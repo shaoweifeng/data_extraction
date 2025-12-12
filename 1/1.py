@@ -4,7 +4,8 @@ import pdfplumber
 import requests
 from datetime import datetime
 from config import base_url, api_key, max_workers
-import fitz  # PyMuPDF - 既能提取文字又能处理图片
+# import fitz  # PyMuPDF - 既能提取文字又能处理图片
+import pymupdf as fitz # 这是新的、正确的方式[1](@ref)
 from PIL import Image
 import io
 import base64

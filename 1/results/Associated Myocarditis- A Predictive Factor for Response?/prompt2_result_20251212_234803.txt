@@ -1,0 +1,31 @@
+[ {
+  "1": "0",
+  "2": "0",
+  "3": "0",
+  "4": "2",
+  "5": "1",
+  "6": "0",
+  "7": "0",
+  "8": "2",
+  "9": "2",
+  "10": "2",
+  "11": "2",
+  "12": "2",
+  "13": "2"
+}]
+
+**评分依据：**
+
+1.  **Method of selection of patients identified and appropriate (0):** 这是一篇病例报告，描述了两位特定患者。没有说明患者是如何从更大人群中被选择或识别的（例如，连续收治、特定时间段内所有患者）。因此，没有报告选择方法。
+2.  **Number of patients deceased or lost to follow-up are either reported or included in appropriate statistical analysis (0):** 文中未提及有患者死亡或失访。由于是病例报告且患者结局已知，此标准不适用，但根据评分规则，未报告相关信息，故评0分。
+3.  **Follow-up period, range and mean mentioned (0):** 文中提到了随访事件（如特定日期进行的检查），但没有明确说明总的随访期、范围或平均随访时间。
+4.  **Scaffold/stent models specified (or interventional strategy) (2):** 干预策略（免疫检查点抑制剂治疗，具体药物、剂量和给药方案）被明确且详细地报告。
+5.  **Well-defined criteria for outcomes measurement (1):** 主要结局（心肌炎）的诊断基于临床症状、生物标志物（肌钙蛋白）和影像学（心脏MRI）结果，标准相对明确。次要结局（肿瘤完全缓解）通过影像学（PET-CT）评估。但未预先定义一套正式的、标准化的反应评估标准（如RECIST标准），因此属于部分报告。
+6.  **Valid statistical anaylisis undertaken (0):** 这是一篇描述性病例报告，未进行任何统计分析（如假设检验、置信区间等）。
+7.  **Data mentioned for deceased individuals (0):** 文中没有患者死亡，因此没有相关数据。
+8.  **Age range and mean age stated (2):** 两位患者的年龄（81岁和55岁）均已明确报告。虽然只有两例，但年龄范围和具体信息清晰。
+9.  **Type of lesion stated (2):** 病变类型（转移性黑色素瘤）被明确报告，并提供了具体细节（如溃疡性结节型黑色素瘤、巨大痣恶变）。
+10. **Pre-operative diagnosis and percentages of patients given (2):** 两位患者的术前/治疗前诊断（转移性黑色素瘤）均被明确描述。由于是病例报告，百分比（100%）是隐含的，但诊断信息全面。
+11. **Quantification of outcomes (2):** 结局被量化报告。例如，肌钙蛋白水平的具体数值、心脏MRI的发现、PET-CT显示无疾病证据（完全缓解）。
+12. **Clinical outcomes reprted at follow-up (2):** 随访时的临床结局（心肌炎缓解、肿瘤完全缓解、无复发）被明确报告。
+13. **Independence of investigators (no conflict of interest) (2):** 文章在“Disclosure Statement”部分明确声明作者无利益冲突。
