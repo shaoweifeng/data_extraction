@@ -1,0 +1,5 @@
+```json
+[{
+    "title": "Cardiac Magnetic Resonance Imaging in Immune Checkpoint Inhibitor–Related Myocarditis"
+}]
+```

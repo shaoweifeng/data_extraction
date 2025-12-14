@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Consider Myocarditis When Patients Treated with Immune Checkpoint Inhibitors Present with Ocular Symptoms.pdf",
+  "pdf_analysis": {
+    "总页数": 4,
+    "有文本的页数": 4,
+    "有图片的页数": 1,
+    "总图片数": 1,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152005",
+  "text_length": 35759,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Consider Myocarditis When Patients Treated with Immune Checkpoint Inhibitors Present with Ocular Symptoms\"\n}]\n```"
+  }
+}

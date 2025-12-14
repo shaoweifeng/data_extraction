@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Beyond T cell toxicity – Intrathecal chemokine CXCL13 indicating B cell involvement in immune-related adverse events following checkpoint inhibition A two-case series and literature review.pdf",
+  "pdf_analysis": {
+    "总页数": 6,
+    "有文本的页数": 6,
+    "有图片的页数": 2,
+    "总图片数": 3,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152015",
+  "text_length": 62509,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Beyond T cell toxicity – Intrathecal chemokine CXCL13 indicating B cell involvement in immune-related adverse events following checkpoint inhibition: A two-case series and literature review\"\n}]\n```"
+  }
+}

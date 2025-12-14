@@ -1,0 +1,16 @@
+{
+  "pdf_file": "使用特瑞普利单抗后新发三度房室传导阻滞2例_何花.pdf",
+  "pdf_analysis": {
+    "总页数": 3,
+    "有文本的页数": 3,
+    "有图片的页数": 0,
+    "总图片数": 0,
+    "PDF类型": "纯文本PDF"
+  },
+  "processing_time": "20251214_152013",
+  "text_length": 18799,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"使用特瑞普利单抗后新发三度房室传导阻滞２例\"\n}]\n```"
+  }
+}

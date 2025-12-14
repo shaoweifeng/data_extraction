@@ -1,0 +1,16 @@
+{
+  "pdf_file": "信迪利单抗引发心脏生物标志异常的病例分析_韩兵.pdf",
+  "pdf_analysis": {
+    "总页数": 3,
+    "有文本的页数": 3,
+    "有图片的页数": 3,
+    "总图片数": 4,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152017",
+  "text_length": 18050,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"信迪利单抗引发心脏生物标志异常的病例分析\"\n}]\n```"
+  }
+}

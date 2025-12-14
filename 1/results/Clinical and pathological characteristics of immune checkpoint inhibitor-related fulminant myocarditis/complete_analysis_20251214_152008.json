@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Clinical and pathological characteristics of immune checkpoint inhibitor-related fulminant myocarditis.pdf",
+  "pdf_analysis": {
+    "总页数": 8,
+    "有文本的页数": 8,
+    "有图片的页数": 6,
+    "总图片数": 6,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152008",
+  "text_length": 57298,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Clinical and pathological characteristics of immune checkpoint inhibitor‑related fulminant myocarditis\"\n}]\n```"
+  }
+}

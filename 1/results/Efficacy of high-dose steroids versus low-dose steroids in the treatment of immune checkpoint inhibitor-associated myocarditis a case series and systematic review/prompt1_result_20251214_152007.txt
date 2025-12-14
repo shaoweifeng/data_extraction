@@ -1,0 +1,5 @@
+```json
+[{
+    "title": "Efficacy of high-dose steroids versus low-dose steroids in the treatment of immune checkpoint inhibitor-associated myocarditis: a case series and systematic review"
+}]
+```

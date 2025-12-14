@@ -1,0 +1,5 @@
+```json
+[{
+    "title": "Beyond T cell toxicity – Intrathecal chemokine CXCL13 indicating B cell involvement in immune-related adverse events following checkpoint inhibition: A two-case series and literature review"
+}]
+```

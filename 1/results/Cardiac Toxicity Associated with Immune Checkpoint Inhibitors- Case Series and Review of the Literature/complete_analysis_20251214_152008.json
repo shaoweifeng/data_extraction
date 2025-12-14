@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Cardiac Toxicity Associated with Immune Checkpoint Inhibitors- Case Series and Review of the Literature.pdf",
+  "pdf_analysis": {
+    "总页数": 17,
+    "有文本的页数": 17,
+    "有图片的页数": 17,
+    "总图片数": 39,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152008",
+  "text_length": 113091,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Cardiac Toxicity Associated with Immune Checkpoint Inhibitors: Case Series and Review of the Literature\"\n}]\n```"
+  }
+}

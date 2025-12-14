@@ -1,0 +1,5 @@
+```json
+[{
+    "title": "Fatal Toxicity Induced by anti-PD-1 Immune Checkpoint Inhibitor in Thymic Epithelial Tumor"
+}]
+```

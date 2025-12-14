@@ -1,0 +1,5 @@
+```json
+[{
+    "title": "A phase I/II study of osimertinib in EGFR exon 20 insertion mutation-positive non-small cell lung cancer"
+}]
+```

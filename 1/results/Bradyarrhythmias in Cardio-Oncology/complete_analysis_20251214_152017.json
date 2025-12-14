@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Bradyarrhythmias in Cardio-Oncology.pdf",
+  "pdf_analysis": {
+    "总页数": 16,
+    "有文本的页数": 16,
+    "有图片的页数": 5,
+    "总图片数": 7,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152017",
+  "text_length": 128902,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Bradyarrhythmias in Cardio-Oncology\"\n}]\n```"
+  }
+}

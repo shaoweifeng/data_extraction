@@ -1,0 +1,16 @@
+{
+  "pdf_file": "应用抗PD-1抗体治疗恶性淋巴瘤致少见不良反应的临床报告_姜利军.pdf",
+  "pdf_analysis": {
+    "总页数": 4,
+    "有文本的页数": 4,
+    "有图片的页数": 1,
+    "总图片数": 1,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152007",
+  "text_length": 24734,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"应用抗PD-1抗体治疗恶性淋巴瘤致少见不良反应的临床报告\"\n}]\n```"
+  }
+}

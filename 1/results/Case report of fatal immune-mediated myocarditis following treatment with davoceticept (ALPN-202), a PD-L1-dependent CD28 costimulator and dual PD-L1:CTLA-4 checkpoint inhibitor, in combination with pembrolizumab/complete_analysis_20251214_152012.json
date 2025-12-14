@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Case report of fatal immune-mediated myocarditis following treatment with davoceticept (ALPN-202), a PD-L1-dependent CD28 costimulator and dual PD-L1:CTLA-4 checkpoint inhibitor, in combination with pembrolizumab.pdf",
+  "pdf_analysis": {
+    "总页数": 6,
+    "有文本的页数": 6,
+    "有图片的页数": 2,
+    "总图片数": 2,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152012",
+  "text_length": 57248,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Case report of fatal immune-mediated myocarditis following treatment with davoceticept (ALPN-202), a PD-L1-dependent CD28 costimulator and dual PD-L1/CTLA-4 checkpoint inhibitor, in combination with pembrolizumab\"\n}]\n```"
+  }
+}

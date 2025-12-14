@@ -19,38 +19,37 @@ def simple_json_to_excel(json_file_path, cnt):
 
     # 定义表头顺序（根据提供的Excel表头）
     header_order = [
- "title","1","2","3","4","5","6","7","8","9","10","11","12","13"
-]
+     "title", "file_path"
+    ]
 
 
     # 字段映射（JSON中的字段名 -> 表头字段名）
     field_mapping = {
         'first_author': 'author',
         'public_year': 'year',
-        'title': 'name',
         'CKMB_value': 'CK-MB_value'
     }
 
     # 处理prompt1_result（基本信息）
     prompt1_data = data.get('prompt1_result', [])
 
-    # 处理prompt2_result（irAE记录）
-    prompt2_data = data.get('prompt2_result', [])
+    # # 处理prompt2_result（irAE记录）
+    # prompt2_data = data.get('prompt2_result', [])
+    #
+    # # 处理prompt3_result（细胞因子）
+    # prompt3_data = data.get('prompt3_result', {})  # 默认空字典，避免None
+    # # print(f"[DEBUG] prompt3_data 原始内容: {prompt3_data}")  # 调试打印
 
-    # 处理prompt3_result（细胞因子）
-    prompt3_data = data.get('prompt3_result', {})  # 默认空字典，避免None
-    # print(f"[DEBUG] prompt3_data 原始内容: {prompt3_data}")  # 调试打印
-
-    # 标准化prompt3_data为字典格式
-    if isinstance(prompt3_data, list):
-        if len(prompt3_data) > 0:
-            IL_data = prompt3_data[0] if isinstance(prompt3_data[0], dict) else {}
-        else:
-            IL_data = {}
-    elif isinstance(prompt3_data, dict):
-        IL_data = prompt3_data
-    else:
-        IL_data = {}
+    # # 标准化prompt3_data为字典格式
+    # if isinstance(prompt3_data, list):
+    #     if len(prompt3_data) > 0:
+    #         IL_data = prompt3_data[0] if isinstance(prompt3_data[0], dict) else {}
+    #     else:
+    #         IL_data = {}
+    # elif isinstance(prompt3_data, dict):
+    #     IL_data = prompt3_data
+    # else:
+    #     IL_data = {}
 
     # print(f"[DEBUG] 标准化后的 IL_data: {IL_data}")  # 调试打印
 
@@ -68,47 +67,48 @@ def simple_json_to_excel(json_file_path, cnt):
                 continue
             mapped_key = field_mapping.get(key, key)
             mapped_base_info[mapped_key] = value
+            all_rows.append(mapped_base_info)
 
         # 如果有prompt2_data，为每条irAE记录创建一行
-        if prompt2_data:
-            for irAE_record in prompt2_data:
-                # 应用字段映射到irAE记录
-                mapped_irAE_record = {}
-                for key, value in irAE_record.items():
-                    if value is None or value == 'null':
-                        continue
-                    mapped_key = field_mapping.get(key, key)
-                    mapped_irAE_record[mapped_key] = value
-
-                # 合并基础信息和irAE记录
-                row_data = mapped_base_info.copy()
-                row_data.update(mapped_irAE_record)
-
-                # 添加细胞因子检查信息
-                if IL_data:  # 如果IL_data非空
-                    row_data['cytokine_check'] = '有'
-                    for key, value in IL_data.items():
-                        if value is None or value == 'null':
-                            continue
-                        mapped_key = field_mapping.get(key, key)
-                        row_data[mapped_key] = value
-                else:
-                    row_data['cytokine_check'] = '无'
-
-                all_rows.append(row_data)
-        else:
-            # 如果没有irAE记录，只添加基础信息
-            if IL_data:
-                mapped_base_info['cytokine_check'] = '有'
-                for key, value in IL_data.items():
-                    if value is None or value == 'null':
-                        continue
-                    mapped_key = field_mapping.get(key, key)
-                    mapped_base_info[mapped_key] = value
-            else:
-                mapped_base_info['cytokine_check'] = '无'
-
-            all_rows.append(mapped_base_info)
+        # if prompt2_data:
+        #     for irAE_record in prompt2_data:
+        #         # 应用字段映射到irAE记录
+        #         mapped_irAE_record = {}
+        #         for key, value in irAE_record.items():
+        #             if value is None or value == 'null':
+        #                 continue
+        #             mapped_key = field_mapping.get(key, key)
+        #             mapped_irAE_record[mapped_key] = value
+        #
+        #         # 合并基础信息和irAE记录
+        #         row_data = mapped_base_info.copy()
+        #         row_data.update(mapped_irAE_record)
+        #
+        #         # 添加细胞因子检查信息
+        #         if IL_data:  # 如果IL_data非空
+        #             row_data['cytokine_check'] = '有'
+        #             for key, value in IL_data.items():
+        #                 if value is None or value == 'null':
+        #                     continue
+        #                 mapped_key = field_mapping.get(key, key)
+        #                 row_data[mapped_key] = value
+        #         else:
+        #             row_data['cytokine_check'] = '无'
+        #
+        #         all_rows.append(row_data)
+        # else:
+        #     # 如果没有irAE记录，只添加基础信息
+        #     if IL_data:
+        #         mapped_base_info['cytokine_check'] = '有'
+        #         for key, value in IL_data.items():
+        #             if value is None or value == 'null':
+        #                 continue
+        #             mapped_key = field_mapping.get(key, key)
+        #             mapped_base_info[mapped_key] = value
+        #     else:
+        #         mapped_base_info['cytokine_check'] = '无'
+        #
+        #     all_rows.append(mapped_base_info)
 
     # 创建DataFrame
     if all_rows:
@@ -118,6 +118,9 @@ def simple_json_to_excel(json_file_path, cnt):
         for header in header_order:
             if header not in df.columns:
                 df[header] = None
+
+        # 添加文件位置信息
+        df['file_path'] = data.get('pdf_file')
 
         # 按照表头顺序重新排列列
         df = df[header_order]

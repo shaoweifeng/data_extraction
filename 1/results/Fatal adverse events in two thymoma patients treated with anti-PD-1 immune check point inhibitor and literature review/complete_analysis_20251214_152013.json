@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Fatal adverse events in two thymoma patients treated with anti-PD-1 immune check point inhibitor and literature review.pdf",
+  "pdf_analysis": {
+    "总页数": 4,
+    "有文本的页数": 4,
+    "有图片的页数": 3,
+    "总图片数": 6,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152013",
+  "text_length": 34457,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Fatal adverse events in two thymoma patients treated with anti-PD-1 immune check point inhibitor and literature review\"\n}]\n```"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "pdf_file": "A retrospective study of immune checkpoint inhibitor-associated myocarditis in a single center in China.pdf",
+  "pdf_analysis": {
+    "总页数": 8,
+    "有文本的页数": 8,
+    "有图片的页数": 2,
+    "总图片数": 2,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152008",
+  "text_length": 67798,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"A retrospective study of immune checkpoint inhibitor-associated myocarditis in a single center in China\"\n}]\n```"
+  }
+}
