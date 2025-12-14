@@ -1,0 +1,35 @@
+```json
+[ {
+  "1": "0",
+  "2": "0",
+  "3": "0",
+  "4": "0",
+  "5": "1",
+  "6": "0",
+  "7": "0",
+  "8": "2",
+  "9": "2",
+  "10": "2",
+  "11": "2",
+  "12": "2",
+  "13": "0"
+} ]
+```
+
+**评分依据：**
+
+本文是一篇病例报告，描述了两例使用特瑞普利单抗后出现三度房室传导阻滞的患者。评分标准主要适用于临床研究或队列研究，而本文作为病例报告，许多项目不适用或未报告。
+
+1.  **Method of selection of patients identified and appropriate (0)**: 未报告患者选择方法。文章仅描述了两例特定病例，未说明是如何从更大人群中识别或选择这些病例的。
+2.  **Number of patients deceased or lost to follow-up are either reported or included in appropriate statistical analysis (0)**: 未报告死亡或失访患者。两例患者均完成随访，但未明确说明无失访。
+3.  **Follow-up period, range and mean mentioned (0)**: 未明确报告随访期的范围和均值。仅提及病例1出院后2个月回访，病例2随访2月，信息不完整。
+4.  **Scaffold/stent models specified (or interventional strategy) (0)**: 不适用。本文涉及药物不良反应，而非支架/介入治疗。
+5.  **Well-defined criteria for outcomes measurement (1)**: 部分报告。主要结局（三度AVB）有明确的诊断标准（心电图）。但未系统定义其他结局（如肝功能恢复、心功能）的测量标准。
+6.  **Valid statistical anaylisis undertaken (0)**: 未进行统计分析。本文为描述性病例报告。
+7.  **Data mentioned for deceased individuals (0)**: 未提及死亡患者数据。两例患者均存活。
+8.  **Age range and mean age stated (2)**: 全面报告。明确给出了两例患者的年龄（72岁和54岁），可计算范围（54-72岁）和均值（63岁）。
+9.  **Type of lesion stated (2)**: 全面报告。明确描述了病例1为“右侧足根恶性黑色素瘤”伴淋巴结转移，病例2为“肾盂尿路上皮癌”伴腰大肌转移。
+10. **Pre-operative diagnosis and percentages of patients given (2)**: 全面报告。明确给出了两例患者的肿瘤诊断（恶性黑色素瘤、尿路上皮癌），并说明各为1例（100%为该诊断）。
+11. **Quantification of outcomes (2)**: 全面报告。对关键结局（如心电图结果、心肌酶谱数值、住院天数、随访时间）进行了定量描述。
+12. **Clinical outcomes reprted at follow-up (2)**: 全面报告。明确报告了两例患者在随访期间的临床状况（如心律、心功能、肝功能恢复情况）。
+13. **Independence of investigators (no conflict of interest) (0)**: 未报告利益冲突声明。文章未声明作者是否存在利益冲突。

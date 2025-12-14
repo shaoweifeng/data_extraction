@@ -1,0 +1,17 @@
+{
+  "pdf_file": "Fatal Toxicity Induced by anti-PD-1 Immune Checkpoint Inhibitor in Thymic Epithelial Tumor.pdf",
+  "pdf_analysis": {
+    "总页数": 13,
+    "有文本的页数": 12,
+    "有图片的页数": 5,
+    "总图片数": 41,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_142135",
+  "text_length": 77678,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'Fatal Toxicity Induced by anti-PD-1 Immune Checkpoint Inhibitor in Thymic Epithelial Tumor']",
+    "prompt2_result": "```json\n[ {\n  \"1\": \"1\",\n  \"2\": \"2\",\n  \"3\": \"0\",\n  \"4\": \"2\",\n  \"5\": \"2\",\n  \"6\": \"1\",\n  \"7\": \"2\",\n  \"8\": \"2\",\n  \"9\": \"2\",\n  \"10\": \"2\",\n  \"11\": \"2\",\n  \"12\": \"2\",\n  \"13\": \"2\"\n}]\n```"
+  }
+}

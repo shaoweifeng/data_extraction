@@ -1,0 +1,17 @@
+{
+  "pdf_file": "Concomitant development of neurologic and cardiac immune-related adverse effects in patients treated with immune checkpoint inhibitors for melanoma.pdf",
+  "pdf_analysis": {
+    "总页数": 8,
+    "有文本的页数": 8,
+    "有图片的页数": 2,
+    "总图片数": 3,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_141302",
+  "text_length": 78032,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'Concomitant development of neurologic and cardiac immune-related adverse effects in patients treated with immune checkpoint inhibitors for melanoma']",
+    "prompt2_result": "```json\n[ {\n  \"1\": \"1\",\n  \"2\": \"0\",\n  \"3\": \"1\",\n  \"4\": \"2\",\n  \"5\": \"2\",\n  \"6\": \"1\",\n  \"7\": \"0\",\n  \"8\": \"2\",\n  \"9\": \"2\",\n  \"10\": \"2\",\n  \"11\": \"2\",\n  \"12\": \"2\",\n  \"13\": \"2\"\n} ]\n```"
+  }
+}

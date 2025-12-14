@@ -1,0 +1,17 @@
+{
+  "pdf_file": "yasuda-A phase I:II study of osimertinib in EGFR exon 20.pdf",
+  "pdf_analysis": {
+    "总页数": 7,
+    "有文本的页数": 7,
+    "有图片的页数": 2,
+    "总图片数": 4,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_142134",
+  "text_length": 90796,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'A phase I/II study of osimertinib in EGFR exon 20 insertion mutation-positive non-small cell lung cancer']",
+    "prompt2_result": "```json\n[ {\n  \"1\": \"2\",\n  \"2\": \"2\",\n  \"3\": \"2\",\n  \"4\": \"2\",\n  \"5\": \"2\",\n  \"6\": \"2\",\n  \"7\": \"0\",\n  \"8\": \"2\",\n  \"9\": \"2\",\n  \"10\": \"2\",\n  \"11\": \"2\",\n  \"12\": \"2\",\n  \"13\": \"2\"\n} ]\n```"
+  }
+}

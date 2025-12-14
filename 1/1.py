@@ -52,12 +52,14 @@ class PDFProcessor:
 
     def mark_file_as_processed(self, pdf_filename, timestamp):
         """标记文件为已处理"""
-        processed_files = self.load_processed_files()
-        processed_files[pdf_filename] = {
-            "processed_time": timestamp,
-            "status": "completed"
-        }
-        self.save_processed_files(processed_files)
+        with self.print_lock:
+            print ("enter mark_file_as_processed ...")
+            processed_files = self.load_processed_files()
+            processed_files[pdf_filename] = {
+                "processed_time": timestamp,
+                "status": "completed"
+            }
+            self.save_processed_files(processed_files)
 
     def is_file_processed(self, pdf_filename):
         """检查文件是否已经处理过"""
@@ -67,14 +69,14 @@ class PDFProcessor:
     def extract_text_with_pymupdf(self, pdf_path):
         """使用PyMuPDF提取PDF文本和图片内容"""
         try:
-            print("使用PyMuPDF提取PDF内容...")
+            # print("使用PyMuPDF提取PDF内容...")
             doc = fitz.open(pdf_path)
             full_text = ""
             image_count = 0
 
             for page_num in range(len(doc)):
                 page = doc[page_num]
-                print(f"  处理第 {page_num + 1}/{len(doc)} 页...")
+                # print(f"  处理第 {page_num + 1}/{len(doc)} 页...")
 
                 # 1. 提取文本内容
                 text = page.get_text()
@@ -84,7 +86,7 @@ class PDFProcessor:
                 # 2. 提取图片并转换为文字描述
                 image_list = page.get_images()
                 if image_list:
-                    print(f"    发现 {len(image_list)} 张图片")
+                    # print(f"    发现 {len(image_list)} 张图片")
                     for img_index, img in enumerate(image_list):
                         try:
                             # 获取图片
@@ -120,7 +122,7 @@ class PDFProcessor:
                     pass
 
             doc.close()
-            print(f"✓ PyMuPDF提取完成: 共{len(full_text)}字符, {image_count}张图片")
+            # print(f"✓ PyMuPDF提取完成: 共{len(full_text)}字符, {image_count}张图片")
             return full_text if full_text.strip() else None
 
         except Exception as e:
@@ -130,11 +132,11 @@ class PDFProcessor:
     def extract_text_with_pdfplumber(self, pdf_path):
         """使用pdfplumber作为备选提取方法"""
         try:
-            print("使用pdfplumber提取文本...")
+            # print("使用pdfplumber提取文本...")
             with pdfplumber.open(pdf_path) as pdf:
                 text = ""
                 for page_num, page in enumerate(pdf.pages, 1):
-                    print(f"  提取第 {page_num}/{len(pdf.pages)} 页...")
+                    # print(f"  提取第 {page_num}/{len(pdf.pages)} 页...")
 
                     # 提取文本
                     page_text = page.extract_text()
@@ -163,29 +165,29 @@ class PDFProcessor:
     def extract_pdf_text_combined(self, pdf_path):
         """结合多种方法提取PDF文本"""
         try:
-            print("开始综合提取PDF内容...")
+            # print("开始综合提取PDF内容...")
 
             # 方法1: 优先使用PyMuPDF（支持文字和图片）
-            print("方法1: 使用PyMuPDF提取...")
+            # print("方法1: 使用PyMuPDF提取...")
             pymupdf_text = self.extract_text_with_pymupdf(pdf_path)
 
             if pymupdf_text and len(pymupdf_text.strip()) > 100:
-                print("✓ PyMuPDF提取成功，使用该结果")
+                # print("✓ PyMuPDF提取成功，使用该结果")
                 return pymupdf_text
 
             # 方法2: 使用pdfplumber作为备选
-            print("方法2: 使用pdfplumber提取...")
+            # print("方法2: 使用pdfplumber提取...")
             pdfplumber_text = self.extract_text_with_pdfplumber(pdf_path)
 
             if pdfplumber_text:
-                print("✓ pdfplumber提取成功，使用该结果")
+                # print("✓ pdfplumber提取成功，使用该结果")
                 return pdfplumber_text
 
             # 方法3: 简化版提取
-            print("方法3: 简化版提取...")
+            # print("方法3: 简化版提取...")
             simple_text = self.extract_pdf_text_simple(pdf_path)
             if simple_text:
-                print("✓ 简化版提取成功")
+                # print("✓ 简化版提取成功")
                 return simple_text
 
             print("❌ 所有提取方法均失败")
@@ -224,7 +226,7 @@ class PDFProcessor:
     def analyze_pdf_structure(self, pdf_path):
         """分析PDF结构，判断类型"""
         try:
-            print("分析PDF结构...")
+            # print("分析PDF结构...")
             doc = fitz.open(pdf_path)
 
             # 统计信息
@@ -268,7 +270,7 @@ class PDFProcessor:
                 "PDF类型": pdf_type
             }
 
-            print(f"PDF分析结果: {analysis_result}")
+            # print(f"PDF分析结果: {analysis_result}")
             return analysis_result
 
         except Exception as e:
@@ -288,7 +290,7 @@ class PDFProcessor:
         """调用DeepSeek API"""
         try:
             if len(pdf_content) > 100000:
-                print(f"文本过长({len(pdf_content)}字符)，进行截断...")
+                # print(f"文本过长({len(pdf_content)}字符)，进行截断...")
                 pdf_content = pdf_content[:100000] + "\n\n[内容已截断...]"
 
             full_prompt = f"{prompt}\n\n[完整病例信息]\n{pdf_content}"
@@ -345,7 +347,7 @@ class PDFProcessor:
                 else:
                     file.write(str(result))
 
-            print(f"结果已保存到: {filepath}")
+            # print(f"结果已保存到: {filepath}")
             return True
         except Exception as e:
             print(f"保存结果失败: {e}")
@@ -366,7 +368,7 @@ class PDFProcessor:
             print(f"PDF文本提取失败，跳过文件: {pdf_filename}")
             return False
 
-        print(f"PDF文本提取成功，共{len(pdf_content)}个字符")
+        # print(f"PDF文本提取成功，共{len(pdf_content)}个字符")
 
         # 处理三个prompt文件
         prompt_files = [
@@ -383,7 +385,7 @@ class PDFProcessor:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         for i, prompt_file in enumerate(prompt_files, 1):
-            print(f"  处理Prompt {i} ({prompt_file})...")
+            # print(f"  处理Prompt {i} ({prompt_file})...")
 
             if not os.path.exists(prompt_file):
                 print(f"  警告：prompt文件不存在: {prompt_file}")
@@ -397,7 +399,7 @@ class PDFProcessor:
             api_result = self.call_deepseek_api(prompt_content, pdf_content)
             if api_result:
                 results[f"prompt{i}_result"] = api_result
-                print(f"  Prompt {i} 处理完成")
+                # print(f"  Prompt {i} 处理完成")
 
                 result_filename = f"prompt{i}_result_{timestamp}.txt"
                 self.save_result(api_result, result_filename, pdf_filename)
@@ -415,7 +417,7 @@ class PDFProcessor:
                 "results": results
             }
             self.save_result(summary, f"complete_analysis_{timestamp}.json", pdf_filename)
-            print(f"  {pdf_filename} 处理完成！共处理了{len(results)}个prompt")
+            # print(f"  {pdf_filename} 处理完成！共处理了{len(results)}个prompt")
 
             self.mark_file_as_processed(pdf_filename, timestamp)
             return True
@@ -437,11 +439,11 @@ class PDFProcessor:
 
         for attempt in range(1, total_attempts + 1):
             try:
-                self.safe_print(f"[{pdf_file}] 第 {attempt} 次尝试处理...")
+                # self.safe_print(f"[{pdf_file}] 第 {attempt} 次尝试处理...")
                 success = self.process_pdf_with_prompts(pdf_path)
                 
                 if success:
-                    self.safe_print(f"✓ {pdf_file} 处理成功（第 {attempt} 次）")
+                    # self.safe_print(f"✓ {pdf_file} 处理成功（第 {attempt} 次）")
                     return {"file": pdf_file, "success": True, "error": None}
                 else:
                     # 函数返回 False，视为“逻辑失败”，触发重试

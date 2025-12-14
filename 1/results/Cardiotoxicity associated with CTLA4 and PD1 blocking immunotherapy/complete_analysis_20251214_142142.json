@@ -1,0 +1,17 @@
+{
+  "pdf_file": "Cardiotoxicity associated with CTLA4 and PD1 blocking immunotherapy.pdf",
+  "pdf_analysis": {
+    "总页数": 11,
+    "有文本的页数": 11,
+    "有图片的页数": 4,
+    "总图片数": 5,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_142142",
+  "text_length": 97298,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'Cardiotoxicity associated with CTLA4 and PD1 blocking immunotherapy']",
+    "prompt2_result": "```json\n[ {\n  \"1\": \"1\",\n  \"2\": \"1\",\n  \"3\": \"1\",\n  \"4\": \"2\",\n  \"5\": \"1\",\n  \"6\": \"0\",\n  \"7\": \"2\",\n  \"8\": \"2\",\n  \"9\": \"2\",\n  \"10\": \"2\",\n  \"11\": \"2\",\n  \"12\": \"2\",\n  \"13\": \"2\"\n} ]\n```\n\n**评分依据：**\n\n1.  **Method of selection of patients identified and appropriate (1 - 部分报告):** 描述了从六个癌症中心的数据库和医生报告中回顾性识别病例的方法，但未详细说明筛选标准或排除过程。\n2.  **Number of patients deceased or lost to follow-up are either reported or included in appropriate statistical analysis (1 - 部分报告):** 报告了死亡病例（3例），但未明确说明是否有失访病例，且未进行正式的统计学分析（如生存分析）。\n3.  **Follow-up period, range and mean mentioned (1 - 部分报告):** 在病例描述和表格中提供了部分随访时间信息（如“stabilized two months later”），但未明确报告整个队列的随访时间范围和中位数/平均值。\n4.  **Scaffold/stent models specified (or interventional strategy) (2 - 全面报告):** 明确报告了干预策略（免疫检查点抑制剂治疗，包括ipilimumab、nivolumab、pembrolizumab的具体剂量和方案）。\n5.  **Well-defined criteria for outcomes measurement (1 - 部分报告):** 描述了心脏不良事件的临床表现和诊断方法（如超声心动图、活检、MRI），但未使用标准化的通用定义（如CTCAE）来统一定义心脏毒性。\n6.  **Valid statistical anaylisis undertaken (0 - 没有报告):** 这是一篇病例系列报告，未进行任何正式的统计学分析（如假设检验、相关性分析）。\n7.  **Data mentioned for deceased individuals (2 - 全面报告):** 详细报告了3例死亡患者的临床过程、死因和尸检结果。\n8.  **Age range and mean age stated (2 - 全面报告):** 表格1明确列出了每位患者的年龄，可计算出年龄范围（23-88岁）和平均年龄。\n9.  **Type of lesion stated (2 - 全面报告):** 明确报告了心脏病变的类型（心肌炎、心肌病、心力衰竭、心肌纤维化、心脏骤停等）。\n10. **Pre-operative diagnosis and percentages of patients given (2 - 全面报告):** 明确报告了所有患者的原发肿瘤诊断（均为转移性黑色素瘤，部分有基因型信息），并给出了具体病例数（8例）。\n11. **Quantification of outcomes (2 - 全面报告):** 对心脏结局进行了量化描述，如射血分数（EF）的具体数值变化、肌钙蛋白水平、生存时间（月）等。\n12. **Clinical outcomes reprted at follow-up (2 - 全面报告):** 详细报告了每位患者在随访期间的临床结局，包括心脏事件的转归（缓解、永久性损伤、死亡）和肿瘤反应（PR、SD、PD）。\n13. **Independence of investigators (no conflict of interest) (2 - 全面报告):** “Competing interests”部分详细列出了每位作者的经济利益冲突声明，符合透明报告要求。"
+  }
+}

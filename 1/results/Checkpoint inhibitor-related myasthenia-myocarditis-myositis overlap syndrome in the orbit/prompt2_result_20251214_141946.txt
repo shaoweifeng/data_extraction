@@ -1,0 +1,31 @@
+[ {
+  "1": "0",
+  "2": "0",
+  "3": "0",
+  "4": "0",
+  "5": "0",
+  "6": "0",
+  "7": "0",
+  "8": "1",
+  "9": "0",
+  "10": "0",
+  "11": "0",
+  "12": "1",
+  "13": "2"
+} ]
+
+**评分依据：**
+
+1.  **Method of selection of patients identified and appropriate (0):** 未报告患者选择方法。这是一篇病例报告，描述了连续或特定时间段内遇到的3例患者，但未说明任何系统性的筛选或纳入标准。
+2.  **Number of patients deceased or lost to follow-up are either reported or included in appropriate statistical analysis (0):** 未报告失访患者。虽然报告了1例死亡，但未提及是否有其他患者失访。本文为病例报告，未进行统计分析。
+3.  **Follow-up period, range and mean mentioned (0):** 未明确报告随访期的范围和均值。文中提到了个别患者的随访时间点（如21周、18周），但未提供所有患者的系统随访数据（范围、均值）。
+4.  **Scaffold/stent models specified (or interventional strategy) (0):** 不适用。本文是关于药物不良反应（免疫检查点抑制剂）的病例报告，不涉及支架或介入策略。
+5.  **Well-defined criteria for outcomes measurement (0):** 未明确定义结局测量标准。描述了症状改善（如眼睑下垂、复视、眼肌麻痹的改善），但未使用标准化的量表或明确定义的客观标准。
+6.  **Valid statistical anaylisis undertaken (0):** 未进行统计分析。本文为描述性病例报告，未涉及假设检验或统计推断。
+7.  **Data mentioned for deceased individuals (0):** 未提供死亡患者的详细数据。仅提及1例患者在第3天死亡，但未提供其具体的基线特征、治疗细节或死亡原因的具体数据。
+8.  **Age range and mean age stated (1):** 部分报告。提供了每位患者的年龄（79岁、62岁、76岁），可以计算出年龄范围（62-79岁）和平均年龄（约72.3岁），但文中未明确总结陈述。
+9.  **Type of lesion stated (0):** 未报告病变类型。本文描述的是免疫介导的综合征（肌炎、心肌炎、重症肌无力），而非结构性“病变”。
+10. **Pre-operative diagnosis and percentages of patients given (0):** 不适用。本文非外科手术研究，无术前诊断。
+11. **Quantification of outcomes (0):** 未对结局进行量化。描述了症状的“改善”或“接近完全缓解”，但未提供可量化的测量数据（如具体评分变化、实验室指标变化百分比）。
+12. **Clinical outcomes reprted at follow-up (1):** 部分报告。报告了随访时的临床结局（2例患者症状改善，1例死亡），但缺乏系统、量化的随访数据。
+13. **Independence of investigators (no conflict of interest) (2):** 全面报告。在“Disclosure statement”中明确声明作者无利益冲突。

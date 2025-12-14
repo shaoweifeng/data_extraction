@@ -1,0 +1,17 @@
+{
+  "pdf_file": "Effectiveness of Additional Immunosuppressive Drugs for Corticosteroid-refractory Immune Checkpoint Inhibitor-induced Myocarditis- Two Case Reports.pdf",
+  "pdf_analysis": {
+    "总页数": 6,
+    "有文本的页数": 6,
+    "有图片的页数": 3,
+    "总图片数": 5,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_142132",
+  "text_length": 38282,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'Effectiveness of Additional Immunosuppressive Drugs for Corticosteroid-refractory Immune Checkpoint Inhibitor-induced Myocarditis: Two Case Reports']",
+    "prompt2_result": "```json\n[ {\n  \"1\": \"0\",\n  \"2\": \"0\",\n  \"3\": \"0\",\n  \"4\": \"0\",\n  \"5\": \"2\",\n  \"6\": \"0\",\n  \"7\": \"0\",\n  \"8\": \"2\",\n  \"9\": \"2\",\n  \"10\": \"2\",\n  \"11\": \"2\",\n  \"12\": \"2\",\n  \"13\": \"2\"\n} ]\n```"
+  }
+}

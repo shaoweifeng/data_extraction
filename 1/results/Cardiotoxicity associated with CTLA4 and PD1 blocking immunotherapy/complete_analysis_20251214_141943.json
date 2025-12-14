@@ -1,0 +1,17 @@
+{
+  "pdf_file": "Cardiotoxicity associated with CTLA4 and PD1 blocking immunotherapy.pdf",
+  "pdf_analysis": {
+    "总页数": 11,
+    "有文本的页数": 11,
+    "有图片的页数": 4,
+    "总图片数": 5,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_141943",
+  "text_length": 97298,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'Cardiotoxicity associated with CTLA4 and PD1 blocking immunotherapy']",
+    "prompt2_result": "```json\n[ {\n  \"1\": \"1\",\n  \"2\": \"1\",\n  \"3\": \"0\",\n  \"4\": \"2\",\n  \"5\": \"1\",\n  \"6\": \"0\",\n  \"7\": \"2\",\n  \"8\": \"2\",\n  \"9\": \"2\",\n  \"10\": \"2\",\n  \"11\": \"2\",\n  \"12\": \"2\",\n  \"13\": \"2\"\n} ]\n```\n\n**评分依据：**\n\n1.  **Method of selection of patients identified and appropriate (1 - 部分报告):** 文章描述了通过查询治疗医生和审查机构数据库来识别病例，但未详细说明筛选标准或排除标准，属于部分报告。\n2.  **Number of patients deceased or lost to follow-up are either reported or included in appropriate statistical analysis (1 - 部分报告):** 报告了死亡病例（3例），但未明确说明是否有失访病例，也未进行相关的统计分析（如生存分析中如何处理失访数据）。\n3.  **Follow-up period, range and mean mentioned (0 - 没有报告):** 文章未提供系统性的随访时间范围或平均随访时间。表1中的“Survival in months”是从转移开始算起，并非针对心脏不良事件的随访期。\n4.  **Scaffold/stent models specified (or interventional strategy) (2 - 全面报告):** 详细说明了每位患者使用的免疫检查点抑制剂（Ipilimumab, Nivolumab, Pembrolizumab）的具体剂量和给药方案。\n5.  **Well-defined criteria for outcomes measurement (1 - 部分报告):** 描述了心脏不良事件的类型（如心肌炎、心力衰竭）和诊断方法（如超声心动图、活检），但未使用统一的、预先定义的严重程度分级标准（如CTCAE）。\n6.  **Valid statistical anaylisis undertaken (0 - 没有报告):** 这是一篇病例系列报告，未进行任何推断性统计分析（如假设检验、回归分析）。\n7.  **Data mentioned for deceased individuals (2 - 全面报告):** 明确报告了3例死亡患者（病例3、6、8），并提供了死亡原因和相关的临床/病理数据。\n8.  **Age range and mean age stated (2 - 全面报告):** 表1提供了每位患者的具体年龄，可计算出年龄范围（23-88岁）和平均年龄。\n9.  **Type of lesion stated (2 - 全面报告):** 明确说明了每位患者发生的心脏病变类型（如心肌炎、心肌病、心力衰竭、心肌纤维化、心脏骤停）。\n10. **Pre-operative diagnosis and percentages of patients given (2 - 全面报告):** 明确说明了所有患者的原发病诊断（均为转移性黑色素瘤），并给出了具体病例数（8例），可计算百分比（100%）。\n11. **Quantification of outcomes (2 - 全面报告):** 对心脏结局进行了量化描述，例如射血分数（EF）的具体数值变化、肌钙蛋白水平等。\n12. **Clinical outcomes reprted at follow-up (2 - 全面报告):** 详细报告了每位患者在发生心脏事件后的临床结局，包括症状缓解、射血分数恢复、永久性心功能下降或死亡。\n13. **Independence of investigators (no conflict of interest) (2 - 全面报告):** 在“Competing interests”部分详细列出了每位作者的经济利益冲突声明，符合报告规范。"
+  }
+}

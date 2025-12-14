@@ -1,0 +1,17 @@
+{
+  "pdf_file": "Efficacy of high-dose steroids versus low-dose steroids in the treatment of immune checkpoint inhibitor-associated myocarditis a case series and systematic review.pdf",
+  "pdf_analysis": {
+    "总页数": 13,
+    "有文本的页数": 13,
+    "有图片的页数": 2,
+    "总图片数": 2,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_142250",
+  "text_length": 123282,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'Efficacy of high-dose steroids versus low-dose steroids in the treatment of immune checkpoint inhibitor-associated myocarditis: a case series and systematic review']",
+    "prompt2_result": "```json\n[ {\n  \"1\": \"1\",\n  \"2\": \"1\",\n  \"3\": \"1\",\n  \"4\": \"2\",\n  \"5\": \"2\",\n  \"6\": \"2\",\n  \"7\": \"1\",\n  \"8\": \"2\",\n  \"9\": \"2\",\n  \"10\": \"2\",\n  \"11\": \"2\",\n  \"12\": \"2\",\n  \"13\": \"2\"\n} ]\n```"
+  }
+}

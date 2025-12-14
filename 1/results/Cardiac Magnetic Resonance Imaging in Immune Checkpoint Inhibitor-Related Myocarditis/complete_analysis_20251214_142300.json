@@ -1,0 +1,17 @@
+{
+  "pdf_file": "Cardiac Magnetic Resonance Imaging in Immune Checkpoint Inhibitor-Related Myocarditis.pdf",
+  "pdf_analysis": {
+    "总页数": 8,
+    "有文本的页数": 8,
+    "有图片的页数": 6,
+    "总图片数": 9,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_142300",
+  "text_length": 64148,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'Cardiac Magnetic Resonance Imaging in Immune Checkpoint Inhibitor–Related Myocarditis']",
+    "prompt2_result": "[ {\n  \"1\": \"0\",\n  \"2\": \"0\",\n  \"3\": \"0\",\n  \"4\": \"0\",\n  \"5\": \"0\",\n  \"6\": \"0\",\n  \"7\": \"0\",\n  \"8\": \"0\",\n  \"9\": \"0\",\n  \"10\": \"0\",\n  \"11\": \"0\",\n  \"12\": \"0\",\n  \"13\": \"2\"\n} ]\n\n**理由：**\n本文是一篇关于心脏磁共振成像在免疫检查点抑制剂相关心肌炎中应用的**综述文章**，而非一项原始研究。因此，它不包含任何特定的患者队列、研究设计、数据收集或统计分析。\n\n1-12项评价标准均要求报告具体的研究数据（如患者选择方法、随访情况、统计结果、临床结局等），这些内容在综述中**不存在**，故评分为 **0**。\n第13项（研究者独立性）在文章末尾的“Conflicts of Interest”部分明确声明“The authors declare no conflicts of interest”，因此评分为 **2**。"
+  }
+}

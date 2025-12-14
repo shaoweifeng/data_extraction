@@ -1,0 +1,17 @@
+{
+  "pdf_file": "Case Series of Steroid-Resistant Immune Checkpoint Inhibitor Associated Myocarditis A Comparative Analysis of Corticosteroid and Tofacitinib Treatment.pdf",
+  "pdf_analysis": {
+    "总页数": 11,
+    "有文本的页数": 11,
+    "有图片的页数": 4,
+    "总图片数": 4,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_142301",
+  "text_length": 95792,
+  "results_count": 2,
+  "results": {
+    "prompt1_result": "['title':'Case Series of Steroid-Resistant Immune Checkpoint Inhibitor Associated Myocarditis: A Comparative Analysis of Corticosteroid and Tofacitinib Treatment']",
+    "prompt2_result": "```json\n[ {\n  \"1\": \"2\",\n  \"2\": \"2\",\n  \"3\": \"1\",\n  \"4\": \"0\",\n  \"5\": \"2\",\n  \"6\": \"2\",\n  \"7\": \"2\",\n  \"8\": \"2\",\n  \"9\": \"2\",\n  \"10\": \"2\",\n  \"11\": \"2\",\n  \"12\": \"2\",\n  \"13\": \"2\"\n} ]\n```"
+  }
+}
