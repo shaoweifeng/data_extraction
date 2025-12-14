@@ -1,0 +1,5 @@
+```json
+[{
+    "title": "From Bad to Worse: The Clinical Spectrum of Immune Checkpoint Inhibitor Myocarditis and Associated 3M Syndrome with Concomitant Myositis and Myasthenia"
+}]
+```

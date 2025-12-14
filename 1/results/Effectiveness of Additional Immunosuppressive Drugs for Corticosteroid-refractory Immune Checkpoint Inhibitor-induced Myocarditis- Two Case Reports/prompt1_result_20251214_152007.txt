@@ -1,0 +1,5 @@
+```json
+[{
+    "title": "Effectiveness of Additional Immunosuppressive Drugs for Corticosteroid-refractory Immune Checkpoint Inhibitor-induced Myocarditis: Two Case Reports"
+}]
+```

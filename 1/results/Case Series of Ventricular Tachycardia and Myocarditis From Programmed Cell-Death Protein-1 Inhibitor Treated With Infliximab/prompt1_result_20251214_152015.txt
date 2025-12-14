@@ -1,0 +1,7 @@
+```json
+[
+    {
+        "title": "Case Series of Ventricular Tachycardia and Myocarditis From Programmed Cell-Death Protein-1 Inhibitor Treated With Infliximab"
+    }
+]
+```

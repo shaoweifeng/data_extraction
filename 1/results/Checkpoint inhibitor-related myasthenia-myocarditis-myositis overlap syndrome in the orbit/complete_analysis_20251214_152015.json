@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Checkpoint inhibitor-related myasthenia-myocarditis-myositis overlap syndrome in the orbit.pdf",
+  "pdf_analysis": {
+    "总页数": 8,
+    "有文本的页数": 8,
+    "有图片的页数": 5,
+    "总图片数": 20,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152015",
+  "text_length": 62316,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Checkpoint inhibitor-related myasthenia-myocarditis-myositis overlap syndrome in the orbit\"\n}]\n```"
+  }
+}

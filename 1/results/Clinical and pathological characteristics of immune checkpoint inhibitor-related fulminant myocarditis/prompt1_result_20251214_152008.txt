@@ -1,0 +1,5 @@
+```json
+[{
+    "title": "Clinical and pathological characteristics of immune checkpoint inhibitor‑related fulminant myocarditis"
+}]
+```

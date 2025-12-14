@@ -53,7 +53,7 @@ class PDFProcessor:
     def mark_file_as_processed(self, pdf_filename, timestamp):
         """标记文件为已处理"""
         with self.print_lock:
-            print ("enter mark_file_as_processed ...")
+            # print ("enter mark_file_as_processed ...")
             processed_files = self.load_processed_files()
             processed_files[pdf_filename] = {
                 "processed_time": timestamp,
@@ -373,8 +373,7 @@ class PDFProcessor:
         # 处理三个prompt文件
         prompt_files = [
             "prompts/prompt1.txt",
-            "prompts/prompt2.txt",
-            "prompts/prompt3.txt"
+
         ]
 
         if not os.path.exists("prompts"):
@@ -414,7 +413,7 @@ class PDFProcessor:
                 "processing_time": timestamp,
                 "text_length": len(pdf_content),
                 "results_count": len(results),
-                "results": results
+                "results": results,
             }
             self.save_result(summary, f"complete_analysis_{timestamp}.json", pdf_filename)
             # print(f"  {pdf_filename} 处理完成！共处理了{len(results)}个prompt")

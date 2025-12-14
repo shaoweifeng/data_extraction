@@ -14,8 +14,10 @@ def extract_and_format_json(json_file_path):
 
     # 提取并格式化三个结果
     formatted_results = {}
+    if "pdf_file" in data:
+        formatted_results["pdf_file"] = data["pdf_file"]
 
-    for key in ['prompt1_result', 'prompt2_result', 'prompt3_result']:
+    for key in ['prompt1_result']:
         if key in data['results']:
             # 提取JSON内容（去除可能存在的```json标记）
             content = data['results'][key]
@@ -27,6 +29,7 @@ def extract_and_format_json(json_file_path):
                 continue
 
             # 使用正则表达式提取JSON部分
+            json_match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
             json_match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
             if json_match:
                 json_content = json_match.group(1)
@@ -44,7 +47,7 @@ def extract_and_format_json(json_file_path):
                     continue
             except json.JSONDecodeError as e:
                 # JSON解析失败也忽略
-                print(f"解析{filename}{key}时出错: {e}")
+                print(f"解析 <<{filename}>> | '{key}' 时出错: {e}")
                 print(f"问题内容: {json_content[:200]}...")
                 continue  # 跳过这个键
     return formatted_results

@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Case Series of Ventricular Tachycardia and Myocarditis From Programmed Cell-Death Protein-1 Inhibitor Treated With Infliximab.pdf",
+  "pdf_analysis": {
+    "总页数": 4,
+    "有文本的页数": 4,
+    "有图片的页数": 1,
+    "总图片数": 1,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152015",
+  "text_length": 26837,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[\n    {\n        \"title\": \"Case Series of Ventricular Tachycardia and Myocarditis From Programmed Cell-Death Protein-1 Inhibitor Treated With Infliximab\"\n    }\n]\n```"
+  }
+}

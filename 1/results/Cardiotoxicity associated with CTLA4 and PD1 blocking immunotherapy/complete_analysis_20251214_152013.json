@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Cardiotoxicity associated with CTLA4 and PD1 blocking immunotherapy.pdf",
+  "pdf_analysis": {
+    "总页数": 11,
+    "有文本的页数": 11,
+    "有图片的页数": 4,
+    "总图片数": 5,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152013",
+  "text_length": 97298,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"Cardiotoxicity associated with CTLA4 and PD1 blocking immunotherapy\"\n}]\n```"
+  }
+}

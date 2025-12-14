@@ -1,0 +1,16 @@
+{
+  "pdf_file": "A closer look at immune-mediated myocarditis in the era of combined checkpoint blockade and targeted therapies.pdf",
+  "pdf_analysis": {
+    "总页数": 10,
+    "有文本的页数": 10,
+    "有图片的页数": 2,
+    "总图片数": 4,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152014",
+  "text_length": 81839,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"A closer look at immune-mediated myocarditis in the era of combined checkpoint blockade and targeted therapies\"\n}]\n```"
+  }
+}

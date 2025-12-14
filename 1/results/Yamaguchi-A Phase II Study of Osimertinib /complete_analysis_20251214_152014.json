@@ -1,0 +1,16 @@
+{
+  "pdf_file": "Yamaguchi-A Phase II Study of Osimertinib .pdf",
+  "pdf_analysis": {
+    "总页数": 12,
+    "有文本的页数": 12,
+    "有图片的页数": 6,
+    "总图片数": 6,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20251214_152014",
+  "text_length": 105384,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[{\n    \"title\": \"A Phase II Study of Osimertinib for Radiotherapy-Naive Central Nervous System Metastasis From NSCLC: Results for the T790M Cohort of the OCEAN Study (LOGIK1603/WJOG9116L)\"\n}]\n```"
+  }
+}
