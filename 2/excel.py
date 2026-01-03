@@ -19,7 +19,7 @@ def simple_json_to_excel(json_file_path, cnt):
 
     # 定义表头顺序（根据提供的Excel表头）
     header_order = [
-     "title", "file_path"
+     "chapter","No","type","question","choose","answer","explanation","file_path"
     ]
 
 
@@ -58,15 +58,16 @@ def simple_json_to_excel(json_file_path, cnt):
 
     # 如果有prompt1_data，将其作为基础信息
     if prompt1_data:
-        base_info = prompt1_data[0]  # 取第一条作为基础信息
+        # base_info = prompt1_data[0]  # 取第一条作为基础信息
 
         # 应用字段映射
-        mapped_base_info = {}
-        for key, value in base_info.items():
-            if value is None or value == 'null':
-                continue
-            mapped_key = field_mapping.get(key, key)
-            mapped_base_info[mapped_key] = value
+        for data_detail in prompt1_data:
+            mapped_base_info = {}
+            for key, value in data_detail.items():
+                if value is None or value == 'null':
+                    continue
+                mapped_key = field_mapping.get(key, key)
+                mapped_base_info[mapped_key] = value
             all_rows.append(mapped_base_info)
 
         # 如果有prompt2_data，为每条irAE记录创建一行
@@ -147,107 +148,107 @@ def traverse_directory(path):
     return file_pathes
 
 
-def merge_same_cells_advanced(excel_path, output_path):
-    """
-    智能合并方法：先按前4列分组，再合并组内完全相同的列
-    """
-    # 读取数据
-    df = pd.read_excel(excel_path, sheet_name='Sheet1')
-
-    # 加载工作簿
-    wb = load_workbook(excel_path)
-    ws = wb.active
-
-    # 取消所有已有的合并单元格
-    merged_ranges = list(ws.merged_cells.ranges)
-    for merged_range in merged_ranges:
-        ws.unmerge_cells(str(merged_range))
-
-    total_rows = len(df) + 1  # +1 因为包含标题行
-    total_cols = len(df.columns)
-
-    print(f"表格总行数: {total_rows}, 总列数: {total_cols}")
-
-    # 按行分组：前4列相同的行分为一组
-    groups = []
-    current_group = []
-
-    for row_idx in range(2, total_rows + 1):  # 从第2行开始（数据行）
-        if row_idx == 2:
-            current_group = [row_idx]
-            continue
-
-        # 检查前4列是否相同
-        same = True
-        for col in range(1, 5):  # 前4列
-            current_val = ws.cell(row=row_idx, column=col).value
-            prev_val = ws.cell(row=row_idx - 1, column=col).value
-
-            # 处理NaN值
-            if current_val is None or (isinstance(current_val, float) and pd.isna(current_val)):
-                current_val = None
-            if prev_val is None or (isinstance(prev_val, float) and pd.isna(prev_val)):
-                prev_val = None
-
-            if current_val != prev_val:
-                same = False
-                break
-
-        if same:
-            current_group.append(row_idx)
-        else:
-            if len(current_group) > 1:
-                groups.append(current_group)
-            current_group = [row_idx]
-
-    # 添加最后一组
-    if len(current_group) > 1:
-        groups.append(current_group)
-
-    print(f"找到 {len(groups)} 个需要合并的组")
-
-    # 对每个组内的每一列检查是否需要合并
-    merge_info = []
-
-    for i, group in enumerate(groups):
-        start_row = group[0]
-        end_row = group[-1]
-
-        # print(f"处理第 {i + 1} 组: 行 {start_row} 到 {end_row}")
-
-        for col_idx in range(1, total_cols + 1):
-            # 检查该列在组内是否所有值都相同
-            values_in_group = []
-            for row in group:
-                value = ws.cell(row=row, column=col_idx).value
-                if value is None or (isinstance(value, float) and pd.isna(value)):
-                    value = None
-                values_in_group.append(value)
-
-            # 如果组内所有值都相同，则合并
-            if len(set(values_in_group)) == 1 and len(group) > 1:
-                col_letter = get_column_letter(col_idx)  # 使用正确的列字母转换函数
-                merge_info.append((col_letter, start_row, end_row))
-                # print(f"  列 {col_letter} 需要合并 (值: {values_in_group[0]})")
-
-    # 执行合并操作（从后往前合并，避免索引问题）
-    for col_letter, start_row, end_row in reversed(merge_info):
-        try:
-            merge_range = f"{col_letter}{start_row}:{col_letter}{end_row}"
-            # print(f"合并范围: {merge_range}")
-            ws.merge_cells(merge_range)
-
-            # 设置居中对齐
-            merged_cell = ws[f"{col_letter}{start_row}"]
-            merged_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        except Exception as e:
-            print(f"合并 {merge_range} 时出错: {e}")
-
-    # 保存文件
-    wb.save(output_path)
-    print(f"合并完成，文件已保存到: {output_path}")
-    print(f"共合并了 {len(merge_info)} 个单元格区域")
-
+# def merge_same_cells_advanced(excel_path, output_path):
+#     """
+#     智能合并方法：先按前4列分组，再合并组内完全相同的列
+#     """
+#     # 读取数据
+#     df = pd.read_excel(excel_path, sheet_name='Sheet1')
+#
+#     # 加载工作簿
+#     wb = load_workbook(excel_path)
+#     ws = wb.active
+#
+#     # 取消所有已有的合并单元格
+#     merged_ranges = list(ws.merged_cells.ranges)
+#     for merged_range in merged_ranges:
+#         ws.unmerge_cells(str(merged_range))
+#
+#     total_rows = len(df) + 1  # +1 因为包含标题行
+#     total_cols = len(df.columns)
+#
+#     print(f"表格总行数: {total_rows}, 总列数: {total_cols}")
+#
+#     # 按行分组：前4列相同的行分为一组
+#     groups = []
+#     current_group = []
+#
+#     for row_idx in range(2, total_rows + 1):  # 从第2行开始（数据行）
+#         if row_idx == 2:
+#             current_group = [row_idx]
+#             continue
+#
+#         # 检查前4列是否相同
+#         same = True
+#         for col in range(1, 5):  # 前4列
+#             current_val = ws.cell(row=row_idx, column=col).value
+#             prev_val = ws.cell(row=row_idx - 1, column=col).value
+#
+#             # 处理NaN值
+#             if current_val is None or (isinstance(current_val, float) and pd.isna(current_val)):
+#                 current_val = None
+#             if prev_val is None or (isinstance(prev_val, float) and pd.isna(prev_val)):
+#                 prev_val = None
+#
+#             if current_val != prev_val:
+#                 same = False
+#                 break
+#
+#         if same:
+#             current_group.append(row_idx)
+#         else:
+#             if len(current_group) > 1:
+#                 groups.append(current_group)
+#             current_group = [row_idx]
+#
+#     # 添加最后一组
+#     if len(current_group) > 1:
+#         groups.append(current_group)
+#
+#     print(f"找到 {len(groups)} 个需要合并的组")
+#
+#     # 对每个组内的每一列检查是否需要合并
+#     merge_info = []
+#
+#     for i, group in enumerate(groups):
+#         start_row = group[0]
+#         end_row = group[-1]
+#
+#         # print(f"处理第 {i + 1} 组: 行 {start_row} 到 {end_row}")
+#
+#         for col_idx in range(1, total_cols + 1):
+#             # 检查该列在组内是否所有值都相同
+#             values_in_group = []
+#             for row in group:
+#                 value = ws.cell(row=row, column=col_idx).value
+#                 if value is None or (isinstance(value, float) and pd.isna(value)):
+#                     value = None
+#                 values_in_group.append(value)
+#
+#             # 如果组内所有值都相同，则合并
+#             if len(set(values_in_group)) == 1 and len(group) > 1:
+#                 col_letter = get_column_letter(col_idx)  # 使用正确的列字母转换函数
+#                 merge_info.append((col_letter, start_row, end_row))
+#                 # print(f"  列 {col_letter} 需要合并 (值: {values_in_group[0]})")
+#
+#     # 执行合并操作（从后往前合并，避免索引问题）
+#     for col_letter, start_row, end_row in reversed(merge_info):
+#         try:
+#             merge_range = f"{col_letter}{start_row}:{col_letter}{end_row}"
+#             # print(f"合并范围: {merge_range}")
+#             ws.merge_cells(merge_range)
+#
+#             # 设置居中对齐
+#             merged_cell = ws[f"{col_letter}{start_row}"]
+#             merged_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+#         except Exception as e:
+#             print(f"合并 {merge_range} 时出错: {e}")
+#
+#     # 保存文件
+#     wb.save(output_path)
+#     print(f"合并完成，文件已保存到: {output_path}")
+#     print(f"共合并了 {len(merge_info)} 个单元格区域")
+#
     return len(merge_info)
 
 
@@ -256,7 +257,7 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     # print(os.getcwd())
     output_file = "2/免疫文献提取结果.xlsx"
-    final_file = "2/免疫文献提取结果_合并版.xlsx"
+    #final_file = "2/免疫文献提取结果_合并版.xlsx"
 
     # 使用简化版（不需要模板文件）
     files = traverse_directory('2/results')
@@ -276,4 +277,4 @@ if __name__ == "__main__":
     print (f"成功写入{succ_cnt}篇，失败{failed_cnt}篇")
     print(f"数据已成功保存到 {output_file}")
 
-    merge_same_cells_advanced(output_file, final_file)
+    #merge_same_cells_advanced(output_file, final_file)

@@ -1,5 +1,0 @@
-```json
-[{
-    "title": "Checkpoint inhibitor-related myasthenia-myocarditis-myositis overlap syndrome in the orbit"
-}]
-```
