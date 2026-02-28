@@ -1,0 +1,16 @@
+{
+  "pdf_file": "yasuda-A phase I:II study of osimertinib in EGFR exon 20.pdf",
+  "pdf_analysis": {
+    "总页数": 7,
+    "有文本的页数": 7,
+    "有图片的页数": 2,
+    "总图片数": 4,
+    "PDF类型": "混合PDF"
+  },
+  "processing_time": "20260114_175115",
+  "text_length": 90796,
+  "results_count": 1,
+  "results": {
+    "prompt1_result": "```json\n[\n  {\n    \"author\": \"Hiroyuki Yasuda\",\n    \"year\": \"2021\",\n    \"institution\": \"Keio University, School of Medicine; Okayama University Hospital; Hokkaido University; National Cancer Center Hospital East; Kanazawa University; Nagoya University Graduate School of Medicine\",\n    \"name\": \"A phase I/II study of osimertinib in EGFR exon 20 insertion mutation-positive non-small cell lung cancer\",\n    \"case_number\": \"12\",\n    \"language\": \"English\",\n    \"phase\": \"III A, III C, IV A, IV B\",\n    \"diagnosis\": \"EGFR exon 20 insertion mutation-positive non-small cell lung cancer (NSCLC)\",\n    \"sex\": \"Male: 5 (41.7%), Female: 7 (58.3%)\",\n    \"age\": \"Median 66.5 years (range 22–84)\",\n    \"weight\": \"null\",\n    \"height\": \"null\",\n    \"smoking_history\": \"null\",\n    \"heart_disease\": \"null\",\n    \"ICI_treatment_history\": \"null\",\n    \"target_treatment_history\": \"No patient was treated with EGFR-TKIs before the enrollment.\",\n    \"operation_treatment_history\": \"null\",\n    \"chemistry_treatment_history\": \"Patients with a history of 0 to 3 regimens of chemotherapy were enrolled.\",\n    \"radiotherapy_treatment_history\": \"null\",\n    \"PD-1/PD-L1_expression\": \"null\",\n    \"ICI_name\": \"Osimertinib\",\n    \"ICI_dosage\": \"80 mg once daily\",\n    \"ICI_use_date\": \"From August 2018 to January 2020\",\n    \"ICI_treatment_line\": \"First line: 2 patients (16.7%), Second line: 7 patients (58.3%), Third line: 2 patients (16.7%), Fourth line: 1 patient (8.3%)\",\n    \"combination_or_not\": \"Single agent\",\n    \"combination_drug\": \"null\",\n    \"irAE_type\": \"null\",\n    \"irAE_date\": \"null\",\n    \"irAE_date_2\": \"null\",\n    \"irAE_degree\": \"null\",\n    \"irAE_Symptoms\": \"null\",\n    \"ECG_start\": \"null\",\n    \"NT-proBNP_value\": \"null\",\n    \"CTNI_value\": \"null\",\n    \"CK-MB_value\": \"null\",\n    \"irAE_decrease_or_stop\": \"Dose reduction to 40 mg was necessary for two patients with drug-induced liver injury and skin rash.\",\n    \"irAE_change_drug\": \"null\",\n    \"jisu_use\": \"null\",\n    \"jisu_type\": \"null\",\n    \"jisu_ dosage\": \"null\",\n    \"jisu_regime\": \"null\",\n    \"Symptoms_after_jisu_treatment\": \"null\",\n    \"ECG_after_jisu_treatment\": \"null\",\n    \"NT-proBNP_value_after_treatment\": \"null\",\n    \"TNI_value_after_treatment\": \"null\",\n    \"CK-MB_value_after_treatment\": \"null\",\n    \"Second_line_yzj_nor_not\": \"null\",\n    \"Second_line_yzj_type\": \"null\",\n    \"Second_line_yzj_treatment_date\": \"null\",\n    \"Second_line_yzj_dosage\": \"null\",\n    \"Symptoms_after_yzj_treatment\": \"null\",\n    \"ECG_after_yzj_treatment\": \"null\",\n    \"NT-proBNP_value_after_yzj_treatment\": \"null\",\n    \"TNI_value_after_yzj_treatment\": \"null\",\n    \"CK-MB_value_after_yzj_treatment\": \"null\",\n    \"irAE_outcome\": \"null\",\n    \"cytokine_check\": \"null\",\n    \"IL_date\": \"null\"\n  }\n]\n```"
+  }
+}

@@ -1,5 +1,15 @@
-PyPDF2
-requests
+PyPDF2==3.0.1
+requests==2.31.0
 pandas
 openpyxl
 flask
+django
+djangorestframework
+celery
+redis
+django-cors-headers
+python-dotenv
+django-celery-results
+django-celery-beat
+pymupdf
+pillow
