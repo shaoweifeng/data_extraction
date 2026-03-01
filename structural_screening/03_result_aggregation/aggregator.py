@@ -20,7 +20,7 @@ def simple_json_to_excel(json_file_path, cnt):
 
     # 定义基础表头顺序
     base_headers = [
-     "id", "title", "authors", "journal", "year", "exclusion_reason", "include_or_not", "url", "source_xml"
+     "id", "title", "authors", "journal", "year", "exclusion_reason", "exclusion_reason_id", "include_or_not", "url", "source_xml"
     ]
     
     # 收集所有动态出现的字段
