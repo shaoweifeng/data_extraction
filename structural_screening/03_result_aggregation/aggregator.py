@@ -18,10 +18,13 @@ def simple_json_to_excel(json_file_path, cnt):
     with open(json_file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # 定义表头顺序（根据提供的Excel表头）
-    header_order = [
+    # 定义基础表头顺序
+    base_headers = [
      "id", "title", "authors", "journal", "year", "exclusion_reason", "include_or_not", "url", "source_xml"
     ]
+    
+    # 收集所有动态出现的字段
+    dynamic_headers = set()
 
     # 字段映射（JSON中的字段名 -> 表头字段名）
     # screener.py 生成的结构已经是扁平化的，或者在 prompt1_result 中
@@ -69,6 +72,10 @@ def simple_json_to_excel(json_file_path, cnt):
                     except:
                         pass
                 mapped_base_info[mapped_key] = value
+                
+                # 记录动态字段 (排除已知的基础字段)
+                if mapped_key not in base_headers:
+                    dynamic_headers.add(mapped_key)
             
             # 确保包含 source_xml，如果没有则尝试从外层获取
             if 'source_xml' not in mapped_base_info and 'pdf_file' in data:
@@ -83,9 +90,12 @@ def simple_json_to_excel(json_file_path, cnt):
     # 创建DataFrame
     if all_rows:
         df = pd.DataFrame(all_rows)
+        
+        # 合并表头：基础字段 + 排序后的动态字段
+        final_headers = base_headers + sorted(list(dynamic_headers))
 
         # 确保所有表头列都存在
-        for header in header_order:
+        for header in final_headers:
             if header not in df.columns:
                 df[header] = None
 
@@ -96,15 +106,16 @@ def simple_json_to_excel(json_file_path, cnt):
         else:
              df['id'] = cnt
         
-        # 只保留 header_order 中的列，并按顺序排列
-        # 注意：这里可能会丢弃 header_order 之外的列，这是符合预期的
-        df = df[header_order] 
+        # 只保留 final_headers 中的列，并按顺序排列
+        # 使用 reindex 可以安全地处理缺失列（自动填 NaN）
+        df = df.reindex(columns=final_headers)
 
         global all_df
         if all_df is None:
             all_df = df.copy()
         else:
-            all_df = pd.concat([all_df, df], axis=0)
+            # 合并时处理列不一致的情况
+            all_df = pd.concat([all_df, df], axis=0, ignore_index=True)
 
         return True
     else:
