@@ -19,14 +19,16 @@ def simple_json_to_excel(json_file_path, cnt):
 
     # 定义表头顺序（根据提供的Excel表头）
     header_order = [
-     "chapter","No","type","question","choose","answer","explanation","file_path"
+     "1","2","3","4","5","6","7","8","9","10","file_path"
     ]
+
+#英文_英文
 
 
     # 字段映射（JSON中的字段名 -> 表头字段名）
     field_mapping = {
-        'first_author': 'author',
-        'public_year': 'year',
+        'author': 'author',
+        'year': 'year',
         'CKMB_value': 'CK-MB_value'
     }
 
