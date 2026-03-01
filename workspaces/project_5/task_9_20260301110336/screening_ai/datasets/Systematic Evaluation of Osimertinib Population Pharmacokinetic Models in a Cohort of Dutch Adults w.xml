@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Systematic Evaluation of Osimertinib Population Pharmacokinetic Models in a Cohort of Dutch Adults with Non-Small Cell Lung Cancer.</Title>
+    <Authors>
+      <Author>Westra, Niels</Author>
+      <Author>Westra N</Author>
+      <Author>Kruithof, Paul D</Author>
+      <Author>Kruithof PD</Author>
+      <Author>Croes, Sander</Author>
+      <Author>Croes S</Author>
+      <Author>van Geel, Robin M J M</Author>
+      <Author>van Geel RMJM</Author>
+      <Author>Hendriks, Lizza E L</Author>
+      <Author>Hendriks LEL</Author>
+      <Author>Touw, Daan J</Author>
+      <Author>Touw DJ</Author>
+      <Author>Oude Munnink, Thijs H</Author>
+      <Author>Oude Munnink TH</Author>
+      <Author>Mian, Paola</Author>
+      <Author>Mian P</Author>
+    </Authors>
+    <Journal>European journal of drug metabolism and pharmacokinetics</Journal>
+    <Year>2024</Year>
+    <Abstract>BACKGROUND AND OBJECTIVE: Several population pharmacokinetic (popPK) studies have been reported that can guide the prediction of osimertinib plasma concentrations in individual patients. It is currently unclear which popPK model offers the best predictive performance and which popPK models are most suitable for nonadherence management and model-informed precision dosing. Therefore, the objective of this study was to externally validate all osimertinib popPK models available in the current literature. METHODS: Published popPK models for osimertinib were constructed using NONMEM version 7.4.4. The predictive quality of the identified models was assessed with goodness-of-fit (GoF) plots, conditional weighted residuals (CWRES) plots and a prediction-corrected visual predictive check (pcVPC) for osimertinib and its active metabolite AZ5104. A subset from the Dutch OSIBOOST trial, where 11 patients with low osimertinib exposure were included, was used as evaluation cohort. RESULTS: The population GoF plots for all four models poorly followed the line of identity. For the individual GoF plots, all models performed comparable and were closely distributed among the line of identity. CWRES of the four models were skewed. The pcVPCs of all four models showed a similar trend, where all observed concentrations fell in the simulated shaded areas, but in the lower region of the simulated areas. CONCLUSION: All four popPK models can be used to individually predict osimertinib concentrations in patients with low osimertinib exposure. For population predictions, all four popPK models performed poorly in patients with low osimertinib exposure. A novel popPK model with good predictive performance should be developed for patients with low osimertinib exposure. Ideally, the cause for the relatively low osimertinib exposure in our evaluation cohort should be known. CLINICAL TRIALS REGISTRATION: NCT03858491.</Abstract>
+    <DOI>10.1007/s13318-024-00904-5</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/38878145</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

@@ -1,0 +1,47 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Multieffect Specific Nanovesicles for Homing Resistant Tumors and Overcoming Osimertinib-Acquired Resistance in NSCLC.</Title>
+    <Authors>
+      <Author>Dou, Yuanyao</Author>
+      <Author>Dou Y</Author>
+      <Author>Liu, Yihui</Author>
+      <Author>Liu Y</Author>
+      <Author>Han, Rui</Author>
+      <Author>Han R</Author>
+      <Author>Zheng, Jie</Author>
+      <Author>Zheng J</Author>
+      <Author>Wang, Liping</Author>
+      <Author>Wang L</Author>
+      <Author>Hu, Chen</Author>
+      <Author>Hu C</Author>
+      <Author>Huang, Daijuan</Author>
+      <Author>Huang D</Author>
+      <Author>He, Chao</Author>
+      <Author>He C</Author>
+      <Author>Zhang, Yimin</Author>
+      <Author>Zhang Y</Author>
+      <Author>Lin, Caiyu</Author>
+      <Author>Lin C</Author>
+      <Author>Lu, Conghua</Author>
+      <Author>Lu C</Author>
+      <Author>Wu, Di</Author>
+      <Author>Wu D</Author>
+      <Author>Tang, Huan</Author>
+      <Author>Tang H</Author>
+      <Author>He, Tingting</Author>
+      <Author>He T</Author>
+      <Author>Tang, Liling</Author>
+      <Author>Tang L</Author>
+      <Author>He, Yong</Author>
+      <Author>He Y</Author>
+    </Authors>
+    <Journal>Advanced healthcare materials</Journal>
+    <Year>2025</Year>
+    <Abstract>Acquired resistance to osimertinib (Osi) remains a major obstacle in the treatment of patients with EGFR-mutant non-small cell lung cancer (NSCLC). AXL elevation is a known key mechanism of Osi-resistance, and therapeutic strategies remain scarce. Emerging evidence reveals that an increased intracellular glutathione (GSH) level induces Osi resistance. In this study, a new mechanism is identified by which GSH regulates AXL expression via glutathione peroxidase 4 (GPX4) in Osi-resistant cells. A multifunctional covalent organic framework (COF) nanoplatform for GSH consumption, AXL inhibition, and co-delivery of the AXL inhibitor (Brigatinib) and Osi is creatively constructed to confirm whether Osi sensitivity improves by simultaneously targeting GSH-AXL resistance mechanisms. Furthermore, it is coated, for the first time, the COF carrier system with specific vesicles to precisely home it into resistant tumors, where CDH2 adhesion molecules play a crucial role. The engineered multifunctional antiresistance-specific nanovesicles effectively inhibited the GSH-AXL axis, induced apoptosis in Osi-resistant cells both in vitro and in vivo, and delayed the progression of Osi-resistant tumors. Overall, these findings provide a novel strategy to overcome the Osi-acquired resistance caused by high AXL levels in NSCLC.</Abstract>
+    <DOI>10.1002/adhm.202404087</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/39967371</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

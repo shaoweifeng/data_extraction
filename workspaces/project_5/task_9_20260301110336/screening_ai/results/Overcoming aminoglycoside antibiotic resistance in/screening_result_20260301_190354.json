@@ -1,0 +1,28 @@
+{
+  "title": "Overcoming aminoglycoside antibiotic resistance in Mycobacterium tuberculosis by targeting Eis protein.",
+  "extracted_abstract": "Tuberculosis (TB), a major global health concern, even after significant advancements in diagnosis and treatment, causing millions of deaths annually and severely impacting the healthcare systems of developing nations. Moreover, the rise of drug-resistant strains further diminishes the efforts made to control the infection and to overcome this scenario, highly effective drugs are required. Identifying new therapeutic uses of existing drugs through drug repurposing can significantly shorten the time and cost. In the current study, using a computational experimental approach, near about 3104 FDA-approved drugs and active pharmaceutical ingredients from Selleckchem database were screened against Enhanced intracellular survival (Eis) protein, responsible for causing drug resistance by inhibiting the aminoglycoside drug activity. Based on the three-level screening and Molecular Mechanics generalized Born surface area (MM/GBSA) scores, five drugs including Isavuconazonium sulfate, Cefotiam Hexetil Hydrochloride, Enzastaurin (LY317615), Salbutamol sulfate (Albuterol), and Osimertinib (AZD9291) were considered as potential Eis inhibitors. The 500 ns MD simulation results revealed that all these Eis-drug complexes are stable, with minor structural arrangements and stable binding patterns. The PCA and FEL analysis also confirmed the structural stability of the complexes. Overall, these drugs displayed promising results as Eis inhibitors, that can be regarded as suitable candidates for experimental validation.",
+  "authors": [
+    "Kumar, Geethu S",
+    "Kumar GS",
+    "Sharma, Kuldeep",
+    "Sharma K",
+    "Mishra, Richa",
+    "Mishra R",
+    "Azhar, Esam Ibraheem",
+    "Azhar EI",
+    "Dwivedi, Vivek Dhar",
+    "Dwivedi VD",
+    "Agrawal, Sharad",
+    "Agrawal S"
+  ],
+  "journal": "In silico pharmacology",
+  "year": "2025",
+  "doi": "10.1007/s40203-025-00325-5",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/40051485",
+  "source_xml": "Overcoming aminoglycoside antibiotic resistance in Mycobacterium tuberculosis by targeting Eis prote.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190354",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

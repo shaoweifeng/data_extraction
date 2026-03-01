@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Effect of almonertinib on the proliferation, invasion, and migration in non-small cell lung cancer cells.</Title>
+    <Authors>
+      <Author>Zhang, Yuhan</Author>
+      <Author>Zhang Y</Author>
+      <Author>Zhang, Yaoshuai</Author>
+      <Author>Zhang Y</Author>
+      <Author>Niu, Wenwen</Author>
+      <Author>Niu W</Author>
+      <Author>Ge, Xianming</Author>
+      <Author>Ge X</Author>
+      <Author>Li, Xian</Author>
+      <Author>Li X</Author>
+      <Author>Fan, Fangtian</Author>
+      <Author>Fan F</Author>
+      <Author>Li, Shanshan</Author>
+      <Author>Li S</Author>
+      <Author>Liu, Hao</Author>
+      <Author>Liu H</Author>
+    </Authors>
+    <Journal>Zhong nan da xue xue bao. Yi xue ban = Journal of Central South University.</Journal>
+    <Year>2021</Year>
+    <Abstract>OBJECTIVES: Lung cancer is one of the most common malignant tumors in the world, and its lethality ranks the first among many malignant tumors. For non-small cell lung cancer (NSCLC) patients, due to the high mortality rate, the overall 5-year survival rate is less than 15%. When NSCLC undergoes local invasion, the 5-year survival rate is only 20%, and it is even lower when distant metastasis occurs up to 4%. Almonertinib is an innovative drug independently researched and developed by China with independent intellectual property rights. As an epidermal growth factor receptor tyrosine kinase inhibitor, almonertinib is mainly used for locally advanced or metastatic NSCLC patients with epidermal growth factor receptor (EGFR) T790M mutation. This study aims to investigate the effects of almonertinib on the proliferation, invasion and migration of NSCLC cells in vitro. METHODS: NSCLC cells H1975 and PC-9 were cultured in vitro. The effects of almonertinib on the proliferation, apoptosis, invasion, and migration of H1975 and PC-9 cells were detected by CCK-8 assay, apoptotic assay and Transwell assay. The expression of invasion and migration related proteins was detected by Western blotting. RESULTS: The CCK-8 experiment showed that almonertinib inhibited the proliferation of H1975 and PC-9 cells in a time- and dose-dependent manner. The IC(50) values in PC-9 cells at 24 and 48 h were 5.422 and 1.302 µmol/L, respectively. The IC(50) values in H1975 cells at 24 and 48 h were 4.803 and 2.094 µmol/L, respectively. Almonertinib (1, 2, 4, 8 µmol/L)-treated PC-9 and H1975 cells for 24 h resulted in apoptosis rate at (8.82±3.22)%, (9.53±4.24)%, (13.62±3.69)%, (42.10±1.76)% and (9.81±0.90)%, (10.51±1.49)%, (15.34±3.50)%, (28.97±2.57)%, respectively. The transwell experiment showed that almonertinib inhibited the invasion and migration of H1975 and PC-9 cells. Western blotting showed that compared with the control group, the expression levels of MMP-9, MMP-2 and vimentin protein in PC-9 and H1975 cells in 1, 2 and 4 µmol/L almonertinib treatment group were significantly lower, and the expression level of E-cadherin protein was significantly higher (all P&lt;0.05). The experimental results of nude mice showed that compared with the control group and the positive control ositinib (AZD9291) group, the tumor growth was significantly inhibited, the weight of nude mice, the tumor volume and the tumor mass were significantly reduced in the almonertinib treatment group (all P&lt;0.05). CONCLUSIONS: Almonertinib can inhibit the proliferation, invasion, and migration of NSCLCH1975 and PC-9 cells in vitro and vivo, and promote the apoptosis of H1975 and PC-9 cells. The underlying mechanism may be related to the inhibition of tumor cell epithelial mesenchymal transformation and metalloproteinase expression.</Abstract>
+    <DOI>10.11817/j.issn.1672-7347.2021.201009</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

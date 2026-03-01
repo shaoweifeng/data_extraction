@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Determination of Osimertinib, Aumolertinib, and Furmonertinib in Human Plasma for Therapeutic Drug Monitoring by UPLC-MS/MS.</Title>
+    <Authors>
+      <Author>Li, Ying</Author>
+      <Author>Li Y</Author>
+      <Author>Meng, Lu</Author>
+      <Author>Meng L</Author>
+      <Author>Ma, Yinling</Author>
+      <Author>Ma Y</Author>
+      <Author>Li, Yajing</Author>
+      <Author>Li Y</Author>
+      <Author>Xing, Xiaoqing</Author>
+      <Author>Xing X</Author>
+      <Author>Guo, Caihui</Author>
+      <Author>Guo C</Author>
+      <Author>Dong, Zhanjun</Author>
+      <Author>Dong Z</Author>
+    </Authors>
+    <Journal>Molecules (Basel, Switzerland)</Journal>
+    <Year>2022</Year>
+    <Abstract>The third-generation epidermal growth factor receptor tyrosine kinase inhibitors (EGFR-TKIs), osimertinib, aumolertinib, and furmonertinib represent a new treatment option for patients with EGFR p.Thr790 Met (T790 M)-mutated non-small cell lung cancer (NSCLC). Currently, there are no studies reporting the simultaneous quantification of these three drugs. A simple ultra-performance liquid chromatography-tandem mass spectrometry (UPLC-MS/MS) method was developed and validated for the simultaneous quantitative determination of osimertinib, aumolertinib, and furmonertinib concentrations in human plasma, and it was applied for therapeutic drug monitoring (TDM). Plasma samples were processed using the protein precipitation method (acetonitrile). A positive ion monitoring mode was used for detecting analytes. D(3)-Sorafenib was utilized as the internal standard (IS), and the mobile phases were acetonitrile (containing 0.1% formic acid) and water with gradient elution on an XSelect HSS XP column (2.1 mm × 100.0 mm, 2.5 µm, Waters, Milford, MA, USA) at a flow rate of 0.5 mL·min(-1). The method's selectivity, precision (coefficient of variation of intra-day and inter-day ≤ 6.1%), accuracy (95.8-105.2%), matrix effect (92.3-106.0%), extraction recovery, and stability results were acceptable according to the guidelines. The linear ranges were 5-500 ng·mL(-1), 2-500 ng·mL(-1), and 0.5-200 ng·mL(-1) for osimertinib, aumolertinib, and furmonertinib, respectively. The results show that the method was sensitive, reliable, and simple and that it could be successfully applied to simultaneously determine the osimertinib, aumolertinib, and furmonertinib blood concentrations in patients. These findings support using the method for TDM, potentially reducing the incidence of dosing blindness and adverse effects due to empirical dosing and inter-patient differences.</Abstract>
+    <DOI>10.3390/molecules27144474</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/35889345</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

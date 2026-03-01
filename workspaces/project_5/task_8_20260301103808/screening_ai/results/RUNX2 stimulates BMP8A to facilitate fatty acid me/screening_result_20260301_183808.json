@@ -1,0 +1,24 @@
+{
+  "title": "RUNX2 stimulates BMP8A to facilitate fatty acid metabolism and cause osimertinib resistance in lung adenocarcinoma.",
+  "extracted_abstract": "BACKGROUND: The most prevalent form of lung cancer, lung adenocarcinoma (LUAD), has significant incidence and fatality rates worldwide. When treating LUAD, osimertinib resistance is a typical problem. Thus, it is imperative to address the concerns of clarifying the mechanism of osimertinib resistance in LUAD and enhancing medication sensitivity. METHODS: Using bioinformatics techniques, expression and possible biological roles of BMP8A in LUAD were examined, and predictions were made about upstream regulatory variables and binding locations. H1975 cell line, resistant to osimertinib, was created. Western blot and RT-qPCR were instrumental to determine mRNA and protein expression of FABP5, ACC1, and FASN associated to lipid metabolism. A fluorescent lipid synthesis test kit was utilized to detect amount of triglycerides present in culture medium. BMP8A and RUNX2 mRNA levels were assayed using RT-qPCR. Utilizing CCK-8 and ANNEXIN V-FITC/PI flow cytometry, cell viability was assessed. Through the use of dual luciferase assays, whether RUNX2 could regulate BMP8A was confirmed. CHIP was further employed to confirm whether the two were bound together. RESULTS: BMP8A and fatty acid metabolism (FAM) have a strong association, as revealed by bioinformatics investigation, and RUNX2 is its upstream transcription factor. Osimertinib-resistant H1975 cell lines were successfully created, and these cell lines showed a significant upregulation of BMP8A expression. The drug sensitivity of the resistant cell lines was decreased, and their FAM level was considerably enhanced by overexpressing BMP8A. Changes in drug sensitivity and FAM were reversed by using FAM inhibitors. An efficient binding of RUNX2 to the BMP8A promoter region was demonstrated by experimental validation, hence activating the production of the BMP8A gene. Lowering LUAD cell survival rates, lipid metabolism levels, and BMP8A expression were all caused by RUNX2 knockdown. CONCLUSION: RUNX2 activated BMP8A-mediated FAM to facilitate osimertinib resistance in LUAD.",
+  "authors": [
+    "Yu, Yilai",
+    "Yu Y",
+    "Huang, Lifei",
+    "Huang L",
+    "Zhu, Xingxing",
+    "Zhu X",
+    "Sun, Yahong",
+    "Sun Y"
+  ],
+  "journal": "Physiology international",
+  "year": "2025",
+  "doi": "10.1556/2060.2025.00482",
+  "url": "",
+  "source_xml": "RUNX2 stimulates BMP8A to facilitate fatty acid metabolism and cause osimertinib resistance inlung a.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183808",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

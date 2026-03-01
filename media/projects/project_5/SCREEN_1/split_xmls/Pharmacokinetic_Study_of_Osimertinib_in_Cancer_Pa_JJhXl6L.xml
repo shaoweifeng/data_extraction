@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Pharmacokinetic Study of Osimertinib in Cancer Patients with Mild or Moderate Hepatic Impairment.</Title>
+    <Authors>
+      <Author>Grande, Enrique</Author>
+      <Author>Grande E</Author>
+      <Author>Harvey, R Donald</Author>
+      <Author>Harvey RD</Author>
+      <Author>You, Benoit</Author>
+      <Author>You B</Author>
+      <Author>Batlle, Jaime Feliu</Author>
+      <Author>Batlle JF</Author>
+      <Author>Galbraith, Hal</Author>
+      <Author>Galbraith H</Author>
+      <Author>Sarantopoulos, John</Author>
+      <Author>Sarantopoulos J</Author>
+      <Author>Ramalingam, Suresh S</Author>
+      <Author>Ramalingam SS</Author>
+      <Author>Mann, Helen</Author>
+      <Author>Mann H</Author>
+      <Author>So, Karen</Author>
+      <Author>So K</Author>
+      <Author>Johnson, Martin</Author>
+      <Author>Johnson M</Author>
+      <Author>Vishwanathan, Karthick</Author>
+      <Author>Vishwanathan K</Author>
+    </Authors>
+    <Journal>The Journal of pharmacology and experimental therapeutics</Journal>
+    <Year>2019</Year>
+    <Abstract>Osimertinib, an epidermal growth factor receptor (EGFR)-tyrosine kinase inhibitor (TKI), undergoes significant hepatic elimination. In this phase 1 study, we assessed the effects of mild and moderate hepatic impairment on the pharmacokinetics (PK) of osimertinib in patients with malignant solid tumors. In part A, patients with normal hepatic function, mild hepatic impairment, and moderate hepatic impairment, according to the Child-Pugh classification, received a single 80 mg oral dose of osimertinib. Standard PK measures were assessed. In part B, patients could continue osimertinib treatment if deemed clinically appropriate. We compared these study results with a population PK analysis including other osimertinib clinical studies. Geometric mean osimertinib plasma concentrations were lower in patients with mild (n = 7) or moderate hepatic impairment (n = 5) versus normal hepatic function (n = 10): C (max) was reduced to 51% and 61%, respectively; area under the curve was reduced to 63% and 68%, respectively. PK results for the metabolites were similar. No apparent differences in the safety profile were found between patients with normal hepatic function and patients with mild or moderate hepatic impairment. Comparison of these study results with National Cancer Institute-Organ Dysfunction Working Group criteria from population PK analysis showed osimertinib exposure was not affected by hepatic impairment. No dose adjustment is required for osimertinib when treating patients with mild or moderate hepatic impairment. No apparent differences in the safety of osimertinib were found between patients with normal hepatic function and mild or moderate hepatic impairment.</Abstract>
+    <DOI>10.1124/jpet.118.255919</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/30872388</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

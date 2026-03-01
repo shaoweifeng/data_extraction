@@ -1,0 +1,20 @@
+{
+  "title": "Miliary brain metastases from lung adenocarcinoma with EGFR (L858R) and CTNNB1 mutations.",
+  "extracted_abstract": "A 76-year-old man was referred to our hospital with a cough. Chest computed tomography (CT) revealed a 45-mm mass in the lingular segment of the left upper lobe. Transbronchial tumor biopsies showed adenocarcinoma. Contrast-enhanced CT and bone scintigraphy revealed lung, pleura, and bone metastases. The patient was diagnosed with left upper lobe adenocarcinoma cT2bN3M1c stage IVB. A genetic analysis of the primary tumor using the Oncomine Dx Target Test Multi-CDx system revealed positivity for epidermal growth factor receptor (EGFR) (L858R) and CTNNB1 mutations. Based on these findings, the patient was treated with osimertinib (80 mg/day) as first-line therapy. Six months later, the tumor increased in size, indicating progressive disease. Osimertinib was stopped and second-line therapy with carboplatin (area under the curve 5) and pemetrexed (500 mg/m2) was initiated. After three cycles of chemotherapy, the patient developed dementia and disorientation. Contrast-enhanced magnetic resonance imaging of the head showed miliary brain metastases. Miliary dissemination is a rare form of brain metastasis. Miliary patterns of lung metastases have been strongly associated with the EGFR exon 19 deletion. The radiological features of miliary brain metastases of non-small cell lung cancer with the exon 19 deletion have been reported. To the best of our knowledge, this is the first case report of lung cancer with miliary brain metastases and co-mutations of EGFR (L858R) and CTNNB1. In conclusion, co-mutations of EGFR (L858R) and CTNNB1 and the discontinuation of EGFR-tyrosine kinase inhibitor may contribute to the development of miliary brain metastases. Further case studies are warranted.",
+  "authors": [
+    "Kunishige, Michihiro",
+    "Kunishige M",
+    "Takeuchi, Eiji",
+    "Takeuchi E"
+  ],
+  "journal": "Thoracic cancer",
+  "year": "2023",
+  "doi": "10.1111/1759-7714.15144",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/37920971",
+  "source_xml": "Miliary brain metastases from lung adenocarcinoma with EGFR L858R and CTNNB1 mutations.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190413",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

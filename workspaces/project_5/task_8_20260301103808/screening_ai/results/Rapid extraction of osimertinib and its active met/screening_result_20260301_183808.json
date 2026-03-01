@@ -1,0 +1,28 @@
+{
+  "title": "Rapid extraction of osimertinib and its active metabolite in urine by miniaturized centrifugal spin-column extraction using ionic liquid hybrid hierarchical porous adsorbent.",
+  "extracted_abstract": "Osimertinib (OSIM) is widely used as a mainstream drug for the treatment of non-small cell lung cancer (NSCLC). However, the lack of a rapid extraction and detection method for OSIM and its metabolite, AZ-5104, has limited clinical drug metabolism and drug resistance research because the drug is unstable. In this study, a new ionic liquid hybrid hierarchical porous material (IL-HHPM) was synthesized with hierarchical porous structures, including micropores (1.6-2.0 nm), mesopores (2.0-50.0 nm), macropores (50.0-148.7 nm), and multiple functional groups via a one-step hydrothermal method using silanized ionic liquids (IL) as functionalized hybrid monomer. The IL-HHPM has the advantages of a high specific surface area (437.4 ± 4.6 m(2) g(-1)), sizable pore volume (0.74 cm(3) g(-1)), and fast mass transfer, additionally, the IL-HHPM adsorbed OSIM and AZ-5104 via π-π interactions and hydrogen bonding. OSIM and AZ-5104 were rapidly extracted and measured in human urine using rapid and miniaturized centrifugal spin-column extraction (MCSCE), which was based on the IL-HHPM. The optimized factors for the extraction recoveries of OSIM and AZ-5104 were adsorbent dosage (8.0 mg), sample volume (0.5 mL), and operation time (9.0 min), and markedly reduced the adsorbent dosage and operation time. The IL-HHPM-MCSCE-HPLC method displayed good linearity (0.02-5.00 μg mL(-1), r ≥ 0.9997), satisfying accuracy (spiked recoveries of 87.7%-100.0%), and good precision (RSDs ≤ 7.0%). The developed method is rapid, sensitive, and reproducible for the simultaneous determination of trace level of OSIM and AZ-5104 in human urine.",
+  "authors": [
+    "Han, Yehong",
+    "Han Y",
+    "Wang, Mingyu",
+    "Wang M",
+    "Yang, Chunliu",
+    "Yang C",
+    "Zhao, Zihui",
+    "Zhao Z",
+    "Yuan, Yanan",
+    "Yuan Y",
+    "Yan, Hongyuan",
+    "Yan H"
+  ],
+  "journal": "Journal of chromatography. A",
+  "year": "2023",
+  "doi": "10.1016/j.chroma.2023.464224",
+  "url": "",
+  "source_xml": "Rapid extraction of osimertinib and its active metabolite in urine by miniaturized centrifugal spin-.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183808",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

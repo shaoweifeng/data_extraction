@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Simultaneous Quantitation of Anlotinib and Osimertinib by Isotope-Labeled UHPLC-MS/MS in Human Plasma: Application in NSCLC Patients.</Title>
+    <Authors>
+      <Author>Liu, Yao</Author>
+      <Author>Liu Y</Author>
+      <Author>Lin, Zhong</Author>
+      <Author>Lin Z</Author>
+      <Author>Luo, Wenji</Author>
+      <Author>Luo W</Author>
+      <Author>Pei, Xiaofeng</Author>
+      <Author>Pei X</Author>
+      <Author>She, Ziyue</Author>
+      <Author>She Z</Author>
+      <Author>Sha, Zhou</Author>
+      <Author>Sha Z</Author>
+      <Author>Guan, Yanping</Author>
+      <Author>Guan Y</Author>
+      <Author>Ming, Dandan</Author>
+      <Author>Ming D</Author>
+      <Author>Liang, Jiabi</Author>
+      <Author>Liang J</Author>
+    </Authors>
+    <Journal>Journal of chromatographic science</Journal>
+    <Year>2024</Year>
+    <Abstract>Anlotinib and osimertinib are a class of tyrosine kinase inhibitors for the treatment of malignant tumor. The combination of anlotinib and osimertinib is currently used for treating non-small cell lung cancer (NSCLC) patients. This study aimed to develop a simple and rapid isotope-labeled UHPLC-MS/MS method for the simultaneous determination of anlotinib and osimertinib in human plasma. The analytes were extracted by protein precipitation with acetonitrile and were then separated on a Shim-pack GIST C18 column. The detection was performed on Shimadzu 8050 triple quadruple mass spectrometer in the positive electrospray ionization mode with multiple reaction monitoring. The precursor-to-product ion transitions were m/z 408.10→ 339.75, 500.25→ 72.20 and 413.50 → 344.50 for anlotinib, osimertinib and D5-anlotinib, respectively. Validation is based on US Food and Drug Administration guidelines. The linearity ranges were 0.5-100 ng/mL for anlotinib and were 1-500 ng/mL for osimertinib with the correlation coefficients (r  2) ≥ 0.99. Accuracy and precision, matrix effect, extraction recovery and stability of anlotinib and osimertinib were acceptable after validation. The UHPLC-MS/MS method was successfully validated and was applied to monitor the concentration of anlotinib and osimertinib in NSCLC patients.</Abstract>
+    <DOI>10.1093/chromsci/bmad024</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/37070405</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

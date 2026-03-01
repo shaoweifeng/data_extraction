@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Osimertinib (AZD9291) Attenuates the Function of Multidrug Resistance-Linked ATP-Binding Cassette Transporter ABCB1 in Vitro.</Title>
+    <Authors>
+      <Author>Hsiao, Sung-Han</Author>
+      <Author>Hsiao SH</Author>
+      <Author>Lu, Yu-Jen</Author>
+      <Author>Lu YJ</Author>
+      <Author>Li, Yan-Qing</Author>
+      <Author>Li YQ</Author>
+      <Author>Huang, Yang-Hui</Author>
+      <Author>Huang YH</Author>
+      <Author>Hsieh, Chia-Hung</Author>
+      <Author>Hsieh CH</Author>
+      <Author>Wu, Chung-Pu</Author>
+      <Author>Wu CP</Author>
+    </Authors>
+    <Journal>Molecular pharmaceutics</Journal>
+    <Year>2016</Year>
+    <Abstract>The effectiveness of cancer chemotherapy is often circumvented by multidrug resistance (MDR) caused by the overexpression of ATP-binding cassette (ABC) drug transporter ABCB1 (MDR1, P-glycoprotein). Several epidermal growth factor receptor (EGFR) tyrosine kinase inhibitors (TKIs) have been shown previously capable of modulating the function of ABCB1 and reversing ABCB1-mediated MDR in human cancer cells. Furthermore, some TKIs are transported by ABCB1, which results in low oral bioavailability, reduced distribution, and the development of acquired resistance to these TKIs. In this study, we investigated the interaction between ABCB1 and osimertinib, a novel selective, irreversible third-generation EGFR TKI that has recently been approved by the U.S. Food and Drug Administration. We also evaluated the potential impact of ABCB1 on the efficacy of osimertinib in cancer cells, which can present a therapeutic challenge to clinicians in the future. We revealed that although osimertinib stimulates the ATPase activity of ABCB1, overexpression of ABCB1 does not confer resistance to osimertinib. Our results suggest that it is unlikely that the overexpression of ABCB1 can be a major contributor to the development of osimertinib resistance in cancer patients. More significantly, we revealed an additional action of osimertinib that directly inhibits the function of ABCB1 without affecting the expression level of ABCB1, enhances drug-induced apoptosis, and reverses the MDR phenotype in ABCB1-overexpressing cancer cells. Considering that osimertinib is a clinically approved third-generation EGFR TKI, our findings suggest that a combination therapy with osimertinib and conventional anticancer drugs may be beneficial to patients with MDR tumors.</Abstract>
+    <DOI>10.1021/acs.molpharmaceut.6b00249</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/27169328</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

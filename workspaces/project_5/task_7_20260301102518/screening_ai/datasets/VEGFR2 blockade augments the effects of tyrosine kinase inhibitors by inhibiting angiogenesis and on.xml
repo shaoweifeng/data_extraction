@@ -1,0 +1,58 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>VEGFR2 blockade augments the effects of tyrosine kinase inhibitors by inhibiting angiogenesis and oncogenic signaling in oncogene-driven non-small-cell lung cancers.</Title>
+    <Authors>
+      <Author>Watanabe, Hiromi</Author>
+      <Author>Watanabe H</Author>
+      <Author>Ichihara, Eiki</Author>
+      <Author>Ichihara E</Author>
+      <Author>Kayatani, Hiroe</Author>
+      <Author>Kayatani H</Author>
+      <Author>Makimoto, Go</Author>
+      <Author>Makimoto G</Author>
+      <Author>Ninomiya, Kiichiro</Author>
+      <Author>Ninomiya K</Author>
+      <Author>Nishii, Kazuya</Author>
+      <Author>Nishii K</Author>
+      <Author>Higo, Hisao</Author>
+      <Author>Higo H</Author>
+      <Author>Ando, Chihiro</Author>
+      <Author>Ando C</Author>
+      <Author>Okawa, Sachi</Author>
+      <Author>Okawa S</Author>
+      <Author>Nakasuka, Takamasa</Author>
+      <Author>Nakasuka T</Author>
+      <Author>Kano, Hirohisa</Author>
+      <Author>Kano H</Author>
+      <Author>Hara, Naofumi</Author>
+      <Author>Hara N</Author>
+      <Author>Hirabae, Atsuko</Author>
+      <Author>Hirabae A</Author>
+      <Author>Kato, Yuka</Author>
+      <Author>Kato Y</Author>
+      <Author>Ninomiya, Takashi</Author>
+      <Author>Ninomiya T</Author>
+      <Author>Kubo, Toshio</Author>
+      <Author>Kubo T</Author>
+      <Author>Rai, Kammei</Author>
+      <Author>Rai K</Author>
+      <Author>Ohashi, Kadoaki</Author>
+      <Author>Ohashi K</Author>
+      <Author>Hotta, Katsuyuki</Author>
+      <Author>Hotta K</Author>
+      <Author>Tabata, Masahiro</Author>
+      <Author>Tabata M</Author>
+      <Author>Maeda, Yoshinobu</Author>
+      <Author>Maeda Y</Author>
+      <Author>Kiura, Katsuyuki</Author>
+      <Author>Kiura K</Author>
+    </Authors>
+    <Journal>Cancer science</Journal>
+    <Year>2021</Year>
+    <Abstract>Molecular agents targeting the epidermal growth factor receptor (EGFR)-, anaplastic lymphoma kinase (ALK)- or c-ros oncogene 1 (ROS1) alterations have revolutionized the treatment of oncogene-driven non-small-cell lung cancer (NSCLC). However, the emergence of acquired resistance remains a significant challenge, limiting the wider clinical success of these molecular targeted therapies. In this study, we investigated the efficacy of various molecular targeted agents, including erlotinib, alectinib, and crizotinib, combined with anti-vascular endothelial growth factor receptor (VEGFR) 2 therapy. The combination of VEGFR2 blockade with molecular targeted agents enhanced the anti-tumor effects of these agents in xenograft mouse models of EGFR-, ALK-, or ROS1-altered NSCLC. The numbers of CD31-positive blood vessels were significantly lower in the tumors of mice treated with an anti-VEGFR2 antibody combined with molecular targeted agents compared with in those of mice treated with molecular targeted agents alone, implying the antiangiogenic effects of VEGFR2 blockade. Additionally, the combination therapies exerted more potent antiproliferative effects in vitro in EGFR-, ALK-, or ROS1-altered NSCLC cells, implying that VEGFR2 inhibition also has direct anti-tumor effects on cancer cells. Furthermore, VEGFR2 expression was induced following exposure to molecular targeted agents, implying the importance of VEGFR2 signaling in NSCLC patients undergoing molecular targeted therapy. In conclusion, VEGFR2 inhibition enhanced the anti-tumor effects of molecular targeted agents in various oncogene-driven NSCLC models, not only by inhibiting tumor angiogenesis but also by exerting direct antiproliferative effects on cancer cells. Hence, combination therapy with anti-VEGFR2 antibodies and molecular targeted agents could serve as a promising treatment strategy for oncogene-driven NSCLC.</Abstract>
+    <DOI>10.1111/cas.14801</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

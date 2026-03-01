@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Osimertinib for EGFR-Mutant Non-Small-Cell Lung Cancer Central Nervous System Metastases: Current Evidence and Future Perspectives on Therapeutic Strategies.</Title>
+    <Authors>
+      <Author>Popat, Sanjay</Author>
+      <Author>Popat S</Author>
+      <Author>Ahn, Myung-Ju</Author>
+      <Author>Ahn MJ</Author>
+      <Author>Ekman, Simon</Author>
+      <Author>Ekman S</Author>
+      <Author>Leighl, Natasha B</Author>
+      <Author>Leighl NB</Author>
+      <Author>Ramalingam, Suresh S</Author>
+      <Author>Ramalingam SS</Author>
+      <Author>Reungwetwattana, Thanyanan</Author>
+      <Author>Reungwetwattana T</Author>
+      <Author>Siva, Shankar</Author>
+      <Author>Siva S</Author>
+      <Author>Tsuboi, Masahiro</Author>
+      <Author>Tsuboi M</Author>
+      <Author>Wu, Yi-Long</Author>
+      <Author>Wu YL</Author>
+      <Author>Yang, James Chih-Hsin</Author>
+      <Author>Yang JC</Author>
+    </Authors>
+    <Journal>Targeted oncology</Journal>
+    <Year>2023</Year>
+    <Abstract>Central nervous system (CNS) metastases are common in non-small-cell lung cancer (NSCLC) and associated with poor prognosis and high disease burden. Effective options are needed to treat CNS metastases, and delay or prevent their formation. For epidermal growth factor receptor mutation-positive (EGFRm) advanced NSCLC and brain metastases, upfront EGFR-tyrosine kinase inhibitors (TKIs) are recommended by the joint European Association of Neuro-Oncology-European Society for Medical Oncology and experts. While early-generation EGFR-TKIs have limited CNS efficacy, the third-generation, irreversible, EGFR-TKI osimertinib has potent efficacy in NSCLC CNS metastases. This review discusses the CNS data of osimertinib in the context of therapeutic strategies and future prospects based on expert review of published literature and relevant clinical, real-world, and ongoing studies in this setting. Osimertinib penetrates the blood-brain barrier and achieves greater exposure in the brain compared with other EGFR-TKIs. Osimertinib has demonstrated CNS efficacy, including in leptomeningeal metastases, in EGFRm advanced disease. In EGFRm stage IB-IIIA NSCLC, adjuvant osimertinib reduced CNS disease recurrence versus placebo. The burden and poor prognosis of CNS metastases necessitate more therapeutic options for their management and reduced risk of recurrence in patients with EGFRm NSCLC. Clinical studies are ongoing in advanced disease to investigate osimertinib combinations with chemotherapy/radiation therapy and optimal treatment post-CNS progression with osimertinib. Further prospective research evaluating treatments using CNS-specific endpoints and evaluating CNS resistance is needed to improve outcomes for patients with CNS metastases.</Abstract>
+    <DOI>10.1007/s11523-022-00941-7</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/36652172</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

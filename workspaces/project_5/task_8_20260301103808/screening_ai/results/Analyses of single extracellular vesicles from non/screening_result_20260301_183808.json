@@ -1,0 +1,30 @@
+{
+  "title": "Analyses of single extracellular vesicles from non-small lung cancer cells to reveal effects of epidermal growth factor receptor inhibitor treatments.",
+  "extracted_abstract": "Precision cancer medicine has changed the treatment landscape of non-small cell lung cancer (NSCLC) as illustrated by the introduction of tyrosine kinase inhibitors (TKIs) towards mutated epidermal growth factor receptor (EGFR). However, as responses to EGFR-TKIs are heterogenous among NSCLC patients, there is a need for ways to early monitor changes in treatment response in a non-invasive way e.g., in patient's blood samples. Recently, extracellular vesicles (EVs) have been identified as a source of tumor biomarkers which could improve on non-invasive liquid biopsy-based diagnosis of cancer. However, the heterogeneity in EVs is high. Putative biomarker candidates may be hidden in the differential expression of membrane proteins in a subset of EVs hard to identify using bulk techniques. Using a fluorescence-based approach, we demonstrate that a single-EV technique can detect alterations in EV surface protein profiles. We analyzed EVs isolated from an EGFR-mutant NSCLC cell line, which is refractory to EGFR-TKIs erlotinib and responsive to osimertinib, before and after treatment with these drugs and after cisplatin chemotherapy. We studied expression level of five proteins; two tetraspanins (CD9, CD81), and three markers of interest in lung cancer (EGFR, programmed death-ligand 1 (PD-L1), human epidermal growth factor receptor 2 (HER2)). The data reveal alterations induced by the osimertinib treatment compared to the other two treatments. These include the growth of the PD-L1/HER2-positive EV population, with the largest increase in vesicles exclusively expressing one of the two proteins. The expression level per EV decreased for these markers. On the other hand, both the TKIs had a similar effect on the EGFR-positive EV population.",
+  "authors": [
+    "Stridfeldt, Fredrik",
+    "Stridfeldt F",
+    "Cavallaro, Sara",
+    "Cavallaro S",
+    "Hååg, Petra",
+    "Hååg P",
+    "Lewensohn, Rolf",
+    "Lewensohn R",
+    "Linnros, Jan",
+    "Linnros J",
+    "Viktorsson, Kristina",
+    "Viktorsson K",
+    "Dev, Apurba",
+    "Dev A"
+  ],
+  "journal": "Talanta",
+  "year": "2023",
+  "doi": "10.1016/j.talanta.2023.124553",
+  "url": "",
+  "source_xml": "Analyses of single extracellular vesicles from non-small lung cancer cells to reveal effects of epid.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183808",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

@@ -1,0 +1,31 @@
+{
+  "title": "Simultaneous quantitative detection of afatinib, erlotinib, gefitinib, icotinib, osimertinib and their metabolites in plasma samples of patients with non-small cell lung cancer using liquid chromatography-tandem mass spectrometry.",
+  "extracted_abstract": "BACKGROUND AND AIMS: As numerous studies have reported the concentration-exposure relationships of epidermal growth factor receptor-tyrosine kinase inhibitors (EGFR-TKIs), therapeutic drug monitoring is a promising approach in lung cancer treatment, aiming to avoid treatment failure or toxicity. A new method for the simultaneous analysis of five EGFR-TKIs (afatinib, erlotinib, gefitinib, icotinib and osimertinib) and their metabolites in human plasma samples was developed and validated using liquid chromatography-tandem mass spectrometry (LC-MS/MS). MATERIALS AND METHODS: Afatinib-d(6), erlotinib-d(6), OSI-420-d(4,) gefitinib-d(6) and osimertinib-C(13),d(3) were used as internal standards (ISs). The samples were prepared by liquid-liquid extraction using tert-butyl methyl ether. Chromatographic separation was undertaken on an XBridge C(18) column using a linear gradient elution. LC-MS/MS was conducted in positive ionization mode with multiple reaction monitoring. RESULTS: The proposed method showed satisfactory results in terms of linearity, sensitivity, specificity, precision (intra- and inter-day coefficients of variation ranged from 1.1 to 13.9%), and accuracy (from 93.3 to 111.1%). The IS-normalized matrix factors were below 15%. The sensitivity and linearity were highly appropriate for the expected concentrations according to the analysis of samples from non-small cell lung caner (NSCLC) patients who received EGFR-TKIs. CONCLUSIONS: The proposed method showed an acceptable reproducibility, high sensitivity and selectivity, and low matrix effects. This method could be significant for monitoring plasma concentrations of the mentioned EGFR-TKIs in NSCLC patients, aiming to improve the efficacy and safety of targeted therapies.",
+  "authors": [
+    "Xiong, Xin",
+    "Xiong X",
+    "Zhang, Yuanyuan",
+    "Zhang Y",
+    "Wang, Ziyu",
+    "Wang Z",
+    "Zhou, Congya",
+    "Zhou C",
+    "Yang, Ping",
+    "Yang P",
+    "Du, Xin",
+    "Du X",
+    "Yang, Li",
+    "Yang L",
+    "Liu, Wei",
+    "Liu W"
+  ],
+  "journal": "Clinica chimica acta; international journal of clinical chemistry",
+  "year": "2022",
+  "doi": "10.1016/j.cca.2021.12.028",
+  "source_xml": "Simultaneous quantitative detection of afatinib erlotinib gefitinib icotinib osimertinib and their m.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182554",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

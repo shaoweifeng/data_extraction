@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Physiologically Based Pharmacokinetic Model of Tyrosine Kinase Inhibitors to Predict Target Site Penetration, with PET-Guided Verification.</Title>
+    <Authors>
+      <Author>van der Gaag, Suzanne</Author>
+      <Author>van der Gaag S</Author>
+      <Author>Jordens, Tamara</Author>
+      <Author>Jordens T</Author>
+      <Author>Yaqub, Maqsood</Author>
+      <Author>Yaqub M</Author>
+      <Author>Grijseels, Robbin</Author>
+      <Author>Grijseels R</Author>
+      <Author>van Valkengoed, Daan W</Author>
+      <Author>van Valkengoed DW</Author>
+      <Author>de Langen, Evelien N</Author>
+      <Author>de Langen EN</Author>
+      <Author>van den Broek, Ruben</Author>
+      <Author>van den Broek R</Author>
+      <Author>Thijssen, Victor L J L</Author>
+      <Author>Thijssen VLJL</Author>
+      <Author>de Langen, Adrianus J</Author>
+      <Author>de Langen AJ</Author>
+      <Author>Kouwenhoven, Mathilde C M</Author>
+      <Author>Kouwenhoven MCM</Author>
+      <Author>Bahce, Idris</Author>
+      <Author>Bahce I</Author>
+      <Author>Westerman, Bart A</Author>
+      <Author>Westerman BA</Author>
+      <Author>Hendrikse, N Harry</Author>
+      <Author>Hendrikse NH</Author>
+      <Author>Bartelink, Imke H</Author>
+      <Author>Bartelink IH</Author>
+    </Authors>
+    <Journal>CPT: pharmacometrics &amp; systems pharmacology</Journal>
+    <Year>2025</Year>
+    <Abstract>Osimertinib, a tyrosine kinase inhibitor (TKI), treats non-small cell lung cancer (NSCLC) with epidermal growth factor receptor (EGFR) mutations. However, its efficacy may vary due to heterogeneous drug distribution, assessable through microdosed radiolabeled drugs and positron emission tomography (PET). Precision dosing using microdosed TKI-PET encounters challenges due to pharmacokinetic (PK) variations between micro- and therapeutic doses. This study aims to predict osimertinib's tissue concentration-time profiles for both microdose and therapeutic dose scenarios using a whole-body physiologically based pharmacokinetic (PBPK) model, which incorporates nonlinear PK processes and target site occupancy. A target site PBPK model for osimertinib was developed to predict drug distribution across various tissues, including lung tumor, based on a previously published PBPK model. The model incorporated tissue-specific parameters and accounted for both linear and nonlinear pharmacokinetic processes, including EGFR-binding dynamics and tumor dynamics. Model predictions were verified with microdosed [(11)C]C-osimertinib PET imaging data and clinical pharmacokinetic profiles to assess accuracy and reliability. The developed target site-PBPK model accurately predicted osimertinib pharmacokinetics across multiple (tumor) tissues and dose levels within 2-fold error compared to observed PET data. This study underscores the utility of PBPK modeling in predicting osimertinib's pharmacokinetics across diverse tissues, offering insights into drug distribution and predictions of target engagement in NSCLC patients using microdose PET imaging data. The developed model serves as a promising tool for optimizing dosing strategies and evaluating novel EGFR-TKIs in NSCLC treatment.</Abstract>
+    <DOI>10.1002/psp4.70006</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

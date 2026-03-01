@@ -1,0 +1,26 @@
+{
+  "title": "Effects of Ephedra Herb extract on the expression of EGFR-activating mutations and c-Met in non-small-cell lung cancer cell line, H1975, and its combined effects with osimertinib.",
+  "extracted_abstract": "We previously reported that the combined application of Ephedra Herb extract (EHE) and epidermal growth factor receptor (EGFR)-tyrosine kinase inhibitor (TKI), erlotinib, is effective in suppressing the growth of erlotinib-resistant non-small-cell lung cancer (NSCLC) cell line, H1993, xenograft tumor, and cell proliferation, and that EHE downregulates c-Met and wild-type EGFR in H1993 cells. However, it was unclear whether EHE could affect EGFR with active mutations. Clinically, advanced NSCLC patients who are eligible for EGFR-TKI treatment are those with detected EGFR with activating mutations. Therefore, it is important to clarify the effect of EHE on EGFR with activating mutations. H1975 cells express EGFR with activating mutations, L858R and T790M, and c-Met; this NSCLC cell line was used in the present study. EHE downregulated the expression of EGFR with activating mutations and c-Met, and inhibited autophosphorylation of c-Met. Proliferation of H1975 cells was suppressed by EHE in a concentration-dependent manner. These results suggest that EHE may be effective against NSCLC harboring EGFR with activating mutations. Considering the fact that advanced NSCLC patients, with an EGFR T790M mutation, are currently widely treated with the third-generation EGFR-TKI, osimertinib, we examined the combined effects of osimertinib and EHE on H1975 cells. The osimertinib and EHE combination downregulated the expression of these receptors and suppressed the proliferation of H1975 cells more effectively than did osimertinib alone, suggesting that this combination may be effective in treating patients with advanced NSCLC with the L858R + T790M EGFR mutation and c-Met. Graphical Abstract was created with BioRender.com.",
+  "authors": [
+    "Mori, Eiko",
+    "Mori E",
+    "Hyuga, Sumiko",
+    "Hyuga S",
+    "Hanawa, Toshihiko",
+    "Hanawa T",
+    "Naoki, Katsuhiko",
+    "Naoki K",
+    "Odaguchi, Hiroshi",
+    "Odaguchi H"
+  ],
+  "journal": "Journal of natural medicines",
+  "year": "2023",
+  "doi": "10.1007/s11418-023-01695-w",
+  "url": "",
+  "source_xml": "Effects of Ephedra Herb extract on the expression of EGFR-activating mutations and c-Met in non-smal.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183808",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

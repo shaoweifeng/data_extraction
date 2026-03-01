@@ -1,0 +1,32 @@
+{
+  "title": "[Acetylcorynoline inhibits microglia activation by regulating EGFR/MAPK signaling to promote functional recovery of injured mouse spinal cord].",
+  "extracted_abstract": "OBJECTIVE: To investigate the effect of acetylcorynoline (Ace) for promoting functional recovery of injured spinal cord in rats and explore the underlying mechanism. METHODS: Rat models of spinal cord injury (SCI) were treated with intraperitoneal injection of different concentrations of Ace, with the sham-operated rats as the control group. After the treatment, the changes in motor function of the rats and the area of spinal cord injury were assessed with BBB score and HE staining, and the changes in pro-inflammatory cytokine levels and microglial activation were determined using PCR, ELISA and immunofluorescence staining. In a lipopolysaccharide (LPS)-treated BV2 cell model, the effects of different concentrations of Ace or DMSO on microglial activation and inflammatory cytokine production were observed. Network pharmacology analysis was performed to predict the target protein and signaling mechanism that mediated the inhibitory effect of Ace on microglia activation, and AutoDock software was used for molecular docking between Ace and the target protein. A signaling pathway blocker (Osimertinib) was used to verify the signaling mechanism in rat models of SCI and LPS-treated BV2 cell model. RESULTS: In rat models of SCI, Ace treatment significantly increased the BBB score, reduced the area of spinal cord injury, and lowered the number of activated microglia cells and the levels of pro-inflammatory cytokines (P < 0.05). The cell experiments showed that Ace treatment significantly lower the level of cell activation and the production of inflammatory cytokines in LPS-treated BV2 cells (P < 0.05). Network pharmacology analysis suggested that EGFR was the main target of Ace, and they bound to each other via hydrogen bonds as shown by molecular docking. Western blotting confirmed that Ace inhibited the activation of the EGFR/MAPK signaling pathway in injured mouse spinal cord tissue and in LPS-treated BV2 cells, and its inhibitory effect was comparable to that of Osimertinib. CONCLUSION: In rat models of SCI, treatment with Ace can inhibit microglia-mediated inflammatory response by regulating the EGFR/MAPK pathway, thus promoting tissue repair and motor function recovery.",
+  "authors": [
+    "Sun, Y",
+    "Sun Y",
+    "Xu, Y",
+    "Xu Y",
+    "Xiao, L",
+    "Xiao L",
+    "Zhu, G",
+    "Zhu G",
+    "Li, J",
+    "Li J",
+    "Song, X",
+    "Song X",
+    "Xu, L",
+    "Xu L",
+    "Hu, J",
+    "Hu J"
+  ],
+  "journal": "Nan fang yi ke da xue xue bao = Journal of Southern Medical University",
+  "year": "2023",
+  "doi": "10.12122/j.issn.1673-4254.2023.06.06",
+  "url": "",
+  "source_xml": "Acetylcorynoline inhibits microglia activation by regulating EGFRMAPK signaling to promote functiona.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183819",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

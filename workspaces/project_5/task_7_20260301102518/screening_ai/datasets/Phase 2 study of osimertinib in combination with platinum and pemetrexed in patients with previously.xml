@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Phase 2 study of osimertinib in combination with platinum and pemetrexed in patients with previously untreated EGFR-mutated advanced non-squamous non-small cell lung cancer: The OPAL Study.</Title>
+    <Authors>
+      <Author>Saito, Ryota</Author>
+      <Author>Saito R</Author>
+      <Author>Sugawara, Shunichi</Author>
+      <Author>Sugawara S</Author>
+      <Author>Ko, Ryo</Author>
+      <Author>Ko R</Author>
+      <Author>Azuma, Koichi</Author>
+      <Author>Azuma K</Author>
+      <Author>Morita, Ryo</Author>
+      <Author>Morita R</Author>
+      <Author>Maemondo, Makoto</Author>
+      <Author>Maemondo M</Author>
+      <Author>Oizumi, Satoshi</Author>
+      <Author>Oizumi S</Author>
+      <Author>Takahashi, Kazuhisa</Author>
+      <Author>Takahashi K</Author>
+      <Author>Kagamu, Hiroshi</Author>
+      <Author>Kagamu H</Author>
+      <Author>Tsubata, Yukari</Author>
+      <Author>Tsubata Y</Author>
+      <Author>Seike, Masahiro</Author>
+      <Author>Seike M</Author>
+      <Author>Kikuchi, Toshiaki</Author>
+      <Author>Kikuchi T</Author>
+      <Author>Okamoto, Isamu</Author>
+      <Author>Okamoto I</Author>
+      <Author>Satoshi, Morita</Author>
+      <Author>Satoshi M</Author>
+      <Author>Asahina, Hajime</Author>
+      <Author>Asahina H</Author>
+      <Author>Tanaka, Kentaro</Author>
+      <Author>Tanaka K</Author>
+      <Author>Sugio, Kenji</Author>
+      <Author>Sugio K</Author>
+      <Author>Kobayashi, Kunihiko</Author>
+      <Author>Kobayashi K</Author>
+    </Authors>
+    <Journal>European journal of cancer (Oxford, England : 1990)</Journal>
+    <Year>2023</Year>
+    <Abstract>BACKGROUND: This multicenter phase 2 trial evaluated the safety and efficacy of osimertinib and platinum-based chemotherapy (OPP) in patients with previously untreated EGFR-mutated advanced non-squamous non-small cell lung cancer (NSCLC). PATIENTS AND METHODS: Patients received osimertinib 80 mg once daily (QD), with either cisplatin 75 mg/m(2) (arm A) or carboplatin (area under the curve [AUC] = 5; arm B), plus pemetrexed 500 mg/m(2) for four cycles and maintenance therapy of osimertinib 80 mg QD with pemetrexed 500 mg/m(2) every 3 weeks. The primary end-points were safety and objective response rate (ORR), and the secondary end-points were complete response rate (CRR), disease control rate (DCR), and progression-free survival (PFS). RESULTS: In total, 67 patients (34 in arm A and 33 in arm B) were enrolled between July 2019 and February 2020. At the data cutoff (28th February 2022), 35 (52.2%) patients had discontinued the protocol treatment, including 10 (14.9%) due to adverse events. No treatment-related deaths occurred. In the full analysis set, the ORR, CRR, and DCR were 90.9% (95% confidence interval [CI], 84.0-97.8), 3.0% (0.0-7.2), and 97.0% (92.8-100.0), respectively. Based on updated survival data (data cutoff on August 31, 2022, median follow-up time: 33.4 months), the median PFS was 31.0 months (95% CI, 26.8 months-not reached) and median overall survival was not reached. CONCLUSIONS: This is the first study to show that OPP has excellent efficacy with acceptable toxicity in previously untreated EGFR-mutated advanced non-squamous NSCLC patients.</Abstract>
+    <DOI>10.1016/j.ejca.2023.02.023</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

@@ -1,0 +1,47 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>CD73 Inhibitor Oleclumab Plus Osimertinib in Previously Treated Patients With Advanced T790M-Negative EGFR-Mutated NSCLC: A Brief Report.</Title>
+    <Authors>
+      <Author>Kim, Dong-Wan</Author>
+      <Author>Kim DW</Author>
+      <Author>Kim, Sang-We</Author>
+      <Author>Kim SW</Author>
+      <Author>Camidge, D Ross</Author>
+      <Author>Camidge DR</Author>
+      <Author>Shu, Catherine A</Author>
+      <Author>Shu CA</Author>
+      <Author>Marrone, Kristen A</Author>
+      <Author>Marrone KA</Author>
+      <Author>Le, Xiuning</Author>
+      <Author>Le X</Author>
+      <Author>Blakely, Collin M</Author>
+      <Author>Blakely CM</Author>
+      <Author>Park, Keunchil</Author>
+      <Author>Park K</Author>
+      <Author>Chang, Gee-Chen</Author>
+      <Author>Chang GC</Author>
+      <Author>Patel, Sandip Pravin</Author>
+      <Author>Patel SP</Author>
+      <Author>Kar, Gozde</Author>
+      <Author>Kar G</Author>
+      <Author>Cooper, Zachary A</Author>
+      <Author>Cooper ZA</Author>
+      <Author>Samadani, Ramin</Author>
+      <Author>Samadani R</Author>
+      <Author>Pluta, Michael</Author>
+      <Author>Pluta M</Author>
+      <Author>Kumar, Rakesh</Author>
+      <Author>Kumar R</Author>
+      <Author>Ramalingam, Suresh</Author>
+      <Author>Ramalingam S</Author>
+    </Authors>
+    <Journal>Journal of thoracic oncology : official publication of the International</Journal>
+    <Year>2023</Year>
+    <Abstract>INTRODUCTION: CD73 is overexpressed in EGFR-mutated NSCLC and may promote immune evasion, suggesting potential for combining CD73 blockers with EGFR tyrosine kinase inhibitors (TKIs). This phase 1b-2 study (NCT03381274) evaluated the anti-CD73 antibody oleclumab plus the third-generation EGFR TKI osimertinib in advanced EGFR-mutated NSCLC. METHODS: Patients had tissue T790M-negative NSCLC with TKI-sensitive EGFR mutations after progression on a first- or second-generation EGFR TKI and were osimertinib naive. They received osimertinib 80 mg orally once daily plus oleclumab 1500 mg (dose level 1 [DL1]) or 3000 mg (DL2) intravenously every 2 weeks. Primary end points included safety and objective response rate by Response Evaluation Criteria in Solid Tumors version 1.1. RESULTS: By July 9, 2021, five patients received DL1 and 21 received DL2. Of these patients, 60.0% and 85.7% had any-grade treatment-related adverse events (TRAEs) and 20.0% and 14.3% had grade 3 TRAEs, respectively. No dose-limiting toxicities, serious TRAEs, or deaths occurred. Four patients were T790M positive on retrospective circulating tumor DNA (ctDNA) testing; three had objective partial responses. In patients who were T790M negative in tumor and ctDNA, objective response rate was 25.0% at DL1 and 11.8% at DL2 (all partial responses); response durations at DL2 were 14.8 and 16.6 months. In patients receiving DL2, excluding those who were T790M positive by ctDNA, median progression-free survival was 7.4 months, and median overall survival was 24.8 months. DL2 was the recommended phase 2 dose. CONCLUSIONS: Oleclumab plus osimertinib was found to have moderate activity with acceptable tolerability in previously treated patients with advanced EGFR-mutated NSCLC.</Abstract>
+    <DOI>10.1016/j.jtho.2022.12.021</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/36641093</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

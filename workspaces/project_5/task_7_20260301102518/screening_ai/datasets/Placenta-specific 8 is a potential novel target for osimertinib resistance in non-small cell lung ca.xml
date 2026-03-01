@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Placenta-specific 8 is a potential novel target for osimertinib resistance in non-small cell lung cancer.</Title>
+    <Authors>
+      <Author>Fei, Xiaoyun</Author>
+      <Author>Fei X</Author>
+      <Author>Wang, Gang</Author>
+      <Author>Wang G</Author>
+      <Author>Shen, Hui</Author>
+      <Author>Shen H</Author>
+      <Author>Gu, Xiaohua</Author>
+      <Author>Gu X</Author>
+    </Authors>
+    <Journal>Oncology letters</Journal>
+    <Year>2019</Year>
+    <Abstract>Currently, osimertinib (AZD9291) is the only third-generation epidermal growth factor receptor (EGFR)-tyrosine kinase inhibitor approved by the Food and Drug Administration for the treatment of non-small cell lung cancer (NSCLC) with EGFR T790M mutations. However, acquired resistance is an inevitable clinical challenge. Although placenta-specific 8 (PLAC8) has been proven to serve an important role in tumor progression and resistance, its effect in AZD9291 resistance in NSCLC remains largely unknown. The aim of the present study was to investigate the functional role of PLAC8 in AZD9291 resistance in NSCLC. The results revealed that the level of PLAC8 was significantly upregulated in AZD9291-resistant cells compared with that in parent cells. Overexpression of PLAC8 in parent cells markedly decreased drug sensitivity, and enhanced cell proliferation, colony formation and migration. Furthermore, the levels of aldehyde dehydrogenase 1 family member A1 (ALDH1A1) were observed to be upregulated in resistant cells and PLAC8-overexpressing parent cells, suggesting that ALDH1A1 may be involved in the association between the overexpression of PLAC8 and AZD9291 resistance in NSCLC. Overall, PLAC8 overexpression promoted NSCLC resistance to AZD9291, and PLAC8 may be a potential target for the reversal of AZD9291 resistance.</Abstract>
+    <DOI>10.3892/ol.2019.10344</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

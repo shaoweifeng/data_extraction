@@ -1,0 +1,28 @@
+{
+  "title": "Blood Concentrations of Osimertinib and Its Active Metabolites: Impact on Treatment Efficacy and Safety.",
+  "extracted_abstract": "BACKGROUND/AIM: Osimertinib (OSI) is a third-generation epidermal growth factor receptor (EGFR)-tyrosine kinase inhibitor (TKI) and the standard treatment for non-small cell lung cancer with EGFR mutation. OSI contains active metabolites such as AZ5104 and AZ7550. The correlation between the blood concentrations of OSI, AZ5104, and AZ7550 with their efficacy and safety is not clear; hence, we examined it. PATIENTS AND METHODS: This was a single-center, retrospective study. We measured the blood concentrations of OSI, AZ5104, and AZ7550 in 46 patients who received OSI between March 2016 and December 2022 and examined their relationships with progression-free survival (PFS), overall survival (OS), and adverse events. RESULTS: The high OSI group had a longer PFS than the low OSI group (26.5 vs. 17.9 months, p=0.058); however, blood levels of AZ7550 and AZ5104 were not correlated with PFS. In the multivariate analysis, blood OSI concentration was an independent prognostic factor for PFS. Overall survival was not different between patients with high or low blood levels of OSI, AZ5104, or AZ7550. In terms of safety, AZ7550 blood levels were higher in patients with higher grades of neutropenia, lymphopenia and anemia, whereas AZ5104 blood levels were higher in patients with higher grades of lymphopenia. CONCLUSION: Higher OSI blood concentrations were associated with a longer PFS, while higher blood concentrations of AZ5104 and AZ7550 were observed in patients with higher hematological toxicity grades. Further research is needed to determine the optimal blood levels of OSI that improve prognosis and minimize toxicity.",
+  "authors": [
+    "Okuno, Takae",
+    "Okuno T",
+    "Hongoh, Masafumi",
+    "Hongoh M",
+    "Tanino, Ryosuke",
+    "Tanino R",
+    "Okimoto, Tamio",
+    "Okimoto T",
+    "Tsubata, Yukari",
+    "Tsubata Y",
+    "Isobe, Takeshi",
+    "Isobe T"
+  ],
+  "journal": "Anticancer research",
+  "year": "2025",
+  "doi": "10.21873/anticanres.17627",
+  "url": "",
+  "source_xml": "Blood Concentrations of Osimertinib and Its Active Metabolites Impact on Treatment Efficacy and Safe.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183826",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

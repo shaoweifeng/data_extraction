@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Multi-gene Liquid Biopsy to Detect Resistance to First-line Osimertinib in Patients With EGFR-mutated Lung Adenocarcinoma.</Title>
+    <Authors>
+      <Author>Ito, Shin</Author>
+      <Author>Ito S</Author>
+      <Author>Tsurumi, Kyoji</Author>
+      <Author>Tsurumi K</Author>
+      <Author>Shindo, Norihisa</Author>
+      <Author>Shindo N</Author>
+      <Author>Soma, Satoshi</Author>
+      <Author>Soma S</Author>
+      <Author>Yamaguchi, Kazunori</Author>
+      <Author>Yamaguchi K</Author>
+      <Author>Tamai, Keiichi</Author>
+      <Author>Tamai K</Author>
+      <Author>Mochizuki, Mai</Author>
+      <Author>Mochizuki M</Author>
+      <Author>Fujimori, Haruna</Author>
+      <Author>Fujimori H</Author>
+      <Author>Morita, Mami</Author>
+      <Author>Morita M</Author>
+      <Author>Watanabe, Kana</Author>
+      <Author>Watanabe K</Author>
+      <Author>Suzuki, Aya</Author>
+      <Author>Suzuki A</Author>
+      <Author>Fukuhara, Tatsuro</Author>
+      <Author>Fukuhara T</Author>
+      <Author>Yasuda, Jun</Author>
+      <Author>Yasuda J</Author>
+    </Authors>
+    <Journal>Anticancer research</Journal>
+    <Year>2023</Year>
+    <Abstract>BACKGROUND/AIM: Osimertinib is currently used as a first-line treatment for EGFR-mutated non-small cell lung cancer, and the emergence of drug resistance poses a substantial challenge. Liquid biopsy with a multi-gene panel can examine both the molecular mechanisms and possibility of early resistance diagnosis. PATIENTS AND METHODS: We used a molecular barcode library construction kit (Archer(®) LiquidPlex™) that allowed the analysis of multiple cancer-related genes using cell-free DNA from the plasma samples of patients. We collected plasma from 17 consecutive patients with lung adenocarcinoma at our hospital at various time points and cell-free DNA was extracted and subjected to LiquidPlex analysis. RESULTS: Plasma DNA concentration was not associated with the presence or absence of resistance to osimertinib. The pathological mutations detected using next-generation sequencing in the resistant specimens were in MAP2K1, PIK3CA, TP53, BRAF, and EGFR. Among the recurrent cases, EGFR mutations identified at the initial diagnosis were detected within 6 months before relapse confirmation in four cases (average 88 days). Many of the recurrent cases without detection of known EGFR mutations in the liquid biopsy showed a longer interval between the detection of relapse and the last blood draw for the liquid biopsy (average 255 days). CONCLUSION: Frequent liquid biopsies are useful for identifying known EGFR mutations as markers for early detection of relapse. Several cancer driver mutations were observed, suggesting a variety of mechanisms of resistance in first-line osimertinib-treated lung adenocarcinoma.</Abstract>
+    <DOI>10.21873/anticanres.16702</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/37909987</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

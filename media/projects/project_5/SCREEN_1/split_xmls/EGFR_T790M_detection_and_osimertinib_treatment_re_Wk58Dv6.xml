@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>EGFR T790M detection and osimertinib treatment response evaluation by liquid biopsy in lung adenocarcinoma patients with acquired resistance to first generation EGFR tyrosine kinase inhibitors.</Title>
+    <Authors>
+      <Author>Li, Chenguang</Author>
+      <Author>Li C</Author>
+      <Author>Jia, Rui</Author>
+      <Author>Jia R</Author>
+      <Author>Liu, Hailin</Author>
+      <Author>Liu H</Author>
+      <Author>Zhang, Bin</Author>
+      <Author>Zhang B</Author>
+      <Author>Wang, Changli</Author>
+      <Author>Wang C</Author>
+    </Authors>
+    <Journal>Diagnostic pathology</Journal>
+    <Year>2018</Year>
+    <Abstract>BACKGROUND: Lung adenocarcinoma with EGFR activating mutations will inevitably acquire resistance to first generation TKIs. Acquired EGFR T790M mutation causes about 50% of these resistance cases. Droplet digital PCR (ddPCR) and cobas enables quantification of T790M mutation. Whether these methods can predict clinical response of osimertinib treatment is unknown. METHODS: Tumor and blood samples from 69 stage IIIB-IV NSCLC patients acquired resistance to EGFR-TKI were collected. Cobas® Mutation Test v2 kit was used to detect EGFR mutations in FFPE or plasma samples. Plasma T790M mutation of both osimertinib naïve and treated patients were quantified by Droplet digital PCR (ddPCR). RESULTS: T790M mutation rate detected by FFPE tissue cobas, plasma ctDNA cobas and plasma ctDNA ddPCR test were 54.5, 21.3 and 30.4% respectively. The T790M positive rate was 52.2% considering all testing methods. The objective response rate (ORR) was 60.9% in 23 patients received osimertinib treatment. Quantification of T790M after treatment decreased to very low level, but no association was observed between clinical response and T790M mutation level decrease. CONCLUSION: ddPCR is more sensitive in plama ctDNA testing and should be performed even in tumor tissue T790M test negative cases. EGFR T790M mutation level is not associated with clinical response after osimertinib treatment.</Abstract>
+    <DOI>10.1186/s13000-018-0728-6</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/30103780</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

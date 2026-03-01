@@ -1,0 +1,30 @@
+{
+  "title": "Nutritional Status and Its Impact on Treatment Tolerance in Non-Small-Cell Lung Cancer Patients Receiving Osimertinib.",
+  "extracted_abstract": "Background/Objectives: Non-small-cell lung cancer (NSCLC) accounts for approximately 85% of all lung cancer cases and is a leading cause of morbidity and mortality worldwide. Between 35% and 65% of NSCLC patients experience nutritional problems or malnutrition, which significantly affects their prognosis and quality of life. This study aims to describe the nutritional status and body composition of NSCLC patients treated with osimertinib, an oral tyrosine kinase inhibitor, while also assessing the prevalence of sarcopenia, presarcopenia, and dynapenia. Additionally, we explore the relationship between dose-limiting toxicities (DLTs) and nutritional status, as well as the impact of nutritional status on quality of life using the EQ-5D scale. Methods: A cross-sectional, observational study was conducted in 25 adult patients diagnosed with NSCLC treated with osimertinib under pharmacotherapeutic follow-up in the Pharmacy Consultations of a tertiary-level hospital. Anthropometric parameters, body composition (via bioimpedance analysis), and muscle functionality (via dynamometry) were assessed. Quality of life was evaluated using the EQ-5D scale. Results: The results showed that 36% of patients were malnourished, 4% had sarcopenia, 8% were presarcopenic, and 20% had dynapenia. Patients with DLTs exhibited significantly lower values of fat-free mass and the fat-free mass index, suggesting a relationship between low muscle mass and increased toxicities. Conclusions: These findings underscore the importance of early, individualized nutritional interventions in NSCLC patients treated with osimertinib to improve nutritional status and optimize oncological outcomes. Further research with larger cohorts and longitudinal designs is necessary to confirm these findings.",
+  "authors": [
+    "Barca-Díez, Claudia",
+    "Barca-Díez C",
+    "Palmeiro-Carballa, Regina",
+    "Palmeiro-Carballa R",
+    "Castro-Luaces, Susana",
+    "Castro-Luaces S",
+    "Fortes-González, Maria Susana",
+    "Fortes-González MS",
+    "Vazquez-Blanco, Silvia",
+    "Vazquez-Blanco S",
+    "Martínez-López-De-Castro, Noemi",
+    "Martínez-López-De-Castro N",
+    "Lago-Rivero, Natividad",
+    "Lago-Rivero N"
+  ],
+  "journal": "Nutrients",
+  "year": "2025",
+  "doi": "10.3390/nu17050927",
+  "url": "",
+  "source_xml": "Nutritional Status and Its Impact on Treatment Tolerance in Non-Small-Cell Lung Cancer Patients Rece.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183814",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

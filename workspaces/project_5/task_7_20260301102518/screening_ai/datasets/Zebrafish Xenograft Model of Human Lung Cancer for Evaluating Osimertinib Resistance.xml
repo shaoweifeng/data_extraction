@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Zebrafish Xenograft Model of Human Lung Cancer for Evaluating Osimertinib Resistance.</Title>
+    <Authors>
+      <Author>Li, Xin-Ying</Author>
+      <Author>Li XY</Author>
+      <Author>Huang, Li-Tang</Author>
+      <Author>Huang LT</Author>
+      <Author>Wu, Jia-Qi</Author>
+      <Author>Wu JQ</Author>
+      <Author>He, Ming-Fang</Author>
+      <Author>He MF</Author>
+      <Author>Zhu, Su-Hua</Author>
+      <Author>Zhu SH</Author>
+      <Author>Zhan, Ping</Author>
+      <Author>Zhan P</Author>
+      <Author>Lv, Tang-Feng</Author>
+      <Author>Lv TF</Author>
+      <Author>Song, Yong</Author>
+      <Author>Song Y</Author>
+    </Authors>
+    <Journal>BioMed research international</Journal>
+    <Year>2019</Year>
+    <Abstract>About half of NSCLC patients with EGFR mutation had secondary mutation T790M after treatment with a first-generation tyrosine kinase inhibitor (TKI), Gefitinib. The third-generation of EGFR-TKI Osimertinib is suitable for patients with EGFR mutation and T790M mutation. However, drug screening for NSCLC patients after the emergence of acquired resistance has become a difficult problem for clinicians. In this study, we established drug-resistant cell lines of Gefitinib and Osimertinib to evaluate cell proliferation in vitro. And we investigated the inhibitory effect of different drug concentration gradients on cancer cells. Zebrafish with high homology to human genes were selected as xenotransplantation models to compare the effects of different concentrations of Osimertinib on the proliferation and angiogenesis of zebrafish tumors after transplantation of different lung cancer cell lines. It was confirmed that Osimertinib could inhibit the proliferation of tumor cells with EGFR mutation and T790M resistance mutation in zebrafish, which was consistent with the clinical research conclusion.</Abstract>
+    <DOI>10.1155/2019/3129748</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

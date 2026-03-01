@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Taxus chinensis var. mairei (Lemée et Lévl) Cheng et L.K. Fu overcomes the resistance to osimertinib in EGFR-mutant non-small-cell lung cancer via suppression of ERK1/2-related cholesterol biosynthesis.</Title>
+    <Authors>
+      <Author>Dai, Shuying</Author>
+      <Author>Dai S</Author>
+      <Author>Zhang, Gao-Chen-Xi</Author>
+      <Author>Zhang GC</Author>
+      <Author>Xiang, Yuying</Author>
+      <Author>Xiang Y</Author>
+      <Author>Liu, Yi</Author>
+      <Author>Liu Y</Author>
+      <Author>Wang, Haibing</Author>
+      <Author>Wang H</Author>
+      <Author>Zhao, Fangmin</Author>
+      <Author>Zhao F</Author>
+      <Author>Shu, Qijin</Author>
+      <Author>Shu Q</Author>
+    </Authors>
+    <Journal>Journal of ethnopharmacology</Journal>
+    <Year>2024</Year>
+    <Abstract>ETHNOPHARMACOLOGICAL RELEVANCE: Acquired resistance to osimertinib limits its clinical efficacy in non-small cell lung cancer (NSCLC) with EGFR mutations. The widespread recognition of Taxus chinensis var. Mairei (Lemée et Lévl) Cheng et L.K. Fu (Chinese yew) as a natural anti-cancer medication is well-established. However, the specific contribution of Taxus chinensis var. Mairei (Lemée et Lévl) Cheng et L.K. Fu in addressing resistance to osimertinib is still uncertain. AIM OF THE STUDY: Based on the biological behaviors and lipid metabolism, we investigated whether aqueous extract of Taxus chinensis var. Mairei (Lemée et Lévl) Cheng et L.K. Fu (AETC) could enhance the antitumor effect of osimertinib in NSCLC with an investigation on the precise mechanisms. MATERIALS AND METHODS: The effect of AETC on enhancing osimertinib sensitivity was assessed via cell viability measurements, levels of reactive oxygen species (ROS), apoptosis, and lipid levels. Western blotting was used to verify the mechanisms of AETC responsible for overcoming the resistance to osimertinib via ERK1/2 overexpression and knockdown models. In vivo validation was conducted using subcutaneous xenografts from osimertinib-resistant cells in nude mice. RESULTS: Osimertinib-resistant cells exhibited altered cholesterol biosynthesis, which was induced by ERK1/2 activation. The combination of AETC and osimertinib can synergistically decrease the levels of ROS in cells, enhance apoptosis, and inhibit the growth of osimertinib-resistant cells. Mechanistic experiments demonstrated that AETC can downregulate the key regulators of cholesterol biosynthesis by regulating ERK1/2, inhibiting the endogenous synthesis rate of cholesterol, and suppressing the level of lipids in osimertinib-resistant cells and xenograft tumors when combined with osimertinib, ultimately reversing resistance to osimertinib. CONCLUSIONS: The resistance to osimertinib is significantly influenced by cholesterol biosynthesis, highlighting its pivotal role in this context. AETC can enhance osimertinib sensitivity via ERK/SREBP-2/HMGCR-mediated cholesterol biosynthesis. These results provide a promising therapeutic target and potential treatment option for resistance to osimertinib.</Abstract>
+    <DOI>10.1016/j.jep.2024.118586</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

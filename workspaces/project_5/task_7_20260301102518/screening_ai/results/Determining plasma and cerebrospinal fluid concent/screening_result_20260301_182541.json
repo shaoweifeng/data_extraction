@@ -1,0 +1,25 @@
+{
+  "title": "Determining plasma and cerebrospinal fluid concentrations of EGFR-TKI in lung cancer patients.",
+  "extracted_abstract": "Epidermal growth factor receptor-tyrosine kinase inhibitors (EGFR-TKIs) are commonly used to treat advanced non-small cell lung cancer (NSCLC). A rapid and reliable method for measuring plasma and cerebrospinal fluid (CSF) concentrations of EGFR-TKIs is needed for therapeutic drug monitoring. By using UHPLC‒MS/MS with multiple reaction monitoring mode, we developed a method for rapidly determining the plasma and CSF concentrations of gefitinib, erlotinib, afatinib, and osimertinib. Protein precipitation was employed to remove protein interference for plasma and CSF matrix. The LC‒MS/MS assay was validated to be satisfactory in terms of linearity, precision, and accuracy. This method was successfully applied to measure plasma (n = 44) and CSF (n = 6) concentrations of EGFR-TKIs in NSCLC patients. The chromatographic separation was achieved by a Hypersil Gold aQ column within 3 min. The median plasma concentrations were 325.76, 1981.50, 42.62, 40.27, and 340.92 ng/ml for gefitinib erlotinib, afatinib 30 mg/day, afatinib 40 mg/day, and osimertinib, respectively. The CSF penetration rates were 2.15% for the patients receiving erlotinib therapy, 0.59% for afatinib, 0.08-1.12% for osimertinib 80 mg/day, and 2.18% for those receiving osimertinib 160 mg/day. This assay helps to predict the effectiveness and toxicities of EGFR-TKIs in the pursuit of precision medicine for lung cancer patients.",
+  "authors": [
+    "Chen, Guan-Yuan",
+    "Chen GY",
+    "Liang, Sheng-Kai",
+    "Liang SK",
+    "Wei, Yu-Feng",
+    "Wei YF",
+    "Weng, Te-I",
+    "Weng TI",
+    "Chen, Kuan-Yu",
+    "Chen KY"
+  ],
+  "journal": "Analytical biochemistry",
+  "year": "2023",
+  "doi": "10.1016/j.ab.2023.115115",
+  "source_xml": "Determining plasma and cerebrospinal fluid concentrations of EGFR-TKI in lung cancer patients.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182541",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

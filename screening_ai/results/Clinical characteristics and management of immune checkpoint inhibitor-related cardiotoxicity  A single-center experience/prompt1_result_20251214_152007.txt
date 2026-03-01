@@ -1,5 +1,0 @@
-```json
-[{
-    "title": "Clinical characteristics and management of immune checkpoint inhibitor-related cardiotoxicity: A single-center experience"
-}]
-```

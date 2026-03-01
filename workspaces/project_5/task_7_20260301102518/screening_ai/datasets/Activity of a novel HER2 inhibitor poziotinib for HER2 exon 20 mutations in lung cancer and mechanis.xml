@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Activity of a novel HER2 inhibitor, poziotinib, for HER2 exon 20 mutations in lung cancer and mechanism of acquired resistance: An in vitro study.</Title>
+    <Authors>
+      <Author>Koga, Takamasa</Author>
+      <Author>Koga T</Author>
+      <Author>Kobayashi, Yoshihisa</Author>
+      <Author>Kobayashi Y</Author>
+      <Author>Tomizawa, Kenji</Author>
+      <Author>Tomizawa K</Author>
+      <Author>Suda, Kenichi</Author>
+      <Author>Suda K</Author>
+      <Author>Kosaka, Takayuki</Author>
+      <Author>Kosaka T</Author>
+      <Author>Sesumi, Yuichi</Author>
+      <Author>Sesumi Y</Author>
+      <Author>Fujino, Toshio</Author>
+      <Author>Fujino T</Author>
+      <Author>Nishino, Masaya</Author>
+      <Author>Nishino M</Author>
+      <Author>Ohara, Shuta</Author>
+      <Author>Ohara S</Author>
+      <Author>Chiba, Masato</Author>
+      <Author>Chiba M</Author>
+      <Author>Shimoji, Masaki</Author>
+      <Author>Shimoji M</Author>
+      <Author>Takemoto, Toshiki</Author>
+      <Author>Takemoto T</Author>
+      <Author>Suzuki, Makoto</Author>
+      <Author>Suzuki M</Author>
+      <Author>Jänne, Pasi A</Author>
+      <Author>Jänne PA</Author>
+      <Author>Mitsudomi, Tetsuya</Author>
+      <Author>Mitsudomi T</Author>
+    </Authors>
+    <Journal>Lung cancer (Amsterdam, Netherlands)</Journal>
+    <Year>2018</Year>
+    <Abstract>OBJECTIVES: Oncogenic HER2 mutations are present in 2-4% of lung adenocarcinomas, but the relevant clinical trials are unsatisfactory. The novel HER2 inhibitor poziotinib was recently developed and clinical trials are ongoing. We compared poziotinib with nine tyrosine kinase inhibitors (TKIs), and derived poziotinib-resistant clones to investigate the resistant mechanism. MATERIALS AND METHODS: We introduced three common HER2 mutations A775_G776insYVMA (YVMA), G776delinsVC (VC) and P780_Y781insGSP (GSP), which account for 94% of HER2 exon 20 insertions in the literature, into Ba/F3 cells. We then compared the activity of poziotinib with that of nine TKIs (erlotinib, afatinib, dacomitinib, neratinib, osimertinib, AZ5104, pyrotinib, lapatinib, and irbinitinib), determined the 90% inhibitory concentration (IC(90)) through a growth inhibition assay, and defined a sensitivity index (SI) as IC(90) divided by the trough concentration at the recommended dose as a surrogate for drug activity in humans. We also generated resistant clones by exposure to poziotinib in the presence of N-ethyl-N-nitrosourea, and HER2 secondary mutations that might serve as a resistance mechanism were searched. RESULTS: YVMA showed resistance to all tested drugs except neratinib, poziotinib and pyrotinib. Poziotinib was the only drug with an SI less than 10 for YVMA, the most common HER2 exon 20 insertion. We established 62 poziotinib-resistant clones, and among these, only C805S of HER2, which is homologous to C797S of the EGFR, was identified as a secondary mutation in 19 clones. We also revealed that heat shock protein (HSP) 90 inhibitors show potent anti-growth activity to the C805S secondary mutant clone. CONCLUSIONS: Poziotinib showed the most potent activity against HER2 exon 20 mutations. We identified the secondary C805S at the covalent binding site of HER2 to poziotinib as a potential mechanism of acquired resistance. HSP90 inhibitors might be a therapeutic strategy for the C805S secondary mutation.</Abstract>
+    <DOI>10.1016/j.lungcan.2018.10.019</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

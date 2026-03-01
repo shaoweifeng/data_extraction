@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Osimertinib Induces the Opposite Effect of Proliferation and Migration in the Drug Resistance of EGFR-T790M Non-small Cell Lung Cancer Cells.</Title>
+    <Authors>
+      <Author>Wang, Rou-Hsin</Author>
+      <Author>Wang RH</Author>
+      <Author>Chang, Chien-Jen</Author>
+      <Author>Chang CJ</Author>
+      <Author>Chen, Chien-Hung</Author>
+      <Author>Chen CH</Author>
+      <Author>Liu, Kuang-Kai</Author>
+      <Author>Liu KK</Author>
+      <Author>Chao, Jui-I</Author>
+      <Author>Chao JI</Author>
+    </Authors>
+    <Journal>Anti-cancer agents in medicinal chemistry</Journal>
+    <Year>2023</Year>
+    <Abstract>BACKGROUND: Lung cancer has become one of the leading causes of cancer incidence and mortality worldwide. Non-small cell lung carcinoma (NSCLC) is the most common type among all lung cancer cases. NSCLC patients contained high levels of activating epidermal growth factor receptor (EGFR) mutations, such as exon 19 deletion, L858R and T790M. Osimertinib, a third-generation of EGFR tyrosine kinase inhibitor (EGFR-TKI), has therapeutic efficacy on the EGFR-T790M mutation of NSCLC patients; however, treatment of osimertinib still can induce drug resistance in lung cancer patients. Therefore, investigation of the drug resistance mechanisms of osimertinib will provide novel strategies for lung cancer therapy. METHODS: The H1975OR osimertinib-resistant cell line was established by prolonged exposure with osimertinib derived from the H1975 cells. The cell proliferation ability was evaluated by the cell viability and cell growth assays. The cell migration ability was determined by the Boyden chamber assays. The differential gene expression profile was analyzed by genome-wide RNA sequencing. The protein expression and location were analyzed by western blot and confocal microscopy. RESULTS: In this study, we established the osimertinib-resistant H1975 (T790M/L858R) cancer cells, named the H1975OR cell line. The cell growth ability was decreased in the H1975OR cells by comparison with the H1975 parental cells. Conversely, the cell migration ability was elevated in the H1975OR cells. We found the differential gene expression profile of cell proliferation and migration pathways between the H1975OR and H1975 parental cells. Interestingly, the protein levels of phospho-EGFR, PD-L1, E-cadherin and β-catenin were decreased, but the survivin and N-cadherin proteins were increased in the H1975OR drug-resistant cells. CONCLUSION: Osimertinib induces the opposite effect of proliferation and migration in the drug resistance of EGFRT790M lung cancer cells. We suggest that differential gene and protein expressions in the cell proliferation and migration pathways may mediate the drug resistance of osimertinib in lung cancer cells. Understanding the molecular drugresistant mechanisms of proliferation and migration pathways of osimertinib may provide novel targets and strategies for the clinical treatment of EGFR-TKIs in lung cancer patients.</Abstract>
+    <DOI>10.2174/1871520623666230223111217</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

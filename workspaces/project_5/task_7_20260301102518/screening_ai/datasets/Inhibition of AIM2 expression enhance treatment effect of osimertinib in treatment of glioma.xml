@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Inhibition of AIM2 expression enhance treatment effect of osimertinib in treatment of glioma.</Title>
+    <Authors>
+      <Author>Wang, Hang</Author>
+      <Author>Wang H</Author>
+      <Author>Zhang, Hongzhuang</Author>
+      <Author>Zhang H</Author>
+      <Author>Wei, Qianqian</Author>
+      <Author>Wei Q</Author>
+    </Authors>
+    <Journal>Folia neuropathologica</Journal>
+    <Year>2024</Year>
+    <Abstract>INTRODUCTION: Glioma is one of the most commonly tumours which occurs in the central nervous system and accounts for nearly 80% of brain tumours, with a significantly high mortality and morbidity. Epidermal growth factor receptor (EGFR) tyrosine kinase inhibitors (TKIs) are used as EGFR targeted therapy in various types of solid tumours; however, effective treatment for glioma is still limited. Osimertinib is an irreversible, oral third-generation TKI that targets the mutation at T790M, which causes cancer cells to acquire resistance to drugs. Osimertinib could be effective in the treatment of EGFR mutations with minimal effects on the activity of wild-type EGFR. Absent in melanoma 2 (AIM2) is highly expressed in glioma cells, promoting the maturation of pro-cancer cytokines and contributing to progression of glioma. However, the secretion of pro-cancer cytokines of tumour cells has been regarded as the resistance mechanism to EGFR-TKIs, including osimertinib. A high level of these cytokines also indicates a shorter progression-free survival (PFS). As AIM2 regulates the secretion of pro-cancer cytokines, we thought inhibition of AIM2 may contribute to the therapeutic effect of EGFR-TKIs. MATERIAL AND METHODS: We first established AIM2 inhibition and overexpression in cells. Then, the viability rate of cells was calculated by cell counting kit-8 (CCK-8) method, and apoptotic ratio of cells were measured by flow cytometry. The expression of inflammatory-related genes was detected using quantitative polymerase chain reaction (qPCR), concentrations of inflammatory-related factors were measured using enzyme-linked immunosorbent assay (ELISA). The expression of Wnt/b-catenin and EGFR/Ras/Mitogen-activated protein kinase kinase 1 (MEK) signalling pathway components was detected using western blotting. RESULTS: We found that inhibition of AIM2 enlarged the effect of osimertinib on the upregulation of inflammatory gene expression and secretion of these genes, increasing apoptosis. In addition, we also found that AIM2 could enhance the effect of osimertinib on reducing the expression of the Wnt/b-catenin and EGFR/Ras/MEK signalling pathways, resulting in the inhibition of cellular proliferation, and exerting an anti-tumour effect. These effects were also observed using in vivo experiments. CONCLUSIONS: AIM2 presents a potential therapeutic target in treatment of glioma.</Abstract>
+    <DOI>10.5114/fn.2024.140806</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

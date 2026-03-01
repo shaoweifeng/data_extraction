@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Influence of interleukin-6 on the pharmacokinetics and pharmacodynamics of osimertinib in patients with non-small cell lung cancer.</Title>
+    <Authors>
+      <Author>Yokota, Hayato</Author>
+      <Author>Yokota H</Author>
+      <Author>Sato, Kazuhiro</Author>
+      <Author>Sato K</Author>
+      <Author>Sakamoto, Sho</Author>
+      <Author>Sakamoto S</Author>
+      <Author>Okuda, Yuji</Author>
+      <Author>Okuda Y</Author>
+      <Author>Takeda, Masahide</Author>
+      <Author>Takeda M</Author>
+      <Author>Akamine, Yumiko</Author>
+      <Author>Akamine Y</Author>
+      <Author>Nakayama, Katsutoshi</Author>
+      <Author>Nakayama K</Author>
+      <Author>Miura, Masatomo</Author>
+      <Author>Miura M</Author>
+    </Authors>
+    <Journal>Cancer chemotherapy and pharmacology</Journal>
+    <Year>2025</Year>
+    <Abstract>PURPOSE: The inflammatory cytokine interleukin (IL)-6 reduces the activity of drug metabolic enzymes and promotes tumor progression. We investigated the effect of IL-6 on the pharmacokinetics of osimertinib and the association between an IL-6 polymorphism and clinical outcomes in 30 patients with non-small cell lung cancer (NSCLC). METHODS: Osimertinib and IL-6 plasma concentrations were measured on day 15 after therapy initiation. The genotype of IL-6 1800796G &gt; C was identified using polymerase chain reaction-restriction fragment length polymorphism. Risk factors affecting overall survival (OS) were assessed by Cox proportional hazard regression analysis. RESULTS: The IL-6 concentration was significantly correlated with the osimertinib trough plasma concentration (r = 0.423, P = 0.020) and area under the plasma concentration-time curve (r = 0.420, P = 0.021). The IL-6 concentration was significantly higher in patients with the IL-6 rs1800796G allele versus C/C genotype (P = 0.024). OS was significantly shorter in patients with the IL-6 rs1800796G allele versus C/C genotype (median: 15.1 vs. 48.9 months, P = 0.005). Univariate and multivariate analyses indicated that the IL-6 rs1800796G allele is an independent risk factor for OS (crude hazard ratio = 7.07; P = 0.014; adjusted hazard ratio = 6.38; P = 0.021). CONCLUSION: A higher IL-6 concentration was associated with reduced metabolic activity of osimertinib, leading to increased osimertinib exposure. As the IL-6 concentration was higher in NSCLC patients with the IL-6 rs1800796G allele, it might be an independent prognostic factor for patients treated with osimertinib.</Abstract>
+    <DOI>10.1007/s00280-025-04772-x</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/40156608</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

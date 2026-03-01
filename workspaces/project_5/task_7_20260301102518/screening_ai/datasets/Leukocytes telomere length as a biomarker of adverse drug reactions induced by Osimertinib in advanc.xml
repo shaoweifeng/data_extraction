@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Leukocytes telomere length as a biomarker of adverse drug reactions induced by Osimertinib in advanced non-small cell lung cancer.</Title>
+    <Authors>
+      <Author>Trachu, Narumol</Author>
+      <Author>Trachu N</Author>
+      <Author>Reungwetwattana, Thanyanan</Author>
+      <Author>Reungwetwattana T</Author>
+      <Author>Meanwatthana, Jennis</Author>
+      <Author>Meanwatthana J</Author>
+      <Author>Sukasem, Chonlaphat</Author>
+      <Author>Sukasem C</Author>
+      <Author>Majam, Teerapat</Author>
+      <Author>Majam T</Author>
+      <Author>Saengsiwaritt, Wacharapol</Author>
+      <Author>Saengsiwaritt W</Author>
+      <Author>Jittikoon, Jiraphun</Author>
+      <Author>Jittikoon J</Author>
+      <Author>Udomsinprasert, Wanvisa</Author>
+      <Author>Udomsinprasert W</Author>
+    </Authors>
+    <Journal>Scientific reports</Journal>
+    <Year>2024</Year>
+    <Abstract>This study aimed to measure relative telomere length (RTL) in blood leukocytes of advanced-stage NSCLC patients either with or without Osimertinib-induced ADRs and determine whether RTL could serve as a biomarker of Osimertinib-induced ADRs. Blood leukocytes RTL were measured in 63 advanced-stage NSCLC patients and 62 age-matched healthy controls using real-time polymerase chain reaction. In patients with advanced-stage NSCLC, RTL was significantly shorter than that in healthy controls (P &lt; 0.001). Compared to patients without ADRs and those with mild/moderate ADRs, patients with severe ADRs exhibited significantly decreased RTL (P &lt; 0.001, P &lt; 0.001, respectively). ROC curve analysis uncovered a diagnostic value of RTL as a biomarker of Osimertinib-induced ADRs (AUC = 1.000, P &lt; 0.001). Kaplan-Meier analysis revealed a significant association between shorter RTL and increased cumulative incidence of Osimertinib-induced ADRs in patients with advanced-stage NSCLC (P &lt; 0.001). Shorter RTL in blood leukocytes would reflect the occurrence of Osimertinib-induced ADRs and might emerge as a promising biomarker for identifying advanced-stage NSCLC patients who are at risk of experiencing Osimertinib-induced ADRs, particularly those with severe ADRs.</Abstract>
+    <DOI>10.1038/s41598-024-77935-0</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

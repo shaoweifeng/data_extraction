@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Quantification of afatinib, alectinib, crizotinib and osimertinib in human plasma by liquid chromatography/triple-quadrupole mass spectrometry; focusing on the stability of osimertinib.</Title>
+    <Authors>
+      <Author>Veerman, G D Marijn</Author>
+      <Author>Veerman GDM</Author>
+      <Author>Lam, Mei H</Author>
+      <Author>Lam MH</Author>
+      <Author>Mathijssen, Ron H J</Author>
+      <Author>Mathijssen RHJ</Author>
+      <Author>Koolen, Stijn L W</Author>
+      <Author>Koolen SLW</Author>
+      <Author>de Bruijn, Peter</Author>
+      <Author>de Bruijn P</Author>
+    </Authors>
+    <Journal>Journal of chromatography. B, Analytical technologies in the biomedical and life</Journal>
+    <Year>2019</Year>
+    <Abstract>The development and full validation of a sensitive and selective ultra-performance liquid chromatography/tandem mass spectrometry (UPLC-MS/MS) method are described for the simultaneous analysis of afatinib, alectinib, crizotinib and osimertinib in human lithium heparinized plasma. Afatinib-d6, crizotinib-d5 and erlotinib-d6 were used as internal standards. Given osimertinib's instability in plasma and whole blood at ambient temperature, samples should be solely processed on ice (T = 0 °C). Chromatographic separation was obtained on an Acquity UPLC ® BEH C18; 2.1 × 50 mm, 1.7 μm column, which was eluted with 0.400 mL/minute flow on a linear gradient, consisting of 10 mM ammonium formate (pH 4.5) and acetonitrile. Calibration curves for all compounds were linear for concentration ranges of 1.00 to 100 ng/mL for afatinib and 10.0 to 1000 ng/mL for alectinib, crizotinib and osimertinib, herewith validating the lower limits of quantification at 1.00 ng/mL for afatinib and 10.0 ng/mL for alectinib, crizotinib and osimertinib. Within-run and between-run precision measurements fell within 10.2%, with accuracy ranging from 89.2 to 110%.</Abstract>
+    <DOI>10.1016/j.jchromb.2019.03.011</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

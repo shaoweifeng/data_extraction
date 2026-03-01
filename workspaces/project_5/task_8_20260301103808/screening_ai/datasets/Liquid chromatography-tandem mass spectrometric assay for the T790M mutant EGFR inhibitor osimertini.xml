@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Liquid chromatography-tandem mass spectrometric assay for the T790M mutant EGFR inhibitor osimertinib (AZD9291) in human plasma.</Title>
+    <Authors>
+      <Author>Rood, Johannes J M</Author>
+      <Author>Rood JJM</Author>
+      <Author>van Bussel, Mark T J</Author>
+      <Author>van Bussel MTJ</Author>
+      <Author>Schellens, Jan H M</Author>
+      <Author>Schellens JHM</Author>
+      <Author>Beijnen, Jos H</Author>
+      <Author>Beijnen JH</Author>
+      <Author>Sparidans, Rolf W</Author>
+      <Author>Sparidans RW</Author>
+    </Authors>
+    <Journal>Journal of chromatography. B, Analytical technologies in the biomedical and life</Journal>
+    <Year>2016</Year>
+    <Abstract>A method for the quantitative analysis by ultra-performance liquid chromatography-tandem mass spectrometry of the highly selective irreversible covalent inhibitor of EGFR-TK, osimertinib in human plasma was developed and validated, using pazopanib as an internal standard. The validation was performed in a range from 1 to 1000ng/ml, with the lowest level corresponding to the lower limit of quantitation. Gradient elution was performed on a 1.8μm particle trifunctional bonded C18 column by 1% (v/v) formic acid in water, and acetonitrile as mobile phase. The analyte was detected in the selected reaction monitoring mode of a triple quadrupole mass spectrometer after positive ionization with the heated electrospray interface. Within-day precisions ranged from 3.4 to 10.3%, and between-day precisions from 3.8 to 10.4%, accuracies were 95.5-102.8%. Plasma (either lithium heparin or sodium EDTA) pretreatment was performed by salting-out assisted liquid-liquid extraction using acetonitrile and magnesium sulfate. This method was used to analyze the osimertinib blood plasma levels of five adult patients with metastatic T790M mutated non-small cellular lung carcinoma for therapeutic drug monitoring purposes.</Abstract>
+    <DOI>10.1016/j.jchromb.2016.07.037</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

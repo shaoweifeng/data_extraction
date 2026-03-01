@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The discovery of a potent and selective third-generation EGFR kinase inhibitor as a therapy for EGFR L858R/T790M double mutant non-small cell lung cancer.</Title>
+    <Authors>
+      <Author>An, Baijiao</Author>
+      <Author>An B</Author>
+      <Author>Pan, Tingting</Author>
+      <Author>Pan T</Author>
+      <Author>Hu, Jinhui</Author>
+      <Author>Hu J</Author>
+      <Author>Pang, Yanqing</Author>
+      <Author>Pang Y</Author>
+      <Author>Huang, Ling</Author>
+      <Author>Huang L</Author>
+      <Author>Chan, Albert S C</Author>
+      <Author>Chan ASC</Author>
+      <Author>Li, Xingshu</Author>
+      <Author>Li X</Author>
+      <Author>Yan, Jun</Author>
+      <Author>Yan J</Author>
+    </Authors>
+    <Journal>European journal of medicinal chemistry</Journal>
+    <Year>2019</Year>
+    <Abstract>A new series of AZD9291 (osimertinib) derivatives containing a sulfoxide side chain at the C-4 position of an aniline moiety were designed, synthesized and evaluated. Among these derivatives, the chiral sulfoxide derivative (-)-4i exhibited excellent inhibition of EGFR kinase activity and L858R/T790M double mutant cell proliferation, with IC(50) values of 4.10 nM and 10 nM, respectively. A mechanism study elucidated that (-)-4i induced cell apoptosis and reduced phosphorylation of EGFR and AKT in a dose-dependent manner. Furthermore, (-)-4i exhibited very little apparent toxicity toward three non-tumorigenic cell lines and was less toxic than AZD9291. Moreover, the remarkable exposure (AUC0-inf: 1294.74 h ng/mL), oral bioavailability (73.69%), and relatively shorter half-life (t(1/2) = 1.12 h) of (-)-4i displayed its favorable pharmacokinetic properties. Finally, the antitumor activity of (-)-4i in vivo resulted in a significant reduction of the tumor volume (TGI: 94.30%). Altogether, these results suggest that (-)-4i warrants further investigation in Non-Small cell lung cancer (NSCLC) therapy.</Abstract>
+    <DOI>10.1016/j.ejmech.2019.111709</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/31581004</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

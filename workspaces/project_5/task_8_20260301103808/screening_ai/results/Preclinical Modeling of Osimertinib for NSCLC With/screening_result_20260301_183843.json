@@ -1,0 +1,32 @@
+{
+  "title": "Preclinical Modeling of Osimertinib for NSCLC With EGFR Exon 20 Insertion Mutations.",
+  "extracted_abstract": "INTRODUCTION: NSCLC with EGFR exon 20 insertion mutations is the third most common type of EGFR-mutant NSCLC and is resistant to EGFR tyrosine kinase inhibitors (TKIs). This study was conducted to evaluate the efficacies of first- to third-generation EGFR TKIs against NSCLC cells harboring EGFR exon 20 insertion mutations. METHODS: We developed seven EGFR exon 20 insertion-mutant Ba/F3 models and one patient-derived NSCLC (SNU-3173) of subtypes A763insFQEA, V769insASV, D770insSVD, D770insNPG, P772insPR, H773insH, H773insNPH, and H773insAH. Cell viability assays, immunoblotting, and N-ethyl-N-nitrosourea mutagenesis screenings were performed. EGFR exon 20 insertion-mutant structures and couplings with osimertinib, a third-generation EGFR TKI, were modeled and compared. RESULTS: EGFR exon 20 insertion-mutant NSCLC cells, excluding EGFR A763insFQEA, were resistant to first-generation EGFR TKIs (concentration that inhibits 50% [IC(50)], 1.1 ± 0.067 to 5.4 ± 0.115 μM). Mutants were sensitive to second-generation EGFR TKIs (IC(50), 0.02 ± 0.0002 to 161.8 ± 18.7nM), except EGFR H773insH (IC(50), 46.3 ± 8.0 to 352.5 ± 22.7nM). The IC(50) ratios for mutant to wild-type cells were higher than those for third-generation EGFR TKIs. Third-generation EGFR TKI osimertinib was highly potent against EGFR exon 20 insertion-mutant cells (IC(50), 14.7-62.7 nM), including EGFR H773insH, and spared wild-type EGFR cells. N-ethyl-N-nitrosourea mutagenesis screening of EGFR exon 20 insertion-mutant Ba/F3 cells showed various second sites for EGFR mutations, mostly at exons 20 and 21, including E762K, P794S, and G796D. In addition, osimertinib-resistant cells were established by stepwise exposure to osimertinib and harbored EGFR E762K mutation. CONCLUSIONS: Osimertinib is active against EGFR exon 20 insertion-mutant NSCLC and flexibly binds within drug-binding pockets in preclinical models.",
+  "authors": [
+    "Lee, Yusoo",
+    "Lee Y",
+    "Kim, Tae Min",
+    "Kim TM",
+    "Kim, Dong-Wan",
+    "Kim DW",
+    "Kim, Soyeon",
+    "Kim S",
+    "Kim, Miso",
+    "Kim M",
+    "Keam, Bhumsuk",
+    "Keam B",
+    "Ku, Ja-Lok",
+    "Ku JL",
+    "Heo, Dae Seog",
+    "Heo DS"
+  ],
+  "journal": "Journal of thoracic oncology : official publication of the International",
+  "year": "2019",
+  "doi": "10.1016/j.jtho.2019.05.006",
+  "url": "",
+  "source_xml": "Preclinical Modeling of Osimertinib for NSCLC With EGFR Exon 20 Insertion Mutations.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183843",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

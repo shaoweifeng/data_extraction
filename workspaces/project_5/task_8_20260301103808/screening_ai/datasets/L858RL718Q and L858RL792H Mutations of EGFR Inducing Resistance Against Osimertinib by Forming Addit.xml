@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>L858R/L718Q and L858R/L792H Mutations of EGFR Inducing Resistance Against Osimertinib by Forming Additional Hydrogen Bonds.</Title>
+    <Authors>
+      <Author>Imam, Ibrahim A</Author>
+      <Author>Imam IA</Author>
+      <Author>Al Adawi, Shatha</Author>
+      <Author>Al Adawi S</Author>
+      <Author>Liu, Xiaoqi</Author>
+      <Author>Liu X</Author>
+      <Author>Ellingson, Sally</Author>
+      <Author>Ellingson S</Author>
+      <Author>Brainson, Christine F</Author>
+      <Author>Brainson CF</Author>
+      <Author>Moseley, Hunter N B</Author>
+      <Author>Moseley HNB</Author>
+      <Author>Zinner, Ralph</Author>
+      <Author>Zinner R</Author>
+      <Author>Zhang, Shulin</Author>
+      <Author>Zhang S</Author>
+      <Author>Shao, Qing</Author>
+      <Author>Shao Q</Author>
+    </Authors>
+    <Journal>Proteins</Journal>
+    <Year>2025</Year>
+    <Abstract>Acquired resistance to first-line treatments in various cancers both promotes cancer recurrence as well as limits effective treatment. This is true for epidermal growth factor receptor (EGFR) mutations, for which secondary EGFR mutations are one of the principal mechanisms conferring resistance to the covalent inhibitor osimertinib. Thus, it is very important to develop a deeper understanding of the secondary mutational resistance mechanisms associated with EGFR mutations arising in tumors treated with osimertinib to expedite the development of innovative therapeutic drugs to overcome acquired resistance. This work uses all-atom molecular dynamics (MD) simulations to investigate the conformational variation of two reported EGFR mutants (L858R/L718Q and L858R/L792H) that resist osimertinib. The wild-type EGFR kinase domain and the L858R mutant are used as the reference. Our MD simulation results revealed that both the L718Q and L792H secondary mutations induce additional hydrogen bonds between the residues in the active pocket and the residues with the water molecules. These additional hydrogen bonds reduce the exposure area of C797, the covalent binding target of osimertinib. The additional hydrogen bonds also influence the binding affinity of the EGFR kinase domain by altering the secondary structure and flexibility of the amino acid residues in the domain. Our work highlights how the two reported mutations may alter both residue-residue and residue-solvent hydrogen bonds, affecting protein binding properties, which could be helpful for future drug discovery.</Abstract>
+    <DOI>10.1002/prot.26761</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

@@ -1,0 +1,27 @@
+{
+  "title": "CircROBO2 Orchestrates Osimertinib Resistance Through miR-625-5p/PDGFB-Mediated MAPK Activation in Non-Small Cell Lung Cancer.",
+  "extracted_abstract": "The emergence of acquired resistance to osimertinib represents a formidable therapeutic challenge in the management of non-small cell lung cancer (NSCLC). While circular RNAs (circRNAs) have been increasingly recognized as crucial modulators of chemotherapeutic resistance, their specific involvement in osimertinib resistance mechanisms remains poorly elucidated. We established osimertinib-resistant NSCLC cell lines (HCC4006OR) through prolonged drug exposure and conducted comprehensive transcriptome sequencing to identify differentially expressed circRNAs. The molecular characteristics and functional implications of circROBO2 were systematically investigated utilizing an array of cellular and molecular biological methodologies. Advanced molecular dynamics simulations were implemented to elucidate the potential molecular interactions between PDGFB and osimertinib. We identified circROBO2 as significantly upregulated in osimertinib-resistant HCC4006OR cells. Functional studies revealed that circROBO2 enhances cell survival, proliferation, and invasion while suppressing apoptosis under osimertinib treatment. Mechanistically, circROBO2 functions as a molecular sponge for miR-625-5p, resulting in elevated PDGFB expression and subsequent activation of the MAPK pathway, particularly the RAF/MEK/ERK cascade. Targeting this pathway through circROBO2 knockdown or miR-625-5p overexpression partially restored osimertinib sensitivity in resistant cells. Molecular dynamics simulations suggested potential direct interactions between PDGFB and osimertinib, providing additional insights into the resistance mechanism. Our study identifies a novel circROBO2/miR-625-5p/PDGFB regulatory axis in osimertinib resistance and positions circROBO2 as a potential therapeutic target and biomarker for NSCLC treatment.",
+  "authors": [
+    "He, Miao",
+    "He M",
+    "Cai, Jiang-Ying",
+    "Cai JY",
+    "Wang, Ying-Ying",
+    "Wang YY",
+    "Ma, Xin",
+    "Ma X",
+    "You, Chong-Ge",
+    "You CG",
+    "Gao, Hong-Wei",
+    "Gao HW"
+  ],
+  "journal": "IUBMB life",
+  "year": "2025",
+  "doi": "10.1002/iub.70045",
+  "source_xml": "CircROBO2 Orchestrates Osimertinib Resistance Through miR-625-5pPDGFB-Mediated MAPK Activation in No.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182533",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>FDA Benefit-Risk Assessment of Osimertinib for the Treatment of Metastatic Non-Small Cell Lung Cancer Harboring Epidermal Growth Factor Receptor T790M Mutation.</Title>
+    <Authors>
+      <Author>Odogwu, Lauretta</Author>
+      <Author>Odogwu L</Author>
+      <Author>Mathieu, Luckson</Author>
+      <Author>Mathieu L</Author>
+      <Author>Goldberg, Kirsten B</Author>
+      <Author>Goldberg KB</Author>
+      <Author>Blumenthal, Gideon M</Author>
+      <Author>Blumenthal GM</Author>
+      <Author>Larkins, Erin</Author>
+      <Author>Larkins E</Author>
+      <Author>Fiero, Mallorie H</Author>
+      <Author>Fiero MH</Author>
+      <Author>Rodriguez, Lisa</Author>
+      <Author>Rodriguez L</Author>
+      <Author>Bijwaard, Karen</Author>
+      <Author>Bijwaard K</Author>
+      <Author>Lee, Eunice Y</Author>
+      <Author>Lee EY</Author>
+      <Author>Philip, Reena</Author>
+      <Author>Philip R</Author>
+      <Author>Fan, Ingrid</Author>
+      <Author>Fan I</Author>
+      <Author>Donoghue, Martha</Author>
+      <Author>Donoghue M</Author>
+      <Author>Keegan, Patricia</Author>
+      <Author>Keegan P</Author>
+      <Author>McKee, Amy</Author>
+      <Author>McKee A</Author>
+      <Author>Pazdur, Richard</Author>
+      <Author>Pazdur R</Author>
+    </Authors>
+    <Journal>The oncologist</Journal>
+    <Year>2018</Year>
+    <Abstract>On March 30, 2017, the U.S. Food and Drug Administration (FDA) approved osimertinib for the treatment of patients with metastatic, epidermal growth factor receptor (EGFR) T790M mutation-positive, non-small cell lung cancer (NSCLC), as detected by an FDA-approved test, whose disease has progressed following EGFR tyrosine kinase inhibitor (TKI) therapy. Approval was based on demonstration of a statistically significant difference in the primary endpoint of progression-free survival (PFS) when comparing osimertinib with chemotherapy in an international, multicenter, open-label, randomized trial (AURA3). In this confirmatory trial, which enrolled 419 patients, the PFS hazard ratio for osimertinib compared with chemotherapy per investigator assessment was 0.30 (95% confidence interval 0.23-0.41), p &lt; .001, with median PFS of 10.1 months in the osimertinib arm and 4.4 months in the chemotherapy arm. Supportive efficacy data included PFS per blinded independent review committee demonstrating similar PFS results and an improved confirmed objective response rate per investigator assessment of 65% and 29%, with estimated median durations of response of 11.0 months and 4.2 months, in the osimertinib and chemotherapy arms, respectively. Patients received osimertinib 80 mg once daily and had a median duration of exposure of 8 months. The toxicity profile of osimertinib compared favorably with the profile of other approved EGFR TKIs and chemotherapy. The most common adverse drug reactions (&gt;20%) in patients treated with osimertinib were diarrhea, rash, dry skin, nail toxicity, and fatigue. Herein, we review the benefit-risk assessment of osimertinib that led to regular approval, for patients with metastatic NSCLC harboring EGFR TKI whose disease has progressed on or after EGFR TKI therapy. IMPLICATIONS FOR PRACTICE: Osimertinib administered to metastatic non-small cell lung cancer (NSCLC) patients harboring an EGFR T790M mutation, who have progressed on or following EGFR TKI therapy, demonstrated a substantial improvement over platinum-based doublet chemotherapy as well as durable intracranial responses. The ability to test for the T790M mutation in plasma using the FDA-approved cobas EGFR Mutation Test v2 (Roche, Basel, Switzerland) identifies patients with NSCLC tumors not amenable to biopsy. Since a 40% false-negative rate has been observed with the circulating tumor DNA test, re-evaluation of the feasibility of tissue biopsy is recommended to identify patients with a false-negative plasma test result who may benefit from osimertinib.</Abstract>
+    <DOI>10.1634/theoncologist.2017-0425</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

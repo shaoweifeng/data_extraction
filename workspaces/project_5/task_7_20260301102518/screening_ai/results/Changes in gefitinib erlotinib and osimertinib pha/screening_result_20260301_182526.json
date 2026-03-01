@@ -1,0 +1,31 @@
+{
+  "title": "Changes in gefitinib, erlotinib and osimertinib pharmacokinetics under various gastric pH levels following oral administration of omeprazole and vonoprazan in rats.",
+  "extracted_abstract": "1. Although drug interactions between epidermal growth factor receptor tyrosine kinase inhibitors (EGFR-TKIs) and gastric acid-suppressing medications (AS) are considered clinically significant, there is limited data regarding the influence of various gastric pH conditions on the pharmacokinetics of EGFR-TKIs. We aimed to clarify the changes in the pharmacokinetics of the EGFR-TKIs, gefitinib, erlotinib and osimertinib, due to the changes in gastric pH after administration of omeprazole or vonoprazan. 2. Omeprazole (10-100 mg/kg, p.o.) and vonoprazan (1-5 mg/kg, p.o.) led to a significant and dose-dependent increase in gastric pH. 3. AUC(0-3) of gefitinib and erlotinib (5 mg/kg, p.o.) started to decrease at gastric pH 3.3 and 5.6, respectively, reached a plateau at pH > 6, and then significantly decreased up to 47 and 59% of control levels, respectively. AUC(0-3) of osimertinib (5 mg/kg, p.o.) was not significantly changed by omeprazole and vonoprazan. 4. Although there are some issues regarding the extrapolation of the results of our rat study to humans, careful monitoring of patients treated with gefitinib and erlotinib is needed in cases in which the gastric pH increases from 3 to 5 and especially when the gastric pH is >5 in patients who are co-administered both the EGFR-TKIs and AS.",
+  "authors": [
+    "Yasumuro, Osamu",
+    "Yasumuro O",
+    "Uchida, Shinya",
+    "Uchida S",
+    "Kashiwagura, Yasuharu",
+    "Kashiwagura Y",
+    "Suzuki, Ayae",
+    "Suzuki A",
+    "Tanaka, Shimako",
+    "Tanaka S",
+    "Inui, Naoki",
+    "Inui N",
+    "Watanabe, Hiroshi",
+    "Watanabe H",
+    "Namiki, Noriyuki",
+    "Namiki N"
+  ],
+  "journal": "Xenobiotica; the fate of foreign compounds in biological systems",
+  "year": "2018",
+  "doi": "10.1080/00498254.2017.1396379",
+  "source_xml": "Changes in gefitinib erlotinib and osimertinib pharmacokinetics under various gastric pH levels foll.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182526",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

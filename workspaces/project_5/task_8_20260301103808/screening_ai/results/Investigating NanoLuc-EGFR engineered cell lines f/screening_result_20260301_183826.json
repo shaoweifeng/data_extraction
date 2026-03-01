@@ -1,0 +1,30 @@
+{
+  "title": "Investigating NanoLuc-EGFR engineered cell lines for real-time monitoring of EGFR protein dynamics in live cells.",
+  "extracted_abstract": "Evaluating the steady-state protein level of the EGFR in live cells presents significant challenges compared to measuring its kinase activity. Traditional testing methods, such as immunoblotting, ELISA, and immunofluorescence assays, are generally restricted to fixed cells or cell lysates. Despite their utility, these methods are cumbersome and provide only intermittent snapshots of EGFR levels at specific time points. With emerging trends in drug development shifting toward engineering novel agents that promote protein degradation, rather than simply inhibiting kinase activity, a tool that enables real-time, quantitative detection of drug effects in live cells could catalyze advances in the field. Such an innovation would expedite the drug development process, enhancing the translation of research findings into effective, patient-centered therapies. The NanoLuc-EGFR cell line, created through CRISPR genome editing, allows for the continuous tracking and analysis of EGFR protein levels and their degradation within live cells. This approach provides quantitative monitoring of protein dynamics in real time, offering insights that go beyond absolute protein levels to include aspects such as protein stability and degradation rate. Using this cell line model, we observed that AT13387 and H84T BanLec induce EGFR degradation in A549-HiBiT cells, with the results confirmed by immunoblotting. In contrast, Erlotinib, Osimertinib, and Cetuximab inhibit EGFR phosphorylation without altering total EGFR levels, as validated by the HiBiT luciferase assay. The NanoLuc-EGFR cell line marks a significant advancement in understanding protein regulation and serves as an instrumental platform for investigating targeted therapies that modulate protein kinases, especially those that induce protein degradation.",
+  "authors": [
+    "Mehta, Ranjit K",
+    "Mehta RK",
+    "Tan, Mingjia",
+    "Tan M",
+    "Hassan, Mohammed K",
+    "Hassan MK",
+    "Zhao, Tengda",
+    "Zhao T",
+    "Markovitz, David M",
+    "Markovitz DM",
+    "Lawrence, Theodore S",
+    "Lawrence TS",
+    "Nyati, Mukesh K",
+    "Nyati MK"
+  ],
+  "journal": "Biochemical and biophysical research communications",
+  "year": "2024",
+  "doi": "10.1016/j.bbrc.2024.150711",
+  "url": "",
+  "source_xml": "Investigating NanoLuc-EGFR engineered cell lines for real-time monitoring of EGFR protein dynamics i.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183826",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

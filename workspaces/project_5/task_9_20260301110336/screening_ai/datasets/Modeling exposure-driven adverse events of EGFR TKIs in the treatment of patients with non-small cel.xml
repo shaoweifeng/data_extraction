@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Modeling exposure-driven adverse events of EGFR TKIs in the treatment of patients with non-small cell lung cancer.</Title>
+    <Authors>
+      <Author>Yong, Ling</Author>
+      <Author>Yong L</Author>
+      <Author>Liu, Yan'e</Author>
+      <Author>Liu Y</Author>
+      <Author>Jian, Wei-Zhe</Author>
+      <Author>Jian WZ</Author>
+      <Author>Cai, Lei</Author>
+      <Author>Cai L</Author>
+      <Author>Bao, Tian-Yu</Author>
+      <Author>Bao TY</Author>
+      <Author>Liu, Chen</Author>
+      <Author>Liu C</Author>
+      <Author>Gan, En-Ze</Author>
+      <Author>Gan EZ</Author>
+      <Author>Wang, Tian-Yu</Author>
+      <Author>Wang TY</Author>
+      <Author>Luo, Ping-Yao</Author>
+      <Author>Luo PY</Author>
+      <Author>Cao, Bao-Shan</Author>
+      <Author>Cao BS</Author>
+      <Author>Liu, Wei</Author>
+      <Author>Liu W</Author>
+      <Author>Zhou, Tian-Yan</Author>
+      <Author>Zhou TY</Author>
+    </Authors>
+    <Journal>Acta pharmacologica Sinica</Journal>
+    <Year>2025</Year>
+    <Abstract>The adverse events associated with antitumour drugs have recently emerged as an increasingly significant clinical concern. Epidermal growth factor receptor tyrosine kinase inhibitors (EGFR TKIs) serve as pivotal therapeutic agents for non-small cell lung cancer (NSCLC). However, considerable interindividual variability exists in drug exposure, along with a high incidence and severity of adverse events. In this study, we quantitatively investigated the impacts of EGFR TKI exposure and other covariates on the severity of the maximum grade of drug-related adverse events (MDRAE) in NSCLC patients treated with EGFR TKIs. Data were collected from 277 patients treated with gefitinib, icotinib, afatinib or osimertinib. Population pharmacokinetic (PopPK) models were constructed for each drug, and individual exposure metrics were derived through model simulations. Normalized individual exposures to different EGFR TKIs based on their IC(50) values and MDRAE data were integrated to develop an ordinal logistic regression model for an exposure-safety analysis. A user-friendly nomogram was subsequently designed. The probability of high-grade MDRAE was significantly associated with normalized exposure levels, a history of EGFR TKI treatment, sex and other factors. Model simulations revealed substantial interindividual variability in drug exposure and the probability of different grades of MDRAE for the same treatment regimen. This study quantitatively elucidates the influences of drug exposure and other critical factors on safety, thereby contributing to the formulation of individualized treatment strategies to prevent and promptly address drug safety-related issues.</Abstract>
+    <DOI>10.1038/s41401-025-01573-z</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/40481213</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

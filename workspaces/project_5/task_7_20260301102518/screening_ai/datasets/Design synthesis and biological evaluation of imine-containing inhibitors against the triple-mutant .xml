@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Design, synthesis and biological evaluation of imine-containing inhibitors against the triple-mutant EGFR kinases based on the scaffold of osimertinib.</Title>
+    <Authors>
+      <Author>Ding, Shi</Author>
+      <Author>Ding S</Author>
+      <Author>Wu, Yuanyu</Author>
+      <Author>Wu Y</Author>
+      <Author>Li, Bin</Author>
+      <Author>Li B</Author>
+      <Author>Wang, Xin</Author>
+      <Author>Wang X</Author>
+      <Author>Ding, Haotian</Author>
+      <Author>Ding H</Author>
+      <Author>Zhan, Zhenzhen</Author>
+      <Author>Zhan Z</Author>
+      <Author>Shen, Jiwei</Author>
+      <Author>Shen J</Author>
+      <Author>Qi, Rui</Author>
+      <Author>Qi R</Author>
+      <Author>Gao, Ziye</Author>
+      <Author>Gao Z</Author>
+      <Author>Yao, Kai</Author>
+      <Author>Yao K</Author>
+      <Author>Su, Riya</Author>
+      <Author>Su R</Author>
+      <Author>Zheng, Hanxue</Author>
+      <Author>Zheng H</Author>
+      <Author>Tang, Zhongyu</Author>
+      <Author>Tang Z</Author>
+      <Author>Liu, Ju</Author>
+      <Author>Liu J</Author>
+      <Author>Chen, Ye</Author>
+      <Author>Chen Y</Author>
+    </Authors>
+    <Journal>Bioorganic chemistry</Journal>
+    <Year>2025</Year>
+    <Abstract>A series of EGFR inhibitors were designed and synthesized based on the scaffold of osimertinib, the inhibitory activities against the L858R/T790M/C797S mutant EGFR kinase of which were subsequently evaluated. Compounds with the imine fragments showed the highest kinase inhibitory activity and were proved to be reversible inhibitors, which were represented by the compound DD-8 (IC(50) = 0.87 nM). Kinase selectivity assay showed the compounds with imine fragments were preferred to inhibit the triple-mutant EGFR kinases rather than other subtypes. In the proliferation inhibition assay against the BaF3-EGFR(L858R/T790M/C797S) cell line, compound DD-8 also showed strong inhibitory activity (IC(50) = 1.11 μM), and the inhibition rate of which reached 98.8 % at the concentration of 2 μM. To further elucidate the antitumor mechanism of the compound DD-8, a comprehensive series of experiments were conducted, including apoptosis induction assay, cell cycle arrest assay, western blot assay, cell migration inhibition assay, liver microsomal stability experiment, and molecular docking analysis.</Abstract>
+    <DOI>10.1016/j.bioorg.2025.108474</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

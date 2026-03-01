@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Identification of Potential Inhibitors Targeting GTPase-Kirsten RAt Sarcoma Virus (K-Ras) Driven Cancers via E-Pharmacophore-Based Virtual Screening and Drug Repurposing Approach.</Title>
+    <Authors>
+      <Author>Kumar S, Udhaya</Author>
+      <Author>Kumar S U</Author>
+      <Author>Varghese, Rinku Polachirakkal</Author>
+      <Author>Varghese RP</Author>
+      <Author>Preethi, V Anu</Author>
+      <Author>Preethi VA</Author>
+      <Author>Doss, C George Priya</Author>
+      <Author>Doss CGP</Author>
+      <Author>Zayed, Hatem</Author>
+      <Author>Zayed H</Author>
+    </Authors>
+    <Journal>Frontiers in bioscience (Landmark edition)</Journal>
+    <Year>2023</Year>
+    <Abstract>BACKGROUND: Mutations in the K-Ras gene are among the most frequent genetic alterations in various cancers, and inhibiting RAS signaling has shown promising results in treating solid tumors. However, finding effective drugs that can bind to the RAS protein remains challenging. This drove us to explore new compounds that could inhibit tumor growth, particularly in cancers that harbor K-Ras mutations. METHODS: Our study used bioinformatic techniques such as E-pharmacophore virtual screening, molecular simulation, principal component analysis (PCA), extra precision (XP) docking, and ADMET analyses to identify potential inhibitors for K-Ras mutants G12C and G12D. RESULTS: In our study, we discovered that inhibitors such as afatinib, osimertinib, and hydroxychloroquine strongly inhibit the G12C mutant. Similarly, hydroxyzine, zuclopenthixol, fluphenazine, and doxapram were potent inhibitors for the G12D mutant. Notably, all six of these molecules exhibit a high binding affinity for the H95 cryptic groove present in the mutant structure. These molecules exhibited a unique affinity mechanism at the molecular level, which was further enhanced by hydrophobic interactions. Molecular simulations and PCA revealed the formation of stable complexes within switch regions I and II. This was particularly evident in three complexes: G12C-osimertinib, G12D-fluphenazine, and G12D-zuclopenthixol. Despite the dynamic nature of switches I and II in K-Ras, the interaction of inhibitors remained stable. According to QikProp results, the properties and descriptors of the selected molecules fell within an acceptable range compared to sotorasib. CONCLUSIONS: We have successfully identified potential inhibitors of the K-Ras protein, laying the groundwork for the development of targeted therapies for cancers driven by K-Ras mutations.</Abstract>
+    <DOI>10.31083/j.fbl2811288</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/38062837</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

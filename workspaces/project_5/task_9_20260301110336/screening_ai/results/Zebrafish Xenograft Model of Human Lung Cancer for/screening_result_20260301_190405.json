@@ -1,0 +1,32 @@
+{
+  "title": "Zebrafish Xenograft Model of Human Lung Cancer for Evaluating Osimertinib Resistance.",
+  "extracted_abstract": "About half of NSCLC patients with EGFR mutation had secondary mutation T790M after treatment with a first-generation tyrosine kinase inhibitor (TKI), Gefitinib. The third-generation of EGFR-TKI Osimertinib is suitable for patients with EGFR mutation and T790M mutation. However, drug screening for NSCLC patients after the emergence of acquired resistance has become a difficult problem for clinicians. In this study, we established drug-resistant cell lines of Gefitinib and Osimertinib to evaluate cell proliferation in vitro. And we investigated the inhibitory effect of different drug concentration gradients on cancer cells. Zebrafish with high homology to human genes were selected as xenotransplantation models to compare the effects of different concentrations of Osimertinib on the proliferation and angiogenesis of zebrafish tumors after transplantation of different lung cancer cell lines. It was confirmed that Osimertinib could inhibit the proliferation of tumor cells with EGFR mutation and T790M resistance mutation in zebrafish, which was consistent with the clinical research conclusion.",
+  "authors": [
+    "Li, Xin-Ying",
+    "Li XY",
+    "Huang, Li-Tang",
+    "Huang LT",
+    "Wu, Jia-Qi",
+    "Wu JQ",
+    "He, Ming-Fang",
+    "He MF",
+    "Zhu, Su-Hua",
+    "Zhu SH",
+    "Zhan, Ping",
+    "Zhan P",
+    "Lv, Tang-Feng",
+    "Lv TF",
+    "Song, Yong",
+    "Song Y"
+  ],
+  "journal": "BioMed research international",
+  "year": "2019",
+  "doi": "10.1155/2019/3129748",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/31346515",
+  "source_xml": "Zebrafish Xenograft Model of Human Lung Cancer for Evaluating Osimertinib Resistance.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190405",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>BBT-176, a Novel Fourth-Generation Tyrosine Kinase Inhibitor for Osimertinib-Resistant EGFR Mutations in Non-Small Cell Lung Cancer.</Title>
+    <Authors>
+      <Author>Lim, Sun Min</Author>
+      <Author>Lim SM</Author>
+      <Author>Fujino, Toshio</Author>
+      <Author>Fujino T</Author>
+      <Author>Kim, Chulwon</Author>
+      <Author>Kim C</Author>
+      <Author>Lee, Gwanghee</Author>
+      <Author>Lee G</Author>
+      <Author>Lee, Yong-Hee</Author>
+      <Author>Lee YH</Author>
+      <Author>Kim, Dong-Wan</Author>
+      <Author>Kim DW</Author>
+      <Author>Ahn, Jin Seok</Author>
+      <Author>Ahn JS</Author>
+      <Author>Mitsudomi, Tetsuya</Author>
+      <Author>Mitsudomi T</Author>
+      <Author>Jin, Taiguang</Author>
+      <Author>Jin T</Author>
+      <Author>Lee, Sang-Yoon</Author>
+      <Author>Lee SY</Author>
+    </Authors>
+    <Journal>Clinical cancer research : an official journal of the American Association for</Journal>
+    <Year>2023</Year>
+    <Abstract>PURPOSE: Resistance to third-generation EGFR inhibitors including osimertinib arises in part from the C797S mutation in EGFR. Currently, no targeted treatment option is available for these patients. We have developed a new EGFR tyrosine kinase inhibitor (TKI), BBT-176, targeting the C797S mutation. PATIENTS AND METHODS: Recombinant EGFR proteins and Ba/F3 cell lines, patient-derived cells, and patient-derived xenografts expressing mutant EGFRs were used to test the inhibitory potency and the anticancer efficacy of BBT-176 both in vitro and in vivo. Patient case data are also available from an ongoing phase I clinical trial (NCT04820023). RESULTS: The half maximal inhibitory concentration (IC50) of BBT-176 against EGFR 19Del/C797S, EGFR 19Del/T790M/C797S, and EGFR L858R/C797S proteins were measured at 4.36, 1.79, and 5.35 nmol/L, respectively (vs. 304.39, 124.82, and 573.72 nmol/L, for osimertinib). IC50 values of BBT-176 against Ba/F3 cells expressing EGFR 19Del/C797S, EGFR 19Del/T790M/C797S, EGFR L858R/C797S, and EGFR L858R/T790M/C797S were 42, 49, 183, and 202 nmol/L, respectively (vs. 869, 1,134, 2,799, and 2,685 nmol/L for osimertinib). N-ethyl-N-nitrosourea mutagenesis suggested that BBT-176 treatment does not introduce any secondary mutations in the EGFR gene but increases EGFR expression levels. Combined with the EGFR antibody cetuximab, BBT-176 effectively suppressed the growth of BBT-176-resistant clones. BBT-176 strongly inhibited the tumor growth, and in some conditions induced tumor regression in mouse models. In the clinical trial, two patients harboring EGFR 19Del/T790M/C797S in blood showed tumor shrinkage and radiologic improvements. CONCLUSIONS: BBT-176 is a fourth-generation EGFR inhibitor showing promising preclinical activity against NSCLC resistant to current EGFR TKI, with early clinical efficacy and safety.</Abstract>
+    <DOI>10.1158/1078-0432.CCR-22-3901</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/37249619</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

@@ -1,0 +1,27 @@
+{
+  "title": "Combining Three Tyrosine Kinase Inhibitors: Drug Monitoring Is the Key.",
+  "extracted_abstract": "A combination of tyrosine kinase inhibitors (TKIs) is likely to be a therapeutic option for numerous oncological situations due to high frequency of oncogenic addiction and progress in precision oncology. Non-small cell lung cancer (NSCLC) represents a subtype of tumors for which oncogenic drivers are frequently involved. To the best of our knowledge, we report the first case of a patient treated with three different TKIs. Osimertinib and crizotinib were administered concurrently for an epidermal growth factor receptor (EGFR)-mutated NSCLC developing a MET amplification as a resistance mechanism to osimertinib. Simultaneously, imatinib was administered for a metastatic gastrointestinal stromal tumor. The progression-free survival was 7 months for both tumors with this tritherapy. The use of therapeutic drug monitoring to assess plasma concentrations of each TKI was a powerful tool to manage the toxicity profile of this combination (creatine phosphokinase elevation) while preserving an optimal exposure to each TKI and treatment efficacy. We observed an imatinib over-exposition related to crizotinib introduction, probably explained by drug-drug interaction mediated by crizotinib enzymatic inhibition on cytochrome P-450 3A4. Posology adjustment due to therapeutic drug monitoring was probably involved in the good survival outcome of the patient. This tool should be used more routinely for patients treated by TKIs to prevent co-treatment interactions and, in particular, for patients receiving TKI combinations to obtain optimal therapeutic exposure and efficacy while reducing possible side-effects.",
+  "authors": [
+    "Thomas, Quentin Dominique",
+    "Thomas QD",
+    "Firmin, Nelly",
+    "Firmin N",
+    "Mbatchi, Litaty",
+    "Mbatchi L",
+    "Evrard, Alexandre",
+    "Evrard A",
+    "Quantin, Xavier",
+    "Quantin X",
+    "Leenhardt, Fanny",
+    "Leenhardt F"
+  ],
+  "journal": "International journal of molecular sciences",
+  "year": "2023",
+  "doi": "10.3390/ijms24065518",
+  "source_xml": "Combining Three Tyrosine Kinase Inhibitors Drug Monitoring Is the Key.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182553",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

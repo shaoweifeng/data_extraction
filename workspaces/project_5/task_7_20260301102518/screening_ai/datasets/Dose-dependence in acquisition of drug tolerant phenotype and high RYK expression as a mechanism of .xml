@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Dose-dependence in acquisition of drug tolerant phenotype and high RYK expression as a mechanism of osimertinib tolerance in lung cancer.</Title>
+    <Authors>
+      <Author>Ohara, Shuta</Author>
+      <Author>Ohara S</Author>
+      <Author>Suda, Kenichi</Author>
+      <Author>Suda K</Author>
+      <Author>Fujino, Toshio</Author>
+      <Author>Fujino T</Author>
+      <Author>Hamada, Akira</Author>
+      <Author>Hamada A</Author>
+      <Author>Koga, Takamasa</Author>
+      <Author>Koga T</Author>
+      <Author>Nishino, Masaya</Author>
+      <Author>Nishino M</Author>
+      <Author>Chiba, Masato</Author>
+      <Author>Chiba M</Author>
+      <Author>Shimoji, Masaki</Author>
+      <Author>Shimoji M</Author>
+      <Author>Takemoto, Toshiki</Author>
+      <Author>Takemoto T</Author>
+      <Author>Soh, Junichi</Author>
+      <Author>Soh J</Author>
+      <Author>Mitsudomi, Tetsuya</Author>
+      <Author>Mitsudomi T</Author>
+    </Authors>
+    <Journal>Lung cancer (Amsterdam, Netherlands)</Journal>
+    <Year>2021</Year>
+    <Abstract>OBJECTIVE: Emergence of acquired resistance is almost inevitable during EGFR-tyrosine kinase inhibitor therapy for non-small-cell lung cancer (NSCLC) harboring EGFR mutations. Drug tolerance, a reversible state of drug insensitivity in the early phases of tyrosine kinase inhibitor therapy, is considered to serve as the basis of recurrent disease. Therefore, it is important to elucidate the molecular mechanisms of drug tolerance. MATERIALS AND METHODS: Five EGFR-mutated NSCLC cell lines were used in this study. We established drug-tolerant cells (DTCs) via 72 h treatment with osimertinib (600 nM) or afatinib (60 nM). Acquisition of drug tolerance was evaluated by growth inhibitory assay, and the molecular mechanisms of drug tolerance were analyzed by phospho-RTK array. RESULTS: DTCs were successfully induced in PC9, HCC4006, and H1975 cells against osimertinib and in PC9 cells against afatinib. We observed that a high drug concentration was required to induce DTCs, and HCC4006 cells become tolerant when a higher dose of afatinib (&gt;180 nM) was used. In the analysis of HCC4006 DTCs against osimertinib, we observed increased receptor-like tyrosine kinase (RYK) expression, and siRNA-mediated RYK knockdown inhibited the proliferation of DTCs. CONCLUSIONS: These results suggest that induction of DTCs is dose-dependent, and increased RYK expression was the mechanism of drug tolerance in HCC4006 cells against osimertinib.</Abstract>
+    <DOI>10.1016/j.lungcan.2021.02.017</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

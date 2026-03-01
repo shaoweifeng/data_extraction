@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Investigating NanoLuc-EGFR engineered cell lines for real-time monitoring of EGFR protein dynamics in live cells.</Title>
+    <Authors>
+      <Author>Mehta, Ranjit K</Author>
+      <Author>Mehta RK</Author>
+      <Author>Tan, Mingjia</Author>
+      <Author>Tan M</Author>
+      <Author>Hassan, Mohammed K</Author>
+      <Author>Hassan MK</Author>
+      <Author>Zhao, Tengda</Author>
+      <Author>Zhao T</Author>
+      <Author>Markovitz, David M</Author>
+      <Author>Markovitz DM</Author>
+      <Author>Lawrence, Theodore S</Author>
+      <Author>Lawrence TS</Author>
+      <Author>Nyati, Mukesh K</Author>
+      <Author>Nyati MK</Author>
+    </Authors>
+    <Journal>Biochemical and biophysical research communications</Journal>
+    <Year>2024</Year>
+    <Abstract>Evaluating the steady-state protein level of the EGFR in live cells presents significant challenges compared to measuring its kinase activity. Traditional testing methods, such as immunoblotting, ELISA, and immunofluorescence assays, are generally restricted to fixed cells or cell lysates. Despite their utility, these methods are cumbersome and provide only intermittent snapshots of EGFR levels at specific time points. With emerging trends in drug development shifting toward engineering novel agents that promote protein degradation, rather than simply inhibiting kinase activity, a tool that enables real-time, quantitative detection of drug effects in live cells could catalyze advances in the field. Such an innovation would expedite the drug development process, enhancing the translation of research findings into effective, patient-centered therapies. The NanoLuc-EGFR cell line, created through CRISPR genome editing, allows for the continuous tracking and analysis of EGFR protein levels and their degradation within live cells. This approach provides quantitative monitoring of protein dynamics in real time, offering insights that go beyond absolute protein levels to include aspects such as protein stability and degradation rate. Using this cell line model, we observed that AT13387 and H84T BanLec induce EGFR degradation in A549-HiBiT cells, with the results confirmed by immunoblotting. In contrast, Erlotinib, Osimertinib, and Cetuximab inhibit EGFR phosphorylation without altering total EGFR levels, as validated by the HiBiT luciferase assay. The NanoLuc-EGFR cell line marks a significant advancement in understanding protein regulation and serves as an instrumental platform for investigating targeted therapies that modulate protein kinases, especially those that induce protein degradation.</Abstract>
+    <DOI>10.1016/j.bbrc.2024.150711</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

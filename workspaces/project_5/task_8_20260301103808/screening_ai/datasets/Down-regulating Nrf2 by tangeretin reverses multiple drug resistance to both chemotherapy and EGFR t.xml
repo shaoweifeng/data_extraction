@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Down-regulating Nrf2 by tangeretin reverses multiple drug resistance to both chemotherapy and EGFR tyrosine kinase inhibitors in lung cancer.</Title>
+    <Authors>
+      <Author>Xie, Ying</Author>
+      <Author>Xie Y</Author>
+      <Author>Feng, Sen-Ling</Author>
+      <Author>Feng SL</Author>
+      <Author>He, Fang</Author>
+      <Author>He F</Author>
+      <Author>Yan, Pei-Yu</Author>
+      <Author>Yan PY</Author>
+      <Author>Yao, Xiao-Jun</Author>
+      <Author>Yao XJ</Author>
+      <Author>Fan, Xing-Xing</Author>
+      <Author>Fan XX</Author>
+      <Author>Leung, Elaine Lai-Han</Author>
+      <Author>Leung EL</Author>
+      <Author>Zhou, Hua</Author>
+      <Author>Zhou H</Author>
+    </Authors>
+    <Journal>Pharmacological research</Journal>
+    <Year>2022</Year>
+    <Abstract>Multiple drug resistance (MDR) is the major obstacle for both chemotherapy and molecular-targeted therapy for cancer, which is mainly caused by overexpression of ABC transporters or genetic mutation of drug targets. Based on previous studies, we hypothesized that ROS/Nrf2 is the common target for overcoming acquired drug resistance to both targeted therapy and chemotherapy treatments. In this study, we firstly proved that the levels of ROS and Nrf2 were remarkably up-regulated in both H1975 (Gefitinib-resistant lung cancer cells with T790M) and A549/T (paclitaxel-resistant) cells, which is consistent with the clinical database analysis results of lung cancer patients that Nrf2 expression level is negatively related to survival rate. Nrf2 Knockdown with siRNA or tangeretin (TG, a flavonoid isolated from citrus peels) inhibited the MDR cell growth by suppressing the Nrf2 pathway, and efficiently enhanced the anti-tumor effects of paclitaxel and AZD9291 (the third generation of TKI) in A549/T or H1975, respectively. Moreover, TG sensitized A549/T cells-derived xenografts to paclitaxel via inhibiting Nrf2 and its downstream target P-gp, leading to an increased paclitaxel concentration in tumors. Collectively, targeting Nrf2 to enhance ROS may be a common target for overcoming the acquired drug resistance and enhancing the therapeutic effects of chemotherapy and molecular-targeted therapy.</Abstract>
+    <DOI>10.1016/j.phrs.2022.106514</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

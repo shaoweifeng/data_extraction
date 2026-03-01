@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The effect of itraconazole and rifampicin on the pharmacokinetics of osimertinib.</Title>
+    <Authors>
+      <Author>Vishwanathan, Karthick</Author>
+      <Author>Vishwanathan K</Author>
+      <Author>Dickinson, Paul A</Author>
+      <Author>Dickinson PA</Author>
+      <Author>So, Karen</Author>
+      <Author>So K</Author>
+      <Author>Thomas, Karen</Author>
+      <Author>Thomas K</Author>
+      <Author>Chen, Yuh-Min</Author>
+      <Author>Chen YM</Author>
+      <Author>De Castro Carpeño, Javier</Author>
+      <Author>De Castro Carpeño J</Author>
+      <Author>Dingemans, Anne-Marie C</Author>
+      <Author>Dingemans AC</Author>
+      <Author>Kim, Hye Ryun</Author>
+      <Author>Kim HR</Author>
+      <Author>Kim, Joo-Hang</Author>
+      <Author>Kim JH</Author>
+      <Author>Krebs, Matthew G</Author>
+      <Author>Krebs MG</Author>
+      <Author>Chih-Hsin Yang, James</Author>
+      <Author>Chih-Hsin Yang J</Author>
+      <Author>Bui, Khanh</Author>
+      <Author>Bui K</Author>
+      <Author>Weilert, Doris</Author>
+      <Author>Weilert D</Author>
+      <Author>Harvey, R Donald</Author>
+      <Author>Harvey RD</Author>
+    </Authors>
+    <Journal>British journal of clinical pharmacology</Journal>
+    <Year>2018</Year>
+    <Abstract>AIMS: We investigated the effects of a strong CYP3A4 inhibitor (itraconazole) or inducer (rifampicin) on the pharmacokinetics of the epidermal growth factor receptor-tyrosine kinase inhibitor osimertinib, in patients with advanced non-small cell lung cancer in two Phase I, open-label, two-part clinical studies. Part one of both studies is reported. METHODS: In the itraconazole study (NCT02157883), patients received single-dose osimertinib 80 mg on Days 1 and 10 and itraconazole (200 mg twice daily) on Days 6-18 orally. In the rifampicin study (NCT02197247), patients received osimertinib 80 mg once daily on Days 1-77 and rifampicin 600 mg once daily on Days 29-49. RESULTS: In the itraconazole study (n = 36), the geometric least squares mean (GMLSM) ratios (osimertinib plus itraconazole/osimertinib alone) for C(max) and AUC were 80% (90% CI 73, 87) and 124% (90% CI 115, 135), respectively, below the predefined no-effect upper limit of 200%. In the rifampicin study (n = 40), the GMLSM ratios (osimertinib plus rifampicin/osimertinib alone) for C(ss,max) and AUCτ were 27% (90% CI 24, 30) and 22% (90% CI 20, 24), respectively, below the predefined no-effect lower limit of 50%. The induction effect of rifampicin was apparent within 7 days of initiation; osimertinib C(ss,max) and AUCτ values returned to pre-rifampicin levels within 3 weeks of rifampicin discontinuation. No new osimertinib safety findings were observed. CONCLUSIONS: Osimertinib can be co-administered with CYP3A4 inhibitors, but strong CYP3A inducers should be avoided if possible.</Abstract>
+    <DOI>10.1111/bcp.13534</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

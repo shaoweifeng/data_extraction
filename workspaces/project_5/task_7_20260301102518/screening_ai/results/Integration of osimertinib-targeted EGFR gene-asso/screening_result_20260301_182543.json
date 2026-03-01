@@ -1,0 +1,27 @@
+{
+  "title": "Integration of osimertinib-targeted EGFR gene-associated differential gene expression in constructing a prognostic model for lung adenocarcinoma.",
+  "extracted_abstract": "Lung adenocarcinoma (LUAD) is one of the deadliest cancers. Epidermal growth factor receptor-tyrosine kinase inhibitor (EGFR-TKI)-targeted therapy is an important approach for treating LUAD. However, the development of acquired resistance poses a serious clinical challenge. Our objective was to explore the differentially expressed genes (DEGs) associated with EGFR and detect biomarkers for diagnosing and treating osimertinib resistance in LUAD patients. LUAD datasets were downloaded from public databases. Differential expression analysis was performed to screen DEGs, and prognostic modules were constructed by Cox regression. Enrichment analysis, gene regulatory network analysis and immune microenvironment analysis were employed to explore the underlying mechanisms in LUAD. Finally, the expression of prognosis module genes (PMGs) was validated in 8 LUAD tissue specimens and 5 cell lines by qRT-PCR. In total, 13 differential module genes (BIRC3, CCT6A, CPLX2, GLCCI1, GSTA1, HLA-DQB2, ID1, KCTD12, MUC15, NOTUM, NT5E, TCIM, and TM4SF4) were screened for the construction of a prognostic module. Notably, CCT6A and KCTD12 demonstrated excellent accuracy in the diagnosis of LUAD. Immune dysregulation and BIRC3, HLA-DQB2, KCTD12, and NT5E expression were significantly associated with invasive immune cells in LUAD patients. The expression level of CCT6A was highest in PC9-OR and H1975-OR cells, while the expression level of KCTD12 was highest in paracancerous tissue and HBE cells. The constructed prognostic model showed promise in predicting the survival of LUAD patients. Notably, KCTD12 and CCT6A might be candidate biomarkers for improving diagnostic performance and guiding individualized therapy for EGFR-TKI-resistant LUAD patients.",
+  "authors": [
+    "Li, Haiwen",
+    "Li H",
+    "Yang, Li",
+    "Yang L",
+    "Yang, Quan",
+    "Yang Q",
+    "Liang, Zhu",
+    "Liang Z",
+    "Su, Wenmei",
+    "Su W",
+    "Yu, Lili",
+    "Yu L"
+  ],
+  "journal": "Functional & integrative genomics",
+  "year": "2024",
+  "doi": "10.1007/s10142-024-01499-5",
+  "source_xml": "Integration of osimertinib-targeted EGFR gene-associated differential gene expression in constructin.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182543",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

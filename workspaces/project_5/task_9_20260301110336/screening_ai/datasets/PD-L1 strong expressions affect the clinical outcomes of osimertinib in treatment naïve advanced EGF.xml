@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>PD-L1 strong expressions affect the clinical outcomes of osimertinib in treatment naïve advanced EGFR-mutant non-small cell lung cancer patients.</Title>
+    <Authors>
+      <Author>Hsu, Kuo-Hsuan</Author>
+      <Author>Hsu KH</Author>
+      <Author>Tseng, Jeng-Sen</Author>
+      <Author>Tseng JS</Author>
+      <Author>Yang, Tsung-Ying</Author>
+      <Author>Yang TY</Author>
+      <Author>Chen, Kun-Chieh</Author>
+      <Author>Chen KC</Author>
+      <Author>Su, Kang-Yi</Author>
+      <Author>Su KY</Author>
+      <Author>Yu, Sung-Liang</Author>
+      <Author>Yu SL</Author>
+      <Author>Chen, Jeremy J W</Author>
+      <Author>Chen JJW</Author>
+      <Author>Huang, Yen-Hsiang</Author>
+      <Author>Huang YH</Author>
+      <Author>Chang, Gee-Chen</Author>
+      <Author>Chang GC</Author>
+    </Authors>
+    <Journal>Scientific reports</Journal>
+    <Year>2022</Year>
+    <Abstract>The impact of strong Programmed Death-ligand 1 (PD-L1) expression on the clinical outcomes of osimertinib in treatment naïve advanced Epidermal Growth Factor Receptor (EGFR)-mutant Non-small Cell Lung Cancer (NSCLC) patients remains uncertain. We enrolled advanced NSCLC patients who harbored sensitizing EGFR mutation and were treated first-line with osimertinib between 2017 and 2021. The PD-L1 expression level was also tested. A total of 85 patients were included. The objective response rate to osimertinib was 78.9%, with the disease control rate being 90.8%. Median Progression-free Survival (PFS) was 22.1 months, while median Overall Survival (OS) was not reached (NR). Patients with the exon 19 deletion experienced better PFS than those with the exon 21 L858R mutation (NR vs 12.4 months, aHR 0.24 (95% CI, 0.10 to 0.57); p = 0.001). Seventy-one of these 85 patients had reported on their PD-L1 expression. Patients with a PD-L1 &lt; 50% experienced longer PFS than patients with a PD-L1 ≧50% (26.5 vs 9.7 months, aHR 0.19 (95% CI, 0.06 to 0.67); p = 0.009). Additionally, patients with a PD-L1 &lt; 50% experienced better OS than those with a PD-L1 ≧50% (NR vs 25.4 months, aHR 0.09 (95% CI, 0.01 to 0.70); p = 0.021). Strong expressions of PD-L1 in treatment naïve advanced EGFR-mutant NSCLC patients were associated with poor prognoses in those undergoing treatment with osimertinib as first-line therapy.</Abstract>
+    <DOI>10.1038/s41598-022-13102-7</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/35697720</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

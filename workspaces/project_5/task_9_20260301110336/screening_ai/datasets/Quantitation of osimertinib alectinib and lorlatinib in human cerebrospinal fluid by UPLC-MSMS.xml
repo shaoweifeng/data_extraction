@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Quantitation of osimertinib, alectinib and lorlatinib in human cerebrospinal fluid by UPLC-MS/MS.</Title>
+    <Authors>
+      <Author>de Leeuw, Simon P</Author>
+      <Author>de Leeuw SP</Author>
+      <Author>de Bruijn, Peter</Author>
+      <Author>de Bruijn P</Author>
+      <Author>Koolen, Stijn L W</Author>
+      <Author>Koolen SLW</Author>
+      <Author>Dingemans, Anne-Marie C</Author>
+      <Author>Dingemans AC</Author>
+      <Author>Mathijssen, Ron H J</Author>
+      <Author>Mathijssen RHJ</Author>
+      <Author>Veerman, G D Marijn</Author>
+      <Author>Veerman GDM</Author>
+    </Authors>
+    <Journal>Journal of pharmaceutical and biomedical analysis</Journal>
+    <Year>2023</Year>
+    <Abstract>Overall survival in metastatic lung cancer has been dramatically improved with the use of small molecule kinase inhibitors (SMKIs). Quantification of SMKI in cerebrospinal fluid (CSF) can be used to assess penetration of these drugs into the central nervous system. This paper describes an ultra-performance liquid chromatography tandem mass spectrometry (UPLC-MS/MS) method for quantification of the SMKIs alectinib, lorlatinib and osimertinib in human CSF. Alectinib-d8 and dasatinib-d8 were used as internal standards. Aliquots with 25 µL CSF/30% albumin (9:1,v/v) were mixed with 100 µL internal standard solution consisting of 1 ng/mL dasatinib-d8 and alectinib-d8 in acetonitrile. The analytes were separated by an Acquity UPLC® HSS T3 column (2.1 ×150 mm, 1.8 µm), using gradient elution (ammonium formate pH 4.5, acetonitrile) with a flow rate of 0.400 mL/min. All calibration curves were linear for the concentration range from 2.50 to 250 ng/mL. Within-run and between-run precision varied from 0.72% to 11.7%, with accuracy ranging from 95.3% to 113.2%. For all compounds, a high degree of non-specific binding to the vacutainer was observed. This issue could be countered easily by a combination of pre-coating with BSA solution (30%) in phosphate buffer pH 4.2, and immediate sample mixture with BSA solution after collection. To test the clinical applicability, CSF was collected in seven unique patients using alectinib (n = 1), lorlatinib (n = 2), and osimertinib (n = 4). Measured CSF trough concentrations ranged between 3.37 and 116 ng/mL.</Abstract>
+    <DOI>10.1016/j.jpba.2023.115233</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/36638566</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

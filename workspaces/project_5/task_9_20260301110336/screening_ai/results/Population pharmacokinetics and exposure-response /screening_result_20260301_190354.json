@@ -1,0 +1,32 @@
+{
+  "title": "Population pharmacokinetics and exposure-response of osimertinib in patients with non-small cell lung cancer.",
+  "extracted_abstract": "AIMS: To develop a population (pop) pharmacokinetic (PK) model for osimertinib (AZD9291) and its metabolite (AZ5104) and investigate the exposure-response relationships for selected efficacy and safety parameters. METHODS: PK, safety and efficacy data were collected from two non-small cell lung cancer (NSCLC) patient studies (n = 748) and one healthy volunteer study (n = 32), after single or multiple once-daily dosing of 20-240 mg osimertinib. Nonlinear mixed effects modelling was used to characterise the popPK. Individual exposure values were used to investigate the relationship with response evaluation criteria in solid tumours (RECIST 1.1) efficacy parameters and key safety parameters (rash, diarrhoea, QTcF). RESULTS: A popPK model that adequately described osimertinib and its metabolite AZ5104 in a joint manner was developed. Body weight, serum albumin and ethnicity were identified as significant covariates on PK in the analysis, but were not found to have a clinically relevant impact on osimertinib exposure. No relationship was identified between exposure and efficacy over the dose range studied. A linear relationship was observed between exposure and the occurrence of rash or diarrhoea, and between concentration and QTcF, with a predicted mean (upper 90% confidence interval) increase of 14.2 (15.8) ms at the maximum concentration for an 80 mg once-daily dose at steady state. CONCLUSIONS: PopPK and exposure-response models were developed for osimertinib and AZ5104. There was no relationship between exposure and efficacy but a linear relationship between exposure and safety endpoints (rash, diarrhoea and QTcF) was observed.",
+  "authors": [
+    "Brown, Kathryn",
+    "Brown K",
+    "Comisar, Craig",
+    "Comisar C",
+    "Witjes, Han",
+    "Witjes H",
+    "Maringwa, John",
+    "Maringwa J",
+    "de Greef, Rik",
+    "de Greef R",
+    "Vishwanathan, Karthick",
+    "Vishwanathan K",
+    "Cantarini, Mireille",
+    "Cantarini M",
+    "Cox, Eugène",
+    "Cox E"
+  ],
+  "journal": "British journal of clinical pharmacology",
+  "year": "2017",
+  "doi": "10.1111/bcp.13223",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/28009438",
+  "source_xml": "Population pharmacokinetics and exposure-response of osimertinib in patients with non-small cell lun.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190354",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

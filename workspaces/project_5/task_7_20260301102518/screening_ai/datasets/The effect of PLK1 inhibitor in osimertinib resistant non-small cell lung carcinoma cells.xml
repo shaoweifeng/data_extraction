@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The effect of PLK1 inhibitor in osimertinib resistant non-small cell lung carcinoma cells.</Title>
+    <Authors>
+      <Author>Dai, Xiaoyang</Author>
+      <Author>Dai X</Author>
+      <Author>Liu, Xiangning</Author>
+      <Author>Liu X</Author>
+      <Author>Ge, Fujing</Author>
+      <Author>Ge F</Author>
+      <Author>Zhu, Hongdao</Author>
+      <Author>Zhu H</Author>
+      <Author>Zheng, Churun</Author>
+      <Author>Zheng C</Author>
+      <Author>Yan, Fangjie</Author>
+      <Author>Yan F</Author>
+      <Author>Yang, Bo</Author>
+      <Author>Yang B</Author>
+    </Authors>
+    <Journal>Zhejiang da xue xue bao. Yi xue ban = Journal of Zhejiang University. Medical</Journal>
+    <Year>2023</Year>
+    <Abstract>OBJECTIVES: To investigate the effects of PLK1 inhibitors on osimertinib-resistant non-small cell lung carcinoma (NSCLC) cells and the anti-tumor effect combined with osimertinib. METHODS: An osimertinib resistant NCI-H1975 cell line was induced by exposure to gradually increasing drug concentrations. Osimertinib-resistant cells were co-treated with compounds from classical tumor pathway inhibitor library and osimertinib to screen for compounds with synergistic effects with osimertinib. The Gene Set Enrichment Analysis (GSEA) was used to investigate the activated signaling pathways in osimertinib-resistant cells; sulforhodamine B (SRB) staining was used to investigate the effect of PLK1 inhibitors on osimertinib-resistant cells and the synergistic effect of PLK1 inhibitors combined with osimertinib. RESULTS: Osimertinib-resistance in NCI-H1975 cell (resistance index=43.45) was successfully established. The PLK1 inhibitors GSK 461364 and BI 2536 had synergistic effect with osimertinib. Compared with osimertinib-sensitive cells, PLK1 regulatory pathway and cell cycle pathway were significantly activated in osimertinib-resistant cells. In NSCLC patients with epidermal growth factor receptor mutations treated with osimertinib, PLK1 mRNA levels were negatively correlated with progression free survival of patients (R=－0.62, P&lt;0.05), indicating that excessive activation of PLK1 in NSCLC cells may cause cell resistant to osimertinib. Further in vitro experiments showed that IC(50) of PLK1 inhibitors BI 6727 and GSK 461364 in osimertinib-resistant cells were lower than those in sensitive ones. Compared with the mono treatment of osimertinib, PLK1 inhibitors combined with osimertinib behaved significantly stronger effect on the proliferation of osimertinib-resistant cells. CONCLUSIONS: PLK1 inhibitors have a synergistic effect with osimertinib on osimertinib-resistant NSCLC cells which indicates that they may have potential clinical value in the treatment of NSCLC patients with osimertinib resistance.</Abstract>
+    <DOI>10.3724/zdxbyxb-2023-0305</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

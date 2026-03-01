@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Licochalcone A inhibits EGFR signalling and translationally suppresses survivin expression in human cancer cells.</Title>
+    <Authors>
+      <Author>Gao, Feng</Author>
+      <Author>Gao F</Author>
+      <Author>Li, Ming</Author>
+      <Author>Li M</Author>
+      <Author>Yu, Xinfang</Author>
+      <Author>Yu X</Author>
+      <Author>Liu, Wenbin</Author>
+      <Author>Liu W</Author>
+      <Author>Zhou, Li</Author>
+      <Author>Zhou L</Author>
+      <Author>Li, Wei</Author>
+      <Author>Li W</Author>
+    </Authors>
+    <Journal>Journal of cellular and molecular medicine</Journal>
+    <Year>2021</Year>
+    <Abstract>Dysfunction of epidermal growth factor receptor (EGFR) signalling plays a critical role in the oncogenesis of non-small-cell lung cancer (NSCLC). Here, we reported the natural product, licochalcone A, exhibited a profound anti-tumour efficacy through directly targeting EGFR signalling. Licochalcone A inhibited in vitro cell growth, colony formation and in vivo tumour growth of either wild-type (WT) or activating mutation EGFR-expressed NSCLC cells. Licochalcone A bound with L858R single-site mutation, exon 19 deletion, L858R/T790M mutation and WT EGFR ex vivo, and impaired EGFR kinase activity both in vitro and in NSCLC cells. The in silico docking study further indicated that licochalcone A interacted with both WT and mutant EGFRs. Moreover, licochalcone A induced apoptosis and decreased survivin protein robustly in NSCLC cells. Mechanistically, we found that treatment with licochalcone A translationally suppressed survivin through inhibiting EGFR downstream kinases ERK1/2 and Akt. Depletion of the translation initiation complex by eIF4E knockdown effectively inhibited survivin expression. In contrast, knockdown of 4E-BP1 showed the opposite effect and dramatically enhanced survivin protein level. Overall, our data indicate that targeting survivin might be an alternative strategy to sensitize EGFR-targeted therapy.</Abstract>
+    <DOI>10.1111/jcmm.16135</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

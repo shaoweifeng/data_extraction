@@ -1,0 +1,33 @@
+{
+  "title": "A Validated Assay to Quantify Osimertinib and Its Metabolites, AZ5104 and AZ7550, from Microsampled Dried Blood Spots and Plasma.",
+  "extracted_abstract": "BACKGROUND: Osimertinib is an oral small-molecule tyrosine kinase receptor inhibitor used to treat non-small cell lung cancer (NSCLC) with a sensitizing epidermal growth factor receptor mutation. Patients may experience drug toxicity and require dose deescalation. The study aimed to quantitate osimertinib and its 2 active metabolites, AZ5104 and AZ7550, in microsampled dried blood spots (DBS) collected from patients with NSCLC using a hemaPEN device and compare them with plasma drug levels. METHODS: A 6-min ultrahigh-performance liquid chromatography-tandem mass spectrometry method was developed and validated using plasma and DBS. The accuracy, selectivity, matrix effect, recovery, and stability were assessed using bioanalytical validation criteria. The hematocrit effect was investigated in DBS. Drug levels were measured in 15 patients with NSCLC, and the Bland-Altman method was used to compare measurements between plasma and DBS. RESULTS: The validated assay determined accurate and precise quantities, respectively, for osimertinib in both plasma (93.2%-99.3%; 0.2%-2.3%) and DBS (96.7%-99.6%; 0.5%-10.3%) over a concentration of 1-729 ng/mL. The osimertinib metabolites, AZ5104 and AZ7550, were similarly validated in accordance with bioanalytical guidelines. For 30%-60% patient hematocrit, no hematocrit bias was observed with DBS for all analytes. The Bland-Altman method showed high concordance between plasma and DBS analyte levels. Stability experiments revealed that osimertinib and its metabolites were poorly stable in plasma at room temperature, whereas all analytes were stable in DBS for 10 days at room temperature. CONCLUSIONS: The measurement of osimertinib, AZ5104, and AZ7550 from hemaPEN microsampled DBS is a convenient and reliable approach for therapeutic drug monitoring that produces measurements consistent with plasma drug levels.",
+  "authors": [
+    "Venkatesh, Bharat",
+    "Venkatesh B",
+    "Yuile, Alex",
+    "Yuile A",
+    "McKay, Matthew J",
+    "McKay MJ",
+    "Narayanan, Sathya",
+    "Narayanan S",
+    "Wheeler, Helen",
+    "Wheeler H",
+    "Itchins, Malinda",
+    "Itchins M",
+    "Pavlakis, Nick",
+    "Pavlakis N",
+    "Clarke, Stephen J",
+    "Clarke SJ",
+    "Molloy, Mark P",
+    "Molloy MP"
+  ],
+  "journal": "Therapeutic drug monitoring",
+  "year": "2024",
+  "doi": "10.1097/FTD.0000000000001157",
+  "source_xml": "A Validated Assay to Quantify Osimertinib and Its Metabolites AZ5104 and AZ7550 from Microsampled Dr.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182552",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

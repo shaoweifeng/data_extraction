@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Exposure-response modelling of osimertinib in patients with non-small cell lung cancer.</Title>
+    <Authors>
+      <Author>Johnson, Martin</Author>
+      <Author>Johnson M</Author>
+      <Author>Lin, Yu-Wei</Author>
+      <Author>Lin YW</Author>
+      <Author>Schmidt, Henning</Author>
+      <Author>Schmidt H</Author>
+      <Author>Sunnaker, Mikael</Author>
+      <Author>Sunnaker M</Author>
+      <Author>Van Maanen, Eline</Author>
+      <Author>Van Maanen E</Author>
+      <Author>Huang, Xiangning</Author>
+      <Author>Huang X</Author>
+      <Author>Rukazenkov, Yuri</Author>
+      <Author>Rukazenkov Y</Author>
+      <Author>Tomkinson, Helen</Author>
+      <Author>Tomkinson H</Author>
+      <Author>Vishwanathan, Karthick</Author>
+      <Author>Vishwanathan K</Author>
+    </Authors>
+    <Journal>British journal of clinical pharmacology</Journal>
+    <Year>2024</Year>
+    <Abstract>AIMS: Osimertinib is a third-generation, irreversible, central nervous system-active, epidermal growth factor receptor (EGFR) tyrosine kinase inhibitor (TKI) with efficacy in EGFR-mutated non-small cell lung cancer (NSCLC). We assessed the relationship between plasma osimertinib levels and its efficacy and safety events. METHODS: Comprehensive pharmacokinetics exposure-response (E-R) modelling was performed utilizing steady state area under the curve (AUC(ss)) data from first-line, ≥second-line and adjuvant studies from the osimertinib clinical development programme (20-240 mg once-daily dosing; N = 1689 patients). Analyses were conducted for survival using a proportional hazard model; for interstitial lung disease (ILD) and left ventricular ejection fraction (LVEF) events using a penalized logistic regression model and graphical analysis of potential confounding factors; and for rash and diarrhoea events using descriptive analysis. RESULTS: E-R modelling analyses indicated no clear trend of increasing efficacy with increasing osimertinib AUC(ss); efficacy in all exposure quartiles was significantly better than the control arm (comparator EGFR-TKI, chemotherapy or placebo) irrespective of treatment line. Model-based analysis suggested a potential relationship between increased osimertinib exposure and increased probability of ILD events, predominantly in Japanese patients. Additionally, there were increased probabilities of rash or diarrhoea with increasing osimertinib exposure. The probability of LVEF events showed overlapping confidence intervals for osimertinib ≤80 mg and control. CONCLUSIONS: E-R modelling in patients with EGFR-mutated NSCLC demonstrated that increased osimertinib exposure was unlikely to increase efficacy but may increase occurrence of certain adverse events. Hence, long-term treatment with doses ≥80 mg was not expected to provide additional benefit.</Abstract>
+    <DOI>10.1111/bcp.16199</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/39160062</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

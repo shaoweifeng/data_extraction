@@ -1,0 +1,24 @@
+{
+  "title": "Development and validation of an LC-MS/MS method for quantification of Osimertinib and its two metabolites AZ7550 and AZ5104 in human plasma including long-time storage.",
+  "extracted_abstract": "Osimertinib (AZD9291) is a widely used tyrosine kinase inhibitor for the treatment of non-small cell lung cancer patients with activating EGFR mutations. However, the correlation between dose and efficacy has been debated for several years. For this reason, there is a need for standardized methods for routine analysis, clinical studies on pharmacokinetics and dose-response relationships, and greater understanding of preanalytical conditions, such as sample storage stability. The objective of this study was to develop and validate a sensitive liquid chromatography-tandem mass spectrometry (LC-MS/MS) method for simultaneous quantification of osimertinib and its two metabolites, AZ7550 and AZ5104, in human plasma and to investigate long-term storage stability of the analytes. Samples were prepared by protein precipitation and separated on a Kinetex EVO C18 column (2.1 × 150 mm, 2.6 µm). Electrospray ionization in positive mode and multiple reaction monitoring were used to monitor the ion transitions. The validated concentration ranges were from 1.25 to 3000 ng/mL. Interassay precisions and accuracies were all ≤ 15 %. Linearity, dilution integrity, and carry-over were also examined and satisfied the validation criteria. Stability was examined under different conditions, and the analytes were found to be stable for more than 3 years at -80°C (< 15 % decline). Finally, the analytical method was successfully applied in a clinical setting on plasma samples from 30 patients with non-small cell lung cancer in treatment with osimertinib, demonstrating its suitability for use in clinical studies and its potential for therapeutic drug monitoring.",
+  "authors": [
+    "Greibe, Eva",
+    "Greibe E",
+    "Sorensen, Boe",
+    "Sorensen B",
+    "Meldgaard, Peter",
+    "Meldgaard P",
+    "Hoffmann-Lücke, Elke",
+    "Hoffmann-Lücke E"
+  ],
+  "journal": "Journal of pharmaceutical and biomedical analysis",
+  "year": "2025",
+  "doi": "10.1016/j.jpba.2025.116662",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/39787847",
+  "source_xml": "Development and validation of an LC-MSMS method for quantification of Osimertinib and its two metabo.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190348",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

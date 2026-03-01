@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>In vitro inhibition of human UDP-glucuronosyltransferase (UGT) 1A1 by osimertinib, and prediction of in vivo drug-drug interactions.</Title>
+    <Authors>
+      <Author>Wang, Zhe</Author>
+      <Author>Wang Z</Author>
+      <Author>Wang, Xiaoyu</Author>
+      <Author>Wang X</Author>
+      <Author>Wang, Zhen</Author>
+      <Author>Wang Z</Author>
+      <Author>Jia, Yaqin</Author>
+      <Author>Jia Y</Author>
+      <Author>Feng, Yuyi</Author>
+      <Author>Feng Y</Author>
+      <Author>Jiang, Lili</Author>
+      <Author>Jiang L</Author>
+      <Author>Xia, Yangliu</Author>
+      <Author>Xia Y</Author>
+      <Author>Cao, Jun</Author>
+      <Author>Cao J</Author>
+      <Author>Liu, Yong</Author>
+      <Author>Liu Y</Author>
+    </Authors>
+    <Journal>Toxicology letters</Journal>
+    <Year>2021</Year>
+    <Abstract>Osimertinib is the only third-generation epidermal growth factor receptor tyrosine-kinase inhibitor (EGFR-TKI) approved by Food and Drug Administration (FDA). This study aimed to know the inhibitory effect of osimertinib on human UDP-glucosyltransferases (UGTs) and human liver microsomes (HLMs), as well as to identify its potential to cause drug-drug interaction (DDI) arising from the modulation of UGT activity. High inhibitory effect of osimertinib was shown towards UGT1A1, 1A3, 1A6, 1A7, 1A8, 1A10, 2B7 and 2B15. Especially, osimertinib exhibited competitive inhibition against UGT1A1 with a K(i,u) of 0.87 ± 0.12 μM. It also noncompetitively inhibited SN-38 glucuronidation in pooled HLMs with a K(i,u) of 3.32 ± 0.25 μM. Results from quantitative prediction study indicated that osimertinib administered at 80 mg/day may result in a 4.83 % increase in the AUC of drugs mainly metabolized by UGT1A1, implying low risk of DDI via liver metabolism. However, the ratios of [I](gut)/K(i,u) are much higher than 11 in HLMs and recombinant UGT1A1, indicating a risk for interaction in intestine. The effects of osimertinib on intestinal UGT should be paid more attention on to avoid unnecessary clinical DDI risks.</Abstract>
+    <DOI>10.1016/j.toxlet.2021.05.004</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/34044055</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Tagrisso incremental therapy in a case of meningeal metastasis of lung cancer with EGFR mutation: a case report.</Title>
+    <Authors>
+      <Author>Sun, Yingjia</Author>
+      <Author>Sun Y</Author>
+      <Author>Ai, Xinghao</Author>
+      <Author>Ai X</Author>
+      <Author>Lu, Shun</Author>
+      <Author>Lu S</Author>
+    </Authors>
+    <Journal>Translational lung cancer research</Journal>
+    <Year>2022</Year>
+    <Abstract>The advent of precision treatment for non-small cell lung cancer (NSCLC) has witnessed the discovery of epidermal growth factor receptor (EGFR) mutations. EGFR tyrosine kinase inhibitors (TKIs) have proven efficacy in treating patients with advanced lung cancer and can significantly prolong overall survival (OS). The incidence of advanced lung cancer with central nervous system (CNS) metastasis has increased significantly. Patients with EGFR mutations are more likely than wild-type patients to develop meningeal metastasis. Many questions still surround treatment-related decision-making for patients with TKI-sensitive mutations, as well as the optimal treatment strategy after progress with TKI treatment. Moreover, the accurate and timely diagnosis of meningeal metastasis and the treatment for patients with TKI-sensitive mutated meningeal metastases also need to be addressed. Here, we report the case of a patient who was diagnosed as stage IV NSCLC with EGFR 21 exon L858R mutation combined with EGFR 20 exon T790M mutation based on an elevated carcinoembryonic antigen (CEA) level (193 ng/mL) as the first symptom. After being diagnosed as meningeal metastasis by cerebrospinal fluid (CSF) cytology, the patient received a regular double dose of Tagrisso. The patient's progression-free survival (PFS) was extended by 7 months, and the OS reached more than 5 years, which is rare in clinical practice. This case suggests that: (I) meningeal metastases should be diagnosed based on clinical presentation, CSF examination, and magnetic resonance imaging (MRI); and (II) in patients with EGFR-mutant meningeal metastases, incremental targeted drug treatment should be considered a therapeutic strategy.</Abstract>
+    <DOI>10.21037/tlcr-21-451</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/35280312</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

@@ -1,0 +1,31 @@
+{
+  "title": "The Relationship Between Efficacy and Safety of Osimertinib Blood Concentration in Patients With EGFR Mutation-positive Lung Cancer: A Prospective Observational Study.",
+  "extracted_abstract": "BACKGROUND/AIM: Osimertinib blood levels and their impact on treatment continuation in patients with EGFR mutation-positive lung cancer is not known. This study investigated the drug blood levels and risk factors affecting treatment continuation. PATIENTS AND METHODS: Fifty-six patients with recurrent and inoperable epidermal growth factor receptor (EGFR) mutation-positive non-small cell lung cancer who received Osimertinib (80 mg once daily, daily dose) between October 1, 2016, and August 31, 2021, were included. Patients were classified into two groups using a cutoff blood level of 155 ng/ml. The primary endpoint was the relationship between Osimertinib exposure and efficacy, and secondary endpoints were the relationship between Osimertinib exposure and side effects, and the effect of covariates on efficacy and blood levels. RESULTS: The median progression-free survival (PFS) for evaluable patients in the steady-state trough concentration (C(min ss)) ≥155 ng/ml and C(min ss) <155 ng/ml groups was 18.7 months and 31.2 months. Serum albumin (Alb) levels were 3.73±0.40 g/dl and 3.93±0.28 g/dl (p=0.030), respectively, and in multivariate analysis, Alb <3.7 g/dl was associated with a hazard ratio of 5.304 (95%CI=1.431-19.66; p=0.013), indicating that Alb <3.7 g/dl significantly shortened PFS. CONCLUSION: Free blood concentration of Osimertinib may have been increased by a combination of factors, including decreased hepatic metabolic function and decreased albumin production caused by systemic inflammation in patients with cancer. However, there was no effect of Osimertinib C(min ss) on PFS.",
+  "authors": [
+    "Hashino, Yasuhisa",
+    "Hashino Y",
+    "Hatsuyama, Tae",
+    "Hatsuyama T",
+    "Iwayama, Kuninori",
+    "Iwayama K",
+    "Hoshi, Takanobu",
+    "Hoshi T",
+    "Wakamoto, Azusa",
+    "Wakamoto A",
+    "Ohtaki, Koichi",
+    "Ohtaki K",
+    "Toda, Takaki",
+    "Toda T",
+    "Sato, Hideki",
+    "Sato H"
+  ],
+  "journal": "In vivo (Athens, Greece)",
+  "year": "2023",
+  "doi": "10.21873/invivo.13376",
+  "source_xml": "The Relationship Between Efficacy and Safety of Osimertinib Blood Concentration in Patients With EGF.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182519",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

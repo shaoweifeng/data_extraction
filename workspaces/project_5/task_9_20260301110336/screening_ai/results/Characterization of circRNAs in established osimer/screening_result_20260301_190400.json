@@ -1,0 +1,30 @@
+{
+  "title": "Characterization of circRNAs in established osimertinib‑resistant non‑small cell lung cancer cell lines.",
+  "extracted_abstract": "Drug resistance is an urgent problem to be solved in the treatment of non‑small‑cell lung cancer (NSCLC). Osimertinib is a third‑generation EGFR‑tyrosine kinase inhibitor, which can improve the efficacy and quality of life of patients; however, the inevitable resistance after long‑term use of osimertinib often leads to treatment failure. Cell lines are key tools for basic and preclinical studies. At present, few osimertinib‑resistant cell lines (HCC827‑OR and H1975‑OR) have been established. In the present study, osimertinib‑resistant cell lines were established by gradually increasing the drug concentration. Half‑maximal inhibitory concentration (IC50), cell morphology, whole exon sequencing, Cell Counting Kit‑8 assay, EdU staining and flow cytometry were used to evaluate the osimertinib‑resistant cell lines. Western blot analysis was used to detect the expression levels of key proteins involved in osimertinib resistance. The circular RNA (circRNA) expression profile was identified by RNA sequencing (RNA‑seq) analysis of HCC827, HCC827‑OR, H1975 and H1975‑OR cells. Subsequently, the biological roles of differentially expressed circRNAs were explored in in vitro studies. Osimertinib‑resistant cell lines were successfully established via treatment with an increasing concentration of osimertinib. Osimertinib IC50 and proliferation of resistant cells were much higher than those of sensitive cells. Notably, phosphorylated (p)‑AKT and p‑ERK were markedly activated in resistant cells, and the inhibitory effect of osimertinib on p‑AKT and p‑ERK was weaker in resistant cells than that in parental cells. RNA‑seq analysis identified differentially expressed circRNAs in HCC827, HCC827‑OR, H1975 and H1975‑OR cells. The most dysregulated circRNAs (circPDLIM5 and circPPP4R1) were selected for further functional study. Kyoto Encyclopedia of Genes and Genomes pathway analysis showed that the host genes of differentially expressed circRNAs were associated with 'endocytosis' and 'regulation of autophagy'. In conclusion, the present study established osimertinib‑resistant cell lines and revealed that circRNAs may serve as a promising biomarker in NSCLC osimertinib resistance.",
+  "authors": [
+    "Chen, Xin",
+    "Chen X",
+    "Gu, Jingyao",
+    "Gu J",
+    "Huang, Jiali",
+    "Huang J",
+    "Wen, Kang",
+    "Wen K",
+    "Zhang, Ge",
+    "Zhang G",
+    "Chen, Zhenyao",
+    "Chen Z",
+    "Wang, Zhaoxia",
+    "Wang Z"
+  ],
+  "journal": "International journal of molecular medicine",
+  "year": "2023",
+  "doi": "10.3892/ijmm.2023.5305",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/37681495",
+  "source_xml": "Characterization of circRNAs in established osimertinibresistant nonsmall cell lung cancer cell line.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190400",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The value of disease-free survival (DFS) and osimertinib in adjuvant non-small-cell lung cancer (NSCLC): an international Delphi consensus report.</Title>
+    <Authors>
+      <Author>Hardenberg, M C</Author>
+      <Author>Hardenberg MC</Author>
+      <Author>Patel, B</Author>
+      <Author>Patel B</Author>
+      <Author>Matthews, C</Author>
+      <Author>Matthews C</Author>
+      <Author>Califano, R</Author>
+      <Author>Califano R</Author>
+      <Author>Garcia Campelo, R</Author>
+      <Author>Garcia Campelo R</Author>
+      <Author>Grohe, C</Author>
+      <Author>Grohe C</Author>
+      <Author>Hong, M H</Author>
+      <Author>Hong MH</Author>
+      <Author>Liu, G</Author>
+      <Author>Liu G</Author>
+      <Author>Lu, S</Author>
+      <Author>Lu S</Author>
+      <Author>de Marinis, F</Author>
+      <Author>de Marinis F</Author>
+      <Author>Pérol, M</Author>
+      <Author>Pérol M</Author>
+      <Author>Soo, R A</Author>
+      <Author>Soo RA</Author>
+      <Author>Stiles, B M</Author>
+      <Author>Stiles BM</Author>
+      <Author>Tiseo, M</Author>
+      <Author>Tiseo M</Author>
+      <Author>Tsuboi, M</Author>
+      <Author>Tsuboi M</Author>
+    </Authors>
+    <Journal>ESMO open</Journal>
+    <Year>2022</Year>
+    <Abstract>BACKGROUND: Rates of disease recurrence and death following surgery remain high in early-stage non-small-cell lung cancer (NSCLC), despite adjuvant treatment and curative intent. Recently, osimertinib showed overwhelming evidence for disease-free survival (DFS), as demonstrated by an overall reduction in the risk of disease recurrence or death in the adjuvant setting of 80% versus control in the ADAURA study (stage IB-IIIA; hazard ratio 0.20; 99.12% confidence interval 0.14-0.30; P &lt; 0.001). However, due to the early unblinding of ADAURA and lack of mature overall survival data, there is a need to qualitatively confirm consensus on the clinical and patient relevance of DFS. MATERIALS AND METHODS: We conducted a modified Delphi panel study consisting of two rounds of surveys, followed by a consensus meeting. An international panel of experts in the field of NSCLC and epidermal growth factor receptor tyrosine kinase inhibitors (EGFR-TKIs) (n = 13) was asked to rate agreement and comment on a list of pre-defined statements covering key consensus gaps. Statements were eliminated or updated between surveys, depending on the level of agreement. A final list of agreed-upon statements was drafted in the consensus meeting. RESULTS: Consensus was reached on 32 qualitative statements, with topics including unmet needs in early-stage NSCLC, the value of DFS, and the value of osimertinib. Crucially, DFS was agreed to be a clinically and patient-relevant endpoint in adjuvant NSCLC. The relevance of DFS was found to relate to the ability of an adjuvant therapy, such as osimertinib, to keep patients in the clinically valuable curative intent setting, while preventing the burden associated with distant and locoregional recurrence, and progressive disease. CONCLUSIONS: Addressing the need for measures that reflect clinical benefit is essential to continue improving outcomes for NSCLC patients. To that end, this work provides a qualitative framework for clinicians to consider the clinical and patient relevance of DFS in adjuvant NSCLC and the benefit demonstrated in ADAURA thus far.</Abstract>
+    <DOI>10.1016/j.esmoop.2022.100572</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Pricing methods in outcome-based contracting: δ1: cost effectiveness analysis and cost-utility analysis-based pricing.</Title>
+    <Authors>
+      <Author>Alkhatib, Nimer S</Author>
+      <Author>Alkhatib NS</Author>
+      <Author>Ramos, Kenneth</Author>
+      <Author>Ramos K</Author>
+      <Author>Erstad, Brian</Author>
+      <Author>Erstad B</Author>
+      <Author>Slack, Marion</Author>
+      <Author>Slack M</Author>
+      <Author>McBride, Ali</Author>
+      <Author>McBride A</Author>
+      <Author>Bhattacharjee, Sandipan</Author>
+      <Author>Bhattacharjee S</Author>
+      <Author>Abraham, Ivo</Author>
+      <Author>Abraham I</Author>
+    </Authors>
+    <Journal>Journal of medical economics</Journal>
+    <Year>2020</Year>
+    <Abstract>AIMS: Six Delta is a six-dimensional independent platform for outcome-based pricing/contracting. The first dimension (δ1) estimates prices on the basis of cost-effectiveness (CEA) and cost-utility analysis (CUA). We describe this dimension's methodology and present a proof-of-concept application to the treatment of non-small cell lung cancer (NSCLC) with EGFR mutation with osimertinib. MATERIALS AND METHODS: CEA and CUA were performed using established methods. Probabilistic sensitivity analyses (PSA) were performed to generate cost-effectiveness acceptability curves (CEAC), specifically the PSA incremental cost-effectiveness (PSA ICER) and incremental cost-utility ratio generated CEACs (PSA ICUR). Price of treatment was estimated at three certainty levels (0%, turning point%, 100%). The marketed drug price at turning point was used to estimate prices at 0% and 100% certainty levels, as per PSA ICER and PSA ICUR-generated CEACs. The resulting prices were pooled, inflated, and simulated by Monte Carlo Simulation (MCS) methods to estimate the dimension-specific price based on CEA and CUA (DSP(CEA/CUA)). A proof-of-concept exercise with osimertinib in NSCLC was performed for two hypothetical outcome-based contracts: 1-year (2019-2020) and 2-years (2019-2021). RESULTS: Turning points were estimated at the 50% certainty level in both PSA ICER and ICUR-generated CEACS. At these points, the wholesale acquisition cost for osimertinib was $14,616 (30-day prescription); inflated by 0.44% for 1-year and by 0.72% for 2-year contracts. Additional prices at 0% and 100% certainty levels were quantified based on the PSA ICER and ICUR-generated CEACs. The MCS yielded a DSP(CEA/CUA) of $16,391 for the 1-year contract and a DSP(CEA/CUA) at $16,677 for the 2-year contract for a 30-day prescription. CONCLUSIONS: We demonstrated that conventional CEA and CUA methods generate price estimates at varying levels of certainty that can be integrated into our proposed Six Delta platform for outcome-based pricing/contracting.</Abstract>
+    <DOI>10.1080/13696998.2020.1815025</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

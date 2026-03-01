@@ -1,0 +1,32 @@
+{
+  "title": "Identification of osimertinib (AZD9291) as a lysine specific demethylase 1 inhibitor.",
+  "extracted_abstract": "Osimertinib (AZD9291) is a third-generation epidermal growth factor receptor (EGFR) tyrosine kinase inhibitor (TKI) that has been approved for the treatment of EGFR-mutated non-small cell lung cancer (NSCLC). In this study, osimertinib was characterized as a LSD1 inhibitor for the first time with an IC(50) of 3.98 ± 0.3 μM and showed LSD1 inhibitory effect at cellular level. These findings provide new molecular skeleton for dual inhibitor for LSD1 and EGFR. Osimertinib could serve as a lead compound for further development for anti-NSCLC drug discovery with dual targeting.",
+  "authors": [
+    "Li, Zhong-Rui",
+    "Li ZR",
+    "Suo, Feng-Zhi",
+    "Suo FZ",
+    "Hu, Bo",
+    "Hu B",
+    "Guo, Yan-Jia",
+    "Guo YJ",
+    "Fu, Dong-Jun",
+    "Fu DJ",
+    "Yu, Bin",
+    "Yu B",
+    "Zheng, Yi-Chao",
+    "Zheng YC",
+    "Liu, Hong-Min",
+    "Liu HM"
+  ],
+  "journal": "Bioorganic chemistry",
+  "year": "2019",
+  "doi": "10.1016/j.bioorg.2018.11.018",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/30502627",
+  "source_xml": "Identification of osimertinib AZD9291 as a lysine specific demethylase 1 inhibitor.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190410",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

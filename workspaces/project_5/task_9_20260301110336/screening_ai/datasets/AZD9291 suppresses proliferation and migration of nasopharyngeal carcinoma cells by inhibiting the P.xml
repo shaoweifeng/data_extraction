@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>[AZD9291 suppresses proliferation and migration of nasopharyngeal carcinoma cells by inhibiting the PI3K-AKT-mTOR pathway].</Title>
+    <Authors>
+      <Author>Zhang, H</Author>
+      <Author>Zhang H</Author>
+      <Author>Pang, J</Author>
+      <Author>Pang J</Author>
+      <Author>Zhang, Y</Author>
+      <Author>Zhang Y</Author>
+      <Author>Ma, Y</Author>
+      <Author>Ma Y</Author>
+      <Author>Fan, F</Author>
+      <Author>Fan F</Author>
+      <Author>Liu, H</Author>
+      <Author>Liu H</Author>
+    </Authors>
+    <Journal>Nan fang yi ke da xue xue bao = Journal of Southern Medical University</Journal>
+    <Year>2022</Year>
+    <Abstract>OBJECTIVE: To investigate the effects of AZD9291 on the proliferation and migration of nasopharyngeal carcinoma cells. METHODS: Nasopharyngeal carcinoma HNE1 and CNE2Z cells were treated with AZD9291 at the doses of 0.5, 1, 2, 4, and 8 μmol/L and at the doses of 1, 2, 4, 8, and 16 μmol/L, respectively. Cell survival was measured using CCK8 assay, and proliferation inhibition of the cells after AZD9291 treatment was examined with colony-forming assay; the cell repair and migration abilities were determined using scratch assay and Transwell experiment. The expressions of EGFR-related signaling proteins and migration-related proteins were detected using Western blotting. RESULTS: The results of CCK8 assay and colonyforming assay showed that AZD9291 significantly inhibited the viability and proliferation of both HNE1 and CNE2Z cells (P &lt; 0.01). AZD9291 treatment also attenuated the migration ability of HNE1 and CNE2Z cells (P &lt; 0.01). Western blotting showed that, as the concentration of AZD9291 increased, the expression levels of the proteins involved in the PI3K-AKT-mTOR signaling pathway were lowered progressively (P &lt; 0.01), resulting in inhibition of migration of HNE1 and CNE2Z cells (P &lt; 0.01). CONCLUSION: AZD9291 suppresses proliferation and attenuates repair and migration capacities of nasopharyngeal carcinoma cells by inhibiting the EGFR/PI3K/AKT/mTOR signaling pathway, suggesting the potential value of AZD9291 in the treatment of nasopharyngeal carcinoma.</Abstract>
+    <DOI>10.12122/j.issn.1673-4254.2022.09.18</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/36210715</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

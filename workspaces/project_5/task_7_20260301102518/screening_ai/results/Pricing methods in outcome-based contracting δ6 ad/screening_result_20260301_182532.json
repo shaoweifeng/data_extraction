@@ -1,0 +1,29 @@
+{
+  "title": "Pricing methods in outcome-based contracting: δ6: adherence-based pricing.",
+  "extracted_abstract": "AIMS: Six Delta is a six-dimensional independent platform for outcome-based pricing/contracting. The sixth dimension (δ6) estimates prices on the basis of adherence to the prescribed regimen, whereby manufacturers provide payers with adherence-enhancing programs and whereby payers implement these programs and provide adherence data to the manufacturer. We describe this dimension's methodology and present a proof-of-concept application to the treatment of non-small cell lung cancer (NSCLC) with EGFR mutation with osimertinib. MATERIALS AND METHODS: We propose two paybacks based on adherence: in-advance (based on clinical trial data) and in-arrear (based on real-world data). The risk of efficacy failure pricing dimension utilizes a 7-step method: 1) defining efficacy endpoints; 2) extracting data; 3) predicting models; 4) estimating in-advance and in-arrear paybacks; 5) suggesting ranges for in-advance and in-arrear paybacks; 6) adjusting for medical inflation; and 7) performing Monte Carlo Simulation (MCS) to estimate the DSP(Adherence). A proof-of-concept exercise with osimertinib in NSCLC was performed for two hypothetical outcome-based contracts: 1-year (2019-2020) and 2-year (2019-2021). The 2018 wholesale acquisition cost (WAC) for a 30-day prescription was used and inflated as needed. Herein, the DSP(Adherence) is estimated exclusively in terms of in-advance payback because real-world data about osimertinib are not yet available and thus the in-arrear payback cannot yet be estimated. RESULTS: For the 1-year contract, the average price for osimertinib was $13,798 (SD=$1,265) and the DSP(Adherence) was $13,785 (or -5.69% of the 2018 WAC) for a 30-day prescription. For the 2-year contract, the average price was $12,555 (SD=$2,847) and the DSP(Adherence) was $12,582 (or -13.92% of the 2018 WAC). CONCLUSIONS: We demonstrated that adherence-based pricing methods can be integrated into our proposed Six Delta platform for outcome-based pricing/contracting. The proof-of-concept exercise needs to be expanded with the in-arrear pricing method based on real world data to be secured.",
+  "authors": [
+    "Alkhatib, Nimer S",
+    "Alkhatib NS",
+    "Slack, Marion",
+    "Slack M",
+    "Bhattacharjee, Sandipan",
+    "Bhattacharjee S",
+    "Erstad, Brian",
+    "Erstad B",
+    "Ramos, Kenneth",
+    "Ramos K",
+    "McBride, Ali",
+    "McBride A",
+    "Abraham, Ivo",
+    "Abraham I"
+  ],
+  "journal": "Journal of medical economics",
+  "year": "2020",
+  "doi": "10.1080/13696998.2020.1815030",
+  "source_xml": "Pricing methods in outcome-based contracting δ6 adherence-based pricing.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182532",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

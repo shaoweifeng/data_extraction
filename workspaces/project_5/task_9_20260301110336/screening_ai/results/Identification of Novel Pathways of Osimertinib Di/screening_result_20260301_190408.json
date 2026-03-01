@@ -1,0 +1,28 @@
+{
+  "title": "Identification of Novel Pathways of Osimertinib Disposition and Potential Implications for the Outcome of Lung Cancer Therapy.",
+  "extracted_abstract": "Purpose: Osimertinib is a third-generation inhibitor of the epidermal growth factor receptor used in treatment of non-small cell lung cancer. A full understanding of its disposition and capacity for interaction with other medications will facilitate its effective use as a single agent and in combination therapy.Experimental Design: Recombinant cytochrome P450s and liver microsomal preparations were used to identify novel pathways of osimertinib metabolism in vitro A panel of knockout and mouse lines humanized for pathways of drug metabolism were used to establish the relevance of these pathways in vivoResults: Although some osimertinib metabolites were similar in mouse and human liver samples there were several significant differences, in particular a marked species difference in the P450s involved. The murine Cyp2d gene cluster played a predominant role in mouse, whereas CYP3A4 was the major human enzyme responsible for osimertinib metabolism. Induction of this enzyme in CYP3A4 humanized mice substantially decreased circulating osimertinib exposure. Importantly, we discovered a further novel pathway of osimertinib disposition involving CPY1A1. Modulation of CYP1A1/CYP1A2 levels markedly reduced parent drug concentrations, significantly altering metabolite pharmacokinetics (PK) in humanized mice in vivoConclusions: We demonstrate that a P450 enzyme expressed in smokers' lungs and lung tumors has the capacity to metabolise osimertinib. This could be a significant factor in defining the outcome of osimertinib treatment. This work also illustrates how P450-humanized mice can be used to identify and mitigate species differences in drug metabolism and thereby model the in vivo effect of critical metabolic pathways on anti-tumor response. Clin Cancer Res; 24(9); 2138-47. ©2018 AACR.",
+  "authors": [
+    "MacLeod, A Kenneth",
+    "MacLeod AK",
+    "Lin, De",
+    "Lin D",
+    "Huang, Jeffrey T-J",
+    "Huang JT",
+    "McLaughlin, Lesley A",
+    "McLaughlin LA",
+    "Henderson, Colin J",
+    "Henderson CJ",
+    "Wolf, C Roland",
+    "Wolf CR"
+  ],
+  "journal": "Clinical cancer research : an official journal of the American Association for",
+  "year": "2018",
+  "doi": "10.1158/1078-0432.CCR-17-3555",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/29437786",
+  "source_xml": "Identification of Novel Pathways of Osimertinib Disposition and Potential Implications for the Outco.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190408",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

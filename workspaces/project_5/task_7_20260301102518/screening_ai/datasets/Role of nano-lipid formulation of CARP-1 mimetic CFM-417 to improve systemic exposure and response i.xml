@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Role of nano-lipid formulation of CARP-1 mimetic, CFM-4.17 to improve systemic exposure and response in osimertinib resistant non-small cell lung cancer.</Title>
+    <Authors>
+      <Author>Kommineni, Nagavendra</Author>
+      <Author>Kommineni N</Author>
+      <Author>Nottingham, Ebony</Author>
+      <Author>Nottingham E</Author>
+      <Author>Bagde, Arvind</Author>
+      <Author>Bagde A</Author>
+      <Author>Patel, Nilkumar</Author>
+      <Author>Patel N</Author>
+      <Author>Rishi, Arun K</Author>
+      <Author>Rishi AK</Author>
+      <Author>Dev, Satyanarayan R S</Author>
+      <Author>Dev SRS</Author>
+      <Author>Singh, Mandip</Author>
+      <Author>Singh M</Author>
+    </Authors>
+    <Journal>European journal of pharmaceutics and biopharmaceutics : official journal of</Journal>
+    <Year>2021</Year>
+    <Abstract>BACKGROUND: EGFR mutated NSCLCs have been shown to employ the use of CARP-1 in overriding the signaling inhibition of tyrosine kinase inhibitors (such as Osimertinib). CFM 4.17 is a CARP-1 inhibitor which has a promising role in overcoming Tyrosine Kinase Inhibitor (TKI) resistance when used as a pre-treatment through promoting apoptosis. Lack of solubility, hydrophobicity leading to poor systemic exposure are the limitations of CFM 4.17. This can be overcome by nano lipid-based formulation (NLPF) of CFM 4.17 which can enhance systemic exposure in preclinical animal models as well as improve therapeutic efficacy in drug-resistant cancer cell lines. METHODS: Molecular docking simulation studies were performed for CFM 4.17. CFM 4.17-NLPF was formulated by melt dispersion technique and optimized using a Box-Behnken designed surface response methodology approach using Design Expert and MATLAB. In vitro, CFM 4.17 release studies were performed in simulated gastric fluids (SGF-pH-1.2) and simulated intestinal fluids (SIF- pH-6.8). Cell viability assays were performed with HCC827 and H1975 Osimertinib resistant and non-resistant cells in 2D and 3D culture models of Non-small cell lung cancer to determine the effects of CFM 4.17 pre-treatment in Osimertinib response. In vivo pharmacokinetics in rats were performed measuring the effects of NLPF on CFM 4.17 to improve the systemic exposure. RESULTS: CFM 4.17 was well accommodated in the active pocket of the active site of human EGFR tyrosine kinase. CFM 4.17 NLPF was optimized with robust experimental design with particle size less than 300 nm and % entrapment efficiency of 92.3 ± 1.23. Sustained diffusion-based release of CFM 4.17 was observed from NLPF in SGF and SIFs with Peppas and Higuchi based release kinetics, respectively. CFM 4.17 pretreatment improved response by decreasing IC50 value by 2-fold when compared to single treatment Osimertinib in both 2D monolayer and 3D spheroid assays in HCC827 and H1975 Osimertinib resistant and non-resistant cells of Non-small cell lung cancer. There were no differences between CFM 4.17 NLPF and suspension in 2D monolayer culture pretreatments; however, The 3D culture assays showed that CFM 4.17 NLPF improved combination sensitivity. Pharmacokinetic analysis showed that CFM 4.17 NLPF displayed higher AUC(tot) (2.9-fold) and C(max) (1.18-fold) as compared to free CFM 4.17. In contrast, the animal groups administered CFM 4.17 NLPF showed a 4.73-fold (in half-life) and a 3.07-fold increase (in MRT) when compared to equivalent dosed suspension. CONCLUSION: We have successfully formulated CFM 4.17 NLPFs by robust RSM design approach displaying improved response through sensitizing cells to Osimertinib treatment as well as improving the oral bioavailability of CFM 4.17.</Abstract>
+    <DOI>10.1016/j.ejpb.2020.11.007</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

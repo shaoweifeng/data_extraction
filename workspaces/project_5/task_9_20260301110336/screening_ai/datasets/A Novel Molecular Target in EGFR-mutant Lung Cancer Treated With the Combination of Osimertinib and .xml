@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A Novel Molecular Target in EGFR-mutant Lung Cancer Treated With the Combination of Osimertinib and Pemetrexed.</Title>
+    <Authors>
+      <Author>Takano, Natsuki</Author>
+      <Author>Takano N</Author>
+      <Author>Seike, Masahiro</Author>
+      <Author>Seike M</Author>
+      <Author>Sugano, Teppei</Author>
+      <Author>Sugano T</Author>
+      <Author>Matsuda, Kuniko</Author>
+      <Author>Matsuda K</Author>
+      <Author>Hisakane, Kakeru</Author>
+      <Author>Hisakane K</Author>
+      <Author>Yoshikawa, Akiko</Author>
+      <Author>Yoshikawa A</Author>
+      <Author>Nakamichi, Shinji</Author>
+      <Author>Nakamichi S</Author>
+      <Author>Noro, Rintaro</Author>
+      <Author>Noro R</Author>
+      <Author>Gemma, Akihiko</Author>
+      <Author>Gemma A</Author>
+    </Authors>
+    <Journal>Anticancer research</Journal>
+    <Year>2022</Year>
+    <Abstract>BACKGROUND/AIM: Synergistic effects of epidermal growth factor receptor tyrosine kinase inhibitors and chemotherapy have been reported. Here, we evaluated the therapeutic potential of combining osimertinib with pemetrexed and investigated the molecular mechanisms. MATERIALS AND METHODS: We analyzed the antitumor effects of osimertinib± pemetrexed in PC-9 and H1975 cells. Gene expression on exposure to osimertinib±pemetrexed was assessed in these cultured cells. Cell lines resistant to osimertinib±pemetrexed were established to explore mechanisms of resistance. RESULTS: Osimertinib+pemetrexed treatment delayed the emergence of resistance relative to monotherapy in vitro and in vivo. Expression of the anti-apoptotic gene PLK1 was down-regulated in PC-9 and H1975 exposed to osimertinib+ pemetrexed, whereas it was up-regulated in resistant cells. Furthermore, inhibition of PLK1 induced apoptosis and inhibited proliferation of resistant cells. CONCLUSION: Blocking PLK1 contributes to mediating the synergistic anti-proliferative effect of osimertinib+pemetrexed. PLK1 over-expression may be a critical mechanism for acquired resistance to osimertinib+pemetrexed.</Abstract>
+    <DOI>10.21873/anticanres.15529</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/35093869</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

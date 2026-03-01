@@ -1,0 +1,32 @@
+{
+  "title": "Leukocytes telomere length as a biomarker of adverse drug reactions induced by Osimertinib in advanced non-small cell lung cancer.",
+  "extracted_abstract": "This study aimed to measure relative telomere length (RTL) in blood leukocytes of advanced-stage NSCLC patients either with or without Osimertinib-induced ADRs and determine whether RTL could serve as a biomarker of Osimertinib-induced ADRs. Blood leukocytes RTL were measured in 63 advanced-stage NSCLC patients and 62 age-matched healthy controls using real-time polymerase chain reaction. In patients with advanced-stage NSCLC, RTL was significantly shorter than that in healthy controls (P < 0.001). Compared to patients without ADRs and those with mild/moderate ADRs, patients with severe ADRs exhibited significantly decreased RTL (P < 0.001, P < 0.001, respectively). ROC curve analysis uncovered a diagnostic value of RTL as a biomarker of Osimertinib-induced ADRs (AUC = 1.000, P < 0.001). Kaplan-Meier analysis revealed a significant association between shorter RTL and increased cumulative incidence of Osimertinib-induced ADRs in patients with advanced-stage NSCLC (P < 0.001). Shorter RTL in blood leukocytes would reflect the occurrence of Osimertinib-induced ADRs and might emerge as a promising biomarker for identifying advanced-stage NSCLC patients who are at risk of experiencing Osimertinib-induced ADRs, particularly those with severe ADRs.",
+  "authors": [
+    "Trachu, Narumol",
+    "Trachu N",
+    "Reungwetwattana, Thanyanan",
+    "Reungwetwattana T",
+    "Meanwatthana, Jennis",
+    "Meanwatthana J",
+    "Sukasem, Chonlaphat",
+    "Sukasem C",
+    "Majam, Teerapat",
+    "Majam T",
+    "Saengsiwaritt, Wacharapol",
+    "Saengsiwaritt W",
+    "Jittikoon, Jiraphun",
+    "Jittikoon J",
+    "Udomsinprasert, Wanvisa",
+    "Udomsinprasert W"
+  ],
+  "journal": "Scientific reports",
+  "year": "2024",
+  "doi": "10.1038/s41598-024-77935-0",
+  "url": "",
+  "source_xml": "Leukocytes telomere length as a biomarker of adverse drug reactions induced by Osimertinib in advanc.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183808",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

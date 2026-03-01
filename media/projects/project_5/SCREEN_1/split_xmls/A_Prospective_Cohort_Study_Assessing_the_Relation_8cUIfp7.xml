@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A Prospective Cohort Study Assessing the Relationship between Plasma Levels of Osimertinib and Treatment Efficacy and Safety.</Title>
+    <Authors>
+      <Author>Fukuhara, Tatsuro</Author>
+      <Author>Fukuhara T</Author>
+      <Author>Imai, Kazuhiro</Author>
+      <Author>Imai K</Author>
+      <Author>Nakagawa, Taku</Author>
+      <Author>Nakagawa T</Author>
+      <Author>Igusa, Ryotaro</Author>
+      <Author>Igusa R</Author>
+      <Author>Yokota, Hayato</Author>
+      <Author>Yokota H</Author>
+      <Author>Watanabe, Kana</Author>
+      <Author>Watanabe K</Author>
+      <Author>Suzuki, Aya</Author>
+      <Author>Suzuki A</Author>
+      <Author>Morita, Mami</Author>
+      <Author>Morita M</Author>
+      <Author>Onodera, Ren</Author>
+      <Author>Onodera R</Author>
+      <Author>Inoue, Akira</Author>
+      <Author>Inoue A</Author>
+      <Author>Miura, Masatomo</Author>
+      <Author>Miura M</Author>
+      <Author>Minamiya, Yoshihiro</Author>
+      <Author>Minamiya Y</Author>
+      <Author>Maemondo, Makoto</Author>
+      <Author>Maemondo M</Author>
+    </Authors>
+    <Journal>Biomedicines</Journal>
+    <Year>2023</Year>
+    <Abstract>Osimertinib is a standard treatment for patients with EGFR-mutated non-small cell lung carcinoma (NSCLC). We evaluated the relationship between plasma osimertinib concentrations and treatment outcome in patients with NSCLC for this cohort study. The plasma levels of osimertinib and its metabolite AZ5104 were measured a week after the start of treatment (P1). The primary endpoint was to evaluate the correlation between plasma concentration and adverse events (AEs). The correlation with treatment efficacy was one of the secondary endpoints. In patients with CNS metastases, the concentration in the cerebrospinal fluid was also measured. Forty-one patients were enrolled. The frequency of AEs was highest for rash, followed by anorexia and thrombocytopenia. Thirty-eight cases provided measurements for P1. The median plasma concentration of osimertinib was 227 ng/mL, and that of AZ5104 was 16.5 ng/mL. The mean CNS penetration rate of two cases was 3.8%. The P1 in the group with anorexia was significantly higher than that in the group without anorexia (385.0 ng/mL vs. 231.5 ng/mL, p = 0.009). Divided into quartiles by P1 trough level, Q2 + Q3 (164-338 ng/mL) had longer PFS, while Q1 and Q4 had shorter PFS. An appropriate plasma level of osimertinib may avoid some adverse events and induce long PFS. Further large-scale trials are warranted.</Abstract>
+    <DOI>10.3390/biomedicines11092501</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/37760942</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

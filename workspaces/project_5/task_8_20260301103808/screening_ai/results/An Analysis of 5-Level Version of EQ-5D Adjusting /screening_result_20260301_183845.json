@@ -1,0 +1,26 @@
+{
+  "title": "An Analysis of 5-Level Version of EQ-5D Adjusting for Treatment Switching: The Case of Patients With Epidermal Growth Factor Receptor T790M-Positive Nonsmall Cell Lung Cancer Treated With Osimertinib.",
+  "extracted_abstract": "OBJECTIVES: Treatment switching from control to treatment after disease progression is common in oncology trials. Analyses of survival data typically adjust for this bias, but such adjustments are rarely performed in analyses of patient-reported outcomes. This analysis aimed to examine the impact of adjusting for treatment switching on estimated treatment effects on 5-level version of EQ-5D (EQ-5D-5L) utilities and quality-adjusted life-years (QALYs). The AURA3 trial (NCT02151981) was a randomized controlled trial comparing osimertinib with platinum-based doublet chemotherapy (standard care) in patients with locally advanced or metastatic epidermal growth factor receptor mutant- and T790M-positive nonsmall cell lung cancer whose disease has progressed with previous epidermal growth factor receptor tyrosine kinase inhibitor therapy. METHODS: Descriptive analyses were used to compare treatment arms. The primary analysis used a 2-stage least squares instrumental variable regression to estimate treatment effect adjusting for treatment crossover. Time to deterioration, defined from baseline to minimally important deterioration in EQ-5D-5L utility, was assessed using a rank preserving structural failure time model. RESULTS: Intention-to-treat analysis of imputed data showed incremental QALYs for osimertinib of 0.23 at 60 weeks. Accounting for treatment switching increased this to 0.52 in the primary analysis and to 0.63 QALYs in sensitivity analysis at 150 weeks. Time to deterioration analysis showed longer health-related quality of life maintenance with osimertinib, of 12.76 weeks, although this was at the borderline of statistical significance (acceleration factor, ψ = -0.275; 95% confidence interval -0.50 to 0.00). CONCLUSIONS: This analysis demonstrates methods to adjust for treatment switching in the analysis of EQ-5D-5L from clinical trials. Failure to account for crossover substantially underestimated the QALY gain for osimertinib.",
+  "authors": [
+    "Singh, Jeshika",
+    "Singh J",
+    "Bourke, Siobhan",
+    "Bourke S",
+    "Dyer, Matthew",
+    "Dyer M",
+    "Devlin, Nancy",
+    "Devlin N",
+    "Longworth, Louise",
+    "Longworth L"
+  ],
+  "journal": "Value in health : the journal of the International Society for Pharmacoeconomics",
+  "year": "2022",
+  "doi": "10.1016/j.jval.2022.01.022",
+  "url": "",
+  "source_xml": "An Analysis of 5-Level Version of EQ-5D Adjusting for Treatment Switching The Case of Patients With .xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183845",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

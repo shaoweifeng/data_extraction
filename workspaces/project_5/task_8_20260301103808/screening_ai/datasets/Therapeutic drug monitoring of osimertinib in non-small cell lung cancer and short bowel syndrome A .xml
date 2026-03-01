@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Therapeutic drug monitoring of osimertinib in non-small cell lung cancer and short bowel syndrome: A case report.</Title>
+    <Authors>
+      <Author>Longuespée, Rémi</Author>
+      <Author>Longuespée R</Author>
+      <Author>Kunz, Julia</Author>
+      <Author>Kunz J</Author>
+      <Author>Fresnais, Margaux</Author>
+      <Author>Fresnais M</Author>
+      <Author>Foerster, Kathrin I</Author>
+      <Author>Foerster KI</Author>
+      <Author>Burhenne, Jürgen</Author>
+      <Author>Burhenne J</Author>
+      <Author>Thomas, Michael</Author>
+      <Author>Thomas M</Author>
+      <Author>Kazdal, Daniel</Author>
+      <Author>Kazdal D</Author>
+      <Author>Stenzinger, Albrecht</Author>
+      <Author>Stenzinger A</Author>
+      <Author>Christopoulos, Petros</Author>
+      <Author>Christopoulos P</Author>
+      <Author>Haefeli, Walter E</Author>
+      <Author>Haefeli WE</Author>
+    </Authors>
+    <Journal>British journal of clinical pharmacology</Journal>
+    <Year>2024</Year>
+    <Abstract>Short bowel syndrome (SBS) following extensive intestinal resection is often characterized by impaired absorption of orally administered drugs, including tyrosine kinase inhibitors (TKI). We report the case of a patient with EGFR-mutated non-small cell lung carcinoma treated with 80 mg/day of the TKI osimertinib who achieved partial response of the tumour, but was subsequently subjected to a double-barrelled jejunostomy due to ileus. Due to the development of SBS after the bypass surgery, plasma concentrations of osimertinib were monitored using mass spectrometry. The therapeutic drug monitoring confirmed a malabsorption of osimertinib in the patient (108 ng/mL, which is below the 5th percentile of the expected plasma concentration) and was useful to guide adjustments of TKI dosing in order to achieve adequate blood levels (161 ng/mL after increase of the dose to 120 mg/day) in order to maintain tumour control.</Abstract>
+    <DOI>10.1111/bcp.15924</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

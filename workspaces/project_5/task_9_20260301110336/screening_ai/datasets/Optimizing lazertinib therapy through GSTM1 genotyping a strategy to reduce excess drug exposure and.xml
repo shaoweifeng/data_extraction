@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Optimizing lazertinib therapy through GSTM1 genotyping: a strategy to reduce excess drug exposure and potential toxicity.</Title>
+    <Authors>
+      <Author>Ter Heine, Rob</Author>
+      <Author>Ter Heine R</Author>
+      <Author>van den Bosch, Bianca J C</Author>
+      <Author>van den Bosch BJC</Author>
+      <Author>van Geel, Robin M</Author>
+      <Author>van Geel RM</Author>
+      <Author>van Geffen, Wouter H</Author>
+      <Author>van Geffen WH</Author>
+      <Author>Hendriks, Lizza E L</Author>
+      <Author>Hendriks LEL</Author>
+      <Author>van den Heuvel, Michel M</Author>
+      <Author>van den Heuvel MM</Author>
+      <Author>Koele, Simon E</Author>
+      <Author>Koele SE</Author>
+      <Author>de Langen, Adrianus J</Author>
+      <Author>de Langen AJ</Author>
+      <Author>Oude Munnink, Thijs H</Author>
+      <Author>Oude Munnink TH</Author>
+      <Author>van der Wekken, Anthonie J</Author>
+      <Author>van der Wekken AJ</Author>
+    </Authors>
+    <Journal>Cancer chemotherapy and pharmacology</Journal>
+    <Year>2025</Year>
+    <Abstract>PURPOSE: The combination of lazertinib and amivantamab has shown superior efficacy over first line osimertinib in EGFR-mutated metastatic non-small cell lung cancer, but is associated with significant toxicity and high costs. Lazertinib exposure varies widely due to genetic polymorphisms of the encoding for GSTM1, with almost 50% of Caucasians having a non-functional enzyme resulting in an approximate twofold higher systemic drug exposure. Despite this, all patients receive a fixed 240 mg once-daily dose irrespective of GSTM1 status, leading to avoidable toxicity without additional clinical benefit. Our purpose was to develop alternative dosing regimens based on GSTM1 status. METHODS: We conducted pharmacokinetic simulations using an existing validated population pharmacokinetic model to evaluate genotype-guided alternative dosing strategies in GSTM1 null individuals. RESULTS: Two regimens- 160 mg once daily (QD) and 240 mg every other day-were predicted to provide systemic exposures comparable to or exceeding those seen in GSTM1 non-null patients on the standard dose. The 160 mg QD dose resulted in a geometric mean ratio in GSTM1 null patients (GMR) for the trough (Ctrough) and average (Caverage) concentration relative tot he approved dose in GSTM1 non-null patients of 1.43 and 1.19, respectively. The respective GMRs for Ctrough and Caverage associated with 240 mg every-other-day dosing were 0.90 and 0.89, and this dosing regimen could reduce drug expenses up to 50% ($132.860 per year per patient) based on current pricing. CONCLUSION: Our findings support the feasibility of individualized lazertinib dosing based on GSTM1 status to reduce toxicity and healthcare costs without compromising effective exposure.</Abstract>
+    <DOI>10.1007/s00280-025-04828-y</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/41198911</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

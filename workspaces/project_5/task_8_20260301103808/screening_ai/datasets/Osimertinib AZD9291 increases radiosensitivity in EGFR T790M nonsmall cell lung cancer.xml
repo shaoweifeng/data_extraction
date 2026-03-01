@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Osimertinib (AZD9291) increases radio‑sensitivity in EGFR T790M non‑small cell lung cancer.</Title>
+    <Authors>
+      <Author>Wang, Nannan</Author>
+      <Author>Wang N</Author>
+      <Author>Wang, Linlin</Author>
+      <Author>Wang L</Author>
+      <Author>Meng, Xiangjiao</Author>
+      <Author>Meng X</Author>
+      <Author>Wang, Jia</Author>
+      <Author>Wang J</Author>
+      <Author>Zhu, Lifang</Author>
+      <Author>Zhu L</Author>
+      <Author>Liu, Changting</Author>
+      <Author>Liu C</Author>
+      <Author>Li, Shaorong</Author>
+      <Author>Li S</Author>
+      <Author>Zheng, Li</Author>
+      <Author>Zheng L</Author>
+      <Author>Yang, Zhenfan</Author>
+      <Author>Yang Z</Author>
+      <Author>Xing, Ligang</Author>
+      <Author>Xing L</Author>
+      <Author>Yu, Jinming</Author>
+      <Author>Yu J</Author>
+    </Authors>
+    <Journal>Oncology reports</Journal>
+    <Year>2019</Year>
+    <Abstract>Osimertinib (AZD9291) is a third generation epidermal growth factor receptor (EGFR) tyrosine kinase inhibitor that has demonstrated significant clinical benefits in patients with EGFR‑sensitizing mutations or the T790M mutation. However, the potential therapeutic effect of osimertinib combined with ionizing irradiation (IR) is not well understood. The present study investigated treatment with osimertinib combined with IR in EGFR T790M non‑small cell lung cancer (NCI‑H1975) in vitro and in vivo. The results revealed that osimertinib inhibited proliferation and clonogenic survival following irradiation, decreased G2/M phase arrest in irradiated cells, and delayed DNA damage repair in a concentration‑ and time‑dependent manner. Furthermore, osimertinib alone or in combination with IR, blocked the phosphorylation of EGFR (Tyr1068/Tyr1173), protein kinase B and extracellular signal‑regulated kinase. Osimertinib also enhanced the antitumor activity of IR in tumor‑bearing nude mice. The results of the present study indicated that osimertinib has therapeutic potential as a radiation‑sensitizer in lung cancer cells harboring the EGFR T790M mutation, providing a rationale for clinically combining osimertinib with irradiation in EGFR T790M non‑small cell lung cancer.</Abstract>
+    <DOI>10.3892/or.2018.6803</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

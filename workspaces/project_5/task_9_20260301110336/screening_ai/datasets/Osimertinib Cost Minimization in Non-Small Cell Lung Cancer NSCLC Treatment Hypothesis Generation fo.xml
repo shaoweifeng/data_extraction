@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Osimertinib Cost Minimization in Non-Small Cell Lung Cancer (NSCLC) Treatment: Hypothesis Generation for a Population Pharmacokinetic Approach for Equivalent Dose Optimization of Osimertinib in Combination with Cobicistat.</Title>
+    <Authors>
+      <Author>Westra, Niels</Author>
+      <Author>Westra N</Author>
+      <Author>Kruithof, Paul D</Author>
+      <Author>Kruithof PD</Author>
+      <Author>Croes, Sander</Author>
+      <Author>Croes S</Author>
+      <Author>van Geel, Robin M J M</Author>
+      <Author>van Geel RMJM</Author>
+      <Author>Hendriks, Lizza E L</Author>
+      <Author>Hendriks LEL</Author>
+      <Author>Touw, Daan J</Author>
+      <Author>Touw DJ</Author>
+      <Author>Kosterink, Jos G W</Author>
+      <Author>Kosterink JGW</Author>
+      <Author>Stevens, Jasper</Author>
+      <Author>Stevens J</Author>
+      <Author>Oude Munnink, Thijs H</Author>
+      <Author>Oude Munnink TH</Author>
+      <Author>Mian, Paola</Author>
+      <Author>Mian P</Author>
+    </Authors>
+    <Journal>Journal of clinical pharmacology</Journal>
+    <Year>2025</Year>
+    <Abstract>Pharmacokinetic boosting can be a strategy to enhance osimertinib exposure and reduce treatment associated costs. The OSIBOOST trial demonstrated that it was feasible to boost low osimertinib plasma trough levels with cobicistat. The current study aims to establish the equivalent dose of cobicistat boosted osimertinib compared to osimertinib 80 mg once daily (QD) by population pharmacokinetic (popPK) modeling. A popPK model was developed on the pharmacokinetic data from the OSIBOOST study using NONMEM 7.4.4. Simulations were performed with cobicistat boosted osimertinib dosing regimens to evaluate their equivalence to the standard of osimertinib 80 mg QD. A dose level was assumed equivalent when the 90% confidence interval (CI) of the geometric mean ratios (GMR) for the area under the curve over 144 h (AUC(0-144h)) and maximum osimertinib concentration (C(max)) were in the acceptance range of 0.8-1.25. Cobicistat decreased osimertinib CL/F by 29.6% compared to osimertinib monotherapy (P &lt; .0001). Osimertinib 80 mg 2 days on, 1 day off, boosted with cobicistat 150 mg QD was equivalent for osimertinib AUC(0-144h) (GMR [90% CI] = 0.96 [0.94-0.98]) and C(max) (GMR [90% CI] = 1.06 [1.04-1.08]) compared to osimertinib 80 mg QD monotherapy. However, this regimen was not equivalent for AZ5104 AUC(0-144h) (GMR [90% CI] = 0.67 [0.66-0.68]) and C(max) (GMR [90% CI] = 0.74 [0.73-0.76]). Theoretically, this reduced dose of cobicistat boosted osimertinib can potentially save approximately 33% in osimertinib treatment associated costs whilst maintaining adequate osimertinib exposure.</Abstract>
+    <DOI>10.1002/jcph.70085</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/40742292</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

@@ -1,0 +1,33 @@
+{
+  "title": "Design, synthesis and antitumour activity of pyrimidine derivatives as novel selective EGFR kinase inhibitors.",
+  "extracted_abstract": "Non-small cell lung cancer (NSCLC) is the most common type of lung cancer, often linked to overexpression or abnormal activation of the epidermal growth factor receptor (EGFR). The issue of developing resistance to third-generation EGFR kinase inhibitors, such as osimertinib, underscores the urgent need for new therapies to overcome this resistance. Our findings revealed that compound A8 exhibits 88.01% kinase inhibition efficacy against the EGFR(L858R/T790M) mutation at a concentration of 0.1 μM, with an IC(50) value of 5.0 nM. Moreover, its selectivity for this double mutation is 29.5, surpassing that of osimertinib. Most notably, A8 demonstrates an inhibitory activity of 2.9 nM against the EGFR(L858R/T790M/C797S) triple mutation, outperforming the benchmark drug osimertinib. Furthermore, compound A8 has demonstrated strong antiproliferative effects against H1975 cells, and its activity was better than osimertinib. The mechanism by which compound A8 operates as a selective EGFR(L858R/T790M) inhibitor was confirmed through a series of cell migration, apoptosis, and cell cycle assays. This lays the foundation for the development of a new structural type of EGFR kinase inhibitors.",
+  "authors": [
+    "Zhang, Cheng",
+    "Zhang C",
+    "Huo, Yiwen",
+    "Huo Y",
+    "Fu, Jianfang",
+    "Fu J",
+    "Liu, Yue",
+    "Liu Y",
+    "Zhou, Qinjiang",
+    "Zhou Q",
+    "Hou, Mingyue",
+    "Hou M",
+    "Duan, Xiaoxuan",
+    "Duan X",
+    "Lv, Yanna",
+    "Lv Y",
+    "Hu, Jinxing",
+    "Hu J"
+  ],
+  "journal": "Molecular diversity",
+  "year": "2025",
+  "doi": "10.1007/s11030-024-11048-8",
+  "source_xml": "Design synthesis and antitumour activity of pyrimidine derivatives as novel selective EGFR kinase in.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182554",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

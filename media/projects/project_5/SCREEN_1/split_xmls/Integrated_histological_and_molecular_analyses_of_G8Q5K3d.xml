@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Integrated histological and molecular analyses of rebiopsy samples at osimertinib progression improve post-progression survivals: A single-center retrospective study.</Title>
+    <Authors>
+      <Author>Cheng, Jiang-Tao</Author>
+      <Author>Cheng JT</Author>
+      <Author>Yao, Yi-Hui</Author>
+      <Author>Yao YH</Author>
+      <Author>Gao, Yu-Er</Author>
+      <Author>Gao YE</Author>
+      <Author>Zhang, Shi-Ling</Author>
+      <Author>Zhang SL</Author>
+      <Author>Chen, Hua-Jun</Author>
+      <Author>Chen HJ</Author>
+      <Author>Wang, Zhen</Author>
+      <Author>Wang Z</Author>
+      <Author>Yan, Hong-Hong</Author>
+      <Author>Yan HH</Author>
+      <Author>Zhou, Qing</Author>
+      <Author>Zhou Q</Author>
+      <Author>Tu, Hai-Yan</Author>
+      <Author>Tu HY</Author>
+      <Author>Zhang, Xu-Chao</Author>
+      <Author>Zhang XC</Author>
+      <Author>Su, Jian</Author>
+      <Author>Su J</Author>
+      <Author>Xie, Zhi</Author>
+      <Author>Xie Z</Author>
+      <Author>Lizaso, Analyn</Author>
+      <Author>Lizaso A</Author>
+      <Author>Chen, Shu-Yin</Author>
+      <Author>Chen SY</Author>
+      <Author>Lin, Xuan</Author>
+      <Author>Lin X</Author>
+      <Author>Xiang, Jian-Xing</Author>
+      <Author>Xiang JX</Author>
+      <Author>Wu, Yi-Long</Author>
+      <Author>Wu YL</Author>
+      <Author>Yang, Jin-Ji</Author>
+      <Author>Yang JJ</Author>
+    </Authors>
+    <Journal>Lung cancer (Amsterdam, Netherlands)</Journal>
+    <Year>2020</Year>
+    <Abstract>BACKGROUND: This single-center retrospective cohort study sought to investigate the impact of rebiopsy analysis after osimertinib progression in improving the survival outcomes. METHODS: Eighty-nine patients with EGFR T790M-positive advanced NSCLC who received second- or further-line osimertinib between January 2017 and July 2019 were included in this study. The co-primary study endpoints were post-progression progression-free survival (pPFS), defined as the time from osimertinib progression until progression from further-line treatment, and post-progression overall survival (pOS), defined as the time from osimertinib progression until death or the last follow-up date. RESULTS: Pairwise analysis revealed that receiving targeted therapy as further-line treatment after osimertinib progression did not statistically improve the pPFS (P = 0.285) or the pOS (P = 0.903) compared to chemotherapy. However, patients who submitted rebiopsy samples at osimertinib progression for histological and molecular analyses, particularly those who had actionable markers and received highly matched therapy, had significantly longer pPFS and pOS as compared to those who received low-level matched therapy (pPFS = 10.0 m vs. 4.1 m, P = 0.005; pOS = 19.4 m vs. 10.0 m, P = 0.023), unmatched therapy (pPFS = 10.0 m vs. 4.7 m, P = 0.009; pOS = 19.4 m vs. 7.0 m, P = 0.001), and those without rebiopsy data (Rebiopsy vs Non-rebiopsy; pPFS = 6.1 m vs. 3.3 m, P = 0.014; pOS = 11.7 m vs. 6.8 m, P = 0.011). CONCLUSION: Our real-world cohort study demonstrates that integrated histological and molecular analyses of rebiopsy specimens after osimertinib progression could provide more opportunities for individualized treatments to improve the post-progression survival of patients with advanced NSCLC. Our findings provide clinical evidence that supports the inclusion of NGS-based analysis of rebiopsy specimens as standard-of-care after osimertinib progression and warrants further prospective evaluation.</Abstract>
+    <DOI>10.1016/j.lungcan.2020.10.010</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/33126092</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

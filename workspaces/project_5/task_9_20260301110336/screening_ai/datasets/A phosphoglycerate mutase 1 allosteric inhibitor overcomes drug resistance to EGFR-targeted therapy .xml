@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A phosphoglycerate mutase 1 allosteric inhibitor overcomes drug resistance to EGFR-targeted therapy via disrupting IL-6/JAK2/STAT3 signaling pathway in lung adenocarcinoma.</Title>
+    <Authors>
+      <Author>Liang, Qian</Author>
+      <Author>Liang Q</Author>
+      <Author>Gong, Miaomiao</Author>
+      <Author>Gong M</Author>
+      <Author>Zou, Jing-Hua</Author>
+      <Author>Zou JH</Author>
+      <Author>Luo, Ming-Yu</Author>
+      <Author>Luo MY</Author>
+      <Author>Jiang, Lu-Lu</Author>
+      <Author>Jiang LL</Author>
+      <Author>Wang, Cheng</Author>
+      <Author>Wang C</Author>
+      <Author>Shen, Ning-Xiang</Author>
+      <Author>Shen NX</Author>
+      <Author>Zhang, Mo-Cong</Author>
+      <Author>Zhang MC</Author>
+      <Author>Xu, Lu</Author>
+      <Author>Xu L</Author>
+      <Author>Lei, Hui-Min</Author>
+      <Author>Lei HM</Author>
+      <Author>Zhang, Ke-Ren</Author>
+      <Author>Zhang KR</Author>
+      <Author>Zhang, Rui</Author>
+      <Author>Zhang R</Author>
+      <Author>Zhuang, Guanglei</Author>
+      <Author>Zhuang G</Author>
+      <Author>Zhu, Liang</Author>
+      <Author>Zhu L</Author>
+      <Author>Chen, Hong-Zhuan</Author>
+      <Author>Chen HZ</Author>
+      <Author>Zhou, Lu</Author>
+      <Author>Zhou L</Author>
+      <Author>Shen, Ying</Author>
+      <Author>Shen Y</Author>
+    </Authors>
+    <Journal>Drug resistance updates : reviews and commentaries in antimicrobial and</Journal>
+    <Year>2023</Year>
+    <Abstract>Resistance to epidermal growth factor receptor (EGFR) inhibitors, from the first-generation erlotinib to the third generation osimertinib, is a clinical challenge in the treatment of patients with EGFR-mutant lung adenocarcinoma. Our previous work found that a novel allosteric inhibitor of phosphoglycerate mutase 1 (PGAM1), HKB99, restrains erlotinib resistance in lung adenocarcinoma cells. However, the role of HKB99 in osimertinib resistance and its underlying molecular mechanism remains to be elucidated. Herein, we found that IL-6/JAK2/STAT3 signaling pathway is aberrantly activated in both erlotinib and osimertinib resistant cells. Importantly, HKB99 significantly blocks the interaction of PGAM1 with JAK2 and STAT3 via the allosteric sites of PGAM1, which leads to inactivation of JAK2/STAT3 and thereby disrupts IL-6/JAK2/STAT3 signaling pathway. Consequently, HKB99 remarkably restores EGFR inhibitor sensitivity and exerts synergistic tumoricidal effect. Additionally, HKB99 alone or in combination with osimertinib down-regulated the level of p-STAT3 in xenograft tumor models. Collectively, this study identifies PGAM1 as a key regulator in IL-6/JAK2/STAT3 axis in the development of resistance to EGFR inhibitors, which could serve as a therapeutic target in lung adenocarcinoma with acquired resistance to EGFR inhibitors.</Abstract>
+    <DOI>10.1016/j.drup.2023.100957</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/36990047</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

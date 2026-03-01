@@ -1,0 +1,33 @@
+{
+  "title": "Modulation of Fexofenadine Pharmacokinetics by Osimertinib in Patients With Advanced EGFR-Mutated Non-Small Cell Lung Cancer.",
+  "extracted_abstract": "Osimertinib is a potent, third-generation, irreversible, central nervous system active epidermal growth factor receptor (EGFR)-tyrosine kinase inhibitor (TKI) that selectively inhibits EGFR-TKI sensitizing and EGFR T790M resistance mutations. It is approved for first-line treatment of patients with advanced non-small cell lung cancer (NSCLC) whose tumors have EGFR exon 19 deletions or exon 21 L858R mutations, and for patients with T790M-positive advanced NSCLC whose disease has progressed on or after EGFR-TKI therapy. This study investigated the pharmacokinetics (PK) of fexofenadine (P-glycoprotein substrate) following single- and multiple-dose osimertinib in patients with advanced NSCLC who have progressed on prior EGFR-TKI therapy. This open-label, phase 1 study (NCT02908750) comprised the PK phase and continued access phase. The former comprised 2 distinct periods with a 3- to 7-day washout: treatment period 1 (n = 24, fexofenadine 120 mg, day 1) and treatment period 2 (fexofenadine 120 mg + osimertinib 80 mg single dose on days 1 and 39 and osimertinib 80 mg once daily from days 4 to 41). Patients could continue osimertinib 80 mg once daily based on investigator's discretion in the continued access phase. Fexofenadine area under the plasma concentration-time curve and maximum concentration increased by 56% (90% confidence interval [CI], 35.4-78.6) and 76% (90%CI, 49.3-108.3) following coadministration with osimertinib single dose, and by 27% (90%CI, 11.2-45.8) and 25% (90%CI, 5.6-48.1) when given with osimertinib at steady state, respectively. Following osimertinib coadministration, median fexofenadine time to maximum concentration increased by approximately 30 minutes compared with time to maximum concentration following fexofenadine alone. No new osimertinib safety findings were observed. The increase in fexofenadine exposure following osimertinib coadministration shows osimertinib as a weak P-glycoprotein inhibitor.",
+  "authors": [
+    "Calvo, Emiliano",
+    "Calvo E",
+    "Lee, Jong-Seok",
+    "Lee JS",
+    "Kim, Sang-We",
+    "Kim SW",
+    "Moreno, Victor",
+    "Moreno V",
+    "deCastro Carpeno, Javier",
+    "deCastro Carpeno J",
+    "Weilert, Doris",
+    "Weilert D",
+    "Laus, Gianluca",
+    "Laus G",
+    "Mann, Helen",
+    "Mann H",
+    "Vishwanathan, Karthick",
+    "Vishwanathan K"
+  ],
+  "journal": "Journal of clinical pharmacology",
+  "year": "2019",
+  "doi": "10.1002/jcph.1403",
+  "source_xml": "Modulation of Fexofenadine Pharmacokinetics by Osimertinib in Patients With Advanced EGFR-Mutated No.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182539",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

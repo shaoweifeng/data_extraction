@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>SHR-A1403, a novel c-mesenchymal-epithelial transition factor (c-Met) antibody-drug conjugate, overcomes AZD9291 resistance in non-small cell lung cancer cells overexpressing c-Met.</Title>
+    <Authors>
+      <Author>Tong, Mengya</Author>
+      <Author>Tong M</Author>
+      <Author>Gao, Mingzhao</Author>
+      <Author>Gao M</Author>
+      <Author>Xu, Yongping</Author>
+      <Author>Xu Y</Author>
+      <Author>Fu, Li</Author>
+      <Author>Fu L</Author>
+      <Author>Li, Yun</Author>
+      <Author>Li Y</Author>
+      <Author>Bao, Xubin</Author>
+      <Author>Bao X</Author>
+      <Author>Fu, Haoyu</Author>
+      <Author>Fu H</Author>
+      <Author>Quan, Haitian</Author>
+      <Author>Quan H</Author>
+      <Author>Lou, Liguang</Author>
+      <Author>Lou L</Author>
+    </Authors>
+    <Journal>Cancer science</Journal>
+    <Year>2019</Year>
+    <Abstract>Epidermal growth factor receptor (EGFR) tyrosine kinase inhibitors (TKI) have been used as the first-line treatment of non-small cell lung cancers (NSCLC) harboring EGFR-activating mutations, but acquired resistance is ubiquitous and needs to be solved urgently. Here, we introduce an effective approach for overcoming resistance to the EGFR-TKI, AZD9291, in NSCLC cells using SHR-A1403, a novel c-mesenchymal-epithelial transition factor (c-Met)-targeting antibody-drug conjugate (ADC) consisting of an anti-c-Met monoclonal antibody (c-Met mAb) conjugated to a microtubule inhibitor. Resistant cells were established by exposing HCC827 to increasing concentrations of EGFR-TKI. c-Met was found to be overexpressed in most resistant cells. AZD9291 resistance was partially restored by combination of AZD9291 and crizotinib only in resistant cells overexpressing phospho-c-Met, which synergistically inhibited c-Met-mediated phosphorylation of the downstream targets ERK1/2 and AKT. In resistant cells overexpressing c-Met, neither crizotinib nor c-Met mAb was able to overcome AZD9291 resistance. In contrast, SHR-A1403 strongly inhibited proliferation of AZD9291-resistant HCC827 overexpressing c-Met, regardless of the levels of c-Met phosphorylation. SHR-A1403 bound to resistant cells overexpressing c-Met was internalized into cells and released associated microtubule inhibitor, resulting in cell-killing activity that was dependent on c-Met expression levels only, irrespective of the involvement of c-Met or EGFR signaling in AZD9291 resistance. Consistent with its activity in vitro, SHR-A1403 significantly inhibited the growth of AZD9291-resistant HCC827 tumors and caused tumor regression in vivo. Thus, our findings show that SHR-A1403 efficiently overcomes AZD9291 resistance in cells overexpressing c-Met, and further indicate that c-Met expression level is a biomarker predictive of SHR-A1403 efficacy.</Abstract>
+    <DOI>10.1111/cas.14180</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/31446643</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

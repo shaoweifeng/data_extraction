@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Transient Asymptomatic Pulmonary Opacities During Osimertinib Treatment and its Clinical Implication.</Title>
+    <Authors>
+      <Author>Lee, Hansang</Author>
+      <Author>Lee H</Author>
+      <Author>Lee, Ho Yun</Author>
+      <Author>Lee HY</Author>
+      <Author>Sun, Jong-Mu</Author>
+      <Author>Sun JM</Author>
+      <Author>Lee, Se-Hoon</Author>
+      <Author>Lee SH</Author>
+      <Author>Kim, Youjin</Author>
+      <Author>Kim Y</Author>
+      <Author>Park, Song Ee</Author>
+      <Author>Park SE</Author>
+      <Author>Ahn, Jin Seok</Author>
+      <Author>Ahn JS</Author>
+      <Author>Park, Keunchil</Author>
+      <Author>Park K</Author>
+      <Author>Ahn, Myung-Ju</Author>
+      <Author>Ahn MJ</Author>
+    </Authors>
+    <Journal>Journal of thoracic oncology : official publication of the International</Journal>
+    <Year>2018</Year>
+    <Abstract>INTRODUCTION: Osimertinib is an oral, potent, irreversible third-generation EGFR tyrosine kinase inhibitor approved for the treatment of T790M-positive NSCLC patients who failed first- or second-generation EGFR tyrosine kinase inhibitors. Interstitial lung disease (ILD) is a rare complication with osimertinib, occurring in 1% to 3% of patients. Recently, a relatively high incidence of transient asymptomatic pulmonary opacities (TAPOs), which are different from ILD, has been described. However, its clinical implication has not been fully determined yet. METHODS: We retrospectively analyzed 74 EGFR T790M mutant NSCLC patients treated with osimertinib. Serial computed tomographic findings were reviewed by a thoracic radiologist independently, and TAPO was classified according to its radiologic pattern. We also analyzed the correlation of TAPO with clinical outcomes. RESULTS: Among 74 patients, TAPOs were found in 15 (20.3%). The median time to TAPO development was 24.0 weeks (range, 1 to 72 weeks) and the median duration of TAPO was 6.0 weeks (range, 5 to 24 weeks) during continued osimertinib treatment. The most common radiological patterns of TAPO include cryptogenic organizing pneumonia and/or simple eosinophilic pneumonia. There was no significant difference in patient characteristics between TAPO-positive and -negative groups. The duration of exposure to osimertinib was significantly longer in TAPO-positive than -negative groups (25.0 months versus 13.0 months, p = 0.009). The median progression-free survival and the median overall survival was numerically longer in TAPO-positive than -negative groups (22 months versus 15 months for progression-free survival, p = 0.293; 37 months versus 24 months for overall survival, p = 0.059), respectively. CONCLUSIONS: TAPOs are frequently observed with osimertinib treatment and may be mistaken for isolated pulmonary progression or drug-induced ILD. Given the lack of serious clinical deterioration, it is reasonable to continue osimertinib with regular computed tomographic-scan follow-up. For further clinical validation of TAPOs, long-term follow-up and large studies are warranted.</Abstract>
+    <DOI>10.1016/j.jtho.2018.04.038</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/29775809</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

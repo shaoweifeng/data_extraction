@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Design, synthesis and antitumour activity of pyrimidine derivatives as novel selective EGFR kinase inhibitors.</Title>
+    <Authors>
+      <Author>Zhang, Cheng</Author>
+      <Author>Zhang C</Author>
+      <Author>Huo, Yiwen</Author>
+      <Author>Huo Y</Author>
+      <Author>Fu, Jianfang</Author>
+      <Author>Fu J</Author>
+      <Author>Liu, Yue</Author>
+      <Author>Liu Y</Author>
+      <Author>Zhou, Qinjiang</Author>
+      <Author>Zhou Q</Author>
+      <Author>Hou, Mingyue</Author>
+      <Author>Hou M</Author>
+      <Author>Duan, Xiaoxuan</Author>
+      <Author>Duan X</Author>
+      <Author>Lv, Yanna</Author>
+      <Author>Lv Y</Author>
+      <Author>Hu, Jinxing</Author>
+      <Author>Hu J</Author>
+    </Authors>
+    <Journal>Molecular diversity</Journal>
+    <Year>2025</Year>
+    <Abstract>Non-small cell lung cancer (NSCLC) is the most common type of lung cancer, often linked to overexpression or abnormal activation of the epidermal growth factor receptor (EGFR). The issue of developing resistance to third-generation EGFR kinase inhibitors, such as osimertinib, underscores the urgent need for new therapies to overcome this resistance. Our findings revealed that compound A8 exhibits 88.01% kinase inhibition efficacy against the EGFR(L858R/T790M) mutation at a concentration of 0.1 μM, with an IC(50) value of 5.0 nM. Moreover, its selectivity for this double mutation is 29.5, surpassing that of osimertinib. Most notably, A8 demonstrates an inhibitory activity of 2.9 nM against the EGFR(L858R/T790M/C797S) triple mutation, outperforming the benchmark drug osimertinib. Furthermore, compound A8 has demonstrated strong antiproliferative effects against H1975 cells, and its activity was better than osimertinib. The mechanism by which compound A8 operates as a selective EGFR(L858R/T790M) inhibitor was confirmed through a series of cell migration, apoptosis, and cell cycle assays. This lays the foundation for the development of a new structural type of EGFR kinase inhibitors.</Abstract>
+    <DOI>10.1007/s11030-024-11048-8</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/39832084</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

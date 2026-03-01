@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Prognosticators of osimertinib treatment outcomes in patients with EGFR-mutant non-small cell lung cancer and leptomeningeal metastasis.</Title>
+    <Authors>
+      <Author>Chiang, Chi-Lu</Author>
+      <Author>Chiang CL</Author>
+      <Author>Ho, Hsiang-Ling</Author>
+      <Author>Ho HL</Author>
+      <Author>Yeh, Yi-Chen</Author>
+      <Author>Yeh YC</Author>
+      <Author>Lee, Cheng-Chia</Author>
+      <Author>Lee CC</Author>
+      <Author>Huang, Hsu-Ching</Author>
+      <Author>Huang HC</Author>
+      <Author>Shen, Chia-I</Author>
+      <Author>Shen CI</Author>
+      <Author>Luo, Yung-Hung</Author>
+      <Author>Luo YH</Author>
+      <Author>Chen, Yuh-Min</Author>
+      <Author>Chen YM</Author>
+      <Author>Chiu, Chao-Hua</Author>
+      <Author>Chiu CH</Author>
+      <Author>Chou, Teh-Ying</Author>
+      <Author>Chou TY</Author>
+    </Authors>
+    <Journal>Journal of cancer research and clinical oncology</Journal>
+    <Year>2023</Year>
+    <Abstract>PURPOSE: Leptomeningeal metastasis (LM) is a serious complication of non-small cell lung cancer (NSCLC), particularly in patients with EGFR mutations. In this study, we investigated the survival outcomes of patients with EGFR-mutant NSCLC who have developed LM and explored the factors associated with their survival. METHODS: From April 2018 to November 2021, patients with EGFR-mutant NSCLC who underwent cerebrospinal fluid (CSF) sampling under the clinical suspicion of LM were enrolled. The patients' clinicodemographic characteristics, treatment history including whole-brain radiation therapy (WBRT), overall survival (OS), and intracranial progression-free survival (icPFS) were measured. EGFR mutations in cell-free tumor DNA (ctDNA) of CSF, including T790M mutation, were analyzed. RESULTS: We enrolled 62 patients with NSCLC. The median time form diagnosis to LM was 23.1 months and 16 (25.8%) patients had history of prior third-generation EGFR-TKI use. EGFR mutation in CSF ctDNA was detected in 53 patients (85.5%); of them, 10 (16.1%) had T790M mutation. The patients' icPFS and OS after osimertinib were 6.43 and 9.37 months, respectively, and were comparable among patients with different sensitive EGFR mutations, indicating that EGFR mutation status did not affect osimertinib efficacy. Patients who received WBRT after LM had numerically higher icPFS and OS compared to those without. Multivariate analysis revealed that lack of prior exposure to third-generation EGFR-TKI was associated with better OS. CONCLUSIONS: Osimertinib is effective in patients with EGFR-mutant NSCLC who developed LM and prior third-generation EGFR-TKI use was associated with poor survival in these patients. The role of WBRT warrants further investigation.</Abstract>
+    <DOI>10.1007/s00432-022-04396-1</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

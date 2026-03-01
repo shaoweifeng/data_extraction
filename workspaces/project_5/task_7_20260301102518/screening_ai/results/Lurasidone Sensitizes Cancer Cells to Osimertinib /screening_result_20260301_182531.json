@@ -1,0 +1,33 @@
+{
+  "title": "Lurasidone Sensitizes Cancer Cells to Osimertinib by Inducing Autophagy and Reduction of Survivin.",
+  "extracted_abstract": "BACKGROUND/AIM: Epidermal growth factor receptor tyrosine kinase inhibitors (EGFR-TKIs) are key drugs in cancer treatment due to their minor adverse effects and outstanding anticancer effects. However, drugs for overcoming EGFR-TKI resistance are not in clinical use so far. Therefore, to overcome resistance, we focused on lurasidone, a new antipsychotic drug, due to its mild adverse effect profile from the viewpoint of drug repositioning. MATERIALS AND METHODS: We explored the effects of lurasidone alone or in combination with EGFR-TKI on the growth of osimertinib-resistant cancer cells the anti-apoptotic marker expression such as survivin, and autophagy levels by LC-3B expression. RESULTS: Within a non-toxic concentration range in normal cells, lurasidone and osimertinib combination therapy showed a growth-inhibitory effect in osimertinib-resistant cancer cells in vitro and in vivo. Furthermore, lurasidone decreased survivin expression and mildly induced autophagy. CONCLUSION: Lurasidone may increase the sensitivity to osimertinib in osimertinib-resistant cancer cells in drug repurposing.",
+  "authors": [
+    "Suzuki, Shuhei",
+    "Suzuki S",
+    "Yamamoto, Masahiro",
+    "Yamamoto M",
+    "Sanomachi, Tomomi",
+    "Sanomachi T",
+    "Togashi, Keita",
+    "Togashi K",
+    "Seino, Shizuka",
+    "Seino S",
+    "Sugai, Asuka",
+    "Sugai A",
+    "Yoshioka, Takashi",
+    "Yoshioka T",
+    "Okada, Masashi",
+    "Okada M",
+    "Kitanaka, Chifumi",
+    "Kitanaka C"
+  ],
+  "journal": "Anticancer research",
+  "year": "2021",
+  "doi": "10.21873/anticanres.15237",
+  "source_xml": "Lurasidone Sensitizes Cancer Cells to Osimertinib by Inducing Autophagy and Reduction of Survivin.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182531",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

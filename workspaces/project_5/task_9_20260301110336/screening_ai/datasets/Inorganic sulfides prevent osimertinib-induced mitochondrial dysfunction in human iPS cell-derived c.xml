@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Inorganic sulfides prevent osimertinib-induced mitochondrial dysfunction in human iPS cell-derived cardiomyocytes.</Title>
+    <Authors>
+      <Author>Kondo, Moe</Author>
+      <Author>Kondo M</Author>
+      <Author>Nakamura, Yuya</Author>
+      <Author>Nakamura Y</Author>
+      <Author>Kato, Yuri</Author>
+      <Author>Kato Y</Author>
+      <Author>Nishimura, Akiyuki</Author>
+      <Author>Nishimura A</Author>
+      <Author>Fukata, Mitsuhiro</Author>
+      <Author>Fukata M</Author>
+      <Author>Moriyama, Shohei</Author>
+      <Author>Moriyama S</Author>
+      <Author>Ito, Tomoya</Author>
+      <Author>Ito T</Author>
+      <Author>Umezawa, Keitaro</Author>
+      <Author>Umezawa K</Author>
+      <Author>Urano, Yasuteru</Author>
+      <Author>Urano Y</Author>
+      <Author>Akaike, Takaaki</Author>
+      <Author>Akaike T</Author>
+      <Author>Akashi, Koichi</Author>
+      <Author>Akashi K</Author>
+      <Author>Kanda, Yasunari</Author>
+      <Author>Kanda Y</Author>
+      <Author>Nishida, Motohiro</Author>
+      <Author>Nishida M</Author>
+    </Authors>
+    <Journal>Journal of pharmacological sciences</Journal>
+    <Year>2024</Year>
+    <Abstract>Despite the widespread recognition of the global concern regarding the onset of cardiovascular diseases in a significant number of patients following cancer treatment, definitive strategies for prevention and treatment remain elusive. In this study, we established systems to evaluate the influence of anti-cancer drugs on the quality control of mitochondria, pivotal for energy metabolism, using human induced pluripotent stem cell-derived cardiomyocytes (hiPSC-CMs). Osimertinib, an epidermal growth factor receptor tyrosine kinase inhibitor used for treatment in lung cancer, reportedly increases the risk of cardiovascular disease. However, its underlying mechanism is largely unknown. Here, we found that the treatment of hiPSC-CMs with osimertinib and doxorubicin, but not trastuzumab and cisplatin, revealed a concentration-dependent impairment of respiratory function accompanied by mitochondrial fission. We previously reported the significant role of sulfur metabolism in maintaining mitochondrial quality in the heart. Co-treatment with various inorganic sulfur donors (Na(2)S, Na(2)S(2), Na(2)S(3)) alongside anti-cancer drugs demonstrated that Na(2)S attenuated the cardiotoxicity of osimertinib but not doxorubicin. Osimertinib decreased intracellular reduced sulfur levels, while Na(2)S treatment suppressed the sulfur leakage, suggesting its potential in mitigating osimertinib-induced cardiotoxicity. These results imply the prospect of inorganic sulfides, such as Na(2)S, as a seed for precision pharmacotherapy to alleviate osimertinib's cardiotoxic effects.</Abstract>
+    <DOI>10.1016/j.jphs.2024.07.007</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/39179336</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

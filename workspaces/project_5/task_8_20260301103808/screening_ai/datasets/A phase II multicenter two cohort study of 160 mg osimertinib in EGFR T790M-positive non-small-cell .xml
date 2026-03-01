@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A phase II, multicenter, two cohort study of 160 mg osimertinib in EGFR T790M-positive non-small-cell lung cancer patients with brain metastases or leptomeningeal disease who progressed on prior EGFR TKI therapy.</Title>
+    <Authors>
+      <Author>Park, S</Author>
+      <Author>Park S</Author>
+      <Author>Lee, M-H</Author>
+      <Author>Lee MH</Author>
+      <Author>Seong, M</Author>
+      <Author>Seong M</Author>
+      <Author>Kim, S T</Author>
+      <Author>Kim ST</Author>
+      <Author>Kang, J-H</Author>
+      <Author>Kang JH</Author>
+      <Author>Cho, B C</Author>
+      <Author>Cho BC</Author>
+      <Author>Lee, K H</Author>
+      <Author>Lee KH</Author>
+      <Author>Cho, E K</Author>
+      <Author>Cho EK</Author>
+      <Author>Sun, J-M</Author>
+      <Author>Sun JM</Author>
+      <Author>Lee, S-H</Author>
+      <Author>Lee SH</Author>
+      <Author>Ahn, J S</Author>
+      <Author>Ahn JS</Author>
+      <Author>Park, K</Author>
+      <Author>Park K</Author>
+      <Author>Ahn, M-J</Author>
+      <Author>Ahn MJ</Author>
+    </Authors>
+    <Journal>Annals of oncology : official journal of the European Society for Medical</Journal>
+    <Year>2020</Year>
+    <Abstract>BACKGROUND: Up to 40% of patients with non-small-cell lung cancer (NSCLC) and epidermal growth factor receptor (EGFR) mutations treated with EGFR tyrosine kinase inhibitors (TKIs) present with disease progression in the central nervous system (CNS), either as brain metastases (BM) or leptomeningeal metastases (LM). Osimertinib (80 mg), a third-generation, irreversible, oral EGFR TKI, has shown efficacy in active CNS metastases. However, efficacy of osimertinib 160 mg in BM or LM is unclear. PATIENTS AND METHODS: This prospective, single-arm, two cohort study evaluated the efficacy of osimertinib 160 mg in T790M-positive BM or LM NSCLC patients who progressed on prior EGFR TKI (NCT03257124) treatment. The primary end points were objective response rate (ORR) (H(1) = 30%) for the BM cohort and overall survival (OS) (H(1) = 5 months) for the LM cohort. RESULTS: The median follow-up duration was 10.1 months and 9.6 months for the BM and LM cohorts, respectively. In the BM cohort, intracranial ORR and disease control rate were 55.0% and 77.5%, respectively. The median progression-free survival (PFS) was 7.6 months [95% confidence interval (CI) 5.0-16.6]; the median OS was 16.9 months [95% CI 7.9-not reached (NR)]. In the LM cohort, intracranial disease control rate was 92.5% and complete response rate was 12.5%. The median OS was 13.3 months (95% CI 9.1-NR); the median PFS was 8.0 months (95% CI 7.2-NR). Subgroup analyses based on previous exposure to T790M-targeting agents, including osimertinib 80 mg or other third-generation EGFR TKIs, showed no difference in PFS in both the BM (n = 18, P = 0.39) and LM (n = 17, P = 0.85) cohorts. Previous radiotherapy favored PFS in the BM cohort (hazard ratio 0.42, P = 0.04). The most common adverse events were decreased appetite, diarrhea, and skin rash; however, most were grade 1-2. CONCLUSION: Thus, osimertinib 160 mg demonstrated promising ORR and survival benefit with a tolerable safety profile in EGFR T790M-positive NSCLC patients with CNS metastasis who progressed on prior EGFR TKIs.</Abstract>
+    <DOI>10.1016/j.annonc.2020.06.017</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

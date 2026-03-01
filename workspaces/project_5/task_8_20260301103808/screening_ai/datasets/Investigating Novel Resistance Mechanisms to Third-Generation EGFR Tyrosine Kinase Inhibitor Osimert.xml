@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Investigating Novel Resistance Mechanisms to Third-Generation EGFR Tyrosine Kinase Inhibitor Osimertinib in Non-Small Cell Lung Cancer Patients.</Title>
+    <Authors>
+      <Author>Yang, Zhe</Author>
+      <Author>Yang Z</Author>
+      <Author>Yang, Nong</Author>
+      <Author>Yang N</Author>
+      <Author>Ou, Qiuxiang</Author>
+      <Author>Ou Q</Author>
+      <Author>Xiang, Yi</Author>
+      <Author>Xiang Y</Author>
+      <Author>Jiang, Tao</Author>
+      <Author>Jiang T</Author>
+      <Author>Wu, Xue</Author>
+      <Author>Wu X</Author>
+      <Author>Bao, Hua</Author>
+      <Author>Bao H</Author>
+      <Author>Tong, Xiaoling</Author>
+      <Author>Tong X</Author>
+      <Author>Wang, Xiaonan</Author>
+      <Author>Wang X</Author>
+      <Author>Shao, Yang W</Author>
+      <Author>Shao YW</Author>
+      <Author>Liu, Yunpeng</Author>
+      <Author>Liu Y</Author>
+      <Author>Wang, Yan</Author>
+      <Author>Wang Y</Author>
+      <Author>Zhou, Caicun</Author>
+      <Author>Zhou C</Author>
+    </Authors>
+    <Journal>Clinical cancer research : an official journal of the American Association for</Journal>
+    <Year>2018</Year>
+    <Abstract>Purpose: The third-generation EGFR tyrosine kinase inhibitor osimertinib is approved to treat patients with EGFR T790M-positive non-small cell lung cancer (NSCLC) who have developed resistance to earlier-generation drugs. Acquired EGFR C797S mutation has been reported to mediate osimertinib resistance in some patients. However, the remaining resistance mechanisms are largely unknown.Experimental Design: We performed mutation profiling using targeted next-generation sequencing (NGS) for 416 cancer-relevant genes on 93 osimertinib-resistant lung cancer patients' samples, mainly cell-free DNAs (cfDNAs), and matched pretreatment samples of 12 patients. In vitro experiments were conducted to functionally study the secondary EGFR mutations identified.Results:EGFR G796/C797, L792, and L718/G719 mutations were identified in 24.7%, 10.8%, and 9.7% of the cases, respectively, with certain mutations coexisting in one patient with different prevalence. L792 and L718 mutants markedly increased the half inhibitory concentration (IC(50)) of osimertinib in vitro, among which the L718Q mutation conferred the greatest resistance to osimertinib, as well as gefitinib resistance when not coexisting with T790M. Further analysis of the 12 matched pretreatment samples confirmed that these EGFR mutations were acquired during osimertinib treatment. Alterations in parallel or downstream oncogenes such as MET, KRAS, and PIK3CA were also discovered, potentially contributing to the osimertinib-resistance in patients without EGFR secondary mutations.Conclusions: We present comprehensive mutation profiles of a large cohort of osimertinib-resistance lung cancer patients using mainly cfDNA. Besides C797 mutations, novel secondary mutations of EGFR L718 and L792 residues confer osimertinib resistance, both in vitro and in vivo, and are of great clinical and pharmaceutical relevance. Clin Cancer Res; 24(13); 3097-107. ©2018 AACR.</Abstract>
+    <DOI>10.1158/1078-0432.CCR-17-2310</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

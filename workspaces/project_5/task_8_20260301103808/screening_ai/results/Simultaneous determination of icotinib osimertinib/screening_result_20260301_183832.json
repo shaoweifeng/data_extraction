@@ -1,0 +1,32 @@
+{
+  "title": "Simultaneous determination of icotinib, osimertinib, aumolertinib, and anlotinib in human plasma for therapeutic drug monitoring by UPLC-MS/MS.",
+  "extracted_abstract": "Epidermal growth factor receptor tyrosine kinase inhibitors (EGFR-TKIs) such as icotinib, osimertinib, and aumolertinib have emerged as promising treatment options for EGFR mutated Non-small cell lung cancer (NSCLC) patients. Additionally, anlotinib, an anti-angiogenic agent targeting VEGFR, FGFR, and PDGFR, has been used in combination with EGFR-TKIs in NSCLC cases. A method utilizing ultrahigh performance liquid chromatography-tandem mass spectrometry (UPLC-MS/MS) was developed and validated for quantifying icotinib, osimertinib, aumolertinib and anlotinib simultaneously in clinical TDM. The chromatographic separation was performed using a Kinetex C18 column (100 mm × 2.1 mm) and an elution gradient of ammonium acetate in water acidified with 0.1 % formic acid and in acetonitrile. The assay was validated over a linear range of 4-2000 ng/mL for icotinib, 2-1000 ng/mL for osimertinib, 1-500 ng/mL for aumolertinib, and 0.8-400 ng/mL for anlotinib, following the guidelines on bioanalytical methods by FDA. The quantification method exhibited satisfactory performance in terms of selectivity, accuracy (from 91.3 % to 107 %), precision (intra- and inter-day coeffficients of variation ranged from 0.944 % to 7.48 %), linearity, recovery (from 86.0 % to 91.9 %), matrix effect (IS-normalized matrix factors were from 96.7 % to 102 %), and stability. Overall, the method proved to be sensitive, reliable, and straightforward, enabling successful simultaneous determination of blood concentrations of icotinib, osimertinib, aumolertinib, and anlotinib in patients. The validity of the method has been confirmed across various instruments.",
+  "authors": [
+    "Xu, Yuxiang",
+    "Xu Y",
+    "Qie, Hongxin",
+    "Qie H",
+    "Zhao, Haopeng",
+    "Zhao H",
+    "Gao, Xiaonan",
+    "Gao X",
+    "Gao, Jinglin",
+    "Gao J",
+    "Feng, Zhangying",
+    "Feng Z",
+    "Bai, Jing",
+    "Bai J",
+    "Wang, Mingxia",
+    "Wang M"
+  ],
+  "journal": "Journal of pharmaceutical and biomedical analysis",
+  "year": "2024",
+  "doi": "10.1016/j.jpba.2024.116445",
+  "url": "",
+  "source_xml": "Simultaneous determination of icotinib osimertinib aumolertinib and anlotinib in human plasma for th.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183832",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Pharmacological effects of osimertinib on a chicken chorioallantoic membrane xenograft model with the EGFR exon-19-deleted advanced NSCLC mutation.</Title>
+    <Authors>
+      <Author>Barthélémy, David</Author>
+      <Author>Barthélémy D</Author>
+      <Author>Vigneron, Arnaud</Author>
+      <Author>Vigneron A</Author>
+      <Author>Rousset, Xavier</Author>
+      <Author>Rousset X</Author>
+      <Author>Guitton, Jérome</Author>
+      <Author>Guitton J</Author>
+      <Author>Grolleau, Emmanuel</Author>
+      <Author>Grolleau E</Author>
+      <Author>Raffin, Margaux</Author>
+      <Author>Raffin M</Author>
+      <Author>Balandier, Julie</Author>
+      <Author>Balandier J</Author>
+      <Author>Lescuyer, Gaëlle</Author>
+      <Author>Lescuyer G</Author>
+      <Author>Bardou, Mathilde</Author>
+      <Author>Bardou M</Author>
+      <Author>Geiguer, Florence</Author>
+      <Author>Geiguer F</Author>
+      <Author>Couraud, Sébastien</Author>
+      <Author>Couraud S</Author>
+      <Author>Bardel, Claire</Author>
+      <Author>Bardel C</Author>
+      <Author>Viallet, Jean</Author>
+      <Author>Viallet J</Author>
+      <Author>Benzerdjeb, Nazim</Author>
+      <Author>Benzerdjeb N</Author>
+      <Author>Payen, Léa</Author>
+      <Author>Payen L</Author>
+    </Authors>
+    <Journal>FEBS open bio</Journal>
+    <Year>2025</Year>
+    <Abstract>Non-small cell lung cancer (NSCLC) affects 10-50% of patients with epidermal growth factor receptor (EGFR) mutations. Osimertinib is a third-generation EGFR tyrosine kinase inhibitor (TKI) that radically changes the outcome of patients with tumors bearing EGFR sensitizing or EGFR T790M resistance mutations. However, resistance usually occurs, and new therapeutic combinations need to be explored. The chorioallantoic membrane (CAM) xenograft model is ideal for studying aggressive tumor growth and the responses to complex therapeutic combinations due to its vascularization and complex microenvironment. This study aims to demonstrate the relevance of analyzing a complex therapeutic response to osimertinib treatment, especially through advanced transcriptomic analysis with the CAM model, which has been limited thus far. We engrafted HCC827 cells (EGFR p.E746_A750del) into the CAM model and treated them with various osimertinib doses for 7 days. The study involved supervised multivariate discrimination and ontology analysis of human transcriptional data. We found that CDX tumor growth inversely correlated with osimertinib dosage, with a notable 35% tumor weight reduction at 10 μm. Transcriptomic analysis revealed that osimertinib reduces EGFR pathway activity and its effectors, and dampens chemotaxis, immune recruitment and angiogenesis, indicating that effectiveness extends beyond cellular mechanisms to the tissue level. This was supported by a 15% reduction in blood vessels around the xenograft in osimertinib-treated cases. This study is the first to demonstrate that ontological analysis of transcriptomic data in the CAM model aligns with clinical observations, highlighting the relevance of this methodology for understanding and ameliorating the efficacy of targeted therapy in NSCLC.</Abstract>
+    <DOI>10.1002/2211-5463.13970</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

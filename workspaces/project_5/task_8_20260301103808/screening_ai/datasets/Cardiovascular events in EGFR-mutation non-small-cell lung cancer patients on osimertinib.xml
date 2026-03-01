@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Cardiovascular events in EGFR-mutation non-small-cell lung cancer patients on osimertinib.</Title>
+    <Authors>
+      <Author>Mensah, Samuel Akaakole</Author>
+      <Author>Mensah SA</Author>
+      <Author>Ahmad, Syed</Author>
+      <Author>Ahmad S</Author>
+      <Author>Alruwaili, Waleed</Author>
+      <Author>Alruwaili W</Author>
+      <Author>Raval, Rutu</Author>
+      <Author>Raval R</Author>
+      <Author>Gonuguntla, Karthik</Author>
+      <Author>Gonuguntla K</Author>
+      <Author>Patel, Brijesh</Author>
+      <Author>Patel B</Author>
+    </Authors>
+    <Journal>European journal of hospital pharmacy : science and practice</Journal>
+    <Year>2025</Year>
+    <Abstract>OBJECTIVES: There have been cases of cardiotoxicity induced by osimertinib in patients with non-small-cell lung cancer (NSCLC). However, limited data exist for a comprehensive cardiotoxicity profile analysis for osimertinib use in NSCLC patients. The aim of this study was to report the entire profile of cardiotoxicities after the initiation of osimertinib in consecutive patients with epidermal growth factor receptor (EGFR) mutation at a single health system. METHODS: The data were retrospectively collected from electronic medical records for all patients who were started on osimertinib for NSCLC at West Virginia University Health System. Prevalence of heart failure (HF), atrial fibrillation, and prolonged QT before and after starting osimertinib were calculated. RESULTS: This study had 116 participants and the median age was 72 years. The frequency of each new cardiotoxicity was between 6% and 9%, and the overall percentage of patients who had developed any of the four cardiotoxicities while on osimertinib was 19.9%. The median time of follow-up was 477 days and the median time on osimertinib for all patients was 390 days. The strongest risk factor in predicting a new onset cardiac event was hypertension with a hazard ratio (HR) of 6.35 (confidence interval (CI) 1.48 to 27.23, p=0.013) and HR 5.36 (CI 1.23 to 23.39, p=0.025) in univariate and multivariate analysis respectively. CONCLUSION: Osimertinib appears to be associated with an increase in cardiac abnormalities. Given the association between this medication exposure and the observed cardiac toxicities, use of osimertinib may entail closer cardiac monitoring of electrocardiogram (ECG) and echocardiogram abnormalities.</Abstract>
+    <DOI>10.1136/ejhpharm-2024-004319</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

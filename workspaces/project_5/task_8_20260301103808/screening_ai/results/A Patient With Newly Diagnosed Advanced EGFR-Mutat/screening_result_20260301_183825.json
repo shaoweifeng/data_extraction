@@ -1,0 +1,24 @@
+{
+  "title": "A Patient With Newly Diagnosed, Advanced EGFR-Mutated Non-Small Cell Lung Cancer.",
+  "extracted_abstract": "A 40-year-old woman presented with a productive cough and shortness of breath that limited her regular activities. Her past medical history was relevant for hypertension since 2016; it is well controlled and treated with enalapril 5 mg twice daily. She also revealed a past wood smoke exposure of 2 hours per day for 10 years during her childhood. A chest computed tomography (CT) scan was performed which showed a 30-mm lung nodule in the lower left lobe and mediastinal and ipsilateral pleural thickening with moderate pleural effusion and several bilateral lung metastases.",
+  "authors": [
+    "Lara-Mejía, Luis",
+    "Lara-Mejía L",
+    "Sánchez-Reyes, Roberto",
+    "Sánchez-Reyes R",
+    "Avilés-Salas, Alejandro",
+    "Avilés-Salas A",
+    "Arrieta, Oscar",
+    "Arrieta O"
+  ],
+  "journal": "Oncology (Williston Park, N.Y.)",
+  "year": "2020",
+  "doi": "",
+  "url": "",
+  "source_xml": "A Patient With Newly Diagnosed Advanced EGFR-Mutated Non-Small Cell Lung Cancer.xml",
+  "exclusion_reason": "摘要内容不包含奥希替尼",
+  "number_exclusion_reason": "1",
+  "include_or_not": "no",
+  "processing_time": "20260301_183825",
+  "raw_ai_response": "[{\"exclusion_reason\": \"摘要内容不包含奥希替尼\", \"number_exclusion_reason\": \"1\", \"include_or_not\": \"no\"}]"
+}

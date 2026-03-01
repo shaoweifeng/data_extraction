@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Exposure-Response Analysis of Osimertinib in EGFR Mutation Positive Non-Small Cell Lung Cancer Patients in a Real-Life Setting.</Title>
+    <Authors>
+      <Author>Boosman, René J</Author>
+      <Author>Boosman RJ</Author>
+      <Author>Jebbink, Merel</Author>
+      <Author>Jebbink M</Author>
+      <Author>Veldhuis, Wouter B</Author>
+      <Author>Veldhuis WB</Author>
+      <Author>Groenland, Stefanie L</Author>
+      <Author>Groenland SL</Author>
+      <Author>van Veggel, Bianca A M H</Author>
+      <Author>van Veggel BAMH</Author>
+      <Author>Moeskops, Pim</Author>
+      <Author>Moeskops P</Author>
+      <Author>de Langen, Adrianus J</Author>
+      <Author>de Langen AJ</Author>
+      <Author>Beijnen, Jos H</Author>
+      <Author>Beijnen JH</Author>
+      <Author>Smit, Egbert F</Author>
+      <Author>Smit EF</Author>
+      <Author>Huitema, Alwin D R</Author>
+      <Author>Huitema ADR</Author>
+      <Author>Steeghs, Neeltje</Author>
+      <Author>Steeghs N</Author>
+    </Authors>
+    <Journal>Pharmaceutical research</Journal>
+    <Year>2022</Year>
+    <Abstract>BACKGROUND: Osimertinib, an irreversible inhibitor of the epidermal growth factor receptor (EGFR) is an important drug in the treatment of EGFR-mutation positive non-small cell lung cancer (NSCLC). Clinical trials with osimertinib could not demonstrate an exposure-efficacy relationship, while a relationship between exposure and toxicity has been found. In this study, we report the exposure-response relationships of osimertinib in a real-life setting. METHODS: A retrospective observational cohort study was performed, including patients receiving 40 - 80 mg osimertinib as ≥ 2 line therapy and from whom pharmacokinetic samples were collected during routine care. Trough plasma concentrations (C(min,pred)) were estimated and used as a measure of osimertinib exposure. A previously defined exploratory pharmacokinetic threshold of 166 µg/L was taken to explore the exposure-efficacy relationship. RESULTS: A total of 145 patients and 513 osimertinib plasma concentration samples were included. Median progression free survival (PFS) was 13.3 (95% confidence interval (CI):10.3 - 19.1) months and 9.3 (95% CI: 7.2 - 11.1) months for patients with C(min,pred) &lt; 166 µg/L and C(min,pred) ≥ 166 µg/L, respectively (p = 0.03). In the multivariate analysis, a C(min,pred) &lt; 166 µg/L resulted in a non-statistically significant hazard ratio of 1.10 (95% CI: 0.60 - 2.01; p = 77). Presence of a EGFR driver-mutation other than the exon 19 del or L858R mutations, led to a shorter PFS with a hazard ratio of 2.89 (95% CI: 1.18 - 7.08; p = 0.02). No relationship between exposure and toxicity was observed (p = 0.91). CONCLUSION: In our real-life cohort, no exposure-response relationship was observed for osimertinib in the current dosing scheme. The feasibility of a standard lower fixed dosing of osimertinib in clinical practice should be studied prospectively.</Abstract>
+    <DOI>10.1007/s11095-022-03355-2</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

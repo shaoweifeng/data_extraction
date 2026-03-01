@@ -1,0 +1,28 @@
+{
+  "title": "Licochalcone A inhibits EGFR signalling and translationally suppresses survivin expression in human cancer cells.",
+  "extracted_abstract": "Dysfunction of epidermal growth factor receptor (EGFR) signalling plays a critical role in the oncogenesis of non-small-cell lung cancer (NSCLC). Here, we reported the natural product, licochalcone A, exhibited a profound anti-tumour efficacy through directly targeting EGFR signalling. Licochalcone A inhibited in vitro cell growth, colony formation and in vivo tumour growth of either wild-type (WT) or activating mutation EGFR-expressed NSCLC cells. Licochalcone A bound with L858R single-site mutation, exon 19 deletion, L858R/T790M mutation and WT EGFR ex vivo, and impaired EGFR kinase activity both in vitro and in NSCLC cells. The in silico docking study further indicated that licochalcone A interacted with both WT and mutant EGFRs. Moreover, licochalcone A induced apoptosis and decreased survivin protein robustly in NSCLC cells. Mechanistically, we found that treatment with licochalcone A translationally suppressed survivin through inhibiting EGFR downstream kinases ERK1/2 and Akt. Depletion of the translation initiation complex by eIF4E knockdown effectively inhibited survivin expression. In contrast, knockdown of 4E-BP1 showed the opposite effect and dramatically enhanced survivin protein level. Overall, our data indicate that targeting survivin might be an alternative strategy to sensitize EGFR-targeted therapy.",
+  "authors": [
+    "Gao, Feng",
+    "Gao F",
+    "Li, Ming",
+    "Li M",
+    "Yu, Xinfang",
+    "Yu X",
+    "Liu, Wenbin",
+    "Liu W",
+    "Zhou, Li",
+    "Zhou L",
+    "Li, Wei",
+    "Li W"
+  ],
+  "journal": "Journal of cellular and molecular medicine",
+  "year": "2021",
+  "doi": "10.1111/jcmm.16135",
+  "url": "",
+  "source_xml": "Licochalcone A inhibits EGFR signalling and translationally suppresses survivin expression in human .xml",
+  "exclusion_reason": "摘要内容未提及奥希替尼，违反排除标准：排除不包含奥希替尼",
+  "number_exclusion_reason": "1",
+  "include_or_not": "no",
+  "processing_time": "20260301_183825",
+  "raw_ai_response": "[{\"exclusion_reason\": \"摘要内容未提及奥希替尼，违反排除标准：排除不包含奥希替尼\", \"number_exclusion_reason\": \"1\", \"include_or_not\": \"no\"}]"
+}

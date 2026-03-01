@@ -1,0 +1,30 @@
+{
+  "title": "Lnc-TMEM132D-AS1 as a potential therapeutic target for acquired resistance to osimertinib in non-small-cell lung cancer.",
+  "extracted_abstract": "Acquired resistance is a major obstacle to the therapeutic efficacy of osimertinib in non-small-cell lung cancer (NSCLC). Current knowledge about the role of long non-coding RNAs (lncRNAs) in this phenomenon is insufficient. In this study, we screened the differentially expressed lncRNAs between osimertinib-sensitive and -resistant NSCLC cell lines, and determined that lnc-TMEM132D-AS1 was significantly upregulated in osimertinib-resistant NSCLC cells, as well as in the plasma of osimertinib-resistant NSCLC patients. Lnc-TMEM132D-AS1 markedly decreased the osimertinib sensitivity of NSCLC cells. After osimertinib exposure, it increased the cell proliferation and colony formation, decreased the cell apoptosis, and induced M2/G-phase cell cycle arrest. After identifying its cytoplasmic localization, a functional lnc-TMEM132D-AS1-miRNA-mRNA interaction network and a protein-protein interaction (PPI) network were constructed to analyze its putative target genes and biological functions. Lnc-TMEM132D-AS1 could directly bind to miR-766-5p and lead to the upregulation of ectonucleoside triphosphate diphosphohydrolase-1 (ENTPD1), resulting in an increase in cell proliferation. Moreover, upregulated ENTPD1 was also associated with enhanced tumor infiltration of immunosuppressive cells and poor prognosis in NSCLC patients. In summary, lnc-TMEM132D-AS1 plays a crucial role in osimertinib resistance. It may serve as a prognostic biomarker and a potential therapeutic target for acquired resistance to osimertinib in NSCLC.",
+  "authors": [
+    "Wang, Nan",
+    "Wang N",
+    "Zhao, Qilin",
+    "Zhao Q",
+    "Huang, Yutang",
+    "Huang Y",
+    "Wen, Chunjie",
+    "Wen C",
+    "Li, Yaji",
+    "Li Y",
+    "Bao, Meihua",
+    "Bao M",
+    "Wu, Lanxiang",
+    "Wu L"
+  ],
+  "journal": "Molecular omics",
+  "year": "2023",
+  "doi": "10.1039/d2mo00261b",
+  "url": "",
+  "source_xml": "Lnc-TMEM132D-AS1 as a potential therapeutic target for acquired resistance to osimertinib in non-sma.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183818",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

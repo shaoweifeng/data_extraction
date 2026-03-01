@@ -1,0 +1,28 @@
+{
+  "title": "The natural product berberine synergizes with osimertinib preferentially against MET-amplified osimertinib-resistant lung cancer via direct MET inhibition.",
+  "extracted_abstract": "Berberine is a natural product that has long been used in traditional Chinese medicine due to its antimicrobial, anti-inflammatory and metabolism-regulatory properties. Osimertinib is the first third-generation EGFR-tyrosine kinase inhibitor (TKI) approved for the treatment of non-small cell lung cancer (NSCLC) with activating EGFR mutations and those resistant to earlier generation EGFR-TKIs due to a T790M mutation. However, emergence of acquired resistance to osimertinib limits its long-term efficacy in the clinic. One known mechanism of acquired resistance to osimertinib and other EGFR-TKIs is MET (c-MET) gene amplification. Here, we report that berberine, when combined with osimertinib, synergistically and selectively decreased the survival of several MET-amplified osimertinib-resistant EGFR mutant NSCLC cell lines with enhanced induction of apoptosis likely through Bim elevation and Mcl-1 reduction. Importantly, this combination effectively enhanced suppressive effect on the growth of MET-amplified osimertinib-resistant xenografts in nude mice and was well tolerated. Molecular modeling showed that berberine was able to bind to the kinase domain of non-phosphorylated MET, occupy the front of the binding pocket, and interact with the activation loop, in a similar way as other known MET inhibitors do. MET kinase assay showed clear concentration-dependent inhibitory effects of berberine against MET activity, confirming its kinase inhibitory activity. These findings collectively suggest that berberine can act as a naturally-existing MET inhibitor to synergize with osimertinib in overcoming osimertinib acquired resistance caused by MET amplification.",
+  "authors": [
+    "Chen, Zhen",
+    "Chen Z",
+    "Vallega, Karin A",
+    "Vallega KA",
+    "Chen, Haiying",
+    "Chen H",
+    "Zhou, Jia",
+    "Zhou J",
+    "Ramalingam, Suresh S",
+    "Ramalingam SS",
+    "Sun, Shi-Yong",
+    "Sun SY"
+  ],
+  "journal": "Pharmacological research",
+  "year": "2022",
+  "doi": "10.1016/j.phrs.2021.105998",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/34826601",
+  "source_xml": "The natural product berberine synergizes with osimertinib preferentially against MET-amplified osime.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190339",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

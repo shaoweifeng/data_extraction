@@ -1,0 +1,30 @@
+{
+  "title": "The Influence of CYP3A4 Genetic Polymorphism and Proton Pump Inhibitors on Osimertinib Metabolism.",
+  "extracted_abstract": "The aim of this study was to 1) investigate the effects of 27 CYP3A4 variants on the metabolism of osimertinib and 2) study the interactions between osimertinib and others as well as the underlying mechanism. A recombinant human CYP3A4 enzymatic incubation system was developed and employed to determine the kinetic profile of CYP3A4 variants. Ultra-performance liquid chromatography-tandem mass spectrometry (UPLC-MS/MS) was applied to detect the concentration of the main metabolite, AZ5104. The results demonstrated that the relative clearance rates of CYP3A4.19, 10, 18, 5, 16, 14, 11, 2, 13, 12, 7, 8, and 17 in catalyzing osimertinib were significantly reduced to a minimum of 25.68% compared to CYP3A4.1, while those of CYP3A4.29, 32, 33, 28, 15, 34, and 3 were obviously enhanced, ranging from 114.14% to 284.52%. The activities of the remaining variants were almost equal to those of CYP3A4.1. In addition, 114 drugs were screened to determine the potential interaction with osimertinib based on the rat liver microsome (RLM) reaction system. Sixteen of them inhibited the production of AZ5104 to 20% or less, especially proton pump inhibitors, among which the IC(50) of rabeprazole was 6.49 ± 1.17 μM in RLM and 20.39 ± 2.32 μM in human liver microsome (HLM), with both following competitive and non-competitive mixed mechanism. In an in vivo study, Sprague-Dawley (SD) rats were randomly divided into groups, with six animals per group, receiving osimertinib with or without rabeprazole, omeprazole, and lansoprazole. We found that the AUC((0-t)), AUC((0-∞)), and C(max) of osimertinib decreased significantly after co-administration with rabeprazole orally, but they increased remarkably when osimertinib was administered through intraperitoneal injection. Taken together, our data demonstrate that the genetic polymorphism and proton pump inhibitors remarkably influence the disposition of osimertinib, thereby providing basic data for the precise application of osimertinib.",
+  "authors": [
+    "Gao, Nanyong",
+    "Gao N",
+    "Zhang, Xiaodan",
+    "Zhang X",
+    "Hu, Xiaoqin",
+    "Hu X",
+    "Kong, Qihui",
+    "Kong Q",
+    "Cai, Jianping",
+    "Cai J",
+    "Hu, Guoxin",
+    "Hu G",
+    "Qian, Jianchang",
+    "Qian J"
+  ],
+  "journal": "Frontiers in pharmacology",
+  "year": "2022",
+  "doi": "10.3389/fphar.2022.794931",
+  "url": "",
+  "source_xml": "The Influence of CYP3A4 Genetic Polymorphism and Proton Pump Inhibitors on Osimertinib Metabolism.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183808",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

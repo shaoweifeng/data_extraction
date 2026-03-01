@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>[Not Available].</Title>
+    <Authors>
+      <Author>Musicco, Felice</Author>
+      <Author>Musicco F</Author>
+      <Author>Lasala, Ruggero</Author>
+      <Author>Lasala R</Author>
+      <Author>Santoleri, Fiorenzo</Author>
+      <Author>Santoleri F</Author>
+      <Author>Costantini, Alberto</Author>
+      <Author>Costantini A</Author>
+      <Author>Abrate, Paolo</Author>
+      <Author>Abrate P</Author>
+      <Author>Romagnoli, Alessia</Author>
+      <Author>Romagnoli A</Author>
+      <Author>Terrenato, Irene</Author>
+      <Author>Terrenato I</Author>
+    </Authors>
+    <Journal>Recenti progressi in medicina</Journal>
+    <Year>2024</Year>
+    <Abstract>For many new oncological drugs, including target therapy and immunotherapy, the treatment should be continued as long as the patient is deriving clinical benefit from therapy or until unacceptable toxicity occurs. Drug survival or Time to treatment discontinuation (Ttd) or persistence have become important intermediate efficacy endpoints, especially in real-world settings due to their strong correlation with endpoints such as Time to treatment failure (Ttf) and Progression free survival (Pfs). Our methodology is based on validated indicators and information technology tools, to develop continuous and updated oncology drug utilization reports in hospital setting which include data about enrolment curves, Ttd, adherence, dose intensity, dose changes and budget impact. We present, as real-world example, the case of anti-EGFR in first line NSCLC. We analysed data of first and second generation drugs (afatinib, gefitinib, erlotinib) and the new third generation drug (osimertinib). Median Ttd and adherence as Proportion of days covered (Pdc) were respectively 11.6 versus 23.4 months and 0.92 versus 0.95.</Abstract>
+    <DOI>10.1701/4365.43596</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/39550657</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

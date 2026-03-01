@@ -1,0 +1,20 @@
+{
+  "title": "Inhibition of Cytochrome P450 2J2-Mediated Metabolism of Rivaroxaban and Arachidonic Acid by Ibrutinib and Osimertinib.",
+  "extracted_abstract": "Covalent tyrosine kinase inhibitors (TKIs) ibrutinib and osimertinib are associated with cardiac arrhythmia. The interactions between these TKIs with CYP2J2 that is highly expressed in the human heart are unknown. In vitro metabolism experiments were performed to characterize CYP2J2-mediated metabolism of ibrutinib and osimertinib. Unbound distribution coefficient (K(puu)) for both TKIs was determined in AC16 cardiomyocytes. In vitro reversible and time-dependent CYP2J2 inhibition experiments were conducted with exogenous and endogenous substrates, namely rivaroxaban and arachidonic acid (AA), respectively, where kinetic parameters were estimated via one-site and multisite kinetic modeling. Ibrutinib was efficiently metabolized by CYP2J2 to a hydroxylated metabolite, M35, following substrate inhibition kinetics. Osimertinib is not a substrate of CYP2J2. Both TKIs depicted K(puu) values above 1 and equipotently inhibited CYP2J2-mediated hydroxylation of rivaroxaban in a concentration-dependent manner without time-dependency. The mode of reversible inhibition of CYP2J2-mediated metabolism of rivaroxaban and AA by osimertinib was described by Michaelis-Menten kinetics, whereas a two-site kinetic model recapitulated the atypical inhibitory kinetics of ibrutinib, assuming multiple substrate-binding domains within the CYP2J2 active site. The inhibition of ibrutinib and osimertinib on cardiac AA metabolism could be clinically significant considering the preferable distribution of both TKIs to cardiomyocytes with R cut-off values of 1.160 and 1.026, respectively. The dysregulation of CYP2J2-mediated metabolism of AA to cardioprotective epoxyeicosatrienoic acids by ibrutinib and osimertinib serves as a novel mechanism for TKI-induced cardiac arrhythmia. Mechanistic characterization of CYP2J2-mediated typical and atypical enzyme kinetics further illuminates the unique catalytic properties of CYP2J2. SIGNIFICANCE STATEMENT: We reported for the first time that ibrutinib is efficiently metabolized by CYP2J2. By using rivaroxaban and arachidonic acid (AA) as substrates, we characterized the typical and atypical inhibition kinetics of CYP2J2 by ibrutinib and osimertinib. The inhibition of both drugs on cardiac AA metabolism could be clinically significant considering their preferable distribution to cardiomyocytes. Our findings serve as a novel mechanism for drug-induced cardiac arrhythmia and shed insights into the multisite interactions between CYP2J2 and ligands.",
+  "authors": [
+    "Wang, Ziteng",
+    "Wang Z",
+    "Yong Chan, Eric Chun",
+    "Yong Chan EC"
+  ],
+  "journal": "Drug metabolism and disposition: the biological fate of chemicals",
+  "year": "2022",
+  "doi": "10.1124/dmd.122.000928",
+  "url": "",
+  "source_xml": "Inhibition of Cytochrome P450 2J2-Mediated Metabolism of Rivaroxaban and Arachidonic Acid by Ibrutin.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183828",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

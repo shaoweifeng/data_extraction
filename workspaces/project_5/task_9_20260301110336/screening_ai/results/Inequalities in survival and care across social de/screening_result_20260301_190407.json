@@ -1,0 +1,26 @@
+{
+  "title": "Inequalities in survival and care across social determinants of health in a cohort of advanced lung cancer patients in Quebec (Canada): A high-resolution population-level analysis.",
+  "extracted_abstract": "BACKGROUND: Advanced lung cancer patients exposed to breakthrough therapies like EGFR tyrosine kinase inhibitors (EGFR-TKI) may experience social inequalities in survival, partly from differences in care. This study examined survival by neighborhood-level socioeconomic and sociodemographic status, and geographical location of advanced lung cancer patients who received gefitinib, an EGFR-TKI, as first-line palliative treatment. Differences in the use and delay of EGFR-TKI treatment were also examined. METHODS: Lung cancer patients receiving gefitinib from 2001 to 2019 were identified from Quebec's health administrative databases. Accounting for age and sex, estimates were obtained for the median survival time from treatment to death, the probability of receiving osimertinib as a second EGFR-TKI, and the median time from biopsy to receiving first-line gefitinib. RESULTS: Among 457 patients who received first-line treatment with gefitinib, those living in the most materially deprived areas had the shortest median survival time (ratio, high vs. low deprivation: 0.69; 95% CI: 0.47-1.04). The probability of receiving osimertinib as a second EGFR-TKI was highest for patients from immigrant-dense areas (ratio, high vs. lowdensity: 1.95; 95% CI: 1.26-3.36) or from Montreal (ratio, other urban areas vs. Montreal: 0.39; 95% CI: 0.16-0.71). The median wait time for gefitinib was 1.27 times longer in regions with health centers peripheral to large centers in Quebec or Montreal in comparison to regions with university-affiliated centers (95% CI: 1.09-1.54; n = 353). CONCLUSION: This study shows that real-world variations in survival and treatment exist among advanced lung cancer patients in the era of breakthrough therapies and that future research on inequalities should also focus on this population.",
+  "authors": [
+    "Qureshi, Samia",
+    "Qureshi S",
+    "Boily, Gino",
+    "Boily G",
+    "Boulanger, Jim",
+    "Boulanger J",
+    "Pagé, Élisabeth",
+    "Pagé É",
+    "Strumpf, Erin",
+    "Strumpf E"
+  ],
+  "journal": "Cancer medicine",
+  "year": "2023",
+  "doi": "10.1002/cam4.5897",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/37017510",
+  "source_xml": "Inequalities in survival and care across social determinants of health in a cohort of advanced lung .xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190407",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

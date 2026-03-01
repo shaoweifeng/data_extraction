@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Structural Basis of AZD9291 Selectivity for EGFR T790M.</Title>
+    <Authors>
+      <Author>Yan, Xiao-E</Author>
+      <Author>Yan XE</Author>
+      <Author>Ayaz, Pelin</Author>
+      <Author>Ayaz P</Author>
+      <Author>Zhu, Su-Jie</Author>
+      <Author>Zhu SJ</Author>
+      <Author>Zhao, Peng</Author>
+      <Author>Zhao P</Author>
+      <Author>Liang, Ling</Author>
+      <Author>Liang L</Author>
+      <Author>Zhang, Casey H</Author>
+      <Author>Zhang CH</Author>
+      <Author>Wu, Ya-Chuang</Author>
+      <Author>Wu YC</Author>
+      <Author>Li, Je-Luen</Author>
+      <Author>Li JL</Author>
+      <Author>Choi, Hwan Geun</Author>
+      <Author>Choi HG</Author>
+      <Author>Huang, Xin</Author>
+      <Author>Huang X</Author>
+      <Author>Shan, Yibing</Author>
+      <Author>Shan Y</Author>
+      <Author>Shaw, David E</Author>
+      <Author>Shaw DE</Author>
+      <Author>Yun, Cai-Hong</Author>
+      <Author>Yun CH</Author>
+    </Authors>
+    <Journal>Journal of medicinal chemistry</Journal>
+    <Year>2020</Year>
+    <Abstract>AZD9291 (Osimertinib) is highly effective in treating EGFR-mutated non-small-cell lung cancers (NSCLCs) with T790M-mediated drug resistance. Despite the remarkable success of AZD9291, its binding pose with EGFR T790M remains unclear. Here, we report unbiased, atomic-level molecular dynamics (MD) simulations in which spontaneous association of AZD9291 with EGFR kinases having WT and T790M mutant gatekeepers was observed. Simulation-generated structural models suggest that the binding pose of AZD9291 with T790M differs from its binding pose with the WT, and that AZD9291 interacts extensively with the gatekeeper residue (Met 790) in T790M but not with Thr 790 in the WT, which explains why AZD9291 binds T790M with higher affinity. The MD simulation-generated models were confirmed by experimentally determined EGFR/T790M complex crystal structures. This work may facilitate the rational design of drugs that can overcome resistance mutations to AZD9291, and more generally it suggests the potential of using unbiased MD simulation to elucidate small-molecule binding poses.</Abstract>
+    <DOI>10.1021/acs.jmedchem.0c00891</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/32672461</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

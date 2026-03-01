@@ -1,0 +1,22 @@
+{
+  "title": "Safety of osimertinib in EGFR-mutated non-small cell lung cancer.",
+  "extracted_abstract": "Osimertinib is a third-generation epidermal growth factor receptor (EGFR) tyrosine kinase inhibitor (TKI), specifically designed to inhibit EGFR sensitizing and T790M acquired mutations, minimizing exposure in EGFR-wild-type tissues. Areas covered: Osimertinib use in EGFR-mutated non-small cell lung cancer patients is described, focusing on safety and tolerability from studies supporting its approval. Expert opinion: Osimertinib demonstrated greater efficacy, including CNS activity, compared to chemotherapy, with a manageable safety profile in pretreated T790M+ EGFR-mutated patients, leading to FDA approval in 2015 within record time in the oncology field. However, the therapeutic strategy in the EGFR-mutated population is changing, following the FLAURA study in untreated EGFR-mutated patients, in which osimertinib improved progression-free survival compared to other TKIs, with a similar toxicity profile but a lower serious adverse event rate. In April 2018, the FDA and EMA approved osimertinib as first-line therapy for EGFR-mutated patients. Long-term survival data will ultimately establish the true benefit of upfront versus sequential strategies guided by T790M status. These studies favor osimertinib for tolerability and safety, except for the slightly higher rate of interstitial lung disease, but which was nonetheless manageable. In the coming years, osimertinib will be consolidated as standard therapy in the EGFR population and in naïve and pretreated patients, based on mature survival data and the toxicity profile.",
+  "authors": [
+    "Mezquita, Laura",
+    "Mezquita L",
+    "Varga, Andreea",
+    "Varga A",
+    "Planchard, David",
+    "Planchard D"
+  ],
+  "journal": "Expert opinion on drug safety",
+  "year": "2018",
+  "doi": "10.1080/14740338.2018.1549222",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/30457891",
+  "source_xml": "Safety of osimertinib in EGFR-mutated non-small cell lung cancer.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190403",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

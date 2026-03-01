@@ -1,5 +1,0 @@
-```json
-[{
-    "title": "Cardiotoxicity associated with CTLA4 and PD1 blocking immunotherapy"
-}]
-```

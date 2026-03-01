@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Quantification of Osimertinib and Metabolite-Protein Modification Reveals Its High Potency and Long Duration of Effects on Target Organs.</Title>
+    <Authors>
+      <Author>Gong, Shilin</Author>
+      <Author>Gong S</Author>
+      <Author>Zhuo, Yue</Author>
+      <Author>Zhuo Y</Author>
+      <Author>Chen, Shengshuang</Author>
+      <Author>Chen S</Author>
+      <Author>Hu, Xiaolan</Author>
+      <Author>Hu X</Author>
+      <Author>Fan, Xing-Xing</Author>
+      <Author>Fan XX</Author>
+      <Author>Wu, Jian-Lin</Author>
+      <Author>Wu JL</Author>
+      <Author>Li, Na</Author>
+      <Author>Li N</Author>
+    </Authors>
+    <Journal>Chemical research in toxicology</Journal>
+    <Year>2021</Year>
+    <Abstract>Covalent drugs are newly developed and proved to be successful therapies in past decades. However, the pharmacokinetics (PK) and pharmacodynamic (PD) studies of covalent drugs now ignore the drug and metabolite-protein modification. The low abundance of modified proteins also prevents its investigation. Herein, a simple, selective, and sensitive liquid chromatography-mass spectrometry (LC-MS)/MS quantitative method was established based on the mechanism of a drug and its metabolite-protein adducts using osimertinib as an example. Five metabolites with covalent modification potential were identified. The drug and its metabolite-cysteine adducts released from modified proteins by a mixed hydrolysis method were developed to characterize the level of the modified proteins. This turned the quantitative objects from proteins or peptides to small molecules, which increased the sensitivity and throughput of the quantitative approach. Accumulation of protein adducts formed by osimertinib and its metabolites in target organs was observed in vivo and long-lasting modifications were noted. These results interpreted the long duration of the covalent drugs' effect from the perspective of both parent and the metabolites. In addition, the established method could also be applied in blood testing as noninvasive monitoring. This newly developed approach showed great feasibility for PK and PD studies of covalent drugs.</Abstract>
+    <DOI>10.1021/acs.chemrestox.1c00195</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

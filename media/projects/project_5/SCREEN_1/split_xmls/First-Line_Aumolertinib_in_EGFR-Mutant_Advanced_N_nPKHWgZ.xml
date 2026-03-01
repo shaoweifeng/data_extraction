@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>First-Line Aumolertinib in EGFR-Mutant Advanced Non-Small Cell Lung Cancer: A Multicenter Real-World Retrospective Study with a Four-Year Follow-Up.</Title>
+    <Authors>
+      <Author>Qin, Xi</Author>
+      <Author>Qin X</Author>
+      <Author>Liu, Yulan</Author>
+      <Author>Liu Y</Author>
+      <Author>Zhu, Lin</Author>
+      <Author>Zhu L</Author>
+      <Author>Mo, Yunyan</Author>
+      <Author>Mo Y</Author>
+      <Author>Zhang, Jing</Author>
+      <Author>Zhang J</Author>
+      <Author>Jiang, Zhuchun</Author>
+      <Author>Jiang Z</Author>
+      <Author>Huang, Dongning</Author>
+      <Author>Huang D</Author>
+      <Author>Hu, Xinrong</Author>
+      <Author>Hu X</Author>
+      <Author>Li, Jingzhang</Author>
+      <Author>Li J</Author>
+      <Author>Chen, Quanfang</Author>
+      <Author>Chen Q</Author>
+      <Author>Xue, Feng</Author>
+      <Author>Xue F</Author>
+    </Authors>
+    <Journal>Oncology research</Journal>
+    <Year>2025</Year>
+    <Abstract>BACKGROUND: The use of third-generation different tyrosine kinase inhibitors (TKIs) is considered the most effective option for treating advanced non-small cell lung cancer (aNSCLC) with epidermal growth factor receptor (EGFR) mutations. However, there is limited information on the efficacy and safety of aumolertinib in patients remains these cases. METHODS: The clinical records of patients receiving aumolertinib as first-line therapy across four hospitals in the Guangxi Zhuang Autonomous Region from April 2020 to December 2021 were retrospectively analyzed, using progression-free survival (PFS) as the primary endpoint and overall survival (OS) representing the secondary endpoint. Adverse events (AEs) were assessed using the Common Terminology Criteria for Adverse Events (CTCAE v5.0). RESULTS: Approximately 47 patients with EGFR-Mutant aNSCLC were recruited, including 1 squamous cell carcinoma (SCC) patient, 1 EGFR G719C mutated patient, 1 EGFR S768 patient mutated, and 1 EGFR KDD mutated patient. The average follow-up duration was 48.1 months concluding in August 2024. The median PFS (mPFS) was 22.2 months (95% CI 17.6 to 26.7), while the median OS (mOS) was 39.7 months (95% CI 32.6 to 46.9). Patients with deletion of exon19 in EGFR (19del) showeda mPFS of 28.4 months, markedlylonger than those with the L858R point mutation (L858R), who had a mPFS of 15.2 months (p = 0.036). Overall, 22 patients (46.8%) had central nervous system (CNS) metastases at the basal level. The mPFS for this cohort was 19.7 months. Rashes (17.0%), skin decrustation (4.2%), pruritus (4.2%), dental ulcers (4.2%), increased creatine kinase (2.1%), and musculoskeletal pains (2.1%) were the most prevalent AEs in this study. Grade 3 and higher AEs were observed at a rate of 4.2%. CONCLUSION: This study concluded that aumolertinib has considerable safety and efficacy for EGFR-mutant NSCLC in a first-line defense.</Abstract>
+    <DOI>10.32604/or.2025.064119</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/40918464</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

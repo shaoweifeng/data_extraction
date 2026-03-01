@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>MicroRNA-130a-3p regulates osimertinib resistance by targeting runt-related transcription factor 3 in lung adenocarcinoma.</Title>
+    <Authors>
+      <Author>Shintani, Takuya</Author>
+      <Author>Shintani T</Author>
+      <Author>Shun, Yu-Ting</Author>
+      <Author>Shun YT</Author>
+      <Author>Toyozumi, Yuji</Author>
+      <Author>Toyozumi Y</Author>
+      <Author>Ikemura, Kenji</Author>
+      <Author>Ikemura K</Author>
+      <Author>Shiroyama, Takayuki</Author>
+      <Author>Shiroyama T</Author>
+      <Author>Nagatomo, Izumi</Author>
+      <Author>Nagatomo I</Author>
+      <Author>Jingushi, Kentaro</Author>
+      <Author>Jingushi K</Author>
+      <Author>Takeda, Yoshito</Author>
+      <Author>Takeda Y</Author>
+      <Author>Kumanogoh, Atsushi</Author>
+      <Author>Kumanogoh A</Author>
+      <Author>Okuda, Masahiro</Author>
+      <Author>Okuda M</Author>
+    </Authors>
+    <Journal>Scientific reports</Journal>
+    <Year>2024</Year>
+    <Abstract>Overcoming resistance to epidermal growth factor receptor tyrosine kinase inhibitors, including osimertinib, is urgent to improve lung cancer treatment outcomes. Extracellular vesicle (EV)-derived microRNAs (EV-miRNAs) play important roles in drug resistance and serve as promising biomarkers. In this study, we aimed to identify EV-miRNAs associated with osimertinib resistance and investigate their clinical relevance. The release of excess EVs was confirmed in the osimertinib-resistant lung adenocarcinoma cell line PC9OR. The exposure of PC9OR-derived EVs and EV-miRNAs to PC9 cells increased cell viability after osimertinib treatment. Microarray analysis revealed that miR-130a-3p was upregulated in EVs derived from PC9OR cells and another osimertinib-resistant cell line (H1975OR). Transfection with miR-130a-3p attenuated osimertinib-induced cytotoxicity and apoptosis in both PC9 and H1975 cells, whereas osimertinib resistance in PC9OR cells was reversed after miR-130a-3p inhibition. Bioinformatics analysis revealed that runt-related transcription factor 3 is a target gene of miR-130a-3p, and it induced osimertinib resistance in PC9 cells. Patients with lower baseline serum miR-130a-3p concentrations had longer progression-free survival. miR-130a-3p is a potential therapeutic target and a predictive biomarker of osimertinib resistance in adenocarcinomas.</Abstract>
+    <DOI>10.1038/s41598-024-76196-1</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

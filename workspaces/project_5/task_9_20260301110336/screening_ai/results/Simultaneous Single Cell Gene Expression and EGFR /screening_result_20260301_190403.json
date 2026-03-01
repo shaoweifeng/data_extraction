@@ -1,0 +1,32 @@
+{
+  "title": "Simultaneous Single Cell Gene Expression and EGFR Mutation Analysis of Circulating Tumor Cells Reveals Distinct Phenotypes in NSCLC.",
+  "extracted_abstract": "While cancer cell populations are known to be highly heterogeneous within a tumor, the current gold standard of tumor profiling is through a tumor biopsy. These biopsies are invasive and prone to missing these clones due to spatial heterogeneity, and this bulk analysis approach can miss information from rare subpopulations. To noninvasively investigate tumor cell heterogeneity, a streamlined workflow is developed to scrutinize rare cells, such as circulating tumor cells (CTCs), for simultaneous analysis of mutations and gene expression profiles at the single cell level. This powerful workflow overcomes low-input limitations of single cell analysis techniques. The utility of this multiplexed workflow to unravel inter- and intra-patient heterogeneity is demonstrated using non-small-cell lung cancer (NSCLC) CTCs (n = 58) from six epidermal growth factor receptor (EGFR) mutant positive NSCLC patients. CTCs are isolated using a high-throughput microfluidic technology, the Labyrinth, and their EGFR mutation status and gene expression profiles are characterized.",
+  "authors": [
+    "Owen, Sarah",
+    "Owen S",
+    "Lo, Ting-Wen",
+    "Lo TW",
+    "Fouladdel, Shamileh",
+    "Fouladdel S",
+    "Zeinali, Mina",
+    "Zeinali M",
+    "Keller, Evan",
+    "Keller E",
+    "Azizi, Ebrahim",
+    "Azizi E",
+    "Ramnath, Nithya",
+    "Ramnath N",
+    "Nagrath, Sunitha",
+    "Nagrath S"
+  ],
+  "journal": "Advanced biosystems",
+  "year": "2020",
+  "doi": "10.1002/adbi.202000110",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/32700450",
+  "source_xml": "Simultaneous Single Cell Gene Expression and EGFR Mutation Analysis of Circulating Tumor Cells Revea.xml",
+  "exclusion_reason": "摘要内容未提及药物奥希替尼，违反排除标准：排除不包含奥希替尼。",
+  "number_exclusion_reason": "1",
+  "include_or_not": "no",
+  "processing_time": "20260301_190403",
+  "raw_ai_response": "[{\"exclusion_reason\": \"摘要内容未提及药物奥希替尼，违反排除标准：排除不包含奥希替尼。\", \"number_exclusion_reason\": \"1\", \"include_or_not\": \"no\"}]"
+}

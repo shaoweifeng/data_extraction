@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The combined inhibition of SLC1A3 and glutaminase in osimertinib-resistant EGFR mutant cells.</Title>
+    <Authors>
+      <Author>Ochi, Nobuaki</Author>
+      <Author>Ochi N</Author>
+      <Author>Miyake, Noriko</Author>
+      <Author>Miyake N</Author>
+      <Author>Takeyama, Masami</Author>
+      <Author>Takeyama M</Author>
+      <Author>Yamane, Hiromichi</Author>
+      <Author>Yamane H</Author>
+      <Author>Fukazawa, Takuya</Author>
+      <Author>Fukazawa T</Author>
+      <Author>Nagasaki, Yasunari</Author>
+      <Author>Nagasaki Y</Author>
+      <Author>Kawahara, Tatsuyuki</Author>
+      <Author>Kawahara T</Author>
+      <Author>Ichiyama, Naruhiko</Author>
+      <Author>Ichiyama N</Author>
+      <Author>Kosaka, Youko</Author>
+      <Author>Kosaka Y</Author>
+      <Author>Mimura, Ayaka</Author>
+      <Author>Mimura A</Author>
+      <Author>Nakanishi, Hidekazu</Author>
+      <Author>Nakanishi H</Author>
+      <Author>Hiraki, Akio</Author>
+      <Author>Hiraki A</Author>
+      <Author>Kiura, Katsuyuki</Author>
+      <Author>Kiura K</Author>
+      <Author>Takigawa, Nagio</Author>
+      <Author>Takigawa N</Author>
+    </Authors>
+    <Journal>Biochimica et biophysica acta. General subjects</Journal>
+    <Year>2024</Year>
+    <Abstract>BACKGROUND: We investigated the unknown mechanisms of osimertinib-resistant EGFR-mutant lung cancer. METHODS: An osimertinib-resistant cell line (PC-9/OsmR2) was established through continuous exposure to osimertinib using an EGFR exon 19 deletion (19Del) lung adenocarcinoma cell line (PC-9). EGFR 19Del (M1), L858R/T790M/C797S (M6), and L858R/C797S (M8) expression vectors were introduced into Ba/F3 cells. A second osimertinib-resistant line (M1/OsmR) was established through continuous exposure to osimertinib using M1 cells. RESULTS: SLC1A3 had the highest mRNA expression level in PC-9/OsmR2 compared to PC-9 cells by microarray analysis and SLC1A3 was increased by flow cytometry. In PC-9/OsmR2 cells, osimertinib sensitivity was significantly increased in combination with siSLC1A3. Because SLC1A3 functions in glutamic acid transport, osimertinib with a glutaminase inhibitor (CB-839) or an SLC1A3 inhibitor (TFB-TBOA) increased the sensitivity. Also, CB-839 plus TFB-TBOA without osimertinib resulted in greater susceptibility than did CB-839 or TFB-TBOA plus osimertinib. Comprehensive metabolome analysis showed that the M1/OsmR cells had significantly more glutamine and glutamic acid than M1 cells. CB-839 plus osimertinib exerted a synergistic effect on M6 cells and an additive effect on M8 cells. CONCLUSION: Targeting glutaminase and glutamic acid may overcome the osimertinib-resistant EGFR-mutant lung cancer.</Abstract>
+    <DOI>10.1016/j.bbagen.2024.130675</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/39059510</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

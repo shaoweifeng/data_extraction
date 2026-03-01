@@ -1,0 +1,24 @@
+{
+  "title": "Comparison of partitioned survival modeling with state transition modeling approaches with or without consideration of brain metastasis: a case study of Osimertinib versus pemetrexed-platinum.",
+  "extracted_abstract": "BACKGROUND: The partitioned survival model (PSM) and the state transition model (STM) are widely used in cost-effectiveness analyses of anticancer drugs. Using different modeling approaches with or without consideration of brain metastasis, we compared the quality-adjusted life-year (QALY) estimates of Osimertinib and pemetrexed-platinum in advanced non-small cell lung cancer with epidermal growth factor receptor mutations. METHODS: We constructed three economic models using parametric curves fitted to patient-level data from the National Health Insurance Review and Assessment claims database from 2009 to 2020. PSM and 3-health state transition model (3-STM) consist of three health states: progression-free, post-progression, and death. The 5-health state transition model (5-STM) has two additional health states (brain metastasis with continuing initial therapy, and with subsequent therapy). Time-dependent transition probabilities were calculated in the state transition models. The incremental life-year (LY) and QALY between the Osimertinib and pemetrexed-platinum cohorts for each modeling approach were estimated over seven years. RESULTS: The PSM and 3-STM produced similar incremental LY (0.889 and 0.899, respectively) and QALY (0.827 and 0.840, respectively). However, 5-STM, which considered brain metastasis as separate health states, yielded a slightly higher incremental LY (0.910) but lower incremental QALY (0.695) than PSM and 3-STM. CONCLUSIONS: Our findings indicate that incorporating additional health states such as brain metastases into economic models can have a considerable impact on incremental QALY estimates. To ensure appropriate health technology assessment decisions, comparison and justification of different modeling approaches are recommended in the economic evaluation of anticancer drugs.",
+  "authors": [
+    "Shim, Yoon-Bo",
+    "Shim YB",
+    "Oh, Byeong-Chan",
+    "Oh BC",
+    "Lee, Eui-Kyung",
+    "Lee EK",
+    "Park, Mi-Hai",
+    "Park MH"
+  ],
+  "journal": "BMC cancer",
+  "year": "2024",
+  "doi": "10.1186/s12885-024-11971-x",
+  "url": "",
+  "source_xml": "Comparison of partitioned survival modeling with state transition modeling approaches with or withou.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183820",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

@@ -218,25 +218,57 @@
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                                    <h4 class="font-bold text-gray-700 mb-4">待处理文献</h4>
-                                    <!-- 这里应该显示待处理的 PDF 列表，暂时用 Placeholder -->
-                                    <div class="text-sm text-gray-500 mb-4">
-                                        检测到 PDF 文件: <span class="font-bold text-gray-800">{{ currentStageFiles.input.length }}</span> 个
-                                    </div>
-                                    <div class="h-40 bg-white rounded border border-gray-200 overflow-y-auto p-2 space-y-1">
-                                         <div v-for="file in currentStageFiles.input" :key="file.id" class="text-xs text-gray-600 truncate">
-                                            <i class="fas fa-file-pdf text-red-500 mr-1"></i> {{ file.filename }}
+                                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 h-96 flex flex-col">
+                                    <h4 class="font-bold text-gray-700 mb-4 flex-shrink-0">待处理文献列表 ({{ splitXmlFiles.length }})</h4>
+                                    
+                                    <div class="flex-1 bg-white rounded border border-gray-200 overflow-y-auto p-2 space-y-1 relative min-h-0">
+                                         <div v-if="splitXmlFiles.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
+                                            <p>暂无拆分后的 XML 文件</p>
+                                            <p class="text-xs">请先完成步骤 2 的去重操作</p>
+                                         </div>
+                                         <div v-else>
+                                             <div v-for="file in paginatedSplitXmlFiles" :key="file.id" class="flex items-center justify-between p-2 hover:bg-gray-50 border-b border-gray-100 last:border-0 text-sm">
+                                                <div class="flex items-center overflow-hidden">
+                                                    <i class="fas fa-file-code text-blue-500 mr-2"></i>
+                                                    <span class="truncate w-64" :title="file.filename">{{ file.filename.replace('split_xmls/', '') }}</span>
+                                                </div>
+                                                <span class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">待筛选</span>
+                                             </div>
                                          </div>
                                     </div>
+                                    
+                                    <!-- Pagination Controls -->
+                                    <div v-if="splitXmlFiles.length > 0" class="flex justify-between items-center mt-4 text-sm flex-shrink-0">
+                                        <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                        <span class="text-gray-600">第 {{ currentPage }} / {{ totalPages }} 页</span>
+                                        <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-green-400 font-mono text-xs overflow-y-auto h-64 shadow-inner">
-                                    <div v-if="!latestTask">等待任务启动...</div>
-                                    <div v-else class="whitespace-pre-wrap">{{ latestTask.logs || '正在初始化...' }}</div>
+                                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-green-400 font-mono text-xs shadow-inner h-96 flex flex-col">
+                                    <div class="flex-1 overflow-y-auto min-h-0">
+                                        <div v-if="!latestTask">等待任务启动...</div>
+                                        <div v-else class="whitespace-pre-wrap">{{ latestTask.logs || '正在初始化...' }}</div>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="text-center">
+                                <div v-if="isProcessing || (latestTask && latestTask.status === 'COMPLETED')" class="mb-4 w-full max-w-2xl mx-auto">
+                                    <div class="flex justify-between text-sm mb-1 text-gray-600">
+                                        <span>筛选进度</span>
+                                        <span class="font-bold">{{ screeningProgress.processed }} / {{ screeningProgress.total }} ({{ screeningProgress.percent }}%)</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                                        <div class="bg-indigo-600 h-4 rounded-full transition-all duration-500 ease-out" :style="{ width: screeningProgress.percent + '%' }"></div>
+                                    </div>
+                                    <div v-if="latestTask.status === 'COMPLETED'" class="mt-2 text-green-600 font-bold animate-bounce">
+                                        <i class="fas fa-check-circle"></i> 筛选完成！结果已生成
+                                    </div>
+                                </div>
                                 <button @click="startScreeningTask" :disabled="isProcessing" class="w-full md:w-1/2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition transform hover:-translate-y-1">
                                     <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
                                     <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
@@ -265,7 +297,7 @@
                                     <div v-if="currentStageFiles.output.find(f => f.filename.endsWith('.xlsx'))">
                                         <a :href="currentStageFiles.output.find(f => f.filename.endsWith('.xlsx')).file" class="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">立即下载</a>
                                     </div>
-                                    <div v-else class="text-xs text-gray-400">暂无文件</div>
+                                    <div v-else class="text-xs text-gray-400">请先生成报表</div>
                                 </div>
 
                                 <div class="p-6 bg-orange-50 rounded-xl border border-orange-100 hover:shadow-md transition">
@@ -275,8 +307,16 @@
                                     <div v-if="currentStageFiles.output.find(f => f.filename.endsWith('.ris'))">
                                         <a :href="currentStageFiles.output.find(f => f.filename.endsWith('.ris')).file" class="inline-block bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 transition">立即下载</a>
                                     </div>
-                                    <div v-else class="text-xs text-gray-400">暂无文件</div>
+                                    <div v-else class="text-xs text-gray-400">请先生成报表</div>
                                 </div>
+                            </div>
+
+                            <div class="mb-8">
+                                <button @click="generateReport" :disabled="isGeneratingReport" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                                    <i v-if="isGeneratingReport" class="fas fa-spinner fa-spin mr-2"></i>
+                                    <span>{{ isGeneratingReport ? '正在生成报表...' : '生成最新报表' }}</span>
+                                </button>
+                                <p class="text-xs text-gray-400 mt-2">点击生成将清理旧文件并基于最新筛选结果创建报表</p>
                             </div>
                             
                             <div class="flex justify-start">
@@ -383,6 +423,28 @@
                 const pollingInterval = ref(null);
                 const newCriteria = ref('');
                 const criteriaList = ref([]);
+                const isGeneratingReport = ref(false);
+
+                const screeningProgress = computed(() => {
+                    if (!latestTask.value || !latestTask.value.logs) return { processed: 0, total: 0, percent: 0 };
+                    
+                    const logs = latestTask.value.logs;
+                    // 匹配最后一次出现的 [PROGRESS] X/Y
+                    const regex = /\[PROGRESS\] (\d+)\/(\d+)/g;
+                    let match;
+                    let lastMatch = null;
+                    while ((match = regex.exec(logs)) !== null) {
+                        lastMatch = match;
+                    }
+                    
+                    if (lastMatch) {
+                        const processed = parseInt(lastMatch[1]);
+                        const total = parseInt(lastMatch[2]);
+                        const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+                        return { processed, total, percent };
+                    }
+                    return { processed: 0, total: 0, percent: 0 };
+                });
 
                 const isProcessing = computed(() => {
                     return latestTask.value && latestTask.value.status === 'PROCESSING';
@@ -397,19 +459,30 @@
                     };
                 });
 
-                // Load metadata for stage
-                watch(currentStage, () => {
-                     if (currentStage.value === 'SCREEN_1') {
-                         currentStep.value = 1;
-                     }
-                     const stage = stagesData.value.find(s => s.stage_type === currentStage.value);
-                     if (stage && stage.metadata && stage.metadata.screening_criteria) {
-                         const savedCriteria = stage.metadata.screening_criteria;
-                         criteriaList.value = savedCriteria ? savedCriteria.split('\n') : [];
-                     } else {
-                         criteriaList.value = [];
-                     }
+                const currentPage = ref(1);
+                const itemsPerPage = ref(20);
+
+                const splitXmlFiles = computed(() => {
+                    return currentStageFiles.value.output.filter(f => f.description === '单篇文献 XML' || f.filename.includes('split_xmls/'));
                 });
+
+                const paginatedSplitXmlFiles = computed(() => {
+                    const start = (currentPage.value - 1) * itemsPerPage.value;
+                    const end = start + itemsPerPage.value;
+                    return splitXmlFiles.value.slice(start, end);
+                });
+
+                const totalPages = computed(() => {
+                    return Math.ceil(splitXmlFiles.value.length / itemsPerPage.value);
+                });
+
+                const nextPage = () => {
+                    if (currentPage.value < totalPages.value) currentPage.value++;
+                };
+
+                const prevPage = () => {
+                    if (currentPage.value > 1) currentPage.value--;
+                };
 
                 const currentStep = ref(1); // 1: XML转换, 2: 去重, 3: 纳排, 4: AI筛选, 5: 结果
 
@@ -528,11 +601,21 @@
                         screening_criteria: criteriaList.value.join('\n')
                     };
                     
-                    await fetch(`${API_BASE}/stages/${stage.id}/update_metadata/`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ metadata })
-                    });
+                    try {
+                        const res = await fetch(`${API_BASE}/stages/${stage.id}/update_metadata/`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ metadata })
+                        });
+                        if (res.ok) {
+                            // 刷新 stagesData 以获取最新的 criteria.txt 文件记录
+                            fetchStages(currentProject.value.id);
+                        } else {
+                            console.error('Failed to save metadata');
+                        }
+                    } catch (e) {
+                        console.error('Error saving metadata:', e);
+                    }
                 };
 
                 const fetchProjects = async () => {
@@ -550,14 +633,52 @@
                     const res = await fetch(`${API_BASE}/projects/${projectId}/stages/`);
                     stagesData.value = await res.json();
                     
-                    // 触发一次 watch 更新 criteriaList
+                    // 强制触发一次 criteriaList 更新
                     const stage = stagesData.value.find(s => s.stage_type === currentStage.value);
                     if (stage && stage.metadata && stage.metadata.screening_criteria) {
                         criteriaList.value = stage.metadata.screening_criteria.split('\n');
                     } else {
-                        criteriaList.value = [];
+                        // 尝试从文件列表查找 criteria.txt
+                        const criteriaFile = stage ? stage.data.find(d => d.filename === 'criteria.txt') : null;
+                        if (criteriaFile) {
+                            try {
+                                const fileRes = await fetch(criteriaFile.file);
+                                const text = await fileRes.text();
+                                criteriaList.value = text.split('\n');
+                            } catch (e) {
+                                console.error('Error fetching criteria.txt:', e);
+                                criteriaList.value = [];
+                            }
+                        } else {
+                            criteriaList.value = [];
+                        }
                     }
                 };
+
+                // Watch currentStage to update criteriaList when switching tabs
+                watch(currentStage, () => {
+                     if (currentStage.value === 'SCREEN_1') {
+                         currentStep.value = 1;
+                     }
+                     // Re-use logic from fetchStages or just call fetchStages if needed, but simpler to just re-evaluate
+                     const stage = stagesData.value.find(s => s.stage_type === currentStage.value);
+                     if (stage && stage.metadata && stage.metadata.screening_criteria) {
+                         const savedCriteria = stage.metadata.screening_criteria;
+                         criteriaList.value = savedCriteria ? savedCriteria.split('\n') : [];
+                     } else {
+                         // Fallback to file check again (duplicated logic, but safe)
+                         const criteriaFile = stage ? stage.data.find(d => d.filename === 'criteria.txt') : null;
+                         if (criteriaFile) {
+                             fetch(criteriaFile.file).then(res => res.text()).then(text => {
+                                 criteriaList.value = text.split('\n');
+                             }).catch(() => {
+                                 criteriaList.value = [];
+                             });
+                         } else {
+                             criteriaList.value = [];
+                         }
+                     }
+                });
 
                 const deleteProject = async (project, e) => {
                     if (e) e.stopPropagation();
@@ -639,7 +760,7 @@
                         if (res.ok) {
                             alert('AI 筛选任务已启动！');
                             startPolling();
-                            nextStep();
+                            // nextStep(); // Removed auto-jump
                         } else {
                             const text = await res.text();
                             alert(`任务启动失败: ${text}`);
@@ -648,6 +769,26 @@
                     } catch (err) {
                         alert(`请求出错: ${err.message}`);
                         console.error('Screening start error:', err);
+                    }
+                };
+
+                const generateReport = async () => {
+                    isGeneratingReport.value = true;
+                    try {
+                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/generate_report/`, {
+                            method: 'POST'
+                        });
+                        if (res.ok) {
+                            alert('报表生成成功！');
+                            fetchStages(currentProject.value.id);
+                        } else {
+                            const data = await res.json();
+                            alert(`生成失败: ${data.error || '未知错误'}`);
+                        }
+                    } catch (e) {
+                        alert(`请求出错: ${e.message}`);
+                    } finally {
+                        isGeneratingReport.value = false;
                     }
                 };
 
@@ -735,7 +876,10 @@
                     selectProject, deleteProject, createProject, handleFileUpload, handleStageFileUpload, startTask,
                     startScreeningTask, addCriteria, removeCriteria, nextStep, prevStep,
                     getStatusClass, getStageClass, getStageName, formatDate, triggerFileInput, handleReferenceUpload,
-                    handleDeduplication
+                    handleDeduplication,
+                    screeningProgress,
+                    splitXmlFiles, paginatedSplitXmlFiles, currentPage, totalPages, nextPage, prevPage,
+                    generateReport, isGeneratingReport
                 };
             }
         }).mount('#app');

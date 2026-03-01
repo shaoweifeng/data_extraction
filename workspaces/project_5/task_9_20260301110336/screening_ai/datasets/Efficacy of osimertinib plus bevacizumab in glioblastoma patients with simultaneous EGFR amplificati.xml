@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Efficacy of osimertinib plus bevacizumab in glioblastoma patients with simultaneous EGFR amplification and EGFRvIII mutation.</Title>
+    <Authors>
+      <Author>Cardona, Andrés F</Author>
+      <Author>Cardona AF</Author>
+      <Author>Jaramillo-Velásquez, Daniel</Author>
+      <Author>Jaramillo-Velásquez D</Author>
+      <Author>Ruiz-Patiño, Alejandro</Author>
+      <Author>Ruiz-Patiño A</Author>
+      <Author>Polo, Carolina</Author>
+      <Author>Polo C</Author>
+      <Author>Jiménez, Enrique</Author>
+      <Author>Jiménez E</Author>
+      <Author>Hakim, Fernando</Author>
+      <Author>Hakim F</Author>
+      <Author>Gómez, Diego</Author>
+      <Author>Gómez D</Author>
+      <Author>Ramón, Juan Fernando</Author>
+      <Author>Ramón JF</Author>
+      <Author>Cifuentes, Hernando</Author>
+      <Author>Cifuentes H</Author>
+      <Author>Mejía, Juan Armando</Author>
+      <Author>Mejía JA</Author>
+      <Author>Salguero, Fernando</Author>
+      <Author>Salguero F</Author>
+      <Author>Ordoñez, Camila</Author>
+      <Author>Ordoñez C</Author>
+      <Author>Muñoz, Álvaro</Author>
+      <Author>Muñoz Á</Author>
+      <Author>Bermúdez, Sonia</Author>
+      <Author>Bermúdez S</Author>
+      <Author>Useche, Nicolas</Author>
+      <Author>Useche N</Author>
+      <Author>Pineda, Diego</Author>
+      <Author>Pineda D</Author>
+      <Author>Ricaurte, Luisa</Author>
+      <Author>Ricaurte L</Author>
+      <Author>Zatarain-Barrón, Zyanya Lucia</Author>
+      <Author>Zatarain-Barrón ZL</Author>
+      <Author>Rodríguez, July</Author>
+      <Author>Rodríguez J</Author>
+      <Author>Avila, Jenny</Author>
+      <Author>Avila J</Author>
+      <Author>Rojas, Leonardo</Author>
+      <Author>Rojas L</Author>
+      <Author>Jaller, Elvira</Author>
+      <Author>Jaller E</Author>
+      <Author>Sotelo, Carolina</Author>
+      <Author>Sotelo C</Author>
+      <Author>Garcia-Robledo, Juan Esteban</Author>
+      <Author>Garcia-Robledo JE</Author>
+      <Author>Santoyo, Nicolas</Author>
+      <Author>Santoyo N</Author>
+      <Author>Rolfo, Christian</Author>
+      <Author>Rolfo C</Author>
+      <Author>Rosell, Rafael</Author>
+      <Author>Rosell R</Author>
+      <Author>Arrieta, Oscar</Author>
+      <Author>Arrieta O</Author>
+    </Authors>
+    <Journal>Journal of neuro-oncology</Journal>
+    <Year>2021</Year>
+    <Abstract>BACKGROUND: Amplification of EGFR and its active mutant EGFRvIII are common in glioblastoma (GB). While EGFR and EGFRvIII play critical roles in pathogenesis, targeted therapy with EGFR-tyrosine kinase inhibitors or antibodies has shown limited efficacy. To improve the likelihood of effectiveness, we targeted adult patients with recurrent GB enriched for simultaneous EGFR amplification and EGFRvIII mutation, with osimertinib/bevacizumab at doses described for non-small cell lung cancer. METHODS: We retrospectively explored whether previously described EGFRvIII mutation in association with EGFR gene amplification could predict response to osimertinib/bevacizumab combination in a subset of 15 patients treated at recurrence. The resistance pattern in a subgroup of subjects is described using a commercial next-generation sequencing panel in liquid biopsy. RESULTS: There were ten males (66.7%), and the median patient's age was 56 years (range 38-70 years). After their initial diagnosis, 12 patients underwent partial (26.7%) or total resection (53.3%). Subsequently, all cases received IMRT and concurrent and adjuvant temozolomide (TMZ; the median number of cycles 9, range 6-12). The median follow-up after recurrence was 17.1 months (95% CI 12.3-22.6). All patients received osimertinib/bevacizumab as a second-line intervention with a median progression-free survival (PFS) of 5.1 months (95% CI 2.8-7.3) and overall survival of 9.0 months (95% CI 3.9-14.0). The PFS6 was 46.7%, and the overall response rate was 13.3%. After exposure to the osimertinib/bevacizumab combination, the main secondary alterations were MET amplification, STAT3, IGF1R, PTEN, and PDGFR. CONCLUSIONS: While the osimertinib/bevacizumab combination was marginally effective in most GB patients with simultaneous EGFR amplification plus EGFRvIII mutation, a subgroup experienced a long-lasting meaningful benefit. The findings of this brief cohort justify the continuation of the research in a clinical trial. The pattern of resistance after exposure to osimertinib/bevacizumab includes known mechanisms in the regulation of EGFR, findings that contribute to the understanding and targeting in a stepwise rational this pathway.</Abstract>
+    <DOI>10.1007/s11060-021-03834-3</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/34498213</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

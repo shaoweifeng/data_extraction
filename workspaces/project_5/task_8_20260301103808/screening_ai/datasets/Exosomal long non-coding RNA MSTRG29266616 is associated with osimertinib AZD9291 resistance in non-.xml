@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Exosomal long non-coding RNA MSTRG.292666.16 is associated with osimertinib (AZD9291) resistance in non-small cell lung cancer.</Title>
+    <Authors>
+      <Author>Deng, Qinfang</Author>
+      <Author>Deng Q</Author>
+      <Author>Fang, Qiyu</Author>
+      <Author>Fang Q</Author>
+      <Author>Xie, Boxiong</Author>
+      <Author>Xie B</Author>
+      <Author>Sun, Hui</Author>
+      <Author>Sun H</Author>
+      <Author>Bao, Yuchen</Author>
+      <Author>Bao Y</Author>
+      <Author>Zhou, Songwen</Author>
+      <Author>Zhou S</Author>
+    </Authors>
+    <Journal>Aging</Journal>
+    <Year>2020</Year>
+    <Abstract>Acquired resistance of osimertinib is encountered in clinic treatment of non-small cell lung cancer (NSCLC). However, the molecular mechanisms of osimertinib resistance are not fully revealed. This study aimed to investigate the roles of exosomes in delivering osimertinib resistance in NSCLC. Exosomes were successfully isolated. LncRNA sequencing identified a total of 123 differentially expressed lncRNAs, including 45 upregulated lncRNAs and 78 downregulated lncRNAs. The relative expression level of lncRNA MSTRG.292666.16 was significantly upregulated in osimertinib-resistant plasma, osimertinib-resistant H1975R cells and their derived exosomes, compared with those in osimertinib- sensitive plasma, H1975 cells and exosomes (P &lt; 0.05). Besides, osimertinib-resistant exosomes could regulate gene expressions induced by osimertinib, including miRNA-21, miRNA-125b, TGFβ, ARF6 and c-Kit. Osimertinib-resistant exosomes could be taken up by osimertinib-sensitive H1975 cells and resulting in osimertinib-resistance in vivo. Knockdown of lncRNA MSTRG.292666.16 decreased osimertinib resistance of H1975R cells. Our results suggest that exosomal lncRNA MSTRG.292666.16 might be associated with osimertinib resistance in NSCLC.</Abstract>
+    <DOI>10.18632/aging.103119</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

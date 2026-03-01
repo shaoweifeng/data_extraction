@@ -1,0 +1,32 @@
+{
+  "title": "A Delphi consensus panel about clinical management of early-stage EGFR-mutated non-small cell lung cancer (NSCLC) in Spain: a Delphi consensus panel study.",
+  "extracted_abstract": "PURPOSE: This Delphi panel study assessed the level of consensus between medical oncologists on the clinical management of patients with early-stage EGFR-mutated non-small cell lung cancer (NSCLC). METHODS: A modified two-round Delphi approach was used. A scientific committee comprised of medical oncologists developed an online questionnaire. Delphi panel experts rated their level of agreement with each questionnaire statement on a 9-point Likert scale. The questionnaire included 36 statements from 3 domains (clinical management of early-stage NSCLC: 15 statements; role of adjuvant therapy in early-stage NSCLC: 9 statements; and role of adjuvant therapy in early-stage NSCLC with sensitizing EGFR mutation: 12 statements). RESULTS: In round 1, consensus was reached for 24/36 statements (66.7%). Nine statements that did not achieve consensus after the first round were evaluated in round 2, and none of them reached consensus. Overall, 84.4% of the panelists agreed that EGFR mutation testing should be done after surgery. Consensus was not achieved on whether the implementation of EGFR mutation testing in resected early-stage NSCLC could limit the use of adjuvant osimertinib. The panelists recognized the rationale for the use of osimertinib in the adjuvant scenario (88%) and 72% agreed that it may change the treatment paradigm in stage IB-IIIA EGFR-mutated NSCLC. Consensus was not reached on the inconvenience of prolonged duration of osimertinib. CONCLUSIONS: This Delphi study provides valuable insights into relevant questions in the management of early-stage EGFR-mutated NSCLC. However, specific issues remain unresolved. The expert consensus emphasizes the role of adjuvant treatment with osimertinib in this scenario.",
+  "authors": [
+    "Isla, Dolores",
+    "Isla D",
+    "Felip, Enriqueta",
+    "Felip E",
+    "Garrido, Pilar",
+    "Garrido P",
+    "Insa, Amelia",
+    "Insa A",
+    "Majem, Margarita",
+    "Majem M",
+    "Remon, Jordi",
+    "Remon J",
+    "Trigo, Jose M",
+    "Trigo JM",
+    "de Castro, Javier",
+    "de Castro J"
+  ],
+  "journal": "Clinical & translational oncology : official publication of the Federation of",
+  "year": "2023",
+  "doi": "10.1007/s12094-022-02941-5",
+  "url": "",
+  "source_xml": "A Delphi consensus panel about clinical management of early-stage EGFR-mutated non-small cell lung c.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_183829",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

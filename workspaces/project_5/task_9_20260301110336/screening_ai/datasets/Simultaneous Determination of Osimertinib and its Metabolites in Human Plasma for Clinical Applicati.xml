@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Simultaneous Determination of Osimertinib and its Metabolites in Human Plasma for Clinical Applications Using High-Performance Liquid Chromatography-Tandem Mass Spectrometry.</Title>
+    <Authors>
+      <Author>Wu, Jingjing</Author>
+      <Author>Wu J</Author>
+      <Author>Guo, Liuxian</Author>
+      <Author>Guo L</Author>
+      <Author>Zhou, Guojin</Author>
+      <Author>Zhou G</Author>
+      <Author>Wang, Yawen</Author>
+      <Author>Wang Y</Author>
+      <Author>Tang, Ke-Jing</Author>
+      <Author>Tang KJ</Author>
+      <Author>Xu, Jing</Author>
+      <Author>Xu J</Author>
+      <Author>Chen, Jie</Author>
+      <Author>Chen J</Author>
+    </Authors>
+    <Journal>Therapeutic drug monitoring</Journal>
+    <Year>2025</Year>
+    <Abstract>BACKGROUND: Osimertinib, the first-line treatment for nonsmall cell lung cancer, has 2 main active metabolites, AZ5104 and AZ7550, which demonstrate potency against wild-type epidermal growth factor receptor mutations. In this study, a simple and sensitive analytical method using high-performance liquid chromatography-tandem mass spectrometry (HPLC-MS/mass spectrometry) was developed and validated to simultaneously quantify osimertinib and its active metabolites in human plasma. METHODS: Plasma samples were subjected to protein precipitation with zinc sulfate solution and acetonitrile using osimertinib- 13 C, d 3 as an internal standard. The separation was performed on a ThermoScientific Hypersil GOLD C18 column (4.6 × 50 mm, 5 μm) with a mobile phase composed of 0.1% formic acid water-acetonitrile through gradient elution. The compounds were monitored using electrospray ionization in the positive mode with multiple reaction monitoring. RESULTS: Excellent linearity of calibration curves was observed over the ranges of 10-1000 ng·mL -1 for osimertinib, and 1.5-120 ng·mL -1 for AZ7550 and AZ5104 in human plasma. Both within-run and between-run accuracies were within ±15%, with the coefficient of variation &lt;15%. CONCLUSIONS: The method met all the validation criteria and was successfully applied to clinical samples from patients with nonsmall cell lung cancer. Furthermore, the correlation between steady-state trough concentrations of osimertinib, AZ5104, and AZ7550 and patients' baseline characteristics were explored. Women exhibited a significantly higher C min, ss for AZ7550 ( P = 0.023). In addition, body mass index was associated with the C min, ss of both AZ5104 ( P = 0.047) and AZ7550 ( P = 0.001).</Abstract>
+    <DOI>10.1097/FTD.0000000000001355</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/40856704</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

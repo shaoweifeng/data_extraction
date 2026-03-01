@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>High MET amplification level as a resistance mechanism to osimertinib (AZD9291) in a patient that symptomatically responded to crizotinib treatment post-osimertinib progression.</Title>
+    <Authors>
+      <Author>Ou, Sai-Hong Ignatius</Author>
+      <Author>Ou SI</Author>
+      <Author>Agarwal, Nikita</Author>
+      <Author>Agarwal N</Author>
+      <Author>Ali, Siraj M</Author>
+      <Author>Ali SM</Author>
+    </Authors>
+    <Journal>Lung cancer (Amsterdam, Netherlands)</Journal>
+    <Year>2016</Year>
+    <Abstract>Third-generation EGFR TKI has been approved in the US and EU for the treatment of EGFR mutant T790M+ NSCLC patients that are resistant to first- or second generation EGFR TKIs. Here we report a patient who developed resistance to osimertinib after a confirmed partial response for 9 months. Pre-osimertinib and post-osimertinib tumor biopsy revealed the emergence of high level of MET amplification (30 copies) post osimertinib treatment. Patient was treated with single agent crizotinib, a known MET inhibitor, with transient symptomatic benefit. MET amplification is one potential resistance mechanism to osimertinib and combination of osimertinib and a MET inhibitor should be investigated post-osimertinib progression in EGFR mutant T790M+ NSCLC patients whose harbored acquired MET amplification.</Abstract>
+    <DOI>10.1016/j.lungcan.2016.05.015</DOI>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

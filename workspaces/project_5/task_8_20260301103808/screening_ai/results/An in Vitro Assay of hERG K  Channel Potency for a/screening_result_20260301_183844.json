@@ -1,0 +1,32 @@
+{
+  "title": "An in Vitro Assay of hERG K (+) Channel Potency for a New EGFR Inhibitor FHND004.",
+  "extracted_abstract": "FHND004 is a newly synthesized epidermal growth factor receptor (EGFR) inhibitor for the treatment of non-small cell lung cancer (NSCLC). The aim of the present study was to investigate the impacts of FHND004 on human ether-à-go-go-related gene (hERG) K(+) channels and the molecular mechanisms underlying of its action. Whole-cell patch clamp recording was performed on wild type (WT), mutant hERG channels heterologously expressed in human embryonic kidney (HEK) 293 cells or I(Kr) endogenously expressed in HL-1 cells, respectively. FHND004 inhibited hERG K(+) currents in a concentration-dependent manner with IC(50) values of 8.46 ± 0.33 μM in HEK293 cells and 7.52 ± 1.27 μM in HL-1 cells, respectively. However, the inhibitory potency of FHND004 on hERG channels was significantly less than its precursor AZD9291. FHND004-induced inhibition was state-dependent with a preference within open state, but did not alter other kinetics including activation, inactivation, and recovery from inactivation or deactivation. In addition, FHND004 exhibited more potent inhibitory effects on WT/A422T and WT/H562P-hERG, two known long QT syndrome (LQTS) associated KCNH2 mutations, than WT alone. Mutations of the residues at pore regions (F656C, Y652A, S624A, and F557L) in hERG channels attenuated block effects of FHND004. Taken together, our results demonstrate the evidence that FHND004 is a less potent hERG blocker than its precursor AZD9291. There is, however, a need for caution in the potential use of FHND004 for treating NSCLC patients, especially in those with other concurrent triggering factors.",
+  "authors": [
+    "Jin, Tao",
+    "Jin T",
+    "Hu, Bingxue",
+    "Hu B",
+    "Chen, Shanshan",
+    "Chen S",
+    "Wang, Qiang",
+    "Wang Q",
+    "Dong, Xue",
+    "Dong X",
+    "Zhang, Yin",
+    "Zhang Y",
+    "Zhu, Yongqiang",
+    "Zhu Y",
+    "Zhang, Zhao",
+    "Zhang Z"
+  ],
+  "journal": "Frontiers in pharmacology",
+  "year": "2018",
+  "doi": "10.3389/fphar.2018.00577",
+  "url": "",
+  "source_xml": "An in Vitro Assay of hERG K  Channel Potency for a New EGFR Inhibitor FHND004.xml",
+  "exclusion_reason": "摘要内容不包含奥希替尼",
+  "number_exclusion_reason": "1",
+  "include_or_not": "no",
+  "processing_time": "20260301_183844",
+  "raw_ai_response": "[{\"exclusion_reason\": \"摘要内容不包含奥希替尼\", \"number_exclusion_reason\": \"1\", \"include_or_not\": \"no\"}]"
+}

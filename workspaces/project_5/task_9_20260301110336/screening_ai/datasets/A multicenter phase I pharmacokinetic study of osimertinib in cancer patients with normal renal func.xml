@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A multicenter, phase I, pharmacokinetic study of osimertinib in cancer patients with normal renal function or severe renal impairment.</Title>
+    <Authors>
+      <Author>Vishwanathan, Karthick</Author>
+      <Author>Vishwanathan K</Author>
+      <Author>Sanchez-Simon, Inmaculada</Author>
+      <Author>Sanchez-Simon I</Author>
+      <Author>Keam, Bhumsuk</Author>
+      <Author>Keam B</Author>
+      <Author>Penel, Nicolas</Author>
+      <Author>Penel N</Author>
+      <Author>de Miguel-Luken, Maria</Author>
+      <Author>de Miguel-Luken M</Author>
+      <Author>Weilert, Doris</Author>
+      <Author>Weilert D</Author>
+      <Author>Mills, Andrew</Author>
+      <Author>Mills A</Author>
+      <Author>Marotti, Marcelo</Author>
+      <Author>Marotti M</Author>
+      <Author>Johnson, Martin</Author>
+      <Author>Johnson M</Author>
+      <Author>Ravaud, Alain</Author>
+      <Author>Ravaud A</Author>
+    </Authors>
+    <Journal>Pharmacology research &amp; perspectives</Journal>
+    <Year>2020</Year>
+    <Abstract>Osimertinib is a third-generation, irreversible, oral epidermal growth factor receptor (EGFR)-tyrosine kinase inhibitor (TKI) that potently and selectively inhibits both EGFR-TKI sensitizing and EGFR T790M and has demonstrated efficacy in non-small cell lung cancer (NSCLC) central nervous system metastases. In this phase I study, we assessed the effects of normal renal function (NRF) and severe renal impairment (SRI) on the pharmacokinetics (PK) of osimertinib in patients with solid tumors. Part A: patients with NRF (creatinine clearance [CrCL] ≥90 mL/min), and SRI, (CrCL &lt;30 mL/min), received a single 80-mg oral dose of osimertinib and standard PK measures were assessed. Part B: patients with SRI were treated for 3 months to obtain safety data, if deemed clinically appropriate. The geometric mean osimertinib plasma concentrations were higher in patients with SRI (n = 7) vs NRF (n = 8) and were highly variable. Osimertinib exposure based on C(max) and area under the plasma concentration-time curve, was 1.19-fold (90% CI: 0.6, 2.0) and 1.85-fold (90% CI: 0.9, 3.6), respectively, higher for patients with SRI vs patients with NRF, with no clear correlation between CrCL and exposure. No new safety signals were identified after 12 weeks of osimertinib 80 mg continuous dosing. PK parameters pooled across this study and other phase I, II, and III osimertinib clinical studies (exploratory population PK analysis), showed minimal correlation between CrCL and total clearance. In conclusion, no dose adjustment is required for osimertinib for patients with SRI.</Abstract>
+    <DOI>10.1002/prp2.613</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/32567817</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

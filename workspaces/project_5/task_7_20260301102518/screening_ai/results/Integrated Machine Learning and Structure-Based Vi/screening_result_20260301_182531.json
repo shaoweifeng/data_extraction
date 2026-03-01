@@ -1,0 +1,31 @@
+{
+  "title": "Integrated Machine Learning and Structure-Based Virtual Screening Identify Osimertinib as a TNIK Inhibitor for Idiopathic Pulmonary Fibrosis.",
+  "extracted_abstract": "Traf2-and Nck-interacting kinase (TNIK) has been implicated in fibrosis-associated signaling pathways and has recently emerged as a promising therapeutic target for idiopathic pulmonary fibrosis (IPF). In this study, we employed an integrated strategy combining machine learning-based prediction and structure-based virtual screening to repurpose drugs from the DrugBank database as potential TNIK inhibitors for IPF treatment. Using this approach, we identified 19 candidate compounds, among which 14 demonstrated TNIK enzymatic inhibition rates exceeding 70% at a concentration of 10 μM, as determined by the ADP-Glo assay. Notably, among these candidates, the approved drug osimertinib showed potent TNIK inhibitory activity with an IC(50) of 151.90 nM and demonstrated an acceptable cytotoxicity profile in human lung fibroblast MRC-5 cells (CC(50) = 4366.01 nM). Furthermore, osimertinib significantly suppressed TGF-β1-induced fibrogenesis in human lung fibroblast-derived MRC-5 cells at 3 μM, as confirmed by qPCR and Western blot analyses. Molecular dynamics simulations and structural analyses revealed that osimertinib engages the ATP-binding pocket of TNIK via hinge hydrogen bonding with Cys108, while unoccupied subpockets near Met105 and the involvement of Gln157 provide opportunities for rational modifications to improve affinity and selectivity. These findings demonstrate the robustness of our integrated machine learning and structure-based virtual screening pipeline and suggest that osimertinib warrants further evaluation as a TNIK-targeted agent for IPF, with future studies needed to optimize its potency and selectivity.",
+  "authors": [
+    "Zhao, Likun",
+    "Zhao L",
+    "Liu, Huanxiang",
+    "Liu H",
+    "Yao, Xiaojun",
+    "Yao X",
+    "Ma, Xiuling",
+    "Ma X",
+    "Liu, Bo",
+    "Liu B",
+    "Li, Bin",
+    "Li B",
+    "Tong, Henry H Y",
+    "Tong HHY",
+    "Zhang, Qianqian",
+    "Zhang Q"
+  ],
+  "journal": "Journal of chemical information and modeling",
+  "year": "2025",
+  "doi": "10.1021/acs.jcim.5c01521",
+  "source_xml": "Integrated Machine Learning and Structure-Based Virtual Screening Identify Osimertinib as a TNIK Inh.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182531",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

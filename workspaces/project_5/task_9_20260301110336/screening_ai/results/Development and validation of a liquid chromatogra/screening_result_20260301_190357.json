@@ -1,0 +1,28 @@
+{
+  "title": "Development and validation of a liquid chromatography-tandem mass spectrometry assay for nine oral anticancer drugs in human plasma.",
+  "extracted_abstract": "A liquid chromatography-tandem mass spectrometry assay was developed and validated for the nine oral anticancer agents alectinib, cobimetinib, lenvatinib, nintedanib, osimertinib, palbociclib, ribociclib, vismodegib and vorinostat in order to support therapeutic drug monitoring (TDM). The assay was based on reversed-phase chromatography coupled with tandem mass spectrometry operating in the positive ion mode. The assay was validated based on the guidelines on bioanalytical methods by the US Food and Drug Administration and European Medicines Agency. The method was validated over a linear range of 10-200 ng/mL for alectinib, lenvatinib, nintedanib and vismodegib; 50-1000 ng/mL for cobimetinib and palbociclib; 100-2000 ng/mL for osimertinib; 5.00-100 ng/mL for ribociclib; 25-500 ng/mL for vorinostat. Intra-assay and inter-assay bias was within ±20% for all analytes at the lower limit of quantification and within ±15% at remaining concentrations. Stability experiments showed that osimertinib is unstable in the biomatrix and should be shipped on dry-ice and stored at -20 °C until analysis. All other compounds were stable in the biomatrix. The described TDM method was successfully validated and applied for TDM in patients treated with these KIs.",
+  "authors": [
+    "Janssen, Julie M",
+    "Janssen JM",
+    "de Vries, Niels",
+    "de Vries N",
+    "Venekamp, Nikkie",
+    "Venekamp N",
+    "Rosing, Hilde",
+    "Rosing H",
+    "Huitema, Alwin D R",
+    "Huitema ADR",
+    "Beijnen, Jos H",
+    "Beijnen JH"
+  ],
+  "journal": "Journal of pharmaceutical and biomedical analysis",
+  "year": "2019",
+  "doi": "10.1016/j.jpba.2019.06.034",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/31255856",
+  "source_xml": "Development and validation of a liquid chromatography-tandem mass spectrometry assay for nine oral a.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_190357",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}

@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Development and validation of a new liquid chromatography-tandem mass spectrometry assay for the simultaneous quantification of afatinib, dacomitinib, osimertinib, and the active metabolites of osimertinib in human serum.</Title>
+    <Authors>
+      <Author>Ishikawa, Emi</Author>
+      <Author>Ishikawa E</Author>
+      <Author>Yokoyama, Yuta</Author>
+      <Author>Yokoyama Y</Author>
+      <Author>Chishima, Haruna</Author>
+      <Author>Chishima H</Author>
+      <Author>Kuniyoshi, Ouki</Author>
+      <Author>Kuniyoshi O</Author>
+      <Author>Sato, Itaru</Author>
+      <Author>Sato I</Author>
+      <Author>Nakaya, Naoki</Author>
+      <Author>Nakaya N</Author>
+      <Author>Nakajima, Hideo</Author>
+      <Author>Nakajima H</Author>
+      <Author>Kimura, Motonori</Author>
+      <Author>Kimura M</Author>
+      <Author>Hakamata, Jun</Author>
+      <Author>Hakamata J</Author>
+      <Author>Suehiro, Naoya</Author>
+      <Author>Suehiro N</Author>
+      <Author>Nakada, Hideo</Author>
+      <Author>Nakada H</Author>
+      <Author>Ikemura, Shinnosuke</Author>
+      <Author>Ikemura S</Author>
+      <Author>Jibiki, Aya</Author>
+      <Author>Jibiki A</Author>
+      <Author>Kawazoe, Hitoshi</Author>
+      <Author>Kawazoe H</Author>
+      <Author>Muramatsu, Hiroshi</Author>
+      <Author>Muramatsu H</Author>
+      <Author>Suzuki, Sayo</Author>
+      <Author>Suzuki S</Author>
+      <Author>Nakamura, Tomonori</Author>
+      <Author>Nakamura T</Author>
+    </Authors>
+    <Journal>Journal of chromatography. B, Analytical technologies in the biomedical and life</Journal>
+    <Year>2022</Year>
+    <Abstract>Reports on the therapeutic drug monitoring (TDM) of second- and third-generation epidermal growth factor receptor-tyrosine kinase inhibitors (EGFR-TKIs) in non-small cell lung cancer patients are limited and are required to improve the safety of EGFR-TKI therapy. Some EGFR-TKIs have active metabolites with similar or higher potency compared with the parent compounds; thus, monitoring the parent compound as well as its active metabolites is essential for truly effective TDM. In this study, we developed and validated a method that simultaneously quantifies second- and third-generation EGFR-TKIs (afatinib, dacomitinib, and osimertinib) and the active metabolites of osimertinib, AZ5104 and AZ7550, in the human serum using liquid chromatography-tandem mass spectrometry (LC-MS/MS). The clinical application of the method was also evaluated. The analytes were extracted from a 100 μL serum sample using a simple protein precipitation method and analyzed using LC-MS/MS. Excellent linearity of calibration curves was observed at ranges of 2.5-125.0 ng/mL for afatinib, 2.5-125.0 ng/mL for dacomitinib, 4.0-800.0 ng/mL for osimertinib, 1.0-125.0 ng/mL for AZ5104, and 2.5-125.0 ng/mL for AZ7550. The precision and accuracy were below 14.9% and within ± 14.9% of the nominal concentrations, respectively. The mean recovery was higher than 94.7% and the coefficient of variation (CV) was lower than 8.3%. The mean internal-standard normalized matrix factors ranged from 94.6 to 111.9%, and the CVs were lower than 9.7%. This analytical method met the acceptance criteria of the U.S. Food and Drug Administration guidelines. The method was also successfully applied to the analysis of 45 clinical samples; it supports the efficient and valuable analysis for TDM investigations of EGFR-TKIs.</Abstract>
+    <DOI>10.1016/j.jchromb.2022.123245</DOI>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/35436724</URL>
+    <SourceFile>pubmed-osimertini-set.nbib</SourceFile>
+    <Type>NBIB</Type>
+  </Reference>
+</References>

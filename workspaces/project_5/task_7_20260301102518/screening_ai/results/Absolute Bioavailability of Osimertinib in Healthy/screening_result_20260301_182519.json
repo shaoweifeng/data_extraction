@@ -1,0 +1,27 @@
+{
+  "title": "Absolute Bioavailability of Osimertinib in Healthy Adults.",
+  "extracted_abstract": "Osimertinib is a third-generation, central nervous system-active, epidermal growth factor receptor-tyrosine kinase inhibitor (EGFR-TKI) selective for EGFR-TKI sensitizing and T790M resistance mutations. This phase 1, open-label study (NCT02491944) investigated absolute bioavailability and pharmacokinetics (PK) of oral and intravenous (IV) osimertinib. Ten healthy subjects (21-61 years) received a single oral 80-mg dose concomitantly with a 100 μg (containing 1 μCi) IV microtracer dose of [(14) C]osimertinib. Oral and IV PK were determined simultaneously for osimertinib and its active metabolites, AZ5104 and AZ7550. High-performance liquid chromatography and accelerator mass spectrometry were used to characterize IV dose PK. Geometric mean absolute oral bioavailability of osimertinib was 69.8% (90% confidence interval, 66.7, 72.9). Oral osimertinib was slowly absorbed (median time to maximum plasma concentration [t(max) ] 7.0 hours). Following t(max) , plasma concentrations fell in an apparent monophasic manner. IV clearance and volume of distribution were 16.8 L/h and 1285 L, respectively. Arithmetic mean elimination half-life estimates were 59.7, 52.6, and 72.6 hours for osimertinib, AZ5104, and AZ7550, respectively (oral dosing), and 54.9, 68.4, and 99.7 hours for [(14) C]osimertinib, [(14) C]AZ5104, and [(14) C]AZ7550, respectively (IV dosing). Oral osimertinib was well absorbed. Simultaneous IV and oral PK analysis proved useful for complete understanding of osimertinib PK and showed that the first-pass effect was minimal for osimertinib.",
+  "authors": [
+    "Vishwanathan, Karthick",
+    "Vishwanathan K",
+    "So, Karen",
+    "So K",
+    "Thomas, Karen",
+    "Thomas K",
+    "Bramley, Alex",
+    "Bramley A",
+    "English, Stephen",
+    "English S",
+    "Collier, Jo",
+    "Collier J"
+  ],
+  "journal": "Clinical pharmacology in drug development",
+  "year": "2019",
+  "doi": "10.1002/cpdd.467",
+  "source_xml": "Absolute Bioavailability of Osimertinib in Healthy Adults.xml",
+  "exclusion_reason": "",
+  "number_exclusion_reason": "",
+  "include_or_not": "yes",
+  "processing_time": "20260301_182519",
+  "raw_ai_response": "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]"
+}
