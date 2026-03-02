@@ -92,7 +92,9 @@ def simple_json_to_excel(json_file_path, cnt):
         df = pd.DataFrame(all_rows)
         
         # 合并表头：基础字段 + 排序后的动态字段
-        final_headers = base_headers + sorted(list(dynamic_headers))
+        # final_headers = base_headers + sorted(list(dynamic_headers))
+        # 仅使用基础表头，忽略动态列
+        final_headers = base_headers
 
         # 确保所有表头列都存在
         for header in final_headers:
