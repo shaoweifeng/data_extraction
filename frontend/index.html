@@ -104,35 +104,59 @@
                     <!-- Workflow Stage Content -->
                     <div v-if="currentStage === 'SCREEN_1'" class="w-full">
                         <!-- Step Indicator -->
-                        <div class="flex items-center justify-between mb-8 px-12">
+                        <div class="flex items-center justify-between mb-6 px-12">
                             <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 1">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition" :class="currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">1</div>
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
+                                    <span>1</span>
+                                    <i v-if="stepStatus.step1" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px]"></i>
+                                </div>
                                 <span class="text-xs font-medium text-gray-600">文献解析</span>
                             </div>
                             <div class="flex-1 h-1 mx-4 transition" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'"></div>
                             <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 2">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition" :class="currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">2</div>
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
+                                    <span>2</span>
+                                    <i v-if="stepStatus.step2" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px]"></i>
+                                </div>
                                 <span class="text-xs font-medium text-gray-600">自动去重</span>
                             </div>
                             <div class="flex-1 h-1 mx-4 transition" :class="currentStep >= 3 ? 'bg-blue-600' : 'bg-gray-200'"></div>
                             <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 3">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition" :class="currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">3</div>
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
+                                    <span>3</span>
+                                    <i v-if="stepStatus.step3" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px] text-[10px]"></i>
+                                </div>
                                 <span class="text-xs font-medium text-gray-600">纳排标准</span>
                             </div>
                             <div class="flex-1 h-1 mx-4 transition" :class="currentStep >= 4 ? 'bg-blue-600' : 'bg-gray-200'"></div>
                             <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 4">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition" :class="currentStep >= 4 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">4</div>
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 4 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
+                                    <span>4</span>
+                                    <i v-if="stepStatus.step4" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px]"></i>
+                                </div>
                                 <span class="text-xs font-medium text-gray-600">AI初筛</span>
                             </div>
                             <div class="flex-1 h-1 mx-4 transition" :class="currentStep >= 5 ? 'bg-blue-600' : 'bg-gray-200'"></div>
                             <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 5">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition" :class="currentStep >= 5 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">5</div>
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 5 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
+                                    <span>5</span>
+                                    <i v-if="stepStatus.step5" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px]"></i>
+                                </div>
                                 <span class="text-xs font-medium text-gray-600">结果归纳</span>
                             </div>
                         </div>
 
-                        <!-- Step 1: Reference Parse -->
-                        <div v-if="currentStep === 1" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
+                        <button @click="prevStep" :disabled="currentStep === 1" class="hidden md:flex fixed left-[18rem] top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-700 hover:shadow-md transition items-center justify-center z-20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none">
+                            <i class="fas fa-chevron-left text-4xl"></i>
+                        </button>
+                        <button @click="nextStep" :disabled="currentStep === 5" class="hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-700 hover:shadow-md transition items-center justify-center z-20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none">
+                            <i class="fas fa-chevron-right text-4xl"></i>
+                        </button>
+
+                        <div>
+
+                            <!-- Step 1: Reference Parse -->
+                            <div v-if="currentStep === 1" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
                             <div class="mb-6">
                                 <i class="fas fa-file-import text-6xl text-blue-100 mb-4"></i>
                                 <h3 class="text-2xl font-bold text-gray-800">步骤 1: 导入文献索引</h3>
@@ -145,13 +169,31 @@
                                 </button>
                                 <p class="mt-4 text-sm text-gray-400">点击或拖拽文件到此处</p>
                             </div>
+                            <div class="mt-6 text-left">
+                                <h4 class="font-semibold text-gray-700 mb-2">已导入的索引</h4>
+                                <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-64 overflow-y-auto">
+                                    <div v-if="referenceFiles.length === 0" class="text-gray-400 text-sm">暂无已导入的索引</div>
+                                    <div v-else class="space-y-2">
+                                        <div v-for="file in referenceFiles" :key="file.id" class="flex items-center justify-between bg-white p-3 rounded border">
+                                            <div class="flex items-center overflow-hidden">
+                                                <i class="fas fa-bookmark text-blue-500 mr-2"></i>
+                                                <span class="truncate w-64">{{ file.filename }}</span>
+                                            </div>
+                                            <div class="space-x-3">
+                                                <a :href="file.file" class="text-blue-600 hover:text-blue-800"><i class="fas fa-download"></i></a>
+                                                <button @click="deleteReference(file)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="mt-8 flex justify-end">
                                 <button @click="nextStep" class="text-blue-600 hover:text-blue-800 font-medium">跳过，直接去重 <i class="fas fa-arrow-right ml-1"></i></button>
                             </div>
-                        </div>
+                            </div>
 
-                        <!-- Step 2: Deduplicate -->
-                        <div v-if="currentStep === 2" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
+                            <!-- Step 2: Deduplicate -->
+                            <div v-if="currentStep === 2" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
                             <div class="mb-6">
                                 <i class="fas fa-clone text-6xl text-purple-100 mb-4"></i>
                                 <h3 class="text-2xl font-bold text-gray-800">步骤 2: 文献自动去重</h3>
@@ -174,10 +216,10 @@
                                 <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 上一步</button>
                                 <button @click="nextStep" class="text-blue-600 hover:text-blue-800 font-medium">下一步 <i class="fas fa-arrow-right ml-1"></i></button>
                             </div>
-                        </div>
+                            </div>
 
-                        <!-- Step 3: Criteria -->
-                        <div v-if="currentStep === 3" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto">
+                            <!-- Step 3: Criteria -->
+                            <div v-if="currentStep === 3" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto">
                             <div class="text-center mb-6">
                                 <i class="fas fa-list-check text-6xl text-green-100 mb-4"></i>
                                 <h3 class="text-2xl font-bold text-gray-800">步骤 3: 设定纳排标准</h3>
@@ -207,10 +249,10 @@
                                 <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 上一步</button>
                                 <button @click="nextStep" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">确认标准并继续 <i class="fas fa-arrow-right ml-1"></i></button>
                             </div>
-                        </div>
+                            </div>
 
-                        <!-- Step 4: AI Screening -->
-                        <div v-if="currentStep === 4" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-4xl mx-auto">
+                            <!-- Step 4: AI Screening -->
+                            <div v-if="currentStep === 4" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-4xl mx-auto">
                             <div class="text-center mb-8">
                                 <i class="fas fa-robot text-6xl text-indigo-100 mb-4"></i>
                                 <h3 class="text-2xl font-bold text-gray-800">步骤 4: AI 智能初筛</h3>
@@ -273,16 +315,20 @@
                                     <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
                                     <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
                                 </button>
+                                <button v-if="isProcessing" @click="stopScreeningTask" class="mt-4 w-full md:w-1/2 bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-red-700 transition">
+                                    <i class="fas fa-stop mr-2"></i>
+                                    <span>停止筛选</span>
+                                </button>
                             </div>
                             
                             <div class="flex justify-between mt-8">
                                 <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 上一步</button>
                                 <button v-if="latestTask && latestTask.status === 'COMPLETED'" @click="nextStep" class="text-blue-600 hover:text-blue-800 font-medium animate-pulse">筛选完成，查看结果 <i class="fas fa-arrow-right ml-1"></i></button>
                             </div>
-                        </div>
+                            </div>
 
-                        <!-- Step 5: Results -->
-                        <div v-if="currentStep === 5" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
+                            <!-- Step 5: Results -->
+                            <div v-if="currentStep === 5" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
                             <div class="mb-8">
                                 <i class="fas fa-flag-checkered text-6xl text-yellow-100 mb-4"></i>
                                 <h3 class="text-2xl font-bold text-gray-800">步骤 5: 结果归纳与导出</h3>
@@ -321,6 +367,7 @@
                             
                             <div class="flex justify-start">
                                 <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 返回筛选</button>
+                            </div>
                             </div>
                         </div>
 
@@ -459,6 +506,12 @@
                     };
                 });
 
+                const referenceFiles = computed(() => {
+                    const screen1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
+                    if (!screen1) return [];
+                    return screen1.data.filter(d => d.data_type === 'INPUT' && (d.filename.endsWith('.ris') || d.filename.endsWith('.bib') || d.filename.endsWith('.nbib')));
+                });
+
                 const currentPage = ref(1);
                 const itemsPerPage = ref(20);
 
@@ -488,10 +541,12 @@
 
                 const nextStep = () => {
                     if (currentStep.value < 5) currentStep.value++;
+                    persistStep();
                 };
 
                 const prevStep = () => {
                     if (currentStep.value > 1) currentStep.value--;
+                    persistStep();
                 };
 
                 const refInput = ref(null);
@@ -503,6 +558,8 @@
                     } else {
                         console.error('refInput is null');
                     }
+
+                    autoSetStep();
                 };
 
                 const handleReferenceUpload = async (e) => {
@@ -580,21 +637,21 @@
                     }
                 };
 
-                const addCriteria = () => {
+                const addCriteria = async () => {
                     if (newCriteria.value.trim()) {
                         criteriaList.value.push(newCriteria.value.trim());
                         newCriteria.value = '';
-                        saveMetadata();
+                        await saveMetadata();
                     }
                 };
 
-                const removeCriteria = (idx) => {
+                const removeCriteria = async (idx) => {
                     criteriaList.value.splice(idx, 1);
-                    saveMetadata();
+                    await saveMetadata();
                 };
 
                 const saveMetadata = async () => {
-                    const stage = stagesData.value.find(s => s.stage_type === currentStage.value);
+                    const stage = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
                     if (!stage) return;
                     
                     const metadata = {
@@ -608,8 +665,7 @@
                             body: JSON.stringify({ metadata })
                         });
                         if (res.ok) {
-                            // 刷新 stagesData 以获取最新的 criteria.txt 文件记录
-                            fetchStages(currentProject.value.id);
+                            await fetchStages(currentProject.value.id);
                         } else {
                             console.error('Failed to save metadata');
                         }
@@ -633,18 +689,17 @@
                     const res = await fetch(`${API_BASE}/projects/${projectId}/stages/`);
                     stagesData.value = await res.json();
                     
-                    // 强制触发一次 criteriaList 更新
-                    const stage = stagesData.value.find(s => s.stage_type === currentStage.value);
-                    if (stage && stage.metadata && stage.metadata.screening_criteria) {
-                        criteriaList.value = stage.metadata.screening_criteria.split('\n');
+                    const screen1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
+                    if (screen1 && screen1.metadata && screen1.metadata.screening_criteria !== undefined) {
+                        const saved = screen1.metadata.screening_criteria || '';
+                        criteriaList.value = saved ? saved.split('\n') : [];
                     } else {
-                        // 尝试从文件列表查找 criteria.txt
-                        const criteriaFile = stage ? stage.data.find(d => d.filename === 'criteria.txt') : null;
+                        const criteriaFile = screen1 ? screen1.data.find(d => d.filename === 'criteria.txt') : null;
                         if (criteriaFile) {
                             try {
                                 const fileRes = await fetch(criteriaFile.file);
                                 const text = await fileRes.text();
-                                criteriaList.value = text.split('\n');
+                                criteriaList.value = text ? text.split('\n') : [];
                             } catch (e) {
                                 console.error('Error fetching criteria.txt:', e);
                                 criteriaList.value = [];
@@ -659,23 +714,11 @@
                 watch(currentStage, () => {
                      if (currentStage.value === 'SCREEN_1') {
                          currentStep.value = 1;
-                     }
-                     // Re-use logic from fetchStages or just call fetchStages if needed, but simpler to just re-evaluate
-                     const stage = stagesData.value.find(s => s.stage_type === currentStage.value);
-                     if (stage && stage.metadata && stage.metadata.screening_criteria) {
-                         const savedCriteria = stage.metadata.screening_criteria;
-                         criteriaList.value = savedCriteria ? savedCriteria.split('\n') : [];
-                     } else {
-                         // Fallback to file check again (duplicated logic, but safe)
-                         const criteriaFile = stage ? stage.data.find(d => d.filename === 'criteria.txt') : null;
-                         if (criteriaFile) {
-                             fetch(criteriaFile.file).then(res => res.text()).then(text => {
-                                 criteriaList.value = text.split('\n');
-                             }).catch(() => {
-                                 criteriaList.value = [];
-                             });
-                         } else {
-                             criteriaList.value = [];
+                         persistStep();
+                         const screen1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
+                         if (screen1 && screen1.metadata && screen1.metadata.screening_criteria !== undefined) {
+                             const saved = screen1.metadata.screening_criteria || '';
+                             criteriaList.value = saved ? saved.split('\n') : [];
                          }
                      }
                 });
@@ -772,6 +815,26 @@
                     }
                 };
 
+                const stopScreeningTask = async () => {
+                    const ok = confirm('确定停止当前 AI 筛选任务？');
+                    if (!ok) return;
+                    try {
+                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/stop_extraction/`, {
+                            method: 'POST'
+                        });
+                        if (res.ok) {
+                            if (pollingInterval.value) clearInterval(pollingInterval.value);
+                            await fetchLatestTask(currentProject.value.id);
+                            alert('已发送停止请求');
+                        } else {
+                            const text = await res.text();
+                            alert(`停止失败: ${text}`);
+                        }
+                    } catch (err) {
+                        alert(`请求出错: ${err.message}`);
+                    }
+                };
+
                 const generateReport = async () => {
                     isGeneratingReport.value = true;
                     try {
@@ -790,6 +853,50 @@
                     } finally {
                         isGeneratingReport.value = false;
                     }
+                };
+
+                const deleteReference = async (file) => {
+                    const ok = confirm(`删除索引文件「${file.filename}」？`);
+                    if (!ok) return;
+                    const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/stage_data/${file.id}/`, { method: 'DELETE' });
+                    if (res.ok || res.status === 204) {
+                        await fetchStages(currentProject.value.id);
+                    } else {
+                        const text = await res.text();
+                        alert(`删除失败: ${text}`);
+                    }
+                };
+
+                const stepStatus = computed(() => {
+                    const s1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
+                    const hasRefs = s1 ? s1.data.some(d => d.data_type === 'INPUT' && (d.filename.endsWith('.ris') || d.filename.endsWith('.bib') || d.filename.endsWith('.nbib'))) : false;
+                    const hasDedup = s1 ? s1.data.some(d => d.filename.includes('deduplicated') || d.filename.includes('references_deduplicated')) : false;
+                    const hasCriteria = (criteriaList.value && criteriaList.value.length > 0) || (s1 && s1.data.some(d => d.filename === 'criteria.txt'));
+                    const taskDone = latestTask.value && latestTask.value.status === 'COMPLETED';
+                    const hasReport = s1 ? s1.data.some(d => d.data_type === 'OUTPUT' && (d.filename.endsWith('.xlsx') || d.filename.endsWith('.ris'))) : false;
+                    return { step1: hasRefs, step2: hasDedup, step3: hasCriteria, step4: taskDone, step5: hasReport };
+                });
+
+                const autoSetStep = () => {
+                    if (!currentProject.value) return;
+                    const key = `project_${currentProject.value.id}_screen1_step`;
+                    const saved = localStorage.getItem(key);
+                    if (saved) {
+                        currentStep.value = parseInt(saved) || 1;
+                        return;
+                    }
+                    const s = stepStatus.value;
+                    if (!s.step1) currentStep.value = 1;
+                    else if (!s.step2) currentStep.value = 2;
+                    else if (!s.step3) currentStep.value = 3;
+                    else if (!s.step4) currentStep.value = 4;
+                    else currentStep.value = 5;
+                };
+
+                const persistStep = () => {
+                    if (!currentProject.value) return;
+                    const key = `project_${currentProject.value.id}_screen1_step`;
+                    localStorage.setItem(key, String(currentStep.value));
                 };
 
                 const startTask = async (force) => {
@@ -841,6 +948,7 @@
                     const base = "px-2 py-1 rounded-full text-xs font-medium ";
                     if (status === 'COMPLETED') return base + "bg-green-100 text-green-700";
                     if (status === 'PROCESSING') return base + "bg-blue-100 text-blue-700 animate-pulse";
+                    if (status === 'STOPPED') return base + "bg-yellow-100 text-yellow-700";
                     if (status === 'FAILED') return base + "bg-red-100 text-red-700";
                     return base + "bg-gray-100 text-gray-700";
                 };
@@ -874,9 +982,9 @@
                     uploadingFiles, latestTask, isProcessing, currentStageFiles, currentStep,
                     criteriaList, newCriteria, refInput,
                     selectProject, deleteProject, createProject, handleFileUpload, handleStageFileUpload, startTask,
-                    startScreeningTask, addCriteria, removeCriteria, nextStep, prevStep,
+                    startScreeningTask, stopScreeningTask, addCriteria, removeCriteria, nextStep, prevStep,
                     getStatusClass, getStageClass, getStageName, formatDate, triggerFileInput, handleReferenceUpload,
-                    handleDeduplication,
+                    handleDeduplication, referenceFiles, deleteReference, stepStatus,
                     screeningProgress,
                     splitXmlFiles, paginatedSplitXmlFiles, currentPage, totalPages, nextPage, prevPage,
                     generateReport, isGeneratingReport

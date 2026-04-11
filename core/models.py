@@ -87,6 +87,7 @@ class ExtractionTask(models.Model):
         ('PROCESSING', '处理中'),
         ('COMPLETED', '已完成'),
         ('FAILED', '失败'),
+        ('STOPPED', '已停止'),
     ]
     
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks", verbose_name="所属项目")

@@ -27,7 +27,7 @@ class StageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Stage
-        fields = ['id', 'project', 'stage_type', 'status', 'updated_at', 'data']
+        fields = ['id', 'project', 'stage_type', 'status', 'metadata', 'updated_at', 'data']
 
 class ProjectSerializer(serializers.ModelSerializer):
     documents_count = serializers.IntegerField(source='documents.count', read_only=True)

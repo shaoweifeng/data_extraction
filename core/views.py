@@ -8,6 +8,7 @@ import os
 import shutil
 from django.conf import settings
 from celery import current_app
+from django.utils import timezone
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
@@ -80,6 +81,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
             uploaded_docs.append(DocumentSerializer(doc).data)
         return Response(uploaded_docs, status=status.HTTP_201_CREATED)
 
+    # 删除某条 StageData（项目级别的文件项）
+    # DELETE /api/projects/{id}/stage_data/{data_id}/
+    @action(detail=True, methods=['delete'], url_path='stage_data/(?P<data_id>[^/.]+)')
+    def delete_stage_data(self, request, pk=None, data_id=None):
+        project = self.get_object()
+        try:
+            sd = StageData.objects.get(pk=data_id)
+        except StageData.DoesNotExist:
+            return Response({"error": "StageData not found"}, status=status.HTTP_404_NOT_FOUND)
+        if sd.stage.project_id != project.id:
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        sd.file.delete(save=False)
+        sd.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=['post'])
     def start_extraction(self, request, pk=None):
         project = self.get_object()
@@ -97,6 +113,29 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # 触发 Celery 任务
         task = run_extraction_pipeline.delay(project.id, force, screening_criteria)
         return Response({"task_id": task.id, "message": "任务已启动"}, status=status.HTTP_202_ACCEPTED)
+
+    @action(detail=True, methods=['post'])
+    def stop_extraction(self, request, pk=None):
+        project = self.get_object()
+        tasks = project.tasks.filter(status='PROCESSING').exclude(celery_task_id__isnull=True).exclude(celery_task_id='')
+        if not tasks.exists():
+            return Response({"message": "No running task"}, status=status.HTTP_200_OK)
+
+        stopped = 0
+        for t in tasks:
+            try:
+                current_app.control.revoke(t.celery_task_id, terminate=True, signal='SIGTERM')
+            except Exception:
+                pass
+            t.status = 'STOPPED'
+            t.completed_at = timezone.now()
+            current_logs = t.logs or ""
+            suffix = "\n[STOPPED] 用户手动停止任务"
+            t.logs = (current_logs + suffix) if suffix.strip() not in current_logs else current_logs
+            t.save()
+            stopped += 1
+
+        return Response({"message": "Stopped", "stopped_tasks": stopped}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def generate_report(self, request, pk=None):
