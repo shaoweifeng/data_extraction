@@ -14,9 +14,12 @@ def simple_json_to_excel(json_file_path, cnt):
     """
     简化版：不需要Excel模板文件，直接使用已知的表头顺序
     """
-    # 读取JSON文件
-    with open(json_file_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    try:
+        with open(json_file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"读取JSON失败，跳过: {json_file_path} ({e})")
+        return False
 
     # 定义基础表头顺序
     base_headers = [
@@ -32,7 +35,8 @@ def simple_json_to_excel(json_file_path, cnt):
     field_mapping = {
         'first_author': 'authors', # 兼容旧
         'public_year': 'year',     # 兼容旧
-        'file_path': 'source_xml'  # 兼容旧
+        'file_path': 'source_xml',  # 兼容旧
+        'number_exclusion_reason': 'exclusion_reason_id'
     }
 
     # 处理prompt1_result（基本信息）
@@ -132,8 +136,11 @@ def convert_to_ris(json_dir, output_ris_path):
     ris_entries = []
     
     for file_path in files:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except Exception:
+            continue
             
         # 提取信息 (假设 prompt1_result 包含元数据)
         prompt1_data = data.get('prompt1_result', [])

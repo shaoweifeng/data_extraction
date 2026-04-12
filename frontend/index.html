@@ -326,26 +326,42 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                                 <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 h-96 flex flex-col">
-                                    <h4 class="font-bold text-gray-700 mb-4 flex-shrink-0">待处理文献列表 ({{ splitXmlFiles.length }})</h4>
+                                    <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                                        <h4 class="font-bold text-gray-700">文献列表</h4>
+                                        <div class="flex items-center space-x-2 text-xs">
+                                            <button @click="fileListTab = 'pending'" :class="fileListTab === 'pending' ? 'bg-white border border-gray-300 text-gray-800' : 'text-gray-500 hover:text-gray-700'" class="px-2 py-1 rounded">
+                                                待处理 {{ pendingXmlFiles.length }}
+                                            </button>
+                                            <button @click="fileListTab = 'processed'" :class="fileListTab === 'processed' ? 'bg-white border border-gray-300 text-gray-800' : 'text-gray-500 hover:text-gray-700'" class="px-2 py-1 rounded">
+                                                已处理 {{ processedEntries.length }}
+                                            </button>
+                                        </div>
+                                    </div>
                                     
                                     <div class="flex-1 bg-white rounded border border-gray-200 overflow-y-auto p-2 space-y-1 relative min-h-0">
-                                         <div v-if="splitXmlFiles.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
-                                            <p>暂无拆分后的 XML 文件</p>
-                                            <p class="text-xs">请先完成步骤 2 的去重操作</p>
+                                         <div v-if="fileListTab === 'pending' && pendingXmlFiles.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
+                                            <p>暂无待处理文献</p>
+                                            <p class="text-xs">请先完成步骤 2 去重，或等待 AI 产出结果</p>
+                                         </div>
+                                         <div v-else-if="fileListTab === 'processed' && processedEntries.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
+                                            <p>暂无已处理文献</p>
+                                            <p class="text-xs">启动 AI 初筛后，处理完成的文献会出现在这里</p>
                                          </div>
                                          <div v-else>
-                                             <div v-for="file in paginatedSplitXmlFiles" :key="file.id" class="flex items-center justify-between p-2 hover:bg-gray-50 border-b border-gray-100 last:border-0 text-sm">
+                                             <div v-for="item in paginatedFileList" :key="item.key" class="flex items-center justify-between p-2 hover:bg-gray-50 border-b border-gray-100 last:border-0 text-sm">
                                                 <div class="flex items-center overflow-hidden">
                                                     <i class="fas fa-file-code text-blue-500 mr-2"></i>
-                                                    <span class="truncate w-64" :title="file.filename">{{ file.filename.replace('split_xmls/', '') }}</span>
+                                                    <span class="truncate w-64" :title="item.title">{{ item.name }}</span>
                                                 </div>
-                                                <span class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">待筛选</span>
+                                                <span v-if="item.badge === 'pending'" class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">待筛选</span>
+                                                <span v-else-if="item.badge === 'included'" class="text-xs px-2 py-1 bg-green-100 rounded text-green-700">已纳入</span>
+                                                <span v-else class="text-xs px-2 py-1 bg-red-100 rounded text-red-700">已排除</span>
                                              </div>
                                          </div>
                                     </div>
                                     
                                     <!-- Pagination Controls -->
-                                    <div v-if="splitXmlFiles.length > 0" class="flex justify-between items-center mt-4 text-sm flex-shrink-0">
+                                    <div v-if="currentListTotal > 0" class="flex justify-between items-center mt-4 text-sm flex-shrink-0">
                                         <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
                                             <i class="fas fa-chevron-left"></i>
                                         </button>
@@ -376,9 +392,13 @@
                                         <i class="fas fa-check-circle"></i> 筛选完成！结果已生成
                                     </div>
                                 </div>
-                                <button @click="startScreeningTask" :disabled="isProcessing" class="w-full md:w-1/2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition transform hover:-translate-y-1">
+                                <button @click="startScreeningTask()" :disabled="isProcessing" class="w-full md:w-1/2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition transform hover:-translate-y-1">
                                     <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
                                     <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
+                                </button>
+                                <button v-if="!isProcessing" @click="restartScreeningTask" class="mt-4 w-full md:w-1/2 border border-red-300 text-red-700 px-8 py-3 rounded-xl font-bold text-base shadow-sm hover:bg-red-50 transition">
+                                    <i class="fas fa-rotate-right mr-2"></i>
+                                    <span>重新筛选（全部）</span>
                                 </button>
                                 <button v-if="isProcessing" @click="stopScreeningTask" class="mt-4 w-full md:w-1/2 bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-red-700 transition">
                                     <i class="fas fa-stop mr-2"></i>
@@ -539,6 +559,8 @@
                 const dedupReport = ref(null);
                 const isDeduplicating = ref(false);
                 const dedupStatusText = ref('正在解析并去重，请稍候…');
+                const processedEntries = ref([]);
+                const fileListTab = ref('pending');
 
                 const screeningProgress = computed(() => {
                     if (!latestTask.value || !latestTask.value.logs) return { processed: 0, total: 0, percent: 0 };
@@ -587,14 +609,57 @@
                     return currentStageFiles.value.output.filter(f => f.description === '单篇文献 XML' || f.filename.includes('split_xmls/'));
                 });
 
-                const paginatedSplitXmlFiles = computed(() => {
+                const processedSet = computed(() => {
+                    return new Set((processedEntries.value || []).map(x => x.source_xml).filter(Boolean));
+                });
+
+                const pendingXmlFiles = computed(() => {
+                    const set = processedSet.value;
+                    return splitXmlFiles.value.filter(f => {
+                        const base = (f.filename || '').split('/').pop();
+                        return base && !set.has(base);
+                    });
+                });
+
+                const processedBySource = computed(() => {
+                    const map = {};
+                    for (const it of (processedEntries.value || [])) {
+                        if (it && it.source_xml) map[it.source_xml] = it;
+                    }
+                    return map;
+                });
+
+                const currentListTotal = computed(() => {
+                    return fileListTab.value === 'processed' ? processedEntries.value.length : pendingXmlFiles.value.length;
+                });
+
+                const paginatedFileList = computed(() => {
                     const start = (currentPage.value - 1) * itemsPerPage.value;
                     const end = start + itemsPerPage.value;
-                    return splitXmlFiles.value.slice(start, end);
+                    if (fileListTab.value === 'processed') {
+                        return (processedEntries.value || []).slice(start, end).map((p, idx) => {
+                            const include = (p.include_or_not || '').toLowerCase();
+                            const badge = include === 'yes' ? 'included' : 'excluded';
+                            return {
+                                key: `${p.source_xml || ''}_${start + idx}`,
+                                name: p.source_xml || (p.title || 'Unknown'),
+                                title: p.title || p.source_xml || '',
+                                badge
+                            };
+                        });
+                    }
+                    return pendingXmlFiles.value.slice(start, end).map(f => {
+                        return {
+                            key: f.id,
+                            name: (f.filename || '').replace('split_xmls/', ''),
+                            title: f.filename || '',
+                            badge: 'pending'
+                        };
+                    });
                 });
 
                 const totalPages = computed(() => {
-                    return Math.ceil(splitXmlFiles.value.length / itemsPerPage.value);
+                    return Math.ceil((currentListTotal.value || 0) / itemsPerPage.value) || 1;
                 });
 
                 const nextPage = () => {
@@ -604,6 +669,10 @@
                 const prevPage = () => {
                     if (currentPage.value > 1) currentPage.value--;
                 };
+
+                watch(fileListTab, () => {
+                    currentPage.value = 1;
+                });
 
                 const currentStep = ref(1); // 1: XML转换, 2: 去重, 3: 纳排, 4: AI筛选, 5: 结果
 
@@ -813,6 +882,12 @@
                      }
                 });
 
+                watch(currentStep, async () => {
+                    if (currentStep.value === 4 && currentProject.value) {
+                        await fetchProcessedEntries(currentProject.value.id);
+                    }
+                });
+
                 const deleteProject = async (project, e) => {
                     if (e) e.stopPropagation();
                     const ok = confirm(`确定删除项目「${project.name}」吗？该项目的所有数据都会被删除。`);
@@ -873,7 +948,7 @@
                     }
                 };
 
-                const startScreeningTask = async () => {
+                const startScreeningTask = async (force = false) => {
                     console.log('startScreeningTask triggered');
                     const criteria = criteriaList.value.join('\n');
                     console.log('Criteria to send:', criteria);
@@ -883,7 +958,7 @@
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ 
-                                force: false,
+                                force,
                                 screening_criteria: criteria
                             })
                         });
@@ -892,6 +967,8 @@
                         
                         if (res.ok) {
                             alert('AI 筛选任务已启动！');
+                            processedEntries.value = [];
+                            fileListTab.value = 'pending';
                             startPolling();
                             // nextStep(); // Removed auto-jump
                         } else {
@@ -903,6 +980,12 @@
                         alert(`请求出错: ${err.message}`);
                         console.error('Screening start error:', err);
                     }
+                };
+
+                const restartScreeningTask = async () => {
+                    const ok = confirm('将重新筛选全部文献（会覆盖/重复生成结果）。确定继续？');
+                    if (!ok) return;
+                    await startScreeningTask(true);
                 };
 
                 const stopScreeningTask = async () => {
@@ -1020,15 +1103,34 @@
                     }
                 };
 
+                const fetchProcessedEntries = async (projectId) => {
+                    try {
+                        const res = await fetch(`${API_BASE}/projects/${projectId}/screening_progress_files/`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            processedEntries.value = data.processed || [];
+                        }
+                    } catch (e) {
+                    }
+                };
+
                 const startPolling = () => {
                     if (pollingInterval.value) clearInterval(pollingInterval.value);
+                    let tick = 0;
                     pollingInterval.value = setInterval(async () => {
                         const res = await fetch(`${API_BASE}/tasks/latest_by_project/?project_id=${currentProject.value.id}`);
                         if (res.ok) {
                             latestTask.value = await res.json();
+                            tick += 1;
+                            if (currentStep.value === 4 && tick % 2 === 0) {
+                                await fetchProcessedEntries(currentProject.value.id);
+                            }
                             if (latestTask.value.status !== 'PROCESSING') {
                                 clearInterval(pollingInterval.value);
                                 fetchProjects(); // 更新状态
+                                if (currentStep.value === 4) {
+                                    await fetchProcessedEntries(currentProject.value.id);
+                                }
                             }
                         }
                     }, 2000);
@@ -1072,11 +1174,12 @@
                     uploadingFiles, latestTask, isProcessing, currentStageFiles, currentStep,
                     criteriaList, newCriteria, refInput,
                     selectProject, deleteProject, createProject, handleFileUpload, handleStageFileUpload, startTask,
-                    startScreeningTask, stopScreeningTask, addCriteria, removeCriteria, nextStep, prevStep,
+                    startScreeningTask, restartScreeningTask, stopScreeningTask, addCriteria, removeCriteria, nextStep, prevStep,
                     getStatusClass, getStageClass, getStageName, formatDate, triggerFileInput, handleReferenceUpload,
                     handleDeduplication, referenceFiles, deleteReference, stepStatus,
                     screeningProgress, dedupReport, isDeduplicating, dedupStatusText,
-                    splitXmlFiles, paginatedSplitXmlFiles, currentPage, totalPages, nextPage, prevPage,
+                    processedEntries, fileListTab, pendingXmlFiles, paginatedFileList, currentListTotal,
+                    splitXmlFiles, currentPage, totalPages, nextPage, prevPage,
                     generateReport, isGeneratingReport
                 };
             }

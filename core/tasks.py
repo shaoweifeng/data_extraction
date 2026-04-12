@@ -145,6 +145,16 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
         
         # 恢复 stdout
         sys.stdout = original_stdout
+
+        task_obj.refresh_from_db()
+        if task_obj.status == 'STOPPED' or os.path.exists(os.path.join(pipeline1_dir, "STOP")):
+            task_obj.status = 'STOPPED'
+            if not task_obj.completed_at:
+                task_obj.completed_at = timezone.now()
+            add_log("AI 初筛任务已停止。")
+            os.chdir(original_cwd)
+            task_obj.save()
+            return False
             
         if success_count == 0 and len(failed_files) > 0:
              task_obj.status = 'FAILED'
@@ -167,6 +177,15 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
 
     # 执行 Step 2: 生成 Excel (已移至单独的 API 触发)
     
+    task_obj.refresh_from_db()
+    if task_obj.status == 'STOPPED' or os.path.exists(os.path.join(pipeline1_dir, "STOP")):
+        task_obj.status = 'STOPPED'
+        if not task_obj.completed_at:
+            task_obj.completed_at = timezone.now()
+        add_log("AI 初筛任务已停止。")
+        task_obj.save()
+        return False
+
     task_obj.status = 'COMPLETED'
     task_obj.completed_at = timezone.now()
     add_log("AI 初筛任务完成！请在下一步生成 Excel 报表。")

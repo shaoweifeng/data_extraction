@@ -21,6 +21,9 @@ class PDFProcessor:
         self.processed_log_file = "processed_files.json"
         self.print_lock = threading.Lock()
 
+    def should_stop(self):
+        return os.path.exists("STOP")
+
     def safe_print(self, *args, **kwargs):
         with self.print_lock:
             print(*args, **kwargs)
@@ -109,6 +112,8 @@ class PDFProcessor:
     def save_result(self, result, filename, pdf_name=None):
         """保存结果到results文件夹"""
         try:
+            if self.should_stop():
+                return False
             results_dir = "results"
             if not os.path.exists(results_dir):
                 os.makedirs(results_dir)
@@ -135,6 +140,8 @@ class PDFProcessor:
 
     def process_entry_with_prompts(self, entry, screening_criteria=None):
         """使用 Prompt 处理单个文献条目 (优先使用 XML 内容，PDF 可选)"""
+        if self.should_stop():
+            return False
         title = entry.get('title', 'Unknown Title')
         print(f"开始处理文献: {title[:50]}...")
         
@@ -172,6 +179,8 @@ class PDFProcessor:
         api_result = self.call_deepseek_api(prompt_content, content_to_analyze)
         if api_result:
             try:
+                if self.should_stop():
+                    return False
                 # 尝试解析 AI 返回的 JSON
                 # 假设 AI 返回的是一个 JSON 列表 [{"exclusion_reason": "...", ...}]
                 # 有时候 AI 可能会在 JSON 外面加 ```json ... ```，需要清理
@@ -211,6 +220,8 @@ class PDFProcessor:
                 
                 # 保存最终结果
                 safe_title = "".join([c for c in title if c.isalnum() or c in (' ', '-', '_')]).strip()[:50]
+                if self.should_stop():
+                    return False
                 self.save_result(final_record, f"screening_result_{timestamp}.json", safe_title)
                 return True
                 
@@ -230,6 +241,8 @@ class PDFProcessor:
 
         for attempt in range(1, total_attempts + 1):
             try:
+                if self.should_stop():
+                    return {"title": title, "success": False, "error": "STOPPED"}
                 success = self.process_entry_with_prompts(entry, screening_criteria)
                 if success:
                     return {"title": title, "success": True, "error": None}
@@ -292,6 +305,8 @@ class PDFProcessor:
         if not os.path.exists(datasets_dir):
             print(f"数据集文件夹不存在: {datasets_dir}")
             return 0, []
+        if self.should_stop():
+            return 0, []
 
         # 1. 加载 XML 条目
         entries = self.load_xml_references(datasets_dir)
@@ -309,9 +324,9 @@ class PDFProcessor:
             title = entry.get('title', '')
             safe_title = "".join([c for c in title if c.isalnum() or c in (' ', '-', '_')]).strip()[:50]
             
-            # 检查 results/safe_title 目录是否存在且有 complete_analysis
+            # 检查 results/safe_title 目录是否存在且已有 screening_result（表示已处理）
             entry_dir = os.path.join(results_dir, safe_title)
-            if not force_reprocess and os.path.exists(entry_dir) and any(f.startswith('complete_analysis') for f in os.listdir(entry_dir)):
+            if not force_reprocess and os.path.exists(entry_dir) and any(f.startswith('screening_result_') and f.lower().endswith('.json') for f in os.listdir(entry_dir)):
                 continue
             
             entries_to_process.append(entry)
@@ -328,12 +343,18 @@ class PDFProcessor:
         processed_count = 0
         
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_entry = {
-                executor.submit(self.process_single_entry_with_retry, entry, max_retries=2, screening_criteria=screening_criteria): entry
-                for entry in entries_to_process
-            }
+            future_to_entry = {}
+            for entry in entries_to_process:
+                if self.should_stop():
+                    break
+                future = executor.submit(self.process_single_entry_with_retry, entry, max_retries=2, screening_criteria=screening_criteria)
+                future_to_entry[future] = entry
 
             for future in as_completed(future_to_entry):
+                if self.should_stop():
+                    for f in future_to_entry:
+                        f.cancel()
+                    break
                 result = future.result()
                 results.append(result)
                 processed_count += 1

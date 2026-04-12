@@ -116,6 +116,78 @@ class ProjectViewSet(viewsets.ModelViewSet):
         task = run_extraction_pipeline.delay(project.id, force, screening_criteria)
         return Response({"task_id": task.id, "message": "任务已启动"}, status=status.HTTP_202_ACCEPTED)
 
+    @action(detail=True, methods=['get'])
+    def screening_progress_files(self, request, pk=None):
+        project = self.get_object()
+
+        candidate_tasks = ExtractionTask.objects.filter(
+            project=project,
+            status__in=['PROCESSING', 'STOPPED', 'COMPLETED']
+        ).order_by('-created_at')[:20]
+
+        project_workspace_root = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
+        if not os.path.exists(project_workspace_root):
+            return Response({"task_id": None, "processed": []})
+
+        workspace_dirs = os.listdir(project_workspace_root)
+        target_results_dir = None
+        selected_task_id = None
+
+        for t in candidate_tasks:
+            for d in workspace_dirs:
+                if d.startswith(f"task_{t.id}_"):
+                    potential_dir = os.path.join(project_workspace_root, d, "screening_ai", "results")
+                    if os.path.exists(potential_dir):
+                        target_results_dir = potential_dir
+                        selected_task_id = t.id
+                        break
+            if target_results_dir:
+                break
+
+        if not target_results_dir:
+            return Response({"task_id": None, "processed": []})
+
+        processed_map = {}
+        for root_dir, _, files in os.walk(target_results_dir):
+            for file_name in files:
+                if not file_name.lower().endswith('.json'):
+                    continue
+                file_path = os.path.join(root_dir, file_name)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                except Exception:
+                    continue
+
+                source_xml = data.get('source_xml')
+                if not source_xml:
+                    continue
+
+                try:
+                    mtime = os.path.getmtime(file_path)
+                except Exception:
+                    mtime = 0
+
+                existing = processed_map.get(source_xml)
+                if existing and existing.get('_mtime', 0) >= mtime:
+                    continue
+
+                processed_map[source_xml] = {
+                    "source_xml": source_xml,
+                    "title": data.get('title') or '',
+                    "include_or_not": data.get('include_or_not') or '',
+                    "exclusion_reason": data.get('exclusion_reason') or '',
+                    "number_exclusion_reason": data.get('number_exclusion_reason') or '',
+                    "_mtime": mtime,
+                }
+
+        processed_list = list(processed_map.values())
+        processed_list.sort(key=lambda x: (x.get('_mtime', 0), x.get('source_xml', '')), reverse=True)
+        for item in processed_list:
+            item.pop('_mtime', None)
+
+        return Response({"task_id": selected_task_id, "processed": processed_list})
+
     @action(detail=True, methods=['post'])
     def stop_extraction(self, request, pk=None):
         project = self.get_object()
@@ -125,16 +197,29 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         stopped = 0
         for t in tasks:
-            try:
-                current_app.control.revoke(t.celery_task_id, terminate=True, signal='SIGTERM')
-            except Exception:
-                pass
             t.status = 'STOPPED'
             t.completed_at = timezone.now()
             current_logs = t.logs or ""
             suffix = "\n[STOPPED] 用户手动停止任务"
             t.logs = (current_logs + suffix) if suffix.strip() not in current_logs else current_logs
             t.save()
+
+            workspace_root = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
+            if os.path.exists(workspace_root):
+                for d in os.listdir(workspace_root):
+                    if d.startswith(f"task_{t.id}_"):
+                        stop_path = os.path.join(workspace_root, d, "screening_ai", "STOP")
+                        try:
+                            os.makedirs(os.path.dirname(stop_path), exist_ok=True)
+                            with open(stop_path, "w", encoding="utf-8") as f:
+                                f.write("STOP")
+                        except Exception:
+                            pass
+                        break
+            try:
+                current_app.control.revoke(t.celery_task_id, terminate=True, signal='SIGTERM')
+            except Exception:
+                pass
             stopped += 1
 
         return Response({"message": "Stopped", "stopped_tasks": stopped}, status=status.HTTP_200_OK)
@@ -170,9 +255,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # 这是一个问题。AI 初筛生成的 JSON 结果留在了 workspace/screening_ai/results 中。
         # 简单的做法：找到该项目最近一次成功的 task，复用其 results 目录
         
-        latest_task = ExtractionTask.objects.filter(project=project, status='COMPLETED').order_by('-completed_at').first()
-        if not latest_task:
-            return Response({"error": "No completed screening task found"}, status=status.HTTP_400_BAD_REQUEST)
+        candidate_tasks = ExtractionTask.objects.filter(
+            project=project,
+            status__in=['PROCESSING', 'STOPPED', 'COMPLETED']
+        ).order_by('-created_at')[:20]
+        if not candidate_tasks:
+            return Response({"error": "No screening task found"}, status=status.HTTP_400_BAD_REQUEST)
             
         # 假设 workspace 结构：workspaces/project_X/task_Y/screening_ai/results
         # 我们需要定位到那个目录
@@ -184,17 +272,29 @@ class ProjectViewSet(viewsets.ModelViewSet):
         
         project_workspace_root = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
         target_results_dir = None
-        
+        selected_task_id = None
+
         if os.path.exists(project_workspace_root):
-            for d in os.listdir(project_workspace_root):
-                if d.startswith(f"task_{latest_task.id}_"):
-                    potential_dir = os.path.join(project_workspace_root, d, "screening_ai", "results")
-                    if os.path.exists(potential_dir):
-                        target_results_dir = potential_dir
-                        break
+            workspace_dirs = os.listdir(project_workspace_root)
+            for t in candidate_tasks:
+                for d in workspace_dirs:
+                    if d.startswith(f"task_{t.id}_"):
+                        potential_dir = os.path.join(project_workspace_root, d, "screening_ai", "results")
+                        if os.path.exists(potential_dir):
+                            has_json = False
+                            for root_dir, _, files in os.walk(potential_dir):
+                                if any(f.lower().endswith('.json') for f in files):
+                                    has_json = True
+                                    break
+                            if has_json:
+                                target_results_dir = potential_dir
+                                selected_task_id = t.id
+                                break
+                if target_results_dir:
+                    break
         
         if not target_results_dir:
-             return Response({"error": "Could not locate results directory for the latest task"}, status=status.HTTP_404_NOT_FOUND)
+             return Response({"error": "Could not locate results directory with JSON outputs for any recent task"}, status=status.HTTP_404_NOT_FOUND)
 
         # 清理旧的 OUTPUT 文件 (Excel/RIS)
         StageData.objects.filter(stage=screen1_stage, data_type='OUTPUT', description__in=['AI初筛结果 (Excel)', 'AI初筛结果 (EndNote/RIS)']).delete()
