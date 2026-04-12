@@ -8,6 +8,55 @@ from openpyxl.utils.cell import get_column_letter
 import rispy
 
 all_df = None
+_xml_cache = {}
+
+
+def _itext(elem):
+    if elem is None:
+        return ""
+    return "".join(elem.itertext()).strip()
+
+
+def _load_xml_fields(xml_path):
+    if not xml_path:
+        return {}
+    cached = _xml_cache.get(xml_path)
+    if cached is not None:
+        return cached
+    try:
+        import xml.etree.ElementTree as ET
+        root = ET.parse(xml_path).getroot()
+        ref = None
+        if root.tag == "Reference":
+            ref = root
+        else:
+            ref = root.find(".//Reference")
+        if ref is None:
+            _xml_cache[xml_path] = {}
+            return {}
+
+        authors = ", ".join([_itext(a) for a in ref.findall("./Authors/Author") if _itext(a)])
+        fields = {
+            "ReferenceType": _itext(ref.find("ReferenceType")),
+            "Volume": _itext(ref.find("Volume")),
+            "Issue": _itext(ref.find("Issue")),
+            "Page": _itext(ref.find("Page")),
+            "Date": _itext(ref.find("Date")),
+            "Doi": _itext(ref.find("DOI")),
+            "PMCID": _itext(ref.find("PMCID")),
+            "Abstract": _itext(ref.find("Abstract")),
+            "Address": _itext(ref.find("Address")),
+            "Title": _itext(ref.find("Title")),
+            "Author": authors,
+            "Journal": _itext(ref.find("Journal")),
+            "Year": _itext(ref.find("Year")),
+            "URL": _itext(ref.find("URL")),
+        }
+        _xml_cache[xml_path] = fields
+        return fields
+    except Exception:
+        _xml_cache[xml_path] = {}
+        return {}
 
 
 def simple_json_to_excel(json_file_path, cnt):
@@ -23,7 +72,12 @@ def simple_json_to_excel(json_file_path, cnt):
 
     # 定义基础表头顺序
     base_headers = [
-     "id", "title", "authors", "journal", "year", "exclusion_reason", "exclusion_reason_id", "include_or_not", "url", "source_xml"
+        "id",
+        "include_or_not", "exclusion_reason_id", "exclusion_reason",
+        "ReferenceType",
+        "Title", "Author", "Year", "Journal",
+        "Volume", "Issue", "Page", "Date", "Doi", "PMCID", "Abstract", "URL", "Address",
+        "source_xml"
     ]
     
     # 收集所有动态出现的字段
@@ -33,9 +87,16 @@ def simple_json_to_excel(json_file_path, cnt):
     # screener.py 生成的结构已经是扁平化的，或者在 prompt1_result 中
     # prompt1_result: [{"title": ..., "authors": [...], "exclusion_reason": ...}]
     field_mapping = {
-        'first_author': 'authors', # 兼容旧
-        'public_year': 'year',     # 兼容旧
+        'first_author': 'Author', # 兼容旧
+        'authors': 'Author',
+        'public_year': 'Year',     # 兼容旧
+        'year': 'Year',
         'file_path': 'source_xml',  # 兼容旧
+        'title': 'Title',
+        'journal': 'Journal',
+        'url': 'URL',
+        'doi': 'Doi',
+        'extracted_abstract': 'Abstract',
         'number_exclusion_reason': 'exclusion_reason_id'
     }
 
@@ -86,8 +147,44 @@ def simple_json_to_excel(json_file_path, cnt):
                  mapped_base_info['source_xml'] = data['pdf_file']
             
             # 确保包含 url，如果内层没有，尝试从外层获取 (针对扁平结构可能不需要，但为了保险)
-            if 'url' not in mapped_base_info and 'url' in data:
-                 mapped_base_info['url'] = data['url']
+            if 'URL' not in mapped_base_info and 'url' in data:
+                 mapped_base_info['URL'] = data['url']
+
+            source_xml = mapped_base_info.get('source_xml') or data.get('source_xml') or ""
+            results_dir = os.path.dirname(os.path.dirname(json_file_path))
+            screening_ai_dir = os.path.dirname(results_dir)
+            datasets_dir = os.path.join(screening_ai_dir, "datasets")
+            xml_path = os.path.join(datasets_dir, os.path.basename(source_xml)) if source_xml else ""
+            xml_fields = _load_xml_fields(xml_path) if xml_path and os.path.exists(xml_path) else {}
+
+            if 'ReferenceType' not in mapped_base_info:
+                mapped_base_info['ReferenceType'] = xml_fields.get('ReferenceType')
+            if 'Title' not in mapped_base_info:
+                mapped_base_info['Title'] = xml_fields.get('Title')
+            if 'Author' not in mapped_base_info:
+                mapped_base_info['Author'] = xml_fields.get('Author')
+            if 'Year' not in mapped_base_info:
+                mapped_base_info['Year'] = xml_fields.get('Year')
+            if 'Journal' not in mapped_base_info:
+                mapped_base_info['Journal'] = xml_fields.get('Journal')
+            if 'Volume' not in mapped_base_info:
+                mapped_base_info['Volume'] = xml_fields.get('Volume')
+            if 'Issue' not in mapped_base_info:
+                mapped_base_info['Issue'] = xml_fields.get('Issue')
+            if 'Page' not in mapped_base_info:
+                mapped_base_info['Page'] = xml_fields.get('Page')
+            if 'Date' not in mapped_base_info:
+                mapped_base_info['Date'] = xml_fields.get('Date')
+            if 'Doi' not in mapped_base_info:
+                mapped_base_info['Doi'] = xml_fields.get('Doi') or data.get('doi') or mapped_base_info.get('doi')
+            if 'PMCID' not in mapped_base_info:
+                mapped_base_info['PMCID'] = xml_fields.get('PMCID')
+            if 'Abstract' not in mapped_base_info:
+                mapped_base_info['Abstract'] = xml_fields.get('Abstract') or data.get('extracted_abstract') or mapped_base_info.get('extracted_abstract')
+            if 'URL' not in mapped_base_info:
+                mapped_base_info['URL'] = xml_fields.get('URL') or data.get('url') or mapped_base_info.get('url')
+            if 'Address' not in mapped_base_info:
+                mapped_base_info['Address'] = xml_fields.get('Address')
 
             all_rows.append(mapped_base_info)
 

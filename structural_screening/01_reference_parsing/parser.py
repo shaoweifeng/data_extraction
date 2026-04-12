@@ -9,6 +9,17 @@ def parse_ris(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         entries = rispy.load(f)
     
+    def first_value(d, keys):
+        for k in keys:
+            v = d.get(k)
+            if v is None:
+                continue
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+            if isinstance(v, (int, float)):
+                return str(v)
+        return None
+
     parsed_entries = []
     for i, entry in enumerate(entries, start=1):
         # Robust URL extraction
@@ -25,11 +36,37 @@ def parse_ris(file_path):
             if not url:
                 url = entry.get('L1')
         
+        reference_type = first_value(entry, ['type_of_reference', 'type', 'TY'])
+        volume = first_value(entry, ['volume', 'VL'])
+        issue = first_value(entry, ['number', 'issue', 'IS'])
+        pages = first_value(entry, ['pages'])
+        start_page = first_value(entry, ['start_page', 'sp', 'SP'])
+        end_page = first_value(entry, ['end_page', 'ep', 'EP'])
+        page = pages
+        if not page:
+            if start_page and end_page:
+                page = f"{start_page}-{end_page}"
+            elif start_page:
+                page = start_page
+            elif end_page:
+                page = end_page
+
+        date = first_value(entry, ['date', 'publication_date', 'DA', 'Y1'])
+        pmcid = first_value(entry, ['pmcid', 'PMCID'])
+        address = first_value(entry, ['address', 'AD'])
+
         parsed_entries.append({
             'title': entry.get('title') or entry.get('primary_title'),
             'authors': entry.get('authors', []),
             'journal': entry.get('journal_name') or entry.get('secondary_title'),
             'year': entry.get('year'),
+            'reference_type': reference_type,
+            'volume': volume,
+            'issue': issue,
+            'page': page,
+            'date': date,
+            'pmcid': pmcid,
+            'address': address,
             'abstract': entry.get('abstract'),
             'doi': entry.get('doi'),
             'url': url,
@@ -50,14 +87,36 @@ def parse_bib(file_path):
         
         # Robust URL extraction
         url = entry.get('url') or entry.get('link') or entry.get('URL')
+
+        reference_type = entry.get('ENTRYTYPE') or entry.get('entrytype') or entry.get('type')
+        volume = entry.get('volume')
+        issue = entry.get('number') or entry.get('issue')
+        page = entry.get('pages')
+        year = entry.get('year')
+        month = entry.get('month')
+        date = None
+        if month and year:
+            date = f"{month} {year}"
+        elif year:
+            date = str(year)
+        doi = entry.get('doi')
+        pmcid = entry.get('pmcid') or entry.get('PMCID')
+        address = entry.get('address')
         
         parsed_entries.append({
             'title': entry.get('title'),
             'authors': [a.strip() for a in authors if a.strip()],
             'journal': entry.get('journal'),
             'year': entry.get('year'),
+            'reference_type': reference_type,
+            'volume': volume,
+            'issue': issue,
+            'page': page,
+            'date': date,
+            'pmcid': pmcid,
+            'address': address,
             'abstract': entry.get('abstract'),
-            'doi': entry.get('doi'),
+            'doi': doi,
             'url': url,
             'source_file': os.path.basename(file_path),
             'source_position': i,
@@ -159,15 +218,26 @@ def parse_nbib(file_path):
             elif key == 'AB':
                 current_entry['abstract'] = val
             elif key == 'DP': # Date of Publication
-                current_entry['year'] = val.split()[0] # Extract year roughly
+                current_entry['date'] = val
+                current_entry['year'] = val.split()[0]
             elif key == 'JT': # Journal Title
                 current_entry['journal'] = val
             elif key == 'UR' or key == 'URL': # URL
                 current_entry['url'] = val
             elif key == 'PMID': # Alternative PMID tag
                 current_entry['pmid'] = val
+            elif key == 'PMCID' or key == 'PMC':
+                current_entry['pmcid'] = val
             elif key == 'LID' and '[doi]' in val:
                 current_entry['doi'] = val.replace('[doi]', '').strip()
+            elif key == 'VI':
+                current_entry['volume'] = val
+            elif key == 'IP':
+                current_entry['issue'] = val
+            elif key == 'PG':
+                current_entry['page'] = val
+            elif key == 'AD':
+                current_entry['address'] = val
             else:
                 # Reset key if we don't care about this field to avoid appending continuation lines to wrong field
                 if key not in ['AB', 'TI']: 
@@ -199,6 +269,13 @@ def parse_nbib(file_path):
             'authors': entry.get('authors', []),
             'journal': entry.get('journal'),
             'year': entry.get('year'),
+            'reference_type': entry.get('type') or entry.get('pt'),
+            'volume': entry.get('volume'),
+            'issue': entry.get('issue'),
+            'page': entry.get('page'),
+            'date': entry.get('date'),
+            'pmcid': entry.get('pmcid'),
+            'address': entry.get('address'),
             'abstract': entry.get('abstract'),
             'doi': entry.get('doi'),
             'url': entry.get('url'),
@@ -234,6 +311,18 @@ def parse_xml(file_path):
             year_raw = first_text(rec, ["./dates/year", "./pub-dates/year", "./dates/pub-dates/year"])
             year_match = re.search(r"\b(19|20)\d{2}\b", year_raw)
             year = year_match.group(0) if year_match else (year_raw[:4] if year_raw else "")
+            reference_type = ""
+            rt = rec.find("./ref-type")
+            if rt is not None:
+                reference_type = rt.get("name") or ""
+            volume = first_text(rec, ["./volume"])
+            issue = first_text(rec, ["./number"])
+            page = first_text(rec, ["./pages"])
+            date = first_text(rec, ["./dates/pub-dates/date", "./pub-dates/date", "./dates/date"])
+            if year and date and year not in date:
+                date = f"{date} {year}"
+            address = first_text(rec, ["./auth-address"])
+            pmcid = first_text(rec, ["./custom2"])
 
             authors = []
             for a in rec.findall("./contributors/authors/author"):
@@ -272,6 +361,13 @@ def parse_xml(file_path):
                 'authors': authors,
                 'journal': journal,
                 'year': year,
+                'reference_type': reference_type,
+                'volume': volume,
+                'issue': issue,
+                'page': page,
+                'date': date,
+                'pmcid': pmcid,
+                'address': address,
                 'abstract': abstract,
                 'doi': doi,
                 'url': url,
@@ -361,6 +457,20 @@ def parse_ciw(file_path):
         year = ""
         if rec.get("PY"):
             year = clean(rec.get("PY", [""])[0])
+        reference_type = clean(rec.get("PT", [""])[0]) if rec.get("PT") else ""
+        volume = clean(rec.get("VL", [""])[0]) if rec.get("VL") else ""
+        issue = clean(rec.get("IS", [""])[0]) if rec.get("IS") else ""
+        bp = clean(rec.get("BP", [""])[0]) if rec.get("BP") else ""
+        ep = clean(rec.get("EP", [""])[0]) if rec.get("EP") else ""
+        page = ""
+        if bp and ep:
+            page = f"{bp}-{ep}"
+        elif bp:
+            page = bp
+        elif ep:
+            page = ep
+        date = clean(rec.get("PD", [""])[0]) if rec.get("PD") else ""
+        address = "; ".join([a for a in rec.get("C1", []) if a]).strip()
         doi = ""
         if rec.get("DI"):
             doi = clean(rec.get("DI", [""])[0]).rstrip(".").rstrip(";").strip()
@@ -386,6 +496,13 @@ def parse_ciw(file_path):
             "authors": authors,
             "journal": journal,
             "year": year,
+            "reference_type": reference_type,
+            "volume": volume,
+            "issue": issue,
+            "page": page,
+            "date": date,
+            "pmcid": "",
+            "address": address,
             "abstract": abstract,
             "doi": doi,
             "url": url,
@@ -421,6 +538,13 @@ def convert_to_xml(entries, output_path):
             
         add_field(ref_node, "Journal", entry.get('journal'))
         add_field(ref_node, "Year", entry.get('year'))
+        add_field(ref_node, "ReferenceType", entry.get('reference_type'))
+        add_field(ref_node, "Volume", entry.get('volume'))
+        add_field(ref_node, "Issue", entry.get('issue'))
+        add_field(ref_node, "Page", entry.get('page'))
+        add_field(ref_node, "Date", entry.get('date'))
+        add_field(ref_node, "PMCID", entry.get('pmcid'))
+        add_field(ref_node, "Address", entry.get('address'))
         add_field(ref_node, "Abstract", entry.get('abstract'))
         add_field(ref_node, "DOI", entry.get('doi'))
         add_field(ref_node, "URL", entry.get('url'))
