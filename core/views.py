@@ -9,6 +9,8 @@ import shutil
 from django.conf import settings
 from celery import current_app
 from django.utils import timezone
+import json
+from django.db import models
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
@@ -408,9 +410,13 @@ class StageViewSet(viewsets.ReadOnlyModelViewSet):
         if not ref_files:
             return Response({"error": "No reference files found"}, status=status.HTTP_400_BAD_REQUEST)
             
-        # 2. 清理之前的 OUTPUT 结果
-        # 删除所有 source='TOOL_GENERATED' 且 data_type='OUTPUT' 的 StageData
-        old_outputs = stage.data.filter(data_type='OUTPUT', source='TOOL_GENERATED')
+        old_outputs = stage.data.filter(
+            data_type='OUTPUT'
+        ).filter(
+            models.Q(source='TOOL_GENERATED') |
+            models.Q(filename__startswith='split_xmls/') |
+            models.Q(description__in=['单篇文献 XML', '去重后的 XML 文献索引 (汇总)', '去重报告 (JSON)'])
+        )
         for old_data in old_outputs:
             try:
                 # 显式删除物理文件，以防万一
@@ -436,15 +442,17 @@ class StageViewSet(viewsets.ReadOnlyModelViewSet):
             # 创建临时目录处理文件
             import tempfile
             with tempfile.TemporaryDirectory() as temp_dir:
+                input_xml_names = set()
                 # 将文件复制到临时目录
                 for f in ref_files:
                     src = f.file.path
                     dst = os.path.join(temp_dir, f.filename)
                     shutil.copy(src, dst)
+                    input_xml_names.add(os.path.basename(f.filename))
                     
                 # 运行处理逻辑
                 output_xml_path = os.path.join(temp_dir, 'references.xml')
-                final_entries = parser.process_directory(temp_dir, output_xml_path)
+                final_entries, report = parser.process_directory(temp_dir, output_xml_path, return_report=True)
                 
                 # parser.process_directory 内部已经调用了 split_xml_to_single_files
                 # 生成的小 XML 文件现在都在 temp_dir 下
@@ -462,6 +470,16 @@ class StageViewSet(viewsets.ReadOnlyModelViewSet):
                             source='TOOL_GENERATED',
                             description='去重后的 XML 文献索引 (汇总)'
                         )
+
+                    report_filename = f"dedup_report_{stage.project.id}.json"
+                    StageData.objects.create(
+                        stage=stage,
+                        file=ContentFile(json.dumps(report, ensure_ascii=False, indent=2).encode('utf-8'), name=report_filename),
+                        filename=report_filename,
+                        data_type='OUTPUT',
+                        source='TOOL_GENERATED',
+                        description='去重报告 (JSON)'
+                    )
                     
                     # 创建 split_xmls 子目录（实际上 StageData 默认是平铺在 upload_to 指定的目录，如果要分目录需要自定义 upload_to 或手动移动）
                     # 简单起见，我们还是用 StageData，但文件名可以带前缀，或者我们接受平铺
@@ -476,6 +494,8 @@ class StageViewSet(viewsets.ReadOnlyModelViewSet):
                     # 遍历 temp_dir 下的所有 .xml 文件，除了 references.xml
                     for f_name in os.listdir(temp_dir):
                         if f_name.endswith('.xml') and f_name != 'references.xml':
+                            if f_name in input_xml_names:
+                                continue
                             f_path = os.path.join(temp_dir, f_name)
                             with open(f_path, 'rb') as f:
                                 # 尝试在 filename 中包含路径
@@ -492,13 +512,16 @@ class StageViewSet(viewsets.ReadOnlyModelViewSet):
                     # 更新 Metadata
                     stage.metadata.update({
                         'total_refs': len(final_entries), # 实际上去重后的数量
-                        'deduplicated_count': 'See logs' # 这里简单处理
+                        'deduplicated_count': report.get('duplicates_removed'),
+                        'duplicate_groups': report.get('duplicate_groups'),
+                        'total_entries_found': report.get('total_entries_found'),
                     })
                     stage.save()
                     
                     return Response({
                         "message": "Reference processing completed",
-                        "total_entries": len(final_entries)
+                        "total_entries": len(final_entries),
+                        "dedup_report": report
                     })
                 else:
                     return Response({"error": "Failed to generate XML"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -10,7 +10,7 @@ def parse_ris(file_path):
         entries = rispy.load(f)
     
     parsed_entries = []
-    for entry in entries:
+    for i, entry in enumerate(entries, start=1):
         # Robust URL extraction
         url = entry.get('url')
         if not url:
@@ -34,6 +34,7 @@ def parse_ris(file_path):
             'doi': entry.get('doi'),
             'url': url,
             'source_file': os.path.basename(file_path),
+            'source_position': i,
             'type': 'RIS'
         })
     return parsed_entries
@@ -43,7 +44,7 @@ def parse_bib(file_path):
         library = bibtexparser.load(f)
     
     parsed_entries = []
-    for entry in library.entries:
+    for i, entry in enumerate(library.entries, start=1):
         # BibTeX authors are often strings, need parsing if possible, but keeping simple for now
         authors = entry.get('author', '').replace('\n', ' ').split(' and ')
         
@@ -59,6 +60,7 @@ def parse_bib(file_path):
             'doi': entry.get('doi'),
             'url': url,
             'source_file': os.path.basename(file_path),
+            'source_position': i,
             'type': 'BIB'
         })
     return parsed_entries
@@ -191,7 +193,7 @@ def parse_nbib(file_path):
         entries.append(current_entry)
         
     parsed_entries = []
-    for entry in entries:
+    for i, entry in enumerate(entries, start=1):
         parsed_entries.append({
             'title': entry.get('title'),
             'authors': entry.get('authors', []),
@@ -201,6 +203,7 @@ def parse_nbib(file_path):
             'doi': entry.get('doi'),
             'url': entry.get('url'),
             'source_file': os.path.basename(file_path),
+            'source_position': i,
             'type': 'NBIB'
         })
     return parsed_entries
@@ -225,7 +228,7 @@ def parse_xml(file_path):
     records_node = root.find("./records")
     if root.tag == "xml" and records_node is not None:
         parsed_entries = []
-        for rec in records_node.findall("./record"):
+        for i, rec in enumerate(records_node.findall("./record"), start=1):
             title = first_text(rec, ["./titles/title"])
             journal = first_text(rec, ["./titles/secondary-title", "./periodical/full-title"])
             year_raw = first_text(rec, ["./dates/year", "./pub-dates/year", "./dates/pub-dates/year"])
@@ -273,12 +276,14 @@ def parse_xml(file_path):
                 'doi': doi,
                 'url': url,
                 'source_file': os.path.basename(file_path),
+                'source_position': i,
+                'record_number': first_text(rec, ["./rec-number"]),
                 'type': 'XML'
             })
         return parsed_entries
 
     parsed_entries = []
-    for ref in root.findall(".//Reference"):
+    for i, ref in enumerate(root.findall(".//Reference"), start=1):
         title = first_text(ref, ["Title"])
         authors = []
         for a in ref.findall("./Authors/Author"):
@@ -299,6 +304,7 @@ def parse_xml(file_path):
             'doi': doi,
             'url': url,
             'source_file': os.path.basename(file_path),
+            'source_position': i,
             'type': 'XML'
         })
     return parsed_entries
@@ -360,7 +366,7 @@ def split_xml_to_single_files(entries, output_dir):
         # Create a single entry list for conversion
         convert_to_xml([entry], file_path)
 
-def process_directory(input_dir, output_file):
+def process_directory(input_dir, output_file, return_report=False):
     all_entries = []
     for filename in os.listdir(input_dir):
         file_path = os.path.join(input_dir, filename)
@@ -374,35 +380,78 @@ def process_directory(input_dir, output_file):
             all_entries.extend(parse_xml(file_path))
             
     # Deduplication based on Title (Case insensitive)
-    unique_entries = {}
-    duplicates_count = 0
-    
+    groups = {}
+    ordered_keys = []
     for entry in all_entries:
-        title = entry.get('title', '')
-        if not title:
-            continue
-            
-        # Normalize title: lowercase and remove punctuation/spaces for comparison
+        title = entry.get('title', '') or ''
         norm_title = "".join(c.lower() for c in title if c.isalnum())
-        
-        if norm_title not in unique_entries:
-            unique_entries[norm_title] = entry
-        else:
-            duplicates_count += 1
-            
-    final_entries = list(unique_entries.values())
+        if not norm_title:
+            continue
+        if norm_title not in groups:
+            groups[norm_title] = []
+            ordered_keys.append(norm_title)
+        groups[norm_title].append(entry)
+
+    final_entries = [groups[k][0] for k in ordered_keys if groups.get(k)]
+    duplicates_count = sum(max(0, len(v) - 1) for v in groups.values())
+    duplicate_groups_count = sum(1 for v in groups.values() if len(v) > 1)
+
     print(f"Total entries found: {len(all_entries)}")
     print(f"Duplicates removed: {duplicates_count}")
     print(f"Final unique entries: {len(final_entries)}")
-    
+
     convert_to_xml(final_entries, output_file)
     
     # New step: Split into individual XML files
     # Assuming output_file is like ".../references.xml", we want to output to the same directory
     output_dir = os.path.dirname(output_file)
     split_xml_to_single_files(final_entries, output_dir)
-    
-    return final_entries
+
+    if not return_report:
+        return final_entries
+
+    duplicates = []
+    for k in ordered_keys:
+        items = groups.get(k) or []
+        if len(items) <= 1:
+            continue
+        kept = items[0]
+        removed = items[1:]
+        duplicates.append({
+            "norm_title": k,
+            "title": kept.get("title") or "",
+            "kept": {
+                "source_file": kept.get("source_file"),
+                "source_position": kept.get("source_position"),
+                "record_number": kept.get("record_number"),
+                "year": kept.get("year"),
+                "journal": kept.get("journal"),
+                "doi": kept.get("doi"),
+                "url": kept.get("url"),
+            },
+            "duplicates": [
+                {
+                    "source_file": d.get("source_file"),
+                    "source_position": d.get("source_position"),
+                    "record_number": d.get("record_number"),
+                    "year": d.get("year"),
+                    "journal": d.get("journal"),
+                    "doi": d.get("doi"),
+                    "url": d.get("url"),
+                }
+                for d in removed
+            ],
+        })
+
+    report = {
+        "total_entries_found": len(all_entries),
+        "duplicate_groups": duplicate_groups_count,
+        "duplicates_removed": duplicates_count,
+        "final_unique_entries": len(final_entries),
+        "duplicates": duplicates,
+    }
+
+    return final_entries, report
 
 if __name__ == "__main__":
     # Test run

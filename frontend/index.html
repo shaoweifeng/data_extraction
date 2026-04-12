@@ -212,6 +212,65 @@
                             <button @click="handleDeduplication" class="bg-purple-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-purple-700 transition transform hover:-translate-y-1 mb-4">
                                 <i class="fas fa-magic mr-2"></i>开始去重
                             </button>
+                            <div v-if="dedupReport" class="mt-6 text-left w-full max-w-3xl mx-auto">
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                        <div class="text-xs text-gray-500">总条目</div>
+                                        <div class="text-lg font-bold text-gray-800">{{ dedupReport.total_entries_found }}</div>
+                                    </div>
+                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                        <div class="text-xs text-gray-500">重复组</div>
+                                        <div class="text-lg font-bold text-gray-800">{{ dedupReport.duplicate_groups }}</div>
+                                    </div>
+                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                        <div class="text-xs text-gray-500">移除重复</div>
+                                        <div class="text-lg font-bold text-gray-800">{{ dedupReport.duplicates_removed }}</div>
+                                    </div>
+                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                        <div class="text-xs text-gray-500">去重后</div>
+                                        <div class="text-lg font-bold text-gray-800">{{ dedupReport.final_unique_entries }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-[420px] overflow-y-auto">
+                                    <div v-if="dedupReport.duplicates.length === 0" class="text-gray-400 text-sm">未发现重复文献</div>
+                                    <div v-else class="space-y-3">
+                                        <details v-for="(g, gi) in dedupReport.duplicates" :key="gi" class="bg-white border border-gray-200 rounded-lg p-3">
+                                            <summary class="cursor-pointer select-none">
+                                                <div class="flex items-start justify-between">
+                                                    <div class="pr-4">
+                                                        <div class="font-semibold text-gray-800">{{ g.title }}</div>
+                                                        <div class="text-xs text-gray-500 mt-1">重复条目数：{{ 1 + g.duplicates.length }}</div>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 whitespace-nowrap">保留 1 / 移除 {{ g.duplicates.length }}</div>
+                                                </div>
+                                            </summary>
+                                            <div class="mt-3 space-y-2 text-sm">
+                                                <div class="p-3 rounded border border-gray-200">
+                                                    <div class="text-xs text-green-700 font-bold mb-2">保留</div>
+                                                    <div class="text-xs text-gray-600">
+                                                        <div>来源：{{ g.kept.source_file }}<span v-if="g.kept.source_position"> · 位置：{{ g.kept.source_position }}</span><span v-if="g.kept.record_number"> · rec-number：{{ g.kept.record_number }}</span></div>
+                                                        <div v-if="g.kept.journal">期刊：{{ g.kept.journal }}</div>
+                                                        <div v-if="g.kept.year">年份：{{ g.kept.year }}</div>
+                                                        <div v-if="g.kept.doi">DOI：{{ g.kept.doi }}</div>
+                                                        <div v-if="g.kept.url">URL：{{ g.kept.url }}</div>
+                                                    </div>
+                                                </div>
+                                                <div v-for="(d, di) in g.duplicates" :key="di" class="p-3 rounded border border-gray-200">
+                                                    <div class="text-xs text-red-600 font-bold mb-2">重复</div>
+                                                    <div class="text-xs text-gray-600">
+                                                        <div>来源：{{ d.source_file }}<span v-if="d.source_position"> · 位置：{{ d.source_position }}</span><span v-if="d.record_number"> · rec-number：{{ d.record_number }}</span></div>
+                                                        <div v-if="d.journal">期刊：{{ d.journal }}</div>
+                                                        <div v-if="d.year">年份：{{ d.year }}</div>
+                                                        <div v-if="d.doi">DOI：{{ d.doi }}</div>
+                                                        <div v-if="d.url">URL：{{ d.url }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="flex justify-between mt-4">
                                 <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 上一步</button>
                                 <button @click="nextStep" class="text-blue-600 hover:text-blue-800 font-medium">下一步 <i class="fas fa-arrow-right ml-1"></i></button>
@@ -471,6 +530,7 @@
                 const newCriteria = ref('');
                 const criteriaList = ref([]);
                 const isGeneratingReport = ref(false);
+                const dedupReport = ref(null);
 
                 const screeningProgress = computed(() => {
                     if (!latestTask.value || !latestTask.value.logs) return { processed: 0, total: 0, percent: 0 };
@@ -623,9 +683,9 @@
                         
                         if (res.ok) {
                             const data = await res.json();
-                            alert(`去重完成！生成了标准 XML 索引，包含 ${data.total_entries} 篇文献。`);
+                            dedupReport.value = data.dedup_report || null;
+                            alert(`去重完成！去重后保留 ${data.total_entries} 篇文献。`);
                             await fetchStages(currentProject.value.id);
-                            nextStep();
                         } else {
                             const text = await res.text();
                             alert(`去重失败: ${text}`);
@@ -688,8 +748,22 @@
                 const fetchStages = async (projectId) => {
                     const res = await fetch(`${API_BASE}/projects/${projectId}/stages/`);
                     stagesData.value = await res.json();
+                    dedupReport.value = null;
                     
                     const screen1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
+                    if (screen1) {
+                        const reportFile = screen1.data.find(d => d.data_type === 'OUTPUT' && d.filename && d.filename.includes('dedup_report') && d.file);
+                        if (reportFile) {
+                            try {
+                                const r = await fetch(reportFile.file);
+                                if (r.ok) {
+                                    dedupReport.value = await r.json();
+                                }
+                            } catch (e) {
+                                dedupReport.value = null;
+                            }
+                        }
+                    }
                     if (screen1 && screen1.metadata && screen1.metadata.screening_criteria !== undefined) {
                         const saved = screen1.metadata.screening_criteria || '';
                         criteriaList.value = saved ? saved.split('\n') : [];
@@ -985,7 +1059,7 @@
                     startScreeningTask, stopScreeningTask, addCriteria, removeCriteria, nextStep, prevStep,
                     getStatusClass, getStageClass, getStageName, formatDate, triggerFileInput, handleReferenceUpload,
                     handleDeduplication, referenceFiles, deleteReference, stepStatus,
-                    screeningProgress,
+                    screeningProgress, dedupReport,
                     splitXmlFiles, paginatedSplitXmlFiles, currentPage, totalPages, nextPage, prevPage,
                     generateReport, isGeneratingReport
                 };
