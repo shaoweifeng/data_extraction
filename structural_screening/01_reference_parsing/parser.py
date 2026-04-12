@@ -309,6 +309,94 @@ def parse_xml(file_path):
         })
     return parsed_entries
 
+def parse_ciw(file_path):
+    def clean(s):
+        return (s or "").strip()
+
+    def add_to_field(d, key, value):
+        if key not in d:
+            d[key] = []
+        d[key].append(value)
+
+    records = []
+    current = {}
+    current_tag = None
+
+    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        for raw_line in f:
+            line = raw_line.rstrip("\n").rstrip("\r")
+            if not line.strip():
+                continue
+
+            if line.strip() == "ER":
+                if current:
+                    records.append(current)
+                current = {}
+                current_tag = None
+                continue
+
+            if line.startswith("  ") and current_tag:
+                add_to_field(current, current_tag, clean(line))
+                continue
+
+            if len(line) >= 3 and line[2] == " ":
+                tag = line[:2]
+                value = clean(line[3:])
+                current_tag = tag
+                if value:
+                    add_to_field(current, tag, value)
+                continue
+
+    if current:
+        records.append(current)
+
+    parsed_entries = []
+    for i, rec in enumerate(records, start=1):
+        title = " ".join(rec.get("TI", [])).strip()
+        if not title:
+            continue
+
+        authors = [a for a in rec.get("AU", []) if a] or [a for a in rec.get("AF", []) if a]
+        journal = " ".join(rec.get("SO", [])).strip()
+        year = ""
+        if rec.get("PY"):
+            year = clean(rec.get("PY", [""])[0])
+        doi = ""
+        if rec.get("DI"):
+            doi = clean(rec.get("DI", [""])[0]).rstrip(".").rstrip(";").strip()
+        abstract = " ".join(rec.get("AB", [])).strip()
+        pmid = clean(rec.get("PM", [""])[0]) if rec.get("PM") else ""
+        ut = clean(rec.get("UT", [""])[0]) if rec.get("UT") else ""
+        ur = ""
+        if rec.get("UR"):
+            ur = clean(rec.get("UR", [""])[0])
+
+        url = ""
+        if ur.lower().startswith("http://") or ur.lower().startswith("https://"):
+            url = ur
+        elif doi:
+            url = f"https://doi.org/{doi}"
+        elif pmid.isdigit():
+            url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
+        elif ut:
+            url = f"https://www.webofscience.com/wos/woscc/full-record/{ut}"
+
+        parsed_entries.append({
+            "title": title,
+            "authors": authors,
+            "journal": journal,
+            "year": year,
+            "abstract": abstract,
+            "doi": doi,
+            "url": url,
+            "source_file": os.path.basename(file_path),
+            "source_position": i,
+            "record_number": ut,
+            "type": "CIW"
+        })
+
+    return parsed_entries
+
 def convert_to_xml(entries, output_path):
     root = ET.Element("References")
     
@@ -351,7 +439,8 @@ def split_xml_to_single_files(entries, output_dir):
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-        
+
+    used_filenames = set()
     for i, entry in enumerate(entries):
         title = entry.get('title', f'Unknown_Title_{i}')
         # Sanitize title for filename
@@ -359,8 +448,15 @@ def split_xml_to_single_files(entries, output_dir):
         safe_title = safe_title[:100] # Limit length
         if not safe_title:
             safe_title = f"entry_{i}"
-            
+
         filename = f"{safe_title}.xml"
+        if filename in used_filenames:
+            filename = f"{safe_title}_{i+1}.xml"
+            n = 2
+            while filename in used_filenames:
+                filename = f"{safe_title}_{i+1}_{n}.xml"
+                n += 1
+        used_filenames.add(filename)
         file_path = os.path.join(output_dir, filename)
         
         # Create a single entry list for conversion
@@ -378,6 +474,8 @@ def process_directory(input_dir, output_file, return_report=False):
             all_entries.extend(parse_nbib(file_path))
         elif filename.lower().endswith('.xml'):
             all_entries.extend(parse_xml(file_path))
+        elif filename.lower().endswith('.ciw'):
+            all_entries.extend(parse_ciw(file_path))
             
     # Deduplication based on Title (Case insensitive)
     groups = {}
