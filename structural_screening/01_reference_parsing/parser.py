@@ -1,4 +1,5 @@
 import os
+import re
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import bibtexparser
@@ -204,6 +205,104 @@ def parse_nbib(file_path):
         })
     return parsed_entries
 
+def parse_xml(file_path):
+    def itext(elem):
+        if elem is None:
+            return ""
+        return "".join(elem.itertext()).strip()
+
+    def first_text(parent, paths):
+        for p in paths:
+            e = parent.find(p)
+            t = itext(e)
+            if t:
+                return t
+        return ""
+
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+
+    records_node = root.find("./records")
+    if root.tag == "xml" and records_node is not None:
+        parsed_entries = []
+        for rec in records_node.findall("./record"):
+            title = first_text(rec, ["./titles/title"])
+            journal = first_text(rec, ["./titles/secondary-title", "./periodical/full-title"])
+            year_raw = first_text(rec, ["./dates/year", "./pub-dates/year", "./dates/pub-dates/year"])
+            year_match = re.search(r"\b(19|20)\d{2}\b", year_raw)
+            year = year_match.group(0) if year_match else (year_raw[:4] if year_raw else "")
+
+            authors = []
+            for a in rec.findall("./contributors/authors/author"):
+                t = itext(a)
+                if t:
+                    authors.append(t)
+
+            abstract = first_text(rec, ["./abstract"])
+
+            doi_raw = first_text(rec, ["./doi", "./electronic-resource-num"])
+            doi_raw = doi_raw.replace("doi:", "").replace("DOI:", "").strip()
+            doi = doi_raw.split()[0] if doi_raw else ""
+            doi = doi.strip().rstrip(".").rstrip(";").strip()
+
+            accession = first_text(rec, ["./accession-num"])
+            accession = accession.strip()
+
+            wos_id = ""
+            if accession.upper().startswith("WOS:"):
+                wos_id = accession
+            else:
+                m = re.search(r"\bWOS:\w+\b", accession)
+                if m:
+                    wos_id = m.group(0)
+
+            url = ""
+            if accession.isdigit():
+                url = f"https://pubmed.ncbi.nlm.nih.gov/{accession}/"
+            elif doi:
+                url = f"https://doi.org/{doi}"
+            elif wos_id:
+                url = f"https://www.webofscience.com/wos/woscc/full-record/{wos_id}"
+
+            parsed_entries.append({
+                'title': title,
+                'authors': authors,
+                'journal': journal,
+                'year': year,
+                'abstract': abstract,
+                'doi': doi,
+                'url': url,
+                'source_file': os.path.basename(file_path),
+                'type': 'XML'
+            })
+        return parsed_entries
+
+    parsed_entries = []
+    for ref in root.findall(".//Reference"):
+        title = first_text(ref, ["Title"])
+        authors = []
+        for a in ref.findall("./Authors/Author"):
+            t = itext(a)
+            if t:
+                authors.append(t)
+        journal = first_text(ref, ["Journal"])
+        year = first_text(ref, ["Year"])
+        abstract = first_text(ref, ["Abstract"])
+        doi = first_text(ref, ["DOI"])
+        url = first_text(ref, ["URL"])
+        parsed_entries.append({
+            'title': title,
+            'authors': authors,
+            'journal': journal,
+            'year': year,
+            'abstract': abstract,
+            'doi': doi,
+            'url': url,
+            'source_file': os.path.basename(file_path),
+            'type': 'XML'
+        })
+    return parsed_entries
+
 def convert_to_xml(entries, output_path):
     root = ET.Element("References")
     
@@ -271,6 +370,8 @@ def process_directory(input_dir, output_file):
             all_entries.extend(parse_bib(file_path))
         elif filename.lower().endswith('.nbib'):
             all_entries.extend(parse_nbib(file_path))
+        elif filename.lower().endswith('.xml'):
+            all_entries.extend(parse_xml(file_path))
             
     # Deduplication based on Title (Case insensitive)
     unique_entries = {}

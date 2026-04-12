@@ -401,9 +401,9 @@ class StageViewSet(viewsets.ReadOnlyModelViewSet):
         if stage.stage_type != 'SCREEN_1':
              return Response({"error": "Only SCREEN_1 stage supports reference processing"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # 1. 获取该阶段所有 INPUT 的 Reference 文件 (.ris, .bib, .nbib)
+        # 1. 获取该阶段所有 INPUT 的 Reference 文件 (.ris, .bib, .nbib, .xml)
         input_files = stage.data.filter(data_type='INPUT')
-        ref_files = [f for f in input_files if f.filename.lower().endswith(('.ris', '.bib', '.nbib'))]
+        ref_files = [f for f in input_files if f.filename.lower().endswith(('.ris', '.bib', '.nbib', '.xml'))]
         
         if not ref_files:
             return Response({"error": "No reference files found"}, status=status.HTTP_400_BAD_REQUEST)

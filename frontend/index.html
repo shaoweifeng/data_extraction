@@ -160,10 +160,10 @@
                             <div class="mb-6">
                                 <i class="fas fa-file-import text-6xl text-blue-100 mb-4"></i>
                                 <h3 class="text-2xl font-bold text-gray-800">步骤 1: 导入文献索引</h3>
-                                <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib 格式的文件。系统将自动解析并转换为标准 XML 格式。</p>
+                                <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib, .xml 格式的文件。系统将自动解析并转换为标准 XML 格式。</p>
                             </div>
                             <div class="border-2 border-dashed border-blue-200 rounded-xl p-10 hover:bg-blue-50 transition cursor-pointer" @click="triggerFileInput">
-                                <input type="file" ref="refInput" class="hidden" multiple accept=".ris,.bib,.nbib" @change="handleReferenceUpload">
+                                <input type="file" ref="refInput" class="hidden" multiple accept=".ris,.bib,.nbib,.xml" @change="handleReferenceUpload">
                                 <button class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1">
                                     <i class="fas fa-upload mr-2"></i>上传 Reference 文件
                                 </button>
@@ -202,7 +202,7 @@
                             <div class="bg-gray-50 rounded-xl p-8 mb-6">
                                 <div class="flex justify-between items-center text-sm text-gray-600 mb-2">
                                     <span>当前 Reference 文件:</span>
-                                    <span class="font-bold text-lg">{{ currentStageFiles.input.filter(f => f.filename.endsWith('.ris') || f.filename.endsWith('.bib') || f.filename.endsWith('.nbib')).length }} 个</span>
+                                    <span class="font-bold text-lg">{{ currentStageFiles.input.filter(f => f.filename.endsWith('.ris') || f.filename.endsWith('.bib') || f.filename.endsWith('.nbib') || f.filename.endsWith('.xml')).length }} 个</span>
                                 </div>
                                 <div class="flex justify-between items-center text-sm text-gray-600">
                                     <span>去重状态:</span>
@@ -509,7 +509,7 @@
                 const referenceFiles = computed(() => {
                     const screen1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
                     if (!screen1) return [];
-                    return screen1.data.filter(d => d.data_type === 'INPUT' && (d.filename.endsWith('.ris') || d.filename.endsWith('.bib') || d.filename.endsWith('.nbib')));
+                    return screen1.data.filter(d => d.data_type === 'INPUT' && (d.filename.endsWith('.ris') || d.filename.endsWith('.bib') || d.filename.endsWith('.nbib') || d.filename.endsWith('.xml')));
                 });
 
                 const currentPage = ref(1);
@@ -869,7 +869,7 @@
 
                 const stepStatus = computed(() => {
                     const s1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
-                    const hasRefs = s1 ? s1.data.some(d => d.data_type === 'INPUT' && (d.filename.endsWith('.ris') || d.filename.endsWith('.bib') || d.filename.endsWith('.nbib'))) : false;
+                    const hasRefs = s1 ? s1.data.some(d => d.data_type === 'INPUT' && (d.filename.endsWith('.ris') || d.filename.endsWith('.bib') || d.filename.endsWith('.nbib') || d.filename.endsWith('.xml'))) : false;
                     const hasDedup = s1 ? s1.data.some(d => d.filename.includes('deduplicated') || d.filename.includes('references_deduplicated')) : false;
                     const hasCriteria = (criteriaList.value && criteriaList.value.length > 0) || (s1 && s1.data.some(d => d.filename === 'criteria.txt'));
                     const taskDone = latestTask.value && latestTask.value.status === 'COMPLETED';
