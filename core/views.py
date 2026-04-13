@@ -11,13 +11,18 @@ from celery import current_app
 from django.utils import timezone
 import json
 from django.db import models
+from django.contrib.auth.models import User
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
 
     def perform_create(self, serializer):
-        project = serializer.save()
+        if self.request.user and self.request.user.is_authenticated:
+            creator = self.request.user
+        else:
+            creator, _ = User.objects.get_or_create(username='root', defaults={'email': ''})
+        project = serializer.save(creator=creator)
         # 创建项目时自动初始化六个阶段
         for stage_type, _ in Stage.STAGE_TYPES:
             Stage.objects.create(project=project, stage_type=stage_type)

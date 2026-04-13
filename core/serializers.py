@@ -37,6 +37,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'creator', 'created_at', 'updated_at', 'documents_count', 'latest_task_status', 'stages']
+        read_only_fields = ['creator', 'created_at', 'updated_at', 'documents_count', 'latest_task_status', 'stages']
 
     def get_latest_task_status(self, obj):
         latest_task = obj.tasks.order_by('-created_at').first()
