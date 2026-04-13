@@ -11,5 +11,6 @@ django-cors-headers
 python-dotenv
 django-celery-results
 django-celery-beat
+pymysql
 pymupdf
 pillow

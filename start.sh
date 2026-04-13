@@ -2,6 +2,14 @@
 
 echo "🚀 正在启动自动化数据提取平台 (Django + Celery)..."
 
+# 0) 数据库配置（MySQL）
+# 如需修改连接信息，直接改下面这几行即可
+export DB_NAME=${DB_NAME:-data_extraction}
+export DB_USER=${DB_USER:-root}
+export DB_PASSWORD=${DB_PASSWORD:-123456}
+export DB_HOST=${DB_HOST:-127.0.0.1}
+export DB_PORT=${DB_PORT:-3306}
+
 # 1. 启动 Redis (后台)
 if command -v redis-server > /dev/null; then
     redis-server --daemonize yes
