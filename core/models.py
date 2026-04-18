@@ -1,157 +1,408 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.conf import settings
+from django.utils.text import slugify
+from django.utils import timezone
 import os
 import shutil
+import uuid
 
-class Project(models.Model):
-    name = models.CharField(max_length=255, verbose_name="项目名称")
-    description = models.TextField(blank=True, null=True, verbose_name="项目描述")
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects", verbose_name="创建者")
+
+# ============================================================================
+# 用户与权限管理
+# ============================================================================
+
+class UserProfile(models.Model):
+    """用户配置文件"""
+    ROLE_CHOICES = [
+        ('admin', '管理员'),
+        ('researcher', '研究者'),
+        ('viewer', '访客'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="用户")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='researcher', verbose_name="角色")
+    quota_projects = models.IntegerField(default=10, verbose_name="项目配额")
+    quota_storage_mb = models.IntegerField(default=5120, verbose_name="存储配额(MB)")
+    is_approved = models.BooleanField(default=False, verbose_name="是否已审核")
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="审核时间")
+    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, 
+                                     related_name='approved_users', verbose_name="审核人")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    
+    class Meta:
+        verbose_name = "用户配置"
+        verbose_name_plural = "用户配置"
+    
+    def __str__(self):
+        return f"{self.user.username} ({self.get_role_display()})"
 
+
+class Permission(models.Model):
+    """系统权限"""
+    CATEGORY_CHOICES = [
+        ('user', '用户管理'),
+        ('project', '项目管理'),
+        ('stage', '阶段管理'),
+        ('task', '任务管理'),
+        ('file', '文件管理'),
+        ('system', '系统管理'),
+    ]
+    
+    code = models.CharField(max_length=100, unique=True, verbose_name="权限代码")
+    name = models.CharField(max_length=255, verbose_name="权限名称")
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, verbose_name="权限分类")
+    description = models.TextField(blank=True, verbose_name="权限描述")
+    is_system = models.BooleanField(default=True, verbose_name="是否系统权限")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    
+    class Meta:
+        verbose_name = "权限"
+        verbose_name_plural = "权限"
+        ordering = ['category', 'code']
+    
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+
+class UserPermission(models.Model):
+    """用户权限关系"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_permissions', verbose_name="用户")
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, verbose_name="权限")
+    granted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, 
+                                    related_name='granted_permissions', verbose_name="授权人")
+    granted_at = models.DateTimeField(auto_now_add=True, verbose_name="授权时间")
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name="过期时间")
+    
+    class Meta:
+        verbose_name = "用户权限"
+        verbose_name_plural = "用户权限"
+        unique_together = ('user', 'permission')
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.permission.code}"
+
+
+class RoleTemplate(models.Model):
+    """角色权限模板"""
+    name = models.CharField(max_length=100, unique=True, verbose_name="模板名称")
+    description = models.TextField(blank=True, verbose_name="模板描述")
+    is_system = models.BooleanField(default=True, verbose_name="是否系统预设")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    
+    class Meta:
+        verbose_name = "角色模板"
+        verbose_name_plural = "角色模板"
+    
     def __str__(self):
         return self.name
 
+
+class RoleTemplatePermission(models.Model):
+    """角色模板-权限关联"""
+    role_template = models.ForeignKey(RoleTemplate, on_delete=models.CASCADE, 
+                                       related_name='template_permissions', verbose_name="角色模板")
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, verbose_name="权限")
+    
+    class Meta:
+        verbose_name = "角色模板权限"
+        verbose_name_plural = "角色模板权限"
+        unique_together = ('role_template', 'permission')
+
+
+# ============================================================================
+# 项目管理
+# ============================================================================
+
+class ProjectQuerySet(models.QuerySet):
+    def for_user(self, user):
+        """返回用户有权访问的项目"""
+        if user.is_superuser:
+            return self
+        
+        # 检查是否有 view_all 权限
+        if UserPermission.objects.filter(
+            user=user,
+            permission__code='project.view_all'
+        ).exists():
+            return self
+        
+        # 仅返回自己的项目
+        return self.filter(owner=user)
+
+
+class Project(models.Model):
+    """项目"""
+    STATUS_CHOICES = [
+        ('active', '活跃'),
+        ('archived', '已归档'),
+        ('deleted', '已删除'),
+    ]
+    
+    name = models.CharField(max_length=255, verbose_name="项目名称")
+    slug = models.SlugField(max_length=100, unique=True, blank=True, verbose_name="URL标识")
+    description = models.TextField(blank=True, verbose_name="项目描述")
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_projects', verbose_name="所有者")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name="状态")
+    metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    
+    objects = ProjectQuerySet.as_manager()
+    
     class Meta:
         verbose_name = "项目"
         verbose_name_plural = "项目"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # 自动生成 slug
+            base_slug = slugify(self.name[:50])
+            if not base_slug:
+                base_slug = f"project-{uuid.uuid4().hex[:8]}"
+            
+            slug = base_slug
+            counter = 1
+            while Project.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        
+        super().save(*args, **kwargs)
 
-class Stage(models.Model):
-    STAGE_TYPES = [
-        ('SEARCH', '文献检索'),
-        ('SCREEN_1', '文献初筛'),
-        ('SCREEN_2', '文献复筛'),
-        ('QUALITY', '文献质量评价'),
-        ('EXTRACT', '数据提取'),
-        ('META', 'Meta分析'),
+
+# ============================================================================
+# 阶段与步骤
+# ============================================================================
+
+class ProjectStage(models.Model):
+    """项目阶段"""
+    STATUS_CHOICES = [
+        ('pending', '未开始'),
+        ('in_progress', '进行中'),
+        ('completed', '已完成'),
+        ('skipped', '已跳过'),
     ]
     
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="stages", verbose_name="所属项目")
-    stage_type = models.CharField(max_length=20, choices=STAGE_TYPES, verbose_name="阶段类型")
-    status = models.CharField(max_length=20, default='PENDING', verbose_name="阶段状态") # PENDING, IN_PROGRESS, COMPLETED
-    metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据") # 存储纳排标准等额外信息
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='stages', verbose_name="所属项目")
+    stage_key = models.CharField(max_length=50, verbose_name="阶段标识")
+    name = models.CharField(max_length=255, verbose_name="阶段名称")
+    order = models.IntegerField(default=0, verbose_name="排序")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="状态")
+    started_at = models.DateTimeField(null=True, blank=True, verbose_name="开始时间")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="完成时间")
+    metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-
+    
     class Meta:
-        unique_together = ('project', 'stage_type')
         verbose_name = "项目阶段"
         verbose_name_plural = "项目阶段"
+        unique_together = ('project', 'stage_key')
+        ordering = ['project', 'order']
+    
+    def __str__(self):
+        return f"{self.project.name} - {self.name}"
 
-def stage_data_upload_path(instance, filename):
-    # 将文件存储在 project_<id>/<stage>/<filename> 下，实现物理隔离
-    return f"projects/project_{instance.stage.project.id}/{instance.stage.stage_type}/{filename}"
 
-class StageData(models.Model):
-    DATA_TYPES = [
-        ('INPUT', '输入数据'),
-        ('OUTPUT', '输出数据'),
+class StageStep(models.Model):
+    """阶段步骤"""
+    STATUS_CHOICES = [
+        ('pending', '未开始'),
+        ('in_progress', '进行中'),
+        ('completed', '已完成'),
+        ('failed', '失败'),
+        ('skipped', '已跳过'),
     ]
     
-    stage = models.ForeignKey(Stage, on_delete=models.CASCADE, related_name="data", verbose_name="所属阶段")
-    file = models.FileField(upload_to=stage_data_upload_path, verbose_name="文件")
-    filename = models.CharField(max_length=255, verbose_name="原始文件名")
-    data_type = models.CharField(max_length=10, choices=DATA_TYPES, default='INPUT', verbose_name="数据类型")
-    description = models.TextField(blank=True, null=True, verbose_name="描述")
-    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="上传时间")
-    source = models.CharField(max_length=50, default='UPLOAD', verbose_name="来源") # UPLOAD, PREVIOUS_STAGE, TOOL_GENERATED
-
-    def __str__(self):
-        return f"{self.stage.get_stage_type_display()} - {self.filename}"
-
+    stage = models.ForeignKey(ProjectStage, on_delete=models.CASCADE, related_name='steps', verbose_name="所属阶段")
+    step_key = models.CharField(max_length=50, verbose_name="步骤标识")
+    name = models.CharField(max_length=255, verbose_name="步骤名称")
+    order = models.IntegerField(default=0, verbose_name="排序")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="状态")
+    can_skip = models.BooleanField(default=True, verbose_name="是否可跳过")
+    started_at = models.DateTimeField(null=True, blank=True, verbose_name="开始时间")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="完成时间")
+    metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    
     class Meta:
-        verbose_name = "阶段数据"
-        verbose_name_plural = "阶段数据"
+        verbose_name = "阶段步骤"
+        verbose_name_plural = "阶段步骤"
+        unique_together = ('stage', 'step_key')
+        ordering = ['stage', 'order']
+    
+    def __str__(self):
+        return f"{self.stage.name} - {self.name}"
 
-# 保留旧模型以便迁移，但标记为过时（实际可以直接删掉 Document，用 StageData 替代，但为了平滑过渡先留着）
-class Document(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="documents", verbose_name="所属项目")
-    file = models.FileField(upload_to="documents/%Y/%m/%d/", verbose_name="PDF文件")
-    filename = models.CharField(max_length=255, verbose_name="原始文件名")
-    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="上传时间")
-    is_processed = models.BooleanField(default=False, verbose_name="是否已处理")
 
+# ============================================================================
+# 文件管理
+# ============================================================================
+
+def data_file_upload_path(instance, filename):
+    """文件上传路径"""
+    project_id = instance.project.id
+    stage_key = instance.stage.stage_key if instance.stage else 'general'
+    category = instance.data_category
+    
+    return f"projects/project_{project_id}/stages/{stage_key}/{category}/{filename}"
+
+
+class DataFile(models.Model):
+    """数据文件"""
+    SOURCE_CHOICES = [
+        ('upload', '用户上传'),
+        ('tool_generated', '工具生成'),
+        ('imported', '导入'),
+    ]
+    
+    CATEGORY_CHOICES = [
+        ('input', '输入数据'),
+        ('output', '输出数据'),
+        ('intermediate', '中间数据'),
+    ]
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files', verbose_name="所属项目")
+    stage = models.ForeignKey(ProjectStage, null=True, blank=True, on_delete=models.CASCADE, 
+                               related_name='files', verbose_name="所属阶段")
+    step = models.ForeignKey(StageStep, null=True, blank=True, on_delete=models.CASCADE, 
+                              related_name='files', verbose_name="所属步骤")
+    
+    filename = models.CharField(max_length=255, verbose_name="文件名")
+    file = models.FileField(upload_to=data_file_upload_path, verbose_name="文件")
+    file_size = models.BigIntegerField(default=0, verbose_name="文件大小(字节)")
+    file_type = models.CharField(max_length=50, blank=True, verbose_name="文件类型")
+    data_category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='input', verbose_name="数据类别")
+    source = models.CharField(max_length=50, choices=SOURCE_CHOICES, default='upload', verbose_name="来源")
+    description = models.TextField(blank=True, verbose_name="描述")
+    metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="创建者")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    
+    class Meta:
+        verbose_name = "数据文件"
+        verbose_name_plural = "数据文件"
+        ordering = ['-created_at']
+    
     def __str__(self):
         return self.filename
+    
+    def save(self, *args, **kwargs):
+        # 自动提取文件类型
+        if not self.file_type and self.filename:
+            self.file_type = self.filename.split('.')[-1].lower() if '.' in self.filename else ''
+        
+        # 自动计算文件大小
+        if self.file and not self.file_size:
+            self.file_size = self.file.size
+        
+        super().save(*args, **kwargs)
 
+
+class DataFileVersion(models.Model):
+    """文件版本历史"""
+    data_file = models.ForeignKey(DataFile, on_delete=models.CASCADE, related_name='versions', verbose_name="数据文件")
+    version = models.IntegerField(verbose_name="版本号")
+    file_path = models.CharField(max_length=500, verbose_name="文件路径")
+    file_size = models.BigIntegerField(default=0, verbose_name="文件大小(字节)")
+    change_summary = models.TextField(blank=True, verbose_name="变更说明")
+    metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="创建者")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    
     class Meta:
-        verbose_name = "文档(旧)"
-        verbose_name_plural = "文档(旧)"
+        verbose_name = "文件版本"
+        verbose_name_plural = "文件版本"
+        unique_together = ('data_file', 'version')
+        ordering = ['data_file', '-version']
+    
+    def __str__(self):
+        return f"{self.data_file.filename} v{self.version}"
 
-class ExtractionTask(models.Model):
+
+# ============================================================================
+# 任务管理
+# ============================================================================
+
+class Task(models.Model):
+    """后台任务"""
     STATUS_CHOICES = [
-        ('PENDING', '等待中'),
-        ('PROCESSING', '处理中'),
-        ('COMPLETED', '已完成'),
-        ('FAILED', '失败'),
-        ('STOPPED', '已停止'),
+        ('pending', '等待中'),
+        ('running', '运行中'),
+        ('completed', '已完成'),
+        ('failed', '失败'),
+        ('stopped', '已停止'),
     ]
     
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks", verbose_name="所属项目")
-    celery_task_id = models.CharField(max_length=255, blank=True, null=True, verbose_name="Celery任务ID")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', verbose_name="任务状态")
-    result_excel = models.FileField(upload_to="results/%Y/%m/%d/", blank=True, null=True, verbose_name="结果Excel")
-    logs = models.TextField(blank=True, null=True, verbose_name="运行日志")
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', verbose_name="所属项目")
+    stage = models.ForeignKey(ProjectStage, null=True, blank=True, on_delete=models.CASCADE, 
+                               related_name='tasks', verbose_name="所属阶段")
+    step = models.ForeignKey(StageStep, null=True, blank=True, on_delete=models.CASCADE, 
+                              related_name='tasks', verbose_name="所属步骤")
+    
+    task_type = models.CharField(max_length=50, verbose_name="任务类型")
+    celery_task_id = models.CharField(max_length=255, blank=True, verbose_name="Celery任务ID")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="状态")
+    progress = models.FloatField(default=0.0, verbose_name="进度(0-1)")
+    result = models.JSONField(null=True, blank=True, verbose_name="任务结果")
+    logs = models.TextField(blank=True, verbose_name="运行日志")
+    error_message = models.TextField(blank=True, verbose_name="错误信息")
+    config = models.JSONField(default=dict, blank=True, verbose_name="任务配置")
+    started_at = models.DateTimeField(null=True, blank=True, verbose_name="开始时间")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="完成时间")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="创建者")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    completed_at = models.DateTimeField(blank=True, null=True, verbose_name="完成时间")
-
-    def __str__(self):
-        return f"Task {self.id} - {self.status}"
-
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    
     class Meta:
-        verbose_name = "提取任务"
-        verbose_name_plural = "提取任务"
-
-
-@receiver(post_delete, sender=Document)
-def _delete_document_file(sender, instance, **kwargs):
-    f = getattr(instance, "file", None)
-    if not f:
-        return
-    if not getattr(f, "name", None):
-        return
-    storage = f.storage
-    if storage.exists(f.name):
-        storage.delete(f.name)
-
-
-@receiver(post_delete, sender=ExtractionTask)
-def _delete_task_result_excel(sender, instance, **kwargs):
-    f = getattr(instance, "result_excel", None)
-    if not f:
-        return
-    if not getattr(f, "name", None):
-        return
-    storage = f.storage
-    if storage.exists(f.name):
-        storage.delete(f.name)
-
-
-@receiver(post_delete, sender=Project)
-def _delete_project_workspace(sender, instance, **kwargs):
-    # 1. 删除 workspaces/project_<id>
-    workspace_base = os.path.join(settings.BASE_DIR, "workspaces")
-    workspace_dir = os.path.join(workspace_base, f"project_{instance.id}")
-    workspace_base_real = os.path.realpath(workspace_base)
-    workspace_dir_real = os.path.realpath(workspace_dir)
-    if workspace_dir_real.startswith(workspace_base_real + os.sep) and os.path.exists(workspace_dir_real):
-        shutil.rmtree(workspace_dir_real, ignore_errors=True)
+        verbose_name = "任务"
+        verbose_name_plural = "任务"
+        ordering = ['-created_at']
     
-    # 2. 删除 media/projects/project_<id> (StageData 的存储位置)
-    media_project_dir = os.path.join(settings.MEDIA_ROOT, "projects", f"project_{instance.id}")
-    media_project_dir_real = os.path.realpath(media_project_dir)
-    media_root_real = os.path.realpath(settings.MEDIA_ROOT)
-    
-    # 安全检查：确保要删除的目录确实在 MEDIA_ROOT 下
-    if media_project_dir_real.startswith(media_root_real + os.sep) and os.path.exists(media_project_dir_real):
-        shutil.rmtree(media_project_dir_real, ignore_errors=True)
-        
-@receiver(post_delete, sender=StageData)
-def _delete_stage_data_file(sender, instance, **kwargs):
-    # 删除 StageData 对应的文件
+    def __str__(self):
+        return f"{self.task_type} - {self.get_status_display()}"
+
+
+# ============================================================================
+# 信号处理
+# ============================================================================
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """创建用户时自动创建 Profile"""
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """保存 User 时同步保存 Profile"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+
+
+@receiver(post_delete, sender=DataFile)
+def delete_file_on_model_delete(sender, instance, **kwargs):
+    """删除数据文件模型时同时删除物理文件"""
     if instance.file:
         if os.path.isfile(instance.file.path):
             os.remove(instance.file.path)
+
+
+@receiver(post_delete, sender=Project)
+def delete_project_directory(sender, instance, **kwargs):
+    """删除项目时清理目录"""
+    project_dir = os.path.join(settings.MEDIA_ROOT, f"projects/project_{instance.id}")
+    if os.path.isdir(project_dir):
+        shutil.rmtree(project_dir, ignore_errors=True)

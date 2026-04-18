@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自动化数据提取平台 - 专业科研工具</title>
+    <title>科研数据提取平台 v2.0</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -14,524 +14,400 @@
 </head>
 <body class="bg-gray-50 font-sans text-gray-900">
     {% verbatim %}
-    <div id="app" class="flex min-h-screen">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0">
-            <div class="p-6">
-                <div class="flex items-center space-x-2 text-blue-600 font-bold text-xl">
-                    <i class="fas fa-microscope"></i>
-                    <span>科研 Meta 平台</span>
-                </div>
+    <div id="app">
+        <!-- 加载中 -->
+        <div v-if="isLoading" class="fixed inset-0 bg-gray-50 flex items-center justify-center z-40">
+            <div class="text-center">
+                <i class="fas fa-spinner fa-spin text-6xl text-blue-600 mb-4"></i>
+                <p class="text-gray-600 text-lg">加载中...</p>
             </div>
-            <nav class="mt-4" v-if="!currentProject">
-                <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">系统概览</div>
-                <a href="#" class="flex items-center space-x-3 px-6 py-3 sidebar-item-active font-medium">
-                    <i class="fas fa-th-large w-5"></i><span>项目列表</span>
-                </a>
-            </nav>
-            <nav class="mt-4" v-else>
-                <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">项目工作流</div>
-                <a href="#" @click="currentStage = 'SEARCH'" :class="getStageClass('SEARCH')" class="flex items-center space-x-3 px-6 py-3 transition">
-                    <i class="fas fa-search w-5"></i><span>文献检索</span>
-                </a>
-                <a href="#" @click="currentStage = 'SCREEN_1'" :class="getStageClass('SCREEN_1')" class="flex items-center space-x-3 px-6 py-3 transition">
-                    <i class="fas fa-filter w-5"></i><span>文献初筛</span>
-                </a>
-                <a href="#" @click="currentStage = 'SCREEN_2'" :class="getStageClass('SCREEN_2')" class="flex items-center space-x-3 px-6 py-3 transition">
-                    <i class="fas fa-tasks w-5"></i><span>文献复筛</span>
-                </a>
-                <a href="#" @click="currentStage = 'QUALITY'" :class="getStageClass('QUALITY')" class="flex items-center space-x-3 px-6 py-3 transition">
-                    <i class="fas fa-shield-virus w-5"></i><span>文献质量评价</span>
-                </a>
-                <a href="#" @click="currentStage = 'EXTRACT'" :class="getStageClass('EXTRACT')" class="flex items-center space-x-3 px-6 py-3 transition">
-                    <i class="fas fa-file-export w-5"></i><span>数据提取</span>
-                </a>
-                <a href="#" @click="currentStage = 'META'" :class="getStageClass('META')" class="flex items-center space-x-3 px-6 py-3 transition">
-                    <i class="fas fa-chart-line w-5"></i><span>Meta分析</span>
-                </a>
-                <div class="px-4 py-2 mt-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">项目操作</div>
-                <a href="#" @click="currentProject = null" class="flex items-center space-x-3 px-6 py-3 text-gray-600 hover:bg-gray-50 transition">
-                    <i class="fas fa-arrow-left w-5"></i><span>返回列表</span>
-                </a>
-            </nav>
-        </aside>
+        </div>
 
-        <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto">
-            <!-- Header -->
-            <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 glass-effect">
-                <h2 class="text-xl font-semibold text-gray-800">
-                    <span v-if="currentProject">
-                        {{ currentProject.name }} 
-                        <span class="text-gray-400 text-sm font-normal">
-                            (ID: {{ currentProject.id }}) / {{ getStageName(currentStage) }}
-                        </span>
-                    </span>
-                    <span v-else>项目列表</span>
-                </h2>
-                <div class="flex items-center space-x-4">
-                    <button v-if="!currentProject" @click="showNewProjectModal = true" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
-                        <i class="fas fa-plus"></i><span>新建项目</span>
+        <!-- 登录框 -->
+        <div v-if="showLoginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl w-full max-w-md p-8">
+                <h2 class="text-2xl font-bold mb-6">用户登录</h2>
+                <div class="space-y-4">
+                    <input v-model="loginForm.username" type="text" placeholder="用户名" 
+                           class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <input v-model="loginForm.password" type="password" placeholder="密码" 
+                           class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                           @keyup.enter="login">
+                </div>
+                <div class="mt-6">
+                    <button @click="login" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        登录
                     </button>
-                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">A</div>
                 </div>
-            </header>
-
-            <div class="p-8">
-                <!-- Project List -->
-                <div v-if="!currentProject" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div v-for="project in projects" :key="project.id" @click="selectProject(project)" class="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition cursor-pointer group">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="p-3 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
-                                <i class="fas fa-folder-open text-xl"></i>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button @click="deleteProject(project, $event)" class="text-gray-300 hover:text-red-500 transition">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <h3 class="text-lg font-bold mb-2">{{ project.name }}</h3>
-                        <p class="text-gray-500 text-sm line-clamp-2 mb-4">{{ project.description || '暂无描述' }}</p>
-                        <div class="flex items-center justify-between text-xs text-gray-400 border-t pt-4">
-                            <span>{{ formatDate(project.created_at) }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stage Detail -->
-                <div v-else class="space-y-8 animate-in fade-in duration-500">
-                    <!-- Workflow Stage Content -->
-                    <div v-if="currentStage === 'SCREEN_1'" class="w-full">
-                        <!-- Step Indicator -->
-                        <div class="flex items-center justify-between mb-6 px-12">
-                            <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 1">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
-                                    <span>1</span>
-                                    <i v-if="stepStatus.step1" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px]"></i>
-                                </div>
-                                <span class="text-xs font-medium text-gray-600">文献解析</span>
-                            </div>
-                            <div class="flex-1 h-1 mx-4 transition" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'"></div>
-                            <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 2">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
-                                    <span>2</span>
-                                    <i v-if="stepStatus.step2" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px]"></i>
-                                </div>
-                                <span class="text-xs font-medium text-gray-600">自动去重</span>
-                            </div>
-                            <div class="flex-1 h-1 mx-4 transition" :class="currentStep >= 3 ? 'bg-blue-600' : 'bg-gray-200'"></div>
-                            <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 3">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
-                                    <span>3</span>
-                                    <i v-if="stepStatus.step3" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px] text-[10px]"></i>
-                                </div>
-                                <span class="text-xs font-medium text-gray-600">纳排标准</span>
-                            </div>
-                            <div class="flex-1 h-1 mx-4 transition" :class="currentStep >= 4 ? 'bg-blue-600' : 'bg-gray-200'"></div>
-                            <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 4">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 4 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
-                                    <span>4</span>
-                                    <i v-if="stepStatus.step4" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px]"></i>
-                                </div>
-                                <span class="text-xs font-medium text-gray-600">AI初筛</span>
-                            </div>
-                            <div class="flex-1 h-1 mx-4 transition" :class="currentStep >= 5 ? 'bg-blue-600' : 'bg-gray-200'"></div>
-                            <div class="flex flex-col items-center cursor-pointer" @click="currentStep = 5">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative" :class="currentStep >= 5 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'">
-                                    <span>5</span>
-                                    <i v-if="stepStatus.step5" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-[10px]"></i>
-                                </div>
-                                <span class="text-xs font-medium text-gray-600">结果归纳</span>
-                            </div>
-                        </div>
-
-                        <button @click="prevStep" :disabled="currentStep === 1" class="hidden md:flex fixed left-[18rem] top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-700 hover:shadow-md transition items-center justify-center z-20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none">
-                            <i class="fas fa-chevron-left text-4xl"></i>
-                        </button>
-                        <button @click="nextStep" :disabled="currentStep === 5" class="hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-700 hover:shadow-md transition items-center justify-center z-20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none">
-                            <i class="fas fa-chevron-right text-4xl"></i>
-                        </button>
-
-                        <div>
-
-                            <!-- Step 1: Reference Parse -->
-                            <div v-if="currentStep === 1" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
-                            <div class="mb-6">
-                                <i class="fas fa-file-import text-6xl text-blue-100 mb-4"></i>
-                                <h3 class="text-2xl font-bold text-gray-800">步骤 1: 导入文献索引</h3>
-                                <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib, .xml, .ciw 格式的文件。系统将自动解析并转换为标准 XML 格式。</p>
-                            </div>
-                            <div class="border-2 border-dashed border-blue-200 rounded-xl p-10 hover:bg-blue-50 transition cursor-pointer" @click="triggerFileInput">
-                                <input type="file" ref="refInput" class="hidden" multiple accept=".ris,.bib,.nbib,.xml,.ciw" @change="handleReferenceUpload">
-                                <button class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1">
-                                    <i class="fas fa-upload mr-2"></i>上传 Reference 文件
-                                </button>
-                                <p class="mt-4 text-sm text-gray-400">点击或拖拽文件到此处</p>
-                            </div>
-                            <div class="mt-6 text-left">
-                                <h4 class="font-semibold text-gray-700 mb-2">已导入的索引</h4>
-                                <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-64 overflow-y-auto">
-                                    <div v-if="referenceFiles.length === 0" class="text-gray-400 text-sm">暂无已导入的索引</div>
-                                    <div v-else class="space-y-2">
-                                        <div v-for="file in referenceFiles" :key="file.id" class="flex items-center justify-between bg-white p-3 rounded border">
-                                            <div class="flex items-center overflow-hidden">
-                                                <i class="fas fa-bookmark text-blue-500 mr-2"></i>
-                                                <span class="truncate w-64">{{ file.filename }}</span>
-                                            </div>
-                                            <div class="space-x-3">
-                                                <a :href="file.file" class="text-blue-600 hover:text-blue-800"><i class="fas fa-download"></i></a>
-                                                <button @click="deleteReference(file)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-8 flex justify-end">
-                                <button @click="nextStep" class="text-blue-600 hover:text-blue-800 font-medium">跳过，直接去重 <i class="fas fa-arrow-right ml-1"></i></button>
-                            </div>
-                            </div>
-
-                            <!-- Step 2: Deduplicate -->
-                            <div v-if="currentStep === 2" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
-                            <div class="mb-6">
-                                <i class="fas fa-clone text-6xl text-purple-100 mb-4"></i>
-                                <h3 class="text-2xl font-bold text-gray-800">步骤 2: 文献自动去重</h3>
-                                <p class="text-gray-500 mt-2">系统将基于论文标题 (Title) 对解析后的 XML 文献进行去重处理。</p>
-                            </div>
-                            <div class="bg-gray-50 rounded-xl p-8 mb-6">
-                                <div class="flex justify-between items-center text-sm text-gray-600 mb-2">
-                                    <span>当前 Reference 文件:</span>
-                                    <span class="font-bold text-lg">{{ currentStageFiles.input.filter(f => f.filename.endsWith('.ris') || f.filename.endsWith('.bib') || f.filename.endsWith('.nbib') || f.filename.endsWith('.xml') || f.filename.endsWith('.ciw')).length }} 个</span>
-                                </div>
-                                <div class="flex justify-between items-center text-sm text-gray-600">
-                                    <span>去重状态:</span>
-                                    <span class="font-bold text-lg">{{ currentStageFiles.output.find(f => f.filename.includes('deduplicated')) ? '已完成' : '待处理' }}</span>
-                                </div>
-                            </div>
-                            <button @click="handleDeduplication" :disabled="isDeduplicating" class="bg-purple-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition transform hover:-translate-y-1 mb-4">
-                                <i v-if="isDeduplicating" class="fas fa-spinner fa-spin mr-2"></i>
-                                <i v-else class="fas fa-magic mr-2"></i>
-                                <span>{{ isDeduplicating ? '正在去重…' : '开始去重' }}</span>
-                            </button>
-                            <div v-if="isDeduplicating" class="mt-2 mb-4 text-sm text-purple-700 flex items-center justify-center">
-                                <i class="fas fa-spinner fa-spin mr-2"></i>
-                                <span>{{ dedupStatusText }}</span>
-                            </div>
-                            <div v-if="dedupReport" class="mt-6 text-left w-full max-w-3xl mx-auto">
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                        <div class="text-xs text-gray-500">总条目</div>
-                                        <div class="text-lg font-bold text-gray-800">{{ dedupReport.total_entries_found }}</div>
-                                    </div>
-                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                        <div class="text-xs text-gray-500">重复组</div>
-                                        <div class="text-lg font-bold text-gray-800">{{ dedupReport.duplicate_groups }}</div>
-                                    </div>
-                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                        <div class="text-xs text-gray-500">移除重复</div>
-                                        <div class="text-lg font-bold text-gray-800">{{ dedupReport.duplicates_removed }}</div>
-                                    </div>
-                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                        <div class="text-xs text-gray-500">去重后</div>
-                                        <div class="text-lg font-bold text-gray-800">{{ dedupReport.final_unique_entries }}</div>
-                                    </div>
-                                </div>
-
-                                <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-[420px] overflow-y-auto">
-                                    <div v-if="dedupReport.duplicates.length === 0" class="text-gray-400 text-sm">未发现重复文献</div>
-                                    <div v-else class="space-y-3">
-                                        <details v-for="(g, gi) in dedupReport.duplicates" :key="gi" class="bg-white border border-gray-200 rounded-lg p-3">
-                                            <summary class="cursor-pointer select-none">
-                                                <div class="flex items-start justify-between">
-                                                    <div class="pr-4">
-                                                        <div class="font-semibold text-gray-800">{{ g.title }}</div>
-                                                        <div class="text-xs text-gray-500 mt-1">重复条目数：{{ 1 + g.duplicates.length }}</div>
-                                                    </div>
-                                                    <div class="text-xs text-gray-500 whitespace-nowrap">保留 1 / 移除 {{ g.duplicates.length }}</div>
-                                                </div>
-                                            </summary>
-                                            <div class="mt-3 space-y-2 text-sm">
-                                                <div class="p-3 rounded border border-gray-200">
-                                                    <div class="text-xs text-green-700 font-bold mb-2">保留</div>
-                                                    <div class="text-xs text-gray-600">
-                                                        <div>来源：{{ g.kept.source_file }}<span v-if="g.kept.source_position"> · 位置：{{ g.kept.source_position }}</span><span v-if="g.kept.record_number"> · rec-number：{{ g.kept.record_number }}</span></div>
-                                                        <div v-if="g.kept.journal">期刊：{{ g.kept.journal }}</div>
-                                                        <div v-if="g.kept.year">年份：{{ g.kept.year }}</div>
-                                                        <div v-if="g.kept.doi">DOI：{{ g.kept.doi }}</div>
-                                                        <div v-if="g.kept.url">URL：{{ g.kept.url }}</div>
-                                                    </div>
-                                                </div>
-                                                <div v-for="(d, di) in g.duplicates" :key="di" class="p-3 rounded border border-gray-200">
-                                                    <div class="text-xs text-red-600 font-bold mb-2">重复</div>
-                                                    <div class="text-xs text-gray-600">
-                                                        <div>来源：{{ d.source_file }}<span v-if="d.source_position"> · 位置：{{ d.source_position }}</span><span v-if="d.record_number"> · rec-number：{{ d.record_number }}</span></div>
-                                                        <div v-if="d.journal">期刊：{{ d.journal }}</div>
-                                                        <div v-if="d.year">年份：{{ d.year }}</div>
-                                                        <div v-if="d.doi">DOI：{{ d.doi }}</div>
-                                                        <div v-if="d.url">URL：{{ d.url }}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </details>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex justify-between mt-4">
-                                <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 上一步</button>
-                                <button @click="nextStep" class="text-blue-600 hover:text-blue-800 font-medium">下一步 <i class="fas fa-arrow-right ml-1"></i></button>
-                            </div>
-                            </div>
-
-                            <!-- Step 3: Criteria -->
-                            <div v-if="currentStep === 3" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto">
-                            <div class="text-center mb-6">
-                                <i class="fas fa-list-check text-6xl text-green-100 mb-4"></i>
-                                <h3 class="text-2xl font-bold text-gray-800">步骤 3: 设定纳排标准</h3>
-                                <p class="text-gray-500 mt-2">定义 AI 筛选文献的纳入与排除规则。</p>
-                            </div>
-                            
-                            <div class="mb-6">
-                                <div class="flex space-x-2 mb-4">
-                                    <input v-model="newCriteria" @keyup.enter="addCriteria" type="text" placeholder="输入一条标准（例如：排除非英文文献）并回车" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm">
-                                    <button @click="addCriteria" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm"><i class="fas fa-plus"></i> 添加</button>
-                                </div>
-                                <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
-                                    <div v-if="criteriaList.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
-                                        <i class="fas fa-clipboard-list text-3xl mb-2 opacity-50"></i>
-                                        <p>暂无标准，请在上方添加</p>
-                                    </div>
-                                    <div v-else class="space-y-2">
-                                        <div v-for="(c, idx) in criteriaList" :key="idx" class="flex justify-between items-center bg-white px-4 py-3 rounded-lg border border-gray-100 shadow-sm group">
-                                            <span class="text-gray-700"><span class="font-bold text-green-600 mr-2">{{ idx + 1 }}.</span>{{ c }}</span>
-                                            <button @click="removeCriteria(idx)" class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"><i class="fas fa-trash-alt"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex justify-between">
-                                <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 上一步</button>
-                                <button @click="nextStep" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">确认标准并继续 <i class="fas fa-arrow-right ml-1"></i></button>
-                            </div>
-                            </div>
-
-                            <!-- Step 4: AI Screening -->
-                            <div v-if="currentStep === 4" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-4xl mx-auto">
-                            <div class="text-center mb-8">
-                                <i class="fas fa-robot text-6xl text-indigo-100 mb-4"></i>
-                                <h3 class="text-2xl font-bold text-gray-800">步骤 4: AI 智能初筛</h3>
-                                <p class="text-gray-500 mt-2">DeepSeek 模型将阅读全文并根据纳排标准进行筛选。</p>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 h-96 flex flex-col">
-                                    <div class="flex items-center justify-between mb-4 flex-shrink-0">
-                                        <h4 class="font-bold text-gray-700">文献列表</h4>
-                                        <div class="flex items-center space-x-2 text-xs">
-                                            <button @click="fileListTab = 'pending'" :class="fileListTab === 'pending' ? 'bg-white border border-gray-300 text-gray-800' : 'text-gray-500 hover:text-gray-700'" class="px-2 py-1 rounded">
-                                                待处理 {{ pendingXmlFiles.length }}
-                                            </button>
-                                            <button @click="fileListTab = 'processed'" :class="fileListTab === 'processed' ? 'bg-white border border-gray-300 text-gray-800' : 'text-gray-500 hover:text-gray-700'" class="px-2 py-1 rounded">
-                                                已处理 {{ processedEntries.length }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex-1 bg-white rounded border border-gray-200 overflow-y-auto p-2 space-y-1 relative min-h-0">
-                                         <div v-if="fileListTab === 'pending' && pendingXmlFiles.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
-                                            <p>暂无待处理文献</p>
-                                            <p class="text-xs">请先完成步骤 2 去重，或等待 AI 产出结果</p>
-                                         </div>
-                                         <div v-else-if="fileListTab === 'processed' && processedEntries.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
-                                            <p>暂无已处理文献</p>
-                                            <p class="text-xs">启动 AI 初筛后，处理完成的文献会出现在这里</p>
-                                         </div>
-                                         <div v-else>
-                                             <div v-for="item in paginatedFileList" :key="item.key" class="flex items-center justify-between p-2 hover:bg-gray-50 border-b border-gray-100 last:border-0 text-sm">
-                                                <div class="flex items-center overflow-hidden">
-                                                    <i class="fas fa-file-code text-blue-500 mr-2"></i>
-                                                    <span class="truncate w-64" :title="item.title">{{ item.name }}</span>
-                                                </div>
-                                                <span v-if="item.badge === 'pending'" class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">待筛选</span>
-                                                <span v-else-if="item.badge === 'included'" class="text-xs px-2 py-1 bg-green-100 rounded text-green-700">已纳入</span>
-                                                <span v-else class="text-xs px-2 py-1 bg-red-100 rounded text-red-700">已排除</span>
-                                             </div>
-                                         </div>
-                                    </div>
-                                    
-                                    <!-- Pagination Controls -->
-                                    <div v-if="currentListTotal > 0" class="flex justify-between items-center mt-4 text-sm flex-shrink-0">
-                                        <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
-                                            <i class="fas fa-chevron-left"></i>
-                                        </button>
-                                        <span class="text-gray-600">第 {{ currentPage }} / {{ totalPages }} 页</span>
-                                        <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
-                                            <i class="fas fa-chevron-right"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-green-400 font-mono text-xs shadow-inner h-96 flex flex-col">
-                                    <div class="flex-1 overflow-y-auto min-h-0">
-                                        <div v-if="!latestTask">等待任务启动...</div>
-                                        <div v-else class="whitespace-pre-wrap">{{ latestTask.logs || '正在初始化...' }}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="text-center">
-                                <div v-if="isProcessing || (latestTask && latestTask.status === 'COMPLETED')" class="mb-4 w-full max-w-2xl mx-auto">
-                                    <div class="flex justify-between text-sm mb-1 text-gray-600">
-                                        <span>筛选进度</span>
-                                        <span class="font-bold">{{ screeningProgress.processed }} / {{ screeningProgress.total }} ({{ screeningProgress.percent }}%)</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-                                        <div class="bg-indigo-600 h-4 rounded-full transition-all duration-500 ease-out" :style="{ width: screeningProgress.percent + '%' }"></div>
-                                    </div>
-                                    <div v-if="latestTask.status === 'COMPLETED'" class="mt-2 text-green-600 font-bold animate-bounce">
-                                        <i class="fas fa-check-circle"></i> 筛选完成！结果已生成
-                                    </div>
-                                </div>
-                                <button @click="startScreeningTask()" :disabled="isProcessing" class="w-full md:w-1/2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition transform hover:-translate-y-1">
-                                    <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
-                                    <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
-                                </button>
-                                <button v-if="!isProcessing" @click="restartScreeningTask" class="mt-4 w-full md:w-1/2 border border-red-300 text-red-700 px-8 py-3 rounded-xl font-bold text-base shadow-sm hover:bg-red-50 transition">
-                                    <i class="fas fa-rotate-right mr-2"></i>
-                                    <span>重新筛选（全部）</span>
-                                </button>
-                                <button v-if="isProcessing" @click="stopScreeningTask" class="mt-4 w-full md:w-1/2 bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-red-700 transition">
-                                    <i class="fas fa-stop mr-2"></i>
-                                    <span>停止筛选</span>
-                                </button>
-                            </div>
-                            
-                            <div class="flex justify-between mt-8">
-                                <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 上一步</button>
-                                <button v-if="latestTask && latestTask.status === 'COMPLETED'" @click="nextStep" class="text-blue-600 hover:text-blue-800 font-medium animate-pulse">筛选完成，查看结果 <i class="fas fa-arrow-right ml-1"></i></button>
-                            </div>
-                            </div>
-
-                            <!-- Step 5: Results -->
-                            <div v-if="currentStep === 5" class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-3xl mx-auto text-center">
-                            <div class="mb-8">
-                                <i class="fas fa-flag-checkered text-6xl text-yellow-100 mb-4"></i>
-                                <h3 class="text-2xl font-bold text-gray-800">步骤 5: 结果归纳与导出</h3>
-                                <p class="text-gray-500 mt-2">筛选已完成，请下载您的数据报表。</p>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                <div class="p-6 bg-green-50 rounded-xl border border-green-100 hover:shadow-md transition">
-                                    <i class="fas fa-file-excel text-4xl text-green-600 mb-3"></i>
-                                    <h4 class="font-bold text-green-800 mb-2">Excel 数据报表</h4>
-                                    <p class="text-xs text-green-600 mb-4">包含详细的提取字段、AI 判断理由及原文引用。</p>
-                                    <div v-if="currentStageFiles.output.find(f => f.filename.endsWith('.xlsx'))">
-                                        <a :href="currentStageFiles.output.find(f => f.filename.endsWith('.xlsx')).file" class="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">立即下载</a>
-                                    </div>
-                                    <div v-else class="text-xs text-gray-400">请先生成报表</div>
-                                </div>
-
-                                <div class="p-6 bg-orange-50 rounded-xl border border-orange-100 hover:shadow-md transition">
-                                    <i class="fas fa-book text-4xl text-orange-600 mb-3"></i>
-                                    <h4 class="font-bold text-orange-800 mb-2">EndNote (RIS)</h4>
-                                    <p class="text-xs text-orange-600 mb-4">标准引文格式，可直接导入 EndNote 进行管理。</p>
-                                    <div v-if="currentStageFiles.output.find(f => f.filename.endsWith('.ris'))">
-                                        <a :href="currentStageFiles.output.find(f => f.filename.endsWith('.ris')).file" class="inline-block bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 transition">立即下载</a>
-                                    </div>
-                                    <div v-else class="text-xs text-gray-400">请先生成报表</div>
-                                </div>
-                            </div>
-
-                            <div class="mb-8">
-                                <button @click="generateReport" :disabled="isGeneratingReport" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
-                                    <i v-if="isGeneratingReport" class="fas fa-spinner fa-spin mr-2"></i>
-                                    <span>{{ isGeneratingReport ? '正在生成报表...' : '生成最新报表' }}</span>
-                                </button>
-                                <p class="text-xs text-gray-400 mt-2">点击生成将清理旧文件并基于最新筛选结果创建报表</p>
-                            </div>
-                            
-                            <div class="flex justify-start">
-                                <button @click="prevStep" class="text-gray-500 hover:text-gray-700"><i class="fas fa-arrow-left mr-1"></i> 返回筛选</button>
-                            </div>
-                            </div>
-                        </div>
-
-                    </div>
-                    
-                    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <!-- Left: Input Data -->
-                        <div class="lg:col-span-1 space-y-6">
-                            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                                <h3 class="font-bold mb-4 flex items-center"><i class="fas fa-folder-open mr-2 text-blue-500"></i>输入数据</h3>
-                                <div class="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-blue-400 transition cursor-pointer mb-4" @click="$refs.fileInput.click()">
-                                    <input type="file" ref="fileInput" class="hidden" multiple @change="handleStageFileUpload">
-                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-300 mb-2"></i>
-                                    <p class="text-sm text-gray-500">上传文件到此阶段</p>
-                                </div>
-                                <div class="space-y-2 max-h-96 overflow-y-auto">
-                                    <div v-for="file in currentStageFiles.input" :key="file.id" class="text-sm flex justify-between items-center bg-gray-50 p-3 rounded hover:bg-gray-100">
-                                        <div class="flex items-center overflow-hidden">
-                                            <i class="fas fa-file text-gray-400 mr-2"></i>
-                                            <span class="truncate w-40">{{ file.filename }}</span>
-                                        </div>
-                                        <a :href="file.file" target="_blank" class="text-blue-500 hover:text-blue-700"><i class="fas fa-download"></i></a>
-                                    </div>
-                                    <div v-if="currentStageFiles.input.length === 0" class="text-center text-gray-400 text-sm py-4">暂无输入数据</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Middle: Tools & Processing -->
-                        <div class="lg:col-span-1 space-y-6">
-                            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
-                                <h3 class="font-bold mb-4 flex items-center"><i class="fas fa-cogs mr-2 text-purple-500"></i>处理工具</h3>
-                                <div class="space-y-4">
-                                    <div class="text-center py-10 text-gray-400">
-                                        <i class="fas fa-tools text-4xl mb-3"></i>
-                                        <p>当前阶段暂无可用工具</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right: Output Data -->
-                        <div class="lg:col-span-1 space-y-6">
-                            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                                <h3 class="font-bold mb-4 flex items-center"><i class="fas fa-check-circle mr-2 text-green-500"></i>输出结果</h3>
-                                <div class="space-y-2 max-h-96 overflow-y-auto">
-                                    <div v-for="file in currentStageFiles.output" :key="file.id" class="text-sm flex justify-between items-center bg-gray-50 p-3 rounded hover:bg-gray-100">
-                                        <div class="flex items-center overflow-hidden">
-                                            <i class="fas fa-file-alt text-green-500 mr-2"></i>
-                                            <span class="truncate w-40">{{ file.filename }}</span>
-                                        </div>
-                                        <a :href="file.file" target="_blank" class="text-green-600 hover:text-green-800"><i class="fas fa-download"></i></a>
-                                    </div>
-                                    <div v-if="currentStageFiles.output.length === 0" class="text-center text-gray-400 text-sm py-4">暂无输出结果</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="mt-4 text-center">
+                    <button @click="showRegisterModal = true; showLoginModal = false" 
+                            class="text-blue-600 hover:underline text-sm">
+                        还没有账号？立即注册
+                    </button>
                 </div>
             </div>
-        </main>
+        </div>
 
-        <!-- New Project Modal -->
-        <div v-if="showNewProjectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-2xl w-full max-w-md p-8 animate-in zoom-in duration-300">
+        <!-- 注册框 -->
+        <div v-if="showRegisterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl w-full max-w-md p-8">
+                <h2 class="text-2xl font-bold mb-6">用户注册</h2>
+                <div class="space-y-4">
+                    <input v-model="registerForm.username" type="text" placeholder="用户名" 
+                           class="w-full px-4 py-2 border rounded-lg">
+                    <input v-model="registerForm.email" type="email" placeholder="邮箱（可选）" 
+                           class="w-full px-4 py-2 border rounded-lg">
+                    <input v-model="registerForm.password" type="password" placeholder="密码" 
+                           class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button @click="showRegisterModal = false; showLoginModal = true" 
+                            class="flex-1 border py-2 rounded-lg hover:bg-gray-50">
+                        取消
+                    </button>
+                    <button @click="register" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        注册
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主界面 -->
+        <div v-if="currentUser" class="flex min-h-screen">
+            <!-- 侧边栏 -->
+            <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+                <div class="p-6">
+                    <div class="flex items-center space-x-2 text-blue-600 font-bold text-xl">
+                        <i class="fas fa-microscope"></i>
+                        <span>科研 Meta 平台</span>
+                    </div>
+                </div>
+                <nav class="mt-4" v-if="!currentProject">
+                    <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">系统概览</div>
+                    <a href="#" class="flex items-center space-x-3 px-6 py-3 sidebar-item-active font-medium">
+                        <i class="fas fa-th-large w-5"></i><span>项目列表</span>
+                    </a>
+                </nav>
+                <nav class="mt-4" v-else>
+                    <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">项目工作流</div>
+                    <a href="#" @click="currentStage = 'SEARCH'" :class="getStageClass('SEARCH')" 
+                       class="flex items-center space-x-3 px-6 py-3 transition hover:bg-gray-50">
+                        <i class="fas fa-search w-5"></i><span>文献检索</span>
+                    </a>
+                    <a href="#" @click="currentStage = 'SCREEN_1'" :class="getStageClass('SCREEN_1')" 
+                       class="flex items-center space-x-3 px-6 py-3 transition hover:bg-gray-50">
+                        <i class="fas fa-filter w-5"></i><span>文献初筛</span>
+                    </a>
+                    <a href="#" @click="currentStage = 'SCREEN_2'" :class="getStageClass('SCREEN_2')" 
+                       class="flex items-center space-x-3 px-6 py-3 transition hover:bg-gray-50">
+                        <i class="fas fa-tasks w-5"></i><span>文献复筛</span>
+                    </a>
+                    <a href="#" @click="currentStage = 'QUALITY'" :class="getStageClass('QUALITY')" 
+                       class="flex items-center space-x-3 px-6 py-3 transition hover:bg-gray-50">
+                        <i class="fas fa-shield-virus w-5"></i><span>文献质量评价</span>
+                    </a>
+                    <a href="#" @click="currentStage = 'EXTRACT'" :class="getStageClass('EXTRACT')" 
+                       class="flex items-center space-x-3 px-6 py-3 transition hover:bg-gray-50">
+                        <i class="fas fa-file-export w-5"></i><span>数据提取</span>
+                    </a>
+                    <a href="#" @click="currentStage = 'META'" :class="getStageClass('META')" 
+                       class="flex items-center space-x-3 px-6 py-3 transition hover:bg-gray-50">
+                        <i class="fas fa-chart-line w-5"></i><span>Meta分析</span>
+                    </a>
+                    <div class="px-4 py-2 mt-6 text-xs font-semibold text-gray-400 uppercase">项目操作</div>
+                    <a href="#" @click="currentProject = null" 
+                       class="flex items-center space-x-3 px-6 py-3 text-gray-600 hover:bg-gray-50 transition">
+                        <i class="fas fa-arrow-left w-5"></i><span>返回列表</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- 主内容区 -->
+            <main class="flex-1 overflow-y-auto">
+                <!-- Header -->
+                <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 glass-effect">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <span v-if="currentProject">{{ currentProject.name }}</span>
+                        <span v-else>项目列表</span>
+                    </h2>
+                    <div class="flex items-center space-x-4">
+                        <button v-if="!currentProject" @click="showNewProjectModal = true" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                            <i class="fas fa-plus"></i> 新建项目
+                        </button>
+                        <span class="text-sm text-gray-600">{{ currentUser.username }}</span>
+                        <button @click="logout" class="text-sm text-red-600 hover:text-red-800">
+                            退出登录
+                        </button>
+                    </div>
+                </header>
+
+                <div class="p-8">
+                    <!-- 项目列表 -->
+                    <div v-if="!currentProject" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="project in projects" :key="project.id" 
+                             @click="selectProject(project)" 
+                             class="bg-white p-6 rounded-xl border hover:shadow-lg transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-3 rounded-lg bg-blue-50 text-blue-600">
+                                    <i class="fas fa-folder-open text-xl"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-bold mb-2">{{ project.name }}</h3>
+                            <p class="text-gray-500 text-sm line-clamp-2 mb-4">{{ project.description || '暂无描述' }}</p>
+                            <div class="text-xs text-gray-400">
+                                {{ new Date(project.created_at).toLocaleDateString() }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 阶段详情 -->
+                    <div v-else class="space-y-8">
+                        <h3 class="text-2xl font-bold mb-6">{{ getStageName(currentStage) }}</h3>
+                        
+                        <!-- SCREEN_1 详细功能 -->
+                        <div v-if="currentStage === 'SCREEN_1'" class="w-full">
+                            <!-- 步骤指示器 -->
+                            <div class="flex items-center justify-between mb-6 px-12">
+                                <div v-for="(step, idx) in screen1Steps" :key="step.step_key"
+                                     class="flex flex-col items-center cursor-pointer"
+                                     @click="currentStep = idx + 1">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative"
+                                         :class="getStepClass(step.status)">
+                                        <span>{{ idx + 1 }}</span>
+                                        <i v-if="step.status === 'completed'" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-xs"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-600">{{ step.name }}</span>
+                                    <button v-if="step.can_skip && step.status === 'pending'" 
+                                            @click.stop="skipStep(step.id)"
+                                            class="mt-1 text-xs text-gray-400 hover:text-red-600">
+                                        跳过
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 步骤内容 -->
+                            <div>
+                                <!-- 步骤 1: 文献解析 -->
+                                <div v-if="currentStep === 1" class="bg-white p-8 rounded-xl border shadow-sm max-w-3xl mx-auto text-center">
+                                    <div class="mb-6">
+                                        <i class="fas fa-file-import text-6xl text-blue-100 mb-4"></i>
+                                        <h3 class="text-2xl font-bold text-gray-800">步骤 1: 导入文献索引</h3>
+                                        <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib, .xml, .ciw 格式的文件</p>
+                                    </div>
+                                    <div class="border-2 border-dashed border-blue-200 rounded-xl p-10 hover:bg-blue-50 transition cursor-pointer"
+                                         @click="$refs.refInput.click()">
+                                        <input type="file" ref="refInput" class="hidden" multiple 
+                                               accept=".ris,.bib,.nbib,.xml,.ciw" @change="handleReferenceUpload">
+                                        <button class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 transition">
+                                            <i class="fas fa-upload mr-2"></i>上传 Reference 文件
+                                        </button>
+                                        <p class="mt-4 text-sm text-gray-400">点击或拖拽文件到此处</p>
+                                    </div>
+                                    <div class="mt-6 text-left">
+                                        <h4 class="font-semibold text-gray-700 mb-2">已导入的索引</h4>
+                                        <div class="bg-gray-50 rounded-xl border p-4 max-h-64 overflow-y-auto">
+                                            <div v-if="referenceFiles.length === 0" class="text-gray-400 text-sm">暂无已导入的索引</div>
+                                            <div v-else class="space-y-2">
+                                                <div v-for="file in referenceFiles" :key="file.id" 
+                                                     class="flex items-center justify-between bg-white p-3 rounded border">
+                                                    <div class="flex items-center overflow-hidden">
+                                                        <i class="fas fa-bookmark text-blue-500 mr-2"></i>
+                                                        <span class="truncate w-64">{{ file.filename }}</span>
+                                                    </div>
+                                                    <div class="space-x-3">
+                                                        <a :href="file.file" class="text-blue-600 hover:text-blue-800"><i class="fas fa-download"></i></a>
+                                                        <button @click="deleteFile(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 步骤 2: 自动去重 -->
+                                <div v-if="currentStep === 2" class="bg-white p-8 rounded-xl border shadow-sm max-w-3xl mx-auto text-center">
+                                    <div class="mb-6">
+                                        <i class="fas fa-clone text-6xl text-purple-100 mb-4"></i>
+                                        <h3 class="text-2xl font-bold text-gray-800">步骤 2: 文献自动去重</h3>
+                                        <p class="text-gray-500 mt-2">系统将基于论文标题对解析后的 XML 文献进行去重处理</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-xl p-8 mb-6">
+                                        <div class="flex justify-between items-center text-sm text-gray-600 mb-2">
+                                            <span>当前 Reference 文件:</span>
+                                            <span class="font-bold text-lg">{{ referenceFiles.length }} 个</span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-sm text-gray-600">
+                                            <span>去重状态:</span>
+                                            <span class="font-bold text-lg">{{ dedupCompleted ? '已完成' : '待处理' }}</span>
+                                        </div>
+                                    </div>
+                                    <button @click="handleDeduplication" :disabled="isDeduplicating"
+                                            class="bg-purple-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-purple-700 disabled:opacity-50 transition">
+                                        <i v-if="isDeduplicating" class="fas fa-spinner fa-spin mr-2"></i>
+                                        <i v-else class="fas fa-magic mr-2"></i>
+                                        <span>{{ isDeduplicating ? '正在去重…' : '开始去重' }}</span>
+                                    </button>
+                                </div>
+
+                                <!-- 步骤 3: 纳排标准 -->
+                                <div v-if="currentStep === 3" class="bg-white p-8 rounded-xl border shadow-sm max-w-3xl mx-auto">
+                                    <div class="text-center mb-6">
+                                        <i class="fas fa-list-check text-6xl text-green-100 mb-4"></i>
+                                        <h3 class="text-2xl font-bold text-gray-800">步骤 3: 设定纳排标准</h3>
+                                        <p class="text-gray-500 mt-2">定义 AI 筛选文献的纳入与排除规则</p>
+                                    </div>
+                                    <div class="mb-6">
+                                        <div class="flex space-x-2 mb-4">
+                                            <input v-model="newCriteria" @keyup.enter="addCriteria" type="text" 
+                                                   placeholder="输入一条标准（例如：排除非英文文献）并回车" 
+                                                   class="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500">
+                                            <button @click="addCriteria" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                                <i class="fas fa-plus"></i> 添加
+                                            </button>
+                                        </div>
+                                        <div class="bg-gray-50 rounded-xl border p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+                                            <div v-if="criteriaList.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
+                                                <i class="fas fa-clipboard-list text-3xl mb-2 opacity-50"></i>
+                                                <p>暂无标准，请在上方添加</p>
+                                            </div>
+                                            <div v-else class="space-y-2">
+                                                <div v-for="(c, idx) in criteriaList" :key="idx" 
+                                                     class="flex justify-between items-center bg-white px-4 py-3 rounded-lg border shadow-sm group">
+                                                    <span class="text-gray-700">
+                                                        <span class="font-bold text-green-600 mr-2">{{ idx + 1 }}.</span>{{ c }}
+                                                    </span>
+                                                    <button @click="removeCriteria(idx)" 
+                                                            class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 步骤 4: AI初筛 -->
+                                <div v-if="currentStep === 4" class="bg-white p-8 rounded-xl border shadow-sm max-w-4xl mx-auto">
+                                    <div class="text-center mb-8">
+                                        <i class="fas fa-robot text-6xl text-indigo-100 mb-4"></i>
+                                        <h3 class="text-2xl font-bold text-gray-800">步骤 4: AI 智能初筛</h3>
+                                        <p class="text-gray-500 mt-2">DeepSeek 模型将阅读全文并根据纳排标准进行筛选</p>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                                        <div class="bg-gray-50 p-6 rounded-xl border h-96 flex flex-col">
+                                            <div class="flex items-center justify-between mb-4">
+                                                <h4 class="font-bold text-gray-700">文献列表</h4>
+                                                <span class="text-sm text-gray-500">{{ pendingFiles.length }} 篇待筛选</span>
+                                            </div>
+                                            <div class="flex-1 bg-white rounded border overflow-y-auto p-2 space-y-1">
+                                                <div v-if="pendingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400">
+                                                    <p>暂无待筛选文献</p>
+                                                </div>
+                                                <div v-else>
+                                                    <div v-for="file in pendingFiles.slice(0, 20)" :key="file.id" 
+                                                         class="flex items-center justify-between p-2 hover:bg-gray-50 border-b text-sm">
+                                                        <div class="flex items-center overflow-hidden">
+                                                            <i class="fas fa-file-code text-blue-500 mr-2"></i>
+                                                            <span class="truncate w-64">{{ file.filename }}</span>
+                                                        </div>
+                                                        <span class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">待筛选</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-green-400 font-mono text-xs shadow-inner h-96 flex flex-col">
+                                            <div class="flex-1 overflow-y-auto">
+                                                <div v-if="!latestTask">等待任务启动...</div>
+                                                <div v-else class="whitespace-pre-wrap">{{ latestTask.logs || '正在初始化...' }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button @click="startScreening" :disabled="isProcessing"
+                                                class="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+                                            <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
+                                            <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 步骤 5: 结果归纳 -->
+                                <div v-if="currentStep === 5" class="bg-white p-8 rounded-xl border shadow-sm max-w-3xl mx-auto text-center">
+                                    <div class="mb-6">
+                                        <i class="fas fa-chart-pie text-6xl text-teal-100 mb-4"></i>
+                                        <h3 class="text-2xl font-bold text-gray-800">步骤 5: 结果归纳</h3>
+                                        <p class="text-gray-500 mt-2">查看 AI 初筛结果并导出报告</p>
+                                    </div>
+                                    <div v-if="screeningResults" class="bg-gray-50 rounded-xl p-6 mb-6 text-left">
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <div class="text-center">
+                                                <div class="text-3xl font-bold text-green-600">{{ screeningResults.included }}</div>
+                                                <div class="text-sm text-gray-500">已纳入</div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="text-3xl font-bold text-red-600">{{ screeningResults.excluded }}</div>
+                                                <div class="text-sm text-gray-500">已排除</div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="text-3xl font-bold text-gray-600">{{ screeningResults.total }}</div>
+                                                <div class="text-sm text-gray-500">总计</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button @click="exportResults" class="bg-teal-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-teal-700 transition">
+                                        <i class="fas fa-download mr-2"></i>导出结果报告
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 步骤导航 -->
+                            <div class="flex justify-between mt-6 px-12">
+                                <button @click="prevStep" :disabled="currentStep === 1"
+                                        class="text-gray-500 hover:text-gray-700 disabled:opacity-30">
+                                    <i class="fas fa-arrow-left mr-1"></i> 上一步
+                                </button>
+                                <button @click="nextStep" :disabled="currentStep === 5"
+                                        class="text-blue-600 hover:text-blue-800 font-medium disabled:opacity-30">
+                                    下一步 <i class="fas fa-arrow-right ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 其他阶段占位 -->
+                        <div v-else class="bg-white p-6 rounded-xl border">
+                            <p class="text-gray-500">该阶段功能正在开发中...</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 新建项目弹窗 -->
+        <div v-if="showNewProjectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl w-full max-w-md p-8">
                 <h2 class="text-2xl font-bold mb-6">创建新项目</h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">项目名称</label>
-                        <input v-model="newProject.name" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="例如：免疫检查点抑制剂心肌炎研究">
+                        <label class="block text-sm font-medium mb-1">项目名称</label>
+                        <input v-model="newProject.name" type="text" 
+                               class="w-full px-4 py-2 border rounded-lg">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">描述（可选）</label>
-                        <textarea v-model="newProject.description" class="w-full px-4 py-2 border border-gray-300 rounded-lg h-24" placeholder="描述该项目的提取目标..."></textarea>
+                        <label class="block text-sm font-medium mb-1">描述（可选）</label>
+                        <textarea v-model="newProject.description" 
+                                  class="w-full px-4 py-2 border rounded-lg h-24"></textarea>
                     </div>
                 </div>
-                <div class="mt-8 flex space-x-3">
-                    <button @click="showNewProjectModal = false" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">取消</button>
-                    <button @click="createProject" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">创建</button>
+                <div class="mt-6 flex space-x-3">
+                    <button @click="showNewProjectModal = false" 
+                            class="flex-1 border py-2 rounded-lg hover:bg-gray-50">
+                        取消
+                    </button>
+                    <button @click="createProject" 
+                            class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        创建
+                    </button>
                 </div>
             </div>
         </div>
@@ -544,615 +420,375 @@
 
         createApp({
             setup() {
+                // 加载状态
+                const isLoading = ref(true);
+
+                // 用户认证状态
+                const currentUser = ref(null);
+                const showLoginModal = ref(false);
+                const showRegisterModal = ref(false);
+                const loginForm = ref({ username: '', password: '' });
+                const registerForm = ref({ username: '', password: '', email: '' });
+
+                // 项目状态
                 const projects = ref([]);
                 const currentProject = ref(null);
-                const currentStage = ref('SEARCH');
+                const currentStage = ref('SCREEN_1');
                 const stagesData = ref([]);
                 const showNewProjectModal = ref(false);
                 const newProject = ref({ name: '', description: '' });
+
+                // SCREEN_1 详细状态
+                const currentStep = ref(1);
+                const screen1Steps = computed(() => {
+                    const stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                    return stage ? stage.steps : [];
+                });
+
+                // 文件上传
+                const referenceFiles = ref([]);
                 const uploadingFiles = ref([]);
-                const latestTask = ref(null);
-                const pollingInterval = ref(null);
+
+                // 去重
+                const isDeduplicating = ref(false);
+                const dedupCompleted = ref(false);
+
+                // 纳排标准
                 const newCriteria = ref('');
                 const criteriaList = ref([]);
-                const isGeneratingReport = ref(false);
-                const dedupReport = ref(null);
-                const isDeduplicating = ref(false);
-                const dedupStatusText = ref('正在解析并去重，请稍候…');
-                const processedEntries = ref([]);
-                const fileListTab = ref('pending');
 
-                const screeningProgress = computed(() => {
-                    if (!latestTask.value || !latestTask.value.logs) return { processed: 0, total: 0, percent: 0 };
-                    
-                    const logs = latestTask.value.logs;
-                    // 匹配最后一次出现的 [PROGRESS] X/Y
-                    const regex = /\[PROGRESS\] (\d+)\/(\d+)/g;
-                    let match;
-                    let lastMatch = null;
-                    while ((match = regex.exec(logs)) !== null) {
-                        lastMatch = match;
-                    }
-                    
-                    if (lastMatch) {
-                        const processed = parseInt(lastMatch[1]);
-                        const total = parseInt(lastMatch[2]);
-                        const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
-                        return { processed, total, percent };
-                    }
-                    return { processed: 0, total: 0, percent: 0 };
-                });
+                // AI初筛
+                const pendingFiles = ref([]);
+                const latestTask = ref(null);
+                const isProcessing = ref(false);
+                const screeningResults = ref(null);
 
-                const isProcessing = computed(() => {
-                    return latestTask.value && latestTask.value.status === 'PROCESSING';
-                });
+                // 工具函数
+                const getCSRFToken = () => {
+                    return document.cookie.split('; ')
+                        .find(row => row.startsWith('csrftoken='))
+                        ?.split('=')[1];
+                };
 
-                const currentStageFiles = computed(() => {
-                    const stage = stagesData.value.find(s => s.stage_type === currentStage.value);
-                    if (!stage) return { input: [], output: [] };
-                    return {
-                        input: stage.data.filter(d => d.data_type === 'INPUT'),
-                        output: stage.data.filter(d => d.data_type === 'OUTPUT')
+                const apiRequest = async (url, options = {}) => {
+                    const defaultOptions = {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken() || ''
+                        },
+                        credentials: 'include'
                     };
-                });
-
-                const referenceFiles = computed(() => {
-                    const screen1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
-                    if (!screen1) return [];
-                    return screen1.data.filter(d => d.data_type === 'INPUT' && (d.filename.endsWith('.ris') || d.filename.endsWith('.bib') || d.filename.endsWith('.nbib') || d.filename.endsWith('.xml') || d.filename.endsWith('.ciw')));
-                });
-
-                const currentPage = ref(1);
-                const itemsPerPage = ref(20);
-
-                const splitXmlFiles = computed(() => {
-                    return currentStageFiles.value.output.filter(f => f.description === '单篇文献 XML' || f.filename.includes('split_xmls/'));
-                });
-
-                const processedSet = computed(() => {
-                    return new Set((processedEntries.value || []).map(x => x.source_xml).filter(Boolean));
-                });
-
-                const pendingXmlFiles = computed(() => {
-                    const set = processedSet.value;
-                    return splitXmlFiles.value.filter(f => {
-                        const base = (f.filename || '').split('/').pop();
-                        return base && !set.has(base);
-                    });
-                });
-
-                const processedBySource = computed(() => {
-                    const map = {};
-                    for (const it of (processedEntries.value || [])) {
-                        if (it && it.source_xml) map[it.source_xml] = it;
+                    const response = await fetch(url, { ...defaultOptions, ...options });
+                    // 401 或 403 都视为未登录状态，立即显示登录框
+                    if (!response.ok && (response.status === 401 || response.status === 403)) {
+                        showLoginModal.value = true;
+                        throw new Error('未登录');
                     }
-                    return map;
-                });
-
-                const currentListTotal = computed(() => {
-                    return fileListTab.value === 'processed' ? processedEntries.value.length : pendingXmlFiles.value.length;
-                });
-
-                const paginatedFileList = computed(() => {
-                    const start = (currentPage.value - 1) * itemsPerPage.value;
-                    const end = start + itemsPerPage.value;
-                    if (fileListTab.value === 'processed') {
-                        return (processedEntries.value || []).slice(start, end).map((p, idx) => {
-                            const include = (p.include_or_not || '').toLowerCase();
-                            const badge = include === 'yes' ? 'included' : 'excluded';
-                            return {
-                                key: `${p.source_xml || ''}_${start + idx}`,
-                                name: p.source_xml || (p.title || 'Unknown'),
-                                title: p.title || p.source_xml || '',
-                                badge
-                            };
-                        });
-                    }
-                    return pendingXmlFiles.value.slice(start, end).map(f => {
-                        return {
-                            key: f.id,
-                            name: (f.filename || '').replace('split_xmls/', ''),
-                            title: f.filename || '',
-                            badge: 'pending'
-                        };
-                    });
-                });
-
-                const totalPages = computed(() => {
-                    return Math.ceil((currentListTotal.value || 0) / itemsPerPage.value) || 1;
-                });
-
-                const nextPage = () => {
-                    if (currentPage.value < totalPages.value) currentPage.value++;
+                    return response;
                 };
 
-                const prevPage = () => {
-                    if (currentPage.value > 1) currentPage.value--;
-                };
-
-                watch(fileListTab, () => {
-                    currentPage.value = 1;
-                });
-
-                const currentStep = ref(1); // 1: XML转换, 2: 去重, 3: 纳排, 4: AI筛选, 5: 结果
-
-                const nextStep = () => {
-                    if (currentStep.value < 5) currentStep.value++;
-                    persistStep();
-                };
-
-                const prevStep = () => {
-                    if (currentStep.value > 1) currentStep.value--;
-                    persistStep();
-                };
-
-                const refInput = ref(null);
-                
-                const triggerFileInput = () => {
-                    console.log('Triggering file input click');
-                    if (refInput.value) {
-                        refInput.value.click();
-                    } else {
-                        console.error('refInput is null');
-                    }
-
-                    autoSetStep();
-                };
-
-                const handleReferenceUpload = async (e) => {
-                    console.log('File input change event triggered');
-                    const files = Array.from(e.target.files);
-                    console.log('Files selected:', files);
-                    
-                    if (files.length === 0) return;
-                    
-                    const formData = new FormData();
-                    files.forEach(f => formData.append('files', f));
-                    formData.append('stage_type', currentStage.value);
-                    formData.append('data_type', 'INPUT');
-
-                    // Reset input value to allow re-uploading the same file
-                    e.target.value = '';
-
-                    console.log('Sending request to API...');
+                // 认证相关
+                const fetchCurrentUser = async () => {
                     try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/upload_stage_data/`, {
+                        const res = await apiRequest(`${API_BASE}/auth/me/`);
+                        if (res.ok) {
+                            currentUser.value = await res.json();
+                        } else {
+                            showLoginModal.value = true;
+                        }
+                    } catch (err) {
+                        showLoginModal.value = true;
+                    }
+                };
+
+                const login = async () => {
+                    try {
+                        const res = await apiRequest(`${API_BASE}/auth/login/`, {
                             method: 'POST',
-                            body: formData
+                            body: JSON.stringify(loginForm.value)
                         });
                         
-                        console.log('API response status:', res.status);
-                        
+                        const data = await res.json();
                         if (res.ok) {
-                            const data = await res.json();
-                            alert(`成功上传 ${files.length} 个文件，准备进行解析...`);
-                            await fetchStages(currentProject.value.id);
+                            currentUser.value = data.user;
+                            showLoginModal.value = false;
+                            await fetchProjects();
                         } else {
-                            const text = await res.text();
-                            alert(`上传失败: ${text}`);
-                            console.error('Upload failed:', text);
+                            alert(data.error || '登录失败');
                         }
                     } catch (err) {
-                        alert(`上传出错: ${err.message}`);
-                        console.error('Upload error:', err);
+                        alert(`登录出错: ${err.message}`);
                     }
                 };
 
-                const handleDeduplication = async () => {
-                    console.log('handleDeduplication triggered');
-                    if (isDeduplicating.value) return;
-                    isDeduplicating.value = true;
-                    dedupStatusText.value = '正在解析并去重，请稍候…';
-                    // 调用后端 API 进行解析和去重
-                    const stage = stagesData.value.find(s => s.stage_type === currentStage.value);
-                    if (!stage) {
-                        console.error('Current stage not found in stagesData');
-                        isDeduplicating.value = false;
-                        return;
-                    }
-                    
-                    const url = `${API_BASE}/stages/${stage.id}/process_references/`;
-                    console.log(`Sending deduplication request to ${url}`);
-
+                const register = async () => {
                     try {
-                        const res = await fetch(url, {
-                            method: 'POST'
+                        const res = await apiRequest(`${API_BASE}/auth/register/`, {
+                            method: 'POST',
+                            body: JSON.stringify(registerForm.value)
                         });
                         
-                        console.log('Deduplication API response status:', res.status);
-                        
+                        const data = await res.json();
                         if (res.ok) {
-                            const data = await res.json();
-                            dedupReport.value = data.dedup_report || null;
-                            alert(`去重完成！去重后保留 ${data.total_entries} 篇文献。`);
-                            await fetchStages(currentProject.value.id);
-                            dedupReport.value = data.dedup_report || dedupReport.value;
+                            alert(data.message);
+                            showRegisterModal.value = false;
+                            showLoginModal.value = true;
                         } else {
-                            const text = await res.text();
-                            alert(`去重失败: ${text}`);
-                            console.error('Deduplication failed:', text);
+                            alert(data.error || '注册失败');
                         }
                     } catch (err) {
-                        alert(`去重请求出错: ${err.message}`);
-                        console.error('Deduplication error:', err);
-                    } finally {
-                        isDeduplicating.value = false;
+                        alert(`注册出错: ${err.message}`);
                     }
                 };
 
-                const addCriteria = async () => {
-                    if (newCriteria.value.trim()) {
-                        criteriaList.value.push(newCriteria.value.trim());
-                        newCriteria.value = '';
-                        await saveMetadata();
-                    }
-                };
-
-                const removeCriteria = async (idx) => {
-                    criteriaList.value.splice(idx, 1);
-                    await saveMetadata();
-                };
-
-                const saveMetadata = async () => {
-                    const stage = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
-                    if (!stage) return;
-                    
-                    const metadata = {
-                        screening_criteria: criteriaList.value.join('\n')
-                    };
-                    
+                const logout = async () => {
+                    if (!confirm('确定要退出登录吗？')) return;
                     try {
-                        const res = await fetch(`${API_BASE}/stages/${stage.id}/update_metadata/`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ metadata })
-                        });
-                        if (res.ok) {
-                            await fetchStages(currentProject.value.id);
-                        } else {
-                            console.error('Failed to save metadata');
-                        }
-                    } catch (e) {
-                        console.error('Error saving metadata:', e);
+                        await apiRequest(`${API_BASE}/auth/logout/`, { method: 'POST' });
+                        currentUser.value = null;
+                        location.reload();
+                    } catch (err) {
+                        alert(`注销出错: ${err.message}`);
                     }
                 };
 
+                // 项目管理
                 const fetchProjects = async () => {
-                    const res = await fetch(`${API_BASE}/projects/`);
-                    projects.value = await res.json();
-                };
-
-                const selectProject = async (project) => {
-                    currentProject.value = project;
-                    currentStage.value = 'SEARCH'; // 默认进入检索阶段
-                    await fetchStages(project.id);
-                };
-
-                const fetchStages = async (projectId) => {
-                    const res = await fetch(`${API_BASE}/projects/${projectId}/stages/`);
-                    stagesData.value = await res.json();
-                    dedupReport.value = null;
-                    
-                    const screen1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
-                    if (screen1) {
-                        const reportFile = screen1.data
-                            .filter(d => d.data_type === 'OUTPUT' && d.filename && d.filename.includes('dedup_report') && d.file)
-                            .sort((a, b) => (b.id || 0) - (a.id || 0))[0];
-                        if (reportFile) {
-                            try {
-                                const r = await fetch(reportFile.file);
-                                if (r.ok) {
-                                    dedupReport.value = await r.json();
-                                }
-                            } catch (e) {
-                                dedupReport.value = null;
-                            }
+                    try {
+                        const res = await apiRequest(`${API_BASE}/projects/`);
+                        if (res.ok) {
+                            projects.value = await res.json();
                         }
-                    }
-                    if (screen1 && screen1.metadata && screen1.metadata.screening_criteria !== undefined) {
-                        const saved = screen1.metadata.screening_criteria || '';
-                        criteriaList.value = saved ? saved.split('\n') : [];
-                    } else {
-                        const criteriaFile = screen1 ? screen1.data.find(d => d.filename === 'criteria.txt') : null;
-                        if (criteriaFile) {
-                            try {
-                                const fileRes = await fetch(criteriaFile.file);
-                                const text = await fileRes.text();
-                                criteriaList.value = text ? text.split('\n') : [];
-                            } catch (e) {
-                                console.error('Error fetching criteria.txt:', e);
-                                criteriaList.value = [];
-                            }
-                        } else {
-                            criteriaList.value = [];
-                        }
-                    }
-                };
-
-                // Watch currentStage to update criteriaList when switching tabs
-                watch(currentStage, () => {
-                     if (currentStage.value === 'SCREEN_1') {
-                         currentStep.value = 1;
-                         persistStep();
-                         const screen1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
-                         if (screen1 && screen1.metadata && screen1.metadata.screening_criteria !== undefined) {
-                             const saved = screen1.metadata.screening_criteria || '';
-                             criteriaList.value = saved ? saved.split('\n') : [];
-                         }
-                     }
-                });
-
-                watch(currentStep, async () => {
-                    if (currentStep.value === 4 && currentProject.value) {
-                        await fetchProcessedEntries(currentProject.value.id);
-                    }
-                });
-
-                const deleteProject = async (project, e) => {
-                    if (e) e.stopPropagation();
-                    const ok = confirm(`确定删除项目「${project.name}」吗？该项目的所有数据都会被删除。`);
-                    if (!ok) return;
-                    const res = await fetch(`${API_BASE}/projects/${project.id}/`, { method: 'DELETE' });
-                    if (res.ok) {
-                        if (currentProject.value && currentProject.value.id === project.id) currentProject.value = null;
-                        await fetchProjects();
-                    } else {
-                        const text = await res.text();
-                        alert(`删除失败: ${text}`);
+                    } catch (err) {
+                        console.error('获取项目列表失败', err);
                     }
                 };
 
                 const createProject = async () => {
-                    const res = await fetch(`${API_BASE}/projects/`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ...newProject.value, creator: 1 }) // 默认 ID 1 为超级用户
-                    });
-                    if (res.ok) {
-                        showNewProjectModal.value = false;
-                        newProject.value = { name: '', description: '' };
-                        fetchProjects();
-                    }
-                };
-
-                const handleStageFileUpload = async (e) => {
-                    const files = Array.from(e.target.files);
-                    const formData = new FormData();
-                    files.forEach(f => formData.append('files', f));
-                    formData.append('stage_type', currentStage.value);
-                    formData.append('data_type', 'INPUT');
-
-                    const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/upload_stage_data/`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (res.ok) {
-                        alert('文件上传成功');
-                        fetchStages(currentProject.value.id);
-                    }
-                };
-
-                // 旧的上传逻辑（兼容）
-                const handleFileUpload = async (e) => {
-                    const files = Array.from(e.target.files);
-                    const formData = new FormData();
-                    files.forEach(f => formData.append('files', f));
-
-                    const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/upload_documents/`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (res.ok) {
-                        alert('文件上传成功');
-                        fetchProjects(); // 更新文件计数
-                    }
-                };
-
-                const startScreeningTask = async (force = false) => {
-                    console.log('startScreeningTask triggered');
-                    const criteria = criteriaList.value.join('\n');
-                    console.log('Criteria to send:', criteria);
-                    
-                    try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/start_extraction/`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                force,
-                                screening_criteria: criteria
-                            })
-                        });
-                        
-                        console.log('Screening API response status:', res.status);
-                        
-                        if (res.ok) {
-                            alert('AI 筛选任务已启动！');
-                            processedEntries.value = [];
-                            fileListTab.value = 'pending';
-                            startPolling();
-                            // nextStep(); // Removed auto-jump
-                        } else {
-                            const text = await res.text();
-                            alert(`任务启动失败: ${text}`);
-                            console.error('Screening start failed:', text);
-                        }
-                    } catch (err) {
-                        alert(`请求出错: ${err.message}`);
-                        console.error('Screening start error:', err);
-                    }
-                };
-
-                const restartScreeningTask = async () => {
-                    const ok = confirm('将重新筛选全部文献（会覆盖/重复生成结果）。确定继续？');
-                    if (!ok) return;
-                    await startScreeningTask(true);
-                };
-
-                const stopScreeningTask = async () => {
-                    const ok = confirm('确定停止当前 AI 筛选任务？');
-                    if (!ok) return;
-                    try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/stop_extraction/`, {
-                            method: 'POST'
-                        });
-                        if (res.ok) {
-                            if (pollingInterval.value) clearInterval(pollingInterval.value);
-                            await fetchLatestTask(currentProject.value.id);
-                            alert('已发送停止请求');
-                        } else {
-                            const text = await res.text();
-                            alert(`停止失败: ${text}`);
-                        }
-                    } catch (err) {
-                        alert(`请求出错: ${err.message}`);
-                    }
-                };
-
-                const generateReport = async () => {
-                    isGeneratingReport.value = true;
-                    try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/generate_report/`, {
-                            method: 'POST'
-                        });
-                        if (res.ok) {
-                            alert('报表生成成功！');
-                            fetchStages(currentProject.value.id);
-                        } else {
-                            const data = await res.json();
-                            alert(`生成失败: ${data.error || '未知错误'}`);
-                        }
-                    } catch (e) {
-                        alert(`请求出错: ${e.message}`);
-                    } finally {
-                        isGeneratingReport.value = false;
-                    }
-                };
-
-                const deleteReference = async (file) => {
-                    const ok = confirm(`删除索引文件「${file.filename}」？`);
-                    if (!ok) return;
-                    const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/stage_data/${file.id}/`, { method: 'DELETE' });
-                    if (res.ok || res.status === 204) {
-                        await fetchStages(currentProject.value.id);
-                    } else {
-                        const text = await res.text();
-                        alert(`删除失败: ${text}`);
-                    }
-                };
-
-                const stepStatus = computed(() => {
-                    const s1 = stagesData.value.find(s => s.stage_type === 'SCREEN_1');
-                    const hasRefs = s1 ? s1.data.some(d => d.data_type === 'INPUT' && (d.filename.endsWith('.ris') || d.filename.endsWith('.bib') || d.filename.endsWith('.nbib') || d.filename.endsWith('.xml') || d.filename.endsWith('.ciw'))) : false;
-                    const hasDedup = s1 ? s1.data.some(d => d.filename.includes('deduplicated') || d.filename.includes('references_deduplicated')) : false;
-                    const hasCriteria = (criteriaList.value && criteriaList.value.length > 0) || (s1 && s1.data.some(d => d.filename === 'criteria.txt'));
-                    const taskDone = latestTask.value && latestTask.value.status === 'COMPLETED';
-                    const hasReport = s1 ? s1.data.some(d => d.data_type === 'OUTPUT' && (d.filename.endsWith('.xlsx') || d.filename.endsWith('.ris'))) : false;
-                    return { step1: hasRefs, step2: hasDedup, step3: hasCriteria, step4: taskDone, step5: hasReport };
-                });
-
-                const autoSetStep = () => {
-                    if (!currentProject.value) return;
-                    const key = `project_${currentProject.value.id}_screen1_step`;
-                    const saved = localStorage.getItem(key);
-                    if (saved) {
-                        currentStep.value = parseInt(saved) || 1;
+                    if (!newProject.value.name) {
+                        alert('请输入项目名称');
                         return;
                     }
-                    const s = stepStatus.value;
-                    if (!s.step1) currentStep.value = 1;
-                    else if (!s.step2) currentStep.value = 2;
-                    else if (!s.step3) currentStep.value = 3;
-                    else if (!s.step4) currentStep.value = 4;
-                    else currentStep.value = 5;
-                };
-
-                const persistStep = () => {
-                    if (!currentProject.value) return;
-                    const key = `project_${currentProject.value.id}_screen1_step`;
-                    localStorage.setItem(key, String(currentStep.value));
-                };
-
-                const startTask = async (force) => {
-                    // 这是一个旧函数，可能不再使用，但也加上错误处理以防万一
+                    
                     try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/start_extraction/`, {
+                        const res = await apiRequest(`${API_BASE}/projects/`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ force })
+                            body: JSON.stringify(newProject.value)
                         });
+                        
                         if (res.ok) {
-                            startPolling();
+                            const project = await res.json();
+                            projects.value.push(project);
+                            showNewProjectModal.value = false;
+                            newProject.value = { name: '', description: '' };
+                            alert('项目创建成功！');
                         } else {
-                            const text = await res.text();
-                            console.error('StartTask failed:', text);
+                            const data = await res.json();
+                            alert(data.error || '创建失败');
                         }
                     } catch (err) {
-                        console.error('StartTask error:', err);
+                        alert(`创建项目出错: ${err.message}`);
                     }
                 };
 
-                const fetchLatestTask = async (projectId) => {
-                    const res = await fetch(`${API_BASE}/tasks/latest_by_project/?project_id=${projectId}`);
-                    if (res.ok) {
-                        latestTask.value = await res.json();
-                        if (latestTask.value.status === 'PROCESSING') {
-                            startPolling();
-                        }
-                    } else {
-                        latestTask.value = null;
-                    }
+                const selectProject = async (project) => {
+                    currentProject.value = project;
+                    await fetchStages(project.id);
                 };
 
-                const fetchProcessedEntries = async (projectId) => {
+                const fetchStages = async (projectId) => {
                     try {
-                        const res = await fetch(`${API_BASE}/projects/${projectId}/screening_progress_files/`);
+                        const res = await apiRequest(`${API_BASE}/projects/${projectId}/stages/`);
                         if (res.ok) {
-                            const data = await res.json();
-                            processedEntries.value = data.processed || [];
+                            stagesData.value = await res.json();
+                            // 加载 SCREEN_1 的文件
+                            await loadScreen1Files();
                         }
-                    } catch (e) {
+                    } catch (err) {
+                        console.error('获取阶段数据失败', err);
                     }
                 };
 
-                const startPolling = () => {
-                    if (pollingInterval.value) clearInterval(pollingInterval.value);
-                    let tick = 0;
-                    pollingInterval.value = setInterval(async () => {
-                        const res = await fetch(`${API_BASE}/tasks/latest_by_project/?project_id=${currentProject.value.id}`);
+                const loadScreen1Files = async () => {
+                    // 从 DataFile API 加载文件列表
+                    try {
+                        const res = await apiRequest(`${API_BASE}/files/?project=${currentProject.value.id}&data_category=input`);
+                        if (res.ok) {
+                            const files = await res.json();
+                            referenceFiles.value = files.filter(f => 
+                                f.filename.endsWith('.ris') || 
+                                f.filename.endsWith('.bib') || 
+                                f.filename.endsWith('.nbib') ||
+                                f.filename.endsWith('.xml') ||
+                                f.filename.endsWith('.ciw')
+                            );
+                        }
+                    } catch (err) {
+                        console.error('加载文件失败', err);
+                    }
+                };
+
+                const skipStep = async (stepId) => {
+                    if (!confirm('确定跳过该步骤吗？')) return;
+                    
+                    try {
+                        const res = await apiRequest(`${API_BASE}/steps/${stepId}/skip/`, {
+                            method: 'POST'
+                        });
+                        
+                        if (res.ok) {
+                            alert('步骤已跳过');
+                            await fetchStages(currentProject.value.id);
+                        } else {
+                            const data = await res.json();
+                            alert(data.error || '跳过失败');
+                        }
+                    } catch (err) {
+                        alert(`操作失败: ${err.message}`);
+                    }
+                };
+
+                // 文件上传处理
+                const handleReferenceUpload = async (event) => {
+                    const files = event.target.files;
+                    if (!files.length) return;
+
+                    for (const file of files) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('project', currentProject.value.id);
+                        formData.append('data_category', 'input');
+
+                        try {
+                            const res = await fetch(`${API_BASE}/files/`, {
+                                method: 'POST',
+                                body: formData,
+                                credentials: 'include',
+                                headers: {
+                                    'X-CSRFToken': getCSRFToken()
+                                }
+                            });
+
+                            if (res.ok) {
+                                await loadScreen1Files();
+                            } else {
+                                const data = await res.json();
+                                console.error('上传失败', data);
+                            }
+                        } catch (err) {
+                            console.error('上传出错', err);
+                        }
+                    }
+                };
+
+                // 去重处理
+                const handleDeduplication = async () => {
+                    if (referenceFiles.value.length === 0) {
+                        alert('请先上传文献文件');
+                        return;
+                    }
+
+                    isDeduplicating.value = true;
+                    
+                    try {
+                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                project: currentProject.value.id,
+                                task_type: 'deduplication',
+                                config: {}
+                            })
+                        });
+
                         if (res.ok) {
                             latestTask.value = await res.json();
-                            tick += 1;
-                            if (currentStep.value === 4 && tick % 2 === 0) {
-                                await fetchProcessedEntries(currentProject.value.id);
-                            }
-                            if (latestTask.value.status !== 'PROCESSING') {
-                                clearInterval(pollingInterval.value);
-                                fetchProjects(); // 更新状态
-                                if (currentStep.value === 4) {
-                                    await fetchProcessedEntries(currentProject.value.id);
+                            // 轮询任务状态
+                            pollTaskStatus(latestTask.value.id);
+                        } else {
+                            alert('启动去重任务失败');
+                        }
+                    } catch (err) {
+                        alert(`去重失败: ${err.message}`);
+                    } finally {
+                        isDeduplicating.value = false;
+                    }
+                };
+
+                const pollTaskStatus = async (taskId) => {
+                    const poll = async () => {
+                        try {
+                            const res = await apiRequest(`${API_BASE}/tasks/${taskId}/`);
+                            if (res.ok) {
+                                latestTask.value = await res.json();
+                                if (latestTask.value.status === 'running') {
+                                    setTimeout(poll, 2000);
+                                } else if (latestTask.value.status === 'completed') {
+                                    dedupCompleted.value = true;
                                 }
                             }
+                        } catch (err) {
+                            console.error('轮询任务状态失败', err);
                         }
-                    }, 2000);
+                    };
+                    await poll();
                 };
 
-                const getStatusClass = (status) => {
-                    const base = "px-2 py-1 rounded-full text-xs font-medium ";
-                    if (status === 'COMPLETED') return base + "bg-green-100 text-green-700";
-                    if (status === 'PROCESSING') return base + "bg-blue-100 text-blue-700 animate-pulse";
-                    if (status === 'STOPPED') return base + "bg-yellow-100 text-yellow-700";
-                    if (status === 'FAILED') return base + "bg-red-100 text-red-700";
-                    return base + "bg-gray-100 text-gray-700";
+                // 纳排标准
+                const addCriteria = () => {
+                    if (newCriteria.value.trim()) {
+                        criteriaList.value.push(newCriteria.value.trim());
+                        newCriteria.value = '';
+                    }
                 };
 
-                const getStageClass = (stageType) => {
-                    return currentStage.value === stageType 
-                        ? 'sidebar-item-active font-medium bg-blue-50 text-blue-600' 
-                        : 'text-gray-600 hover:bg-gray-50';
+                const removeCriteria = (index) => {
+                    criteriaList.value.splice(index, 1);
                 };
 
-                const getStageName = (stageType) => {
-                    const map = {
+                // AI初筛
+                const startScreening = async () => {
+                    if (criteriaList.value.length === 0) {
+                        alert('请先设置纳排标准');
+                        return;
+                    }
+
+                    isProcessing.value = true;
+                    
+                    try {
+                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                project: currentProject.value.id,
+                                task_type: 'ai_screening',
+                                config: { criteria: criteriaList.value }
+                            })
+                        });
+
+                        if (res.ok) {
+                            latestTask.value = await res.json();
+                            pollTaskStatus(latestTask.value.id);
+                        } else {
+                            alert('启动AI筛选失败');
+                        }
+                    } catch (err) {
+                        alert(`启动失败: ${err.message}`);
+                    } finally {
+                        isProcessing.value = false;
+                    }
+                };
+
+                // 导出结果
+                const exportResults = async () => {
+                    alert('导出功能开发中...');
+                };
+
+                // 辅助函数
+                const getStageClass = (stageKey) => {
+                    return currentStage.value === stageKey ? 'sidebar-item-active' : '';
+                };
+
+                const getStageName = (stageKey) => {
+                    const names = {
                         'SEARCH': '文献检索',
                         'SCREEN_1': '文献初筛',
                         'SCREEN_2': '文献复筛',
@@ -1160,27 +796,72 @@
                         'EXTRACT': '数据提取',
                         'META': 'Meta分析'
                     };
-                    return map[stageType] || stageType;
+                    return names[stageKey] || stageKey;
                 };
 
-                const formatDate = (dateStr) => {
-                    return new Date(dateStr).toLocaleDateString();
+                const getStepClass = (status) => {
+                    const classes = {
+                        'completed': 'bg-blue-600 text-white',
+                        'skipped': 'bg-yellow-500 text-white',
+                        'in_progress': 'bg-green-600 text-white',
+                        'pending': 'bg-gray-200 text-gray-500',
+                        'failed': 'bg-red-600 text-white'
+                    };
+                    return classes[status] || 'bg-gray-200 text-gray-500';
                 };
 
-                onMounted(fetchProjects);
+                const nextStep = () => {
+                    if (currentStep.value < 5) currentStep.value++;
+                };
+
+                const prevStep = () => {
+                    if (currentStep.value > 1) currentStep.value--;
+                };
+
+                const deleteFile = async (fileId) => {
+                    if (!confirm('确定删除该文件？')) return;
+                    
+                    try {
+                        const res = await apiRequest(`${API_BASE}/files/${fileId}/`, {
+                            method: 'DELETE'
+                        });
+                        
+                        if (res.ok) {
+                            await loadScreen1Files();
+                        }
+                    } catch (err) {
+                        alert(`删除失败: ${err.message}`);
+                    }
+                };
+
+                // 初始化
+                onMounted(async () => {
+                    try {
+                        await fetchCurrentUser();
+                        if (currentUser.value) {
+                            await fetchProjects();
+                        }
+                    } finally {
+                        // 无论成功失败，都关闭加载状态
+                        isLoading.value = false;
+                    }
+                });
 
                 return {
-                    projects, currentProject, currentStage, showNewProjectModal, newProject,
-                    uploadingFiles, latestTask, isProcessing, currentStageFiles, currentStep,
-                    criteriaList, newCriteria, refInput,
-                    selectProject, deleteProject, createProject, handleFileUpload, handleStageFileUpload, startTask,
-                    startScreeningTask, restartScreeningTask, stopScreeningTask, addCriteria, removeCriteria, nextStep, prevStep,
-                    getStatusClass, getStageClass, getStageName, formatDate, triggerFileInput, handleReferenceUpload,
-                    handleDeduplication, referenceFiles, deleteReference, stepStatus,
-                    screeningProgress, dedupReport, isDeduplicating, dedupStatusText,
-                    processedEntries, fileListTab, pendingXmlFiles, paginatedFileList, currentListTotal,
-                    splitXmlFiles, currentPage, totalPages, nextPage, prevPage,
-                    generateReport, isGeneratingReport
+                    isLoading,
+                    currentUser, showLoginModal, showRegisterModal,
+                    loginForm, registerForm, login, register, logout,
+                    projects, currentProject, currentStage, stagesData,
+                    showNewProjectModal, newProject,
+                    createProject, selectProject, skipStep,
+                    currentStep, screen1Steps, getStepClass,
+                    referenceFiles, handleReferenceUpload, deleteFile,
+                    isDeduplicating, dedupCompleted, handleDeduplication,
+                    newCriteria, criteriaList, addCriteria, removeCriteria,
+                    pendingFiles, latestTask, isProcessing, screeningResults,
+                    startScreening, exportResults,
+                    getStageClass, getStageName, nextStep, prevStep,
+                    uploadingFiles
                 };
             }
         }).mount('#app');

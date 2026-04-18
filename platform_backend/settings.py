@@ -88,8 +88,10 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
         'PORT': os.getenv('DB_PORT', '3306'),
+        'CONN_MAX_AGE': 60,  # 60秒后重建连接，避免无限复用失效连接
         'OPTIONS': {
             'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
@@ -140,6 +142,31 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Django REST Framework 配置
+REST_FRAMEWORK = {
+    # 认证方式
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',  # Session 认证
+    ],
+    
+    # 默认权限：必须登录
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    
+    # 分页配置
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    
+    # 异常处理
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+}
+
+# 登录相关 URL
+LOGIN_URL = '/api/auth/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/api/auth/login/'
+
 # Celery Configuration Options
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'django-db'
@@ -147,6 +174,13 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERY_BROKER_POOL_LIMIT = 1  # 限制 broker 连接池，避免 prefork 模型下竞争
+CELERY_RESULT_DB_SHORT_LIVED_SESSIONS = True  # 每次任务结果写入后关闭会话，避免连接泄漏
 
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = True # In production, restrict this to specific origins
+
+# CSRF 设置（开发环境）
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
