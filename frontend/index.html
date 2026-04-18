@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>科研数据提取平台 v2.0</title>
+    <title>科研数据提取平台 v2.1</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -417,6 +420,7 @@
     <script>
         const { createApp, ref, onMounted, computed, watch } = Vue;
         const API_BASE = '/api';
+        const REQUEST_TIMEOUT_MS = 15000;
 
         createApp({
             setup() {
@@ -470,6 +474,27 @@
                         ?.split('=')[1];
                 };
 
+                const extractListData = (payload) => {
+                    if (Array.isArray(payload)) {
+                        return payload;
+                    }
+                    if (Array.isArray(payload?.results)) {
+                        return payload.results;
+                    }
+                    return [];
+                };
+
+                const fetchWithTimeout = async (url, options = {}) => {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+                    try {
+                        return await fetch(url, { ...options, signal: controller.signal });
+                    } finally {
+                        clearTimeout(timeoutId);
+                    }
+                };
+
                 const apiRequest = async (url, options = {}) => {
                     const defaultOptions = {
                         headers: {
@@ -478,7 +503,7 @@
                         },
                         credentials: 'include'
                     };
-                    const response = await fetch(url, { ...defaultOptions, ...options });
+                    const response = await fetchWithTimeout(url, { ...defaultOptions, ...options });
                     // 401 或 403 都视为未登录状态，立即显示登录框
                     if (!response.ok && (response.status === 401 || response.status === 403)) {
                         showLoginModal.value = true;
@@ -493,6 +518,7 @@
                         const res = await apiRequest(`${API_BASE}/auth/me/`);
                         if (res.ok) {
                             currentUser.value = await res.json();
+                            showLoginModal.value = false;
                         } else {
                             showLoginModal.value = true;
                         }
@@ -503,8 +529,14 @@
 
                 const login = async () => {
                     try {
-                        const res = await apiRequest(`${API_BASE}/auth/login/`, {
+                        // 登录接口直接用 fetch，不经过 apiRequest，这样可以正确处理401错误
+                        const res = await fetchWithTimeout(`${API_BASE}/auth/login/`, {
                             method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCSRFToken() || ''
+                            },
+                            credentials: 'include',
                             body: JSON.stringify(loginForm.value)
                         });
                         
@@ -514,6 +546,7 @@
                             showLoginModal.value = false;
                             await fetchProjects();
                         } else {
+                            // 正确显示后端返回的错误信息
                             alert(data.error || '登录失败');
                         }
                     } catch (err) {
@@ -557,7 +590,8 @@
                     try {
                         const res = await apiRequest(`${API_BASE}/projects/`);
                         if (res.ok) {
-                            projects.value = await res.json();
+                            const data = await res.json();
+                            projects.value = extractListData(data);
                         }
                     } catch (err) {
                         console.error('获取项目列表失败', err);
@@ -614,7 +648,8 @@
                     try {
                         const res = await apiRequest(`${API_BASE}/files/?project=${currentProject.value.id}&data_category=input`);
                         if (res.ok) {
-                            const files = await res.json();
+                            const data = await res.json();
+                            const files = extractListData(data);
                             referenceFiles.value = files.filter(f => 
                                 f.filename.endsWith('.ris') || 
                                 f.filename.endsWith('.bib') || 
@@ -838,12 +873,13 @@
                 onMounted(async () => {
                     try {
                         await fetchCurrentUser();
-                        if (currentUser.value) {
-                            await fetchProjects();
-                        }
                     } finally {
-                        // 无论成功失败，都关闭加载状态
+                        // 登录态检查结束后立刻展示页面，避免后续业务请求把整页卡住。
                         isLoading.value = false;
+                    }
+
+                    if (currentUser.value) {
+                        await fetchProjects();
                     }
                 });
 
