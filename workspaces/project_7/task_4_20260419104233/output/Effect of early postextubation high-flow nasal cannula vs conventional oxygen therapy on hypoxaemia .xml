@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Effect of early postextubation high-flow nasal cannula vs conventional oxygen therapy on hypoxaemia in patients after major abdominal surgery: a French multicentre randomised controlled trial (OPERA)</Title>
+    <Authors>
+      <Author>Futier, E</Author>
+      <Author>Paugam-Burtz, C</Author>
+      <Author>Godet, T</Author>
+      <Author>Khoy-Ear, L</Author>
+      <Author>Rozencwajg, S</Author>
+      <Author>Delay, JM</Author>
+      <Author>Verzilli, D</Author>
+      <Author>Dupuis, J</Author>
+      <Author>Chanques, G</Author>
+      <Author>Bazin, JE</Author>
+      <Author>Constantin, JM</Author>
+      <Author>Pereira, B</Author>
+      <Author>Jaber, S</Author>
+    </Authors>
+    <Journal>INTENSIVE CARE MEDICINE</Journal>
+    <Year>2016</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>42</Volume>
+    <Issue>12</Issue>
+    <Page>1888-1898</Page>
+    <Date>DEC 2016</Date>
+    <Address>[Futier, Emmanuel; Godet, Thomas; Dupuis, Jeremie; Bazin, Jean-Etienne; Constantin, Jean-Michel] CHU Clermont Ferrand, Hop Estaing, Pole Med Perioperatoire MPO, F-63003 Clermont Ferrand, France; [Futier, Emmanuel; Constantin, Jean-Michel] Univ Auvergne, Lab Univ, R2D2, EA 7281, F-63000 Clermont Ferrand, France; [Paugam-Burtz, Catherine; Khoy-Ear, Linda; Rozencwajg, Sacha] Hop Univ Paris Nord Val Seine, Hop Beaujon, AP HP, Dept Anesthesie Reanimat, F-75018 Paris, France; [Delay, Jean-Marc; Verzilli, Daniel; Chanques, Gerald; Jaber, Samir] CHU Montpellier, Dept Anesthesie Reanimat B DAR B, Hop St Eloi, 80 Ave Augustin Fliche, F-34295 Montpellier, France; [Pereira, Bruno] CHU Clermont Ferrand, DRC, F-63000 Clermont Ferrand, France; [Chanques, Gerald; Jaber, Samir] Univ Montpellier, INSERM, CNRS, U1046,UMR 9214, F-34295 Montpellier, France</Address>
+    <Abstract>High-flow nasal cannula (HFNC) oxygen therapy is attracting increasing interest in acute medicine as an alternative to standard oxygen therapy; however, its use to prevent hypoxaemia after major abdominal surgery has not been evaluated. Our trial was designed to close this evidence gap.A multicentre randomised controlled trial was carried out at three university hospitals in France. Adult patients at moderate to high risk of postoperative pulmonary complications who had undergone major abdominal surgery using lung-protective ventilation were randomly assigned using a computer-generated sequence to receive either HFNC oxygen therapy or standard oxygen therapy (low-flow oxygen delivered via nasal prongs or facemask) directly after extubation. The primary endpoint was absolute risk reduction (ARR) for hypoxaemia at 1 h after extubation and after treatment discontinuation. Secondary outcomes included occurrence of postoperative pulmonary complications within 7 days after surgery, the duration of hospital stay, and in-hospital mortality. The analysis was performed on data from the modified intention-to-treat population. This trial was registered with ClinicalTrials.gov (NCT01887015).Between 6 November 2013 and 1 March 2015, 220 patients were randomly assigned to receive either HFNC (n = 108) or standard oxygen therapy (n = 112); all of these patients completed follow-up. The median duration of the allocated treatment was 16 h (interquartile range 14-18 h) with standard oxygen therapy and 15 h (interquartile range 12-18) with HFNC therapy. Twenty-three (21 %) of the 108 patients treated with HFNC 1 h after extubation and 29 (27 %) of the 108 patients after treatment discontinuation had postextubation hypoxaemia, compared with 27 (24 %) and 34 (30 %) of the 112 patients treated with standard oxygen (ARR 4, 95 % CI -8 to 15 %; p = 0.57; adjusted relative risk [RR] 0.87, 95 % CI 0.53-1.43; p = 0.58). Over the 7-day postoperative follow-up period, there was no statistically significant difference between the groups in the proportion of patients who remained free of any pulmonary complication (ARR 7, 95 % CI -6 to 20 %; p = 0.40). Other secondary outcomes also did not differ significantly between the two groups.Among patients undergoing major abdominal surgery, early preventive application of high-flow nasal cannula oxygen therapy after extubation did not result in improved pulmonary outcomes compared with standard oxygen therapy.</Abstract>
+    <DOI>10.1007/s00134-016-4594-y</DOI>
+    <URL>https://doi.org/10.1007/s00134-016-4594-y</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

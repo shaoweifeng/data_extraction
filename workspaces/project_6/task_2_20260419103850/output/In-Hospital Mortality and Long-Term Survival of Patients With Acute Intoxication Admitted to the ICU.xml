@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>In-Hospital Mortality and Long-Term Survival of Patients With Acute Intoxication Admitted to the ICU</Title>
+    <Authors>
+      <Author>Brandenburg, R</Author>
+      <Author>Brinkman, S</Author>
+      <Author>de Keizer, NF</Author>
+      <Author>Meulenbelt, J</Author>
+      <Author>de Lange, DW</Author>
+    </Authors>
+    <Journal>CRITICAL CARE MEDICINE</Journal>
+    <Year>2014</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>42</Volume>
+    <Issue>6</Issue>
+    <Page>1471-1479</Page>
+    <Date>JUN 2014</Date>
+    <Address>[Brandenburg, Raya; Meulenbelt, Jan; de Lange, Dylan W.] Univ Utrecht, Univ Med Ctr Utrecht, Dept Intens Care &amp; Emergency Med, Utrecht, Netherlands; [Brinkman, Sylvia; de Keizer, Nicolette F.] Univ Amsterdam, Acad Med Ctr, Dept Med Informat, NL-1105 AZ Amsterdam, Netherlands; [Brinkman, Sylvia; de Keizer, Nicolette F.; de Lange, Dylan W.] Natl Intens Care Evaluat Fdn, Amsterdam, Netherlands; [Meulenbelt, Jan; de Lange, Dylan W.] Univ Utrecht, Univ Med Ctr, Dutch Natl Poisons Informat Ctr, Utrecht, Netherlands; [Meulenbelt, Jan] Univ Utrecht, Inst Risk Assessment Sci, Utrecht, Netherlands</Address>
+    <Abstract>Objective: To assess in-hospital and long-term mortality of Dutch ICU patients admitted with an acute intoxication.Design: Cohort of ICU admissions from a national ICU registry linked to records from an insurance claims database.Setting: Eighty-one ICUs (85% of all Dutch ICUs).Patients: Seven thousand three hundred thirty-one admissions between January 1, 2008, and October 1, 2011.Interventions: None.Measurements and Main Results: Kaplan-Meier curves were used to compare the unadjusted mortality of the total intoxicated population and for specific intoxication subgroups based on the Acute Physiology and Chronic Health Evaluation IV reasons for admission: 1) alcohol(s), 2) analgesics, 3) antidepressants, 4) street drugs, 5) sedatives, 6) poisoning (carbon monoxide, arsenic, or cyanide), 7) other toxins, and 8) combinations. The case-mix adjusted mortality was assessed by the odds ratio adjusted for age, gender, severity of illness, intubation status, recurrent intoxication, and several comorbidities. The ICU mortality was 1.2%, and the in-hospital mortality was 2.1%. The mortality 1, 3, 6, 12, and 24 months after ICU admission was 2.8%, 4.1%, 5.2%, 6.5%, and 9.3%, respectively. Street drugs had the highest mortality 2 years after ICU admission (12.3%); a combination of different intoxications had the lowest (6.3%). The adjusted observed mortality showed that intoxications with street drugs and other toxins have a significant higher mortality 1 month after ICU admission (odds ratio(adj) = 1.63 and odds ratio(adj)= 1.73, respectively). Intoxications with alcohol or antidepressants have a significant lower mortality 1 month after ICU admission (odds ratio(adj) = 0.50 and odds ratio(adj) = 0.46, respectively). These differences were not found in the adjusted mortality 3 months upward of ICU admission.Conclusions: Overall, the mortality 2 years after ICU admission is relatively low compared with other ICU admissions. The first 3 months after ICU admission there is a difference in mortality between the subgroups, not thereafter. Still, the difference between the in-hospital mortality and the mortality after 2 years is substantial.</Abstract>
+    <DOI>10.1097/CCM.0000000000000245</DOI>
+    <URL>https://doi.org/10.1097/CCM.0000000000000245</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

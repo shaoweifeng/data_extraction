@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Exploring the Changes in Code Status During the COVID-19 Pandemic and the Implications for Future Pandemic Care</Title>
+    <Authors>
+      <Author>Katamreddy, A</Author>
+      <Author>Ye, AM</Author>
+      <Author>Vorchheimer, DA</Author>
+      <Author>Hardoon, I</Author>
+      <Author>Faillace, RT</Author>
+      <Author>Taub, CC</Author>
+    </Authors>
+    <Journal>AMERICAN JOURNAL OF HOSPICE &amp; PALLIATIVE MEDICINE</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>39</Volume>
+    <Issue>11</Issue>
+    <Page>1364-1370</Page>
+    <Date>NOV 2022</Date>
+    <Address>[Katamreddy, Adarsh; Faillace, Robert T.] Albert Einstein Coll Med, Jacobi Med Ctr, Dept Med, Bronx, NY 10467 USA; [Ye, Alexander M.] Greenwich High Sch, Greenwich, NY USA; [Vorchheimer, David A.; Taub, Cynthia C.] Montefiore Med Ctr, Albert Einstein Coll Med, Dept Med, Div Cardiovasc Dis, Bronx, NY 10467 USA; [Hardoon, Isaac] Montefiore Med Ctr, Albert Einstein Coll Med, Palliat Care, Dept Family &amp; Social Med, Bronx, NY 10467 USA</Address>
+    <Abstract>Objective: We aim to explore patterns of inpatient code status during the COVID-19 pandemic compared with a similar timeframe the previous year, as well as utilization of palliative care services. Methods: This is a retrospective cohort study using data from the Montefiore Health system of all inpatient admissions between March 15-May 31, 2019 and March 15-May 31, 2020. Univariate logistic regression was performed with full code status as the outcome. All statistically significant variables were included in the multivariable logistic regression. Results: The total number of admissions declined during the pandemic (16844 vs 11637). A lower proportion of patients had full code status during the pandemic (85.1% vs 94%, P &lt; .001) at the time of discharge/death. There was a 20% relative increase in the number of palliative care consultations during the pandemic (12.2% vs 10.5%, P &lt; .001). Intubated patients were less often full code (66.5% vs 82.2%, P &lt; .001) during the pandemic. Although a lower portion of COVID-19 positive patients had a full code status compared with non-COVID patients (77.6% vs 92.4%, P&lt;.001), there was no statistically significant difference in code status at death (38.3% vs 38.3%, P = .96). Conclusions: The proportion of full code patients was significantly lower during the pandemic. Age and COVID status were the key determinants of code status during the pandemic. There was a higher demand for palliative care services during the pandemic.</Abstract>
+    <DOI>10.1177/10499091221092699</DOI>
+    <URL>https://doi.org/10.1177/10499091221092699</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

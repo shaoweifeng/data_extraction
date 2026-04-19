@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Hyperpolarised 129Xe magnetic resonance imaging to monitor treatment response in children with cystic fibrosis</Title>
+    <Authors>
+      <Author>Rayment, JH</Author>
+      <Author>Couch, MJ</Author>
+      <Author>McDonald, N</Author>
+      <Author>Kanhere, N</Author>
+      <Author>Manson, D</Author>
+      <Author>Santyr, G</Author>
+      <Author>Ratjen, F</Author>
+    </Authors>
+    <Journal>EUROPEAN RESPIRATORY JOURNAL</Journal>
+    <Year>2019</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>53</Volume>
+    <Issue>5</Issue>
+    <Date>MAY 1 2019</Date>
+    <Address>[Rayment, Jonathan H.; McDonald, Nancy; Ratjen, Felix] Hosp Sick Children, Dept Paediat, Div Resp Med, Toronto, ON, Canada; [Rayment, Jonathan H.; Ratjen, Felix] Univ Toronto, Dept Paediat, Toronto, ON, Canada; [Rayment, Jonathan H.; Couch, Marcus J.; McDonald, Nancy; Kanhere, Nikhil; Santyr, Giles; Ratjen, Felix] SickKids Res Inst, Translat Med Program, Toronto, ON, Canada; [Couch, Marcus J.; Santyr, Giles] Univ Toronto, Dept Med Biophys, Toronto, ON, Canada; [Manson, David] Hosp Sick Children, Dept Diagnost Imaging, Toronto, ON, Canada</Address>
+    <Abstract>Pulmonary magnetic resonance imaging using hyperpolarised 129Xe gas (XeMRI) can quantify ventilation inhomogeneity by measuring the percentage of unventilated lung volume (ventilation defect per cent (VDP)). While previous studies have demonstrated its sensitivity for detecting early cystic fibrosis (CF) lung disease, the utility of XeMRI to monitor response to therapy in CF is unknown. The aim of this study was to assess the ability of XeMRI to capture treatment response in paediatric CF patients undergoing inpatient antibiotic treatment for a pulmonary exacerbation. 15 CF patients aged 8-18 years underwent XeMRI, spirometry, plethysmography and multiple-breath nitrogen washout at the beginning and end of inpatient treatment of a pulmonary exacerbation. VDP was calculated from XeMRI images obtained during a static breath hold using semi-automated k-means clustering and linear binning approaches. XeMRI was well tolerated. VDP, lung clearance index and the forced expiratory volume in 1 s all improved with treatment; however, response was not uniform in individual patients. Of all outcome measures, VDP showed the largest relative improvement (-42.1%, 95% CI -52.1--31.9%, p&lt; 0.0001). These data support further investigation of XeMRI as a tool to capture treatment response in CF lung disease.</Abstract>
+    <DOI>10.1183/13993003.02188-2018</DOI>
+    <URL>https://doi.org/10.1183/13993003.02188-2018</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

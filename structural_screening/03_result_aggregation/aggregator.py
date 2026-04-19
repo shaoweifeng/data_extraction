@@ -385,42 +385,28 @@ def merge_same_cells_advanced(excel_path, output_path):
 
 
 # 使用示例
-if __name__ == "__main__":
-    import argparse
+def main(input_dir, output_dir):
+    """
+    主函数：聚合AI初筛结果JSON文件到Excel
     
-    parser = argparse.ArgumentParser(description="Aggregate screening results to Excel")
-    parser.add_argument('--input_dir', type=str, help='Input directory containing JSON files', required=False)
-    parser.add_argument('--output_dir', type=str, help='Output directory for Excel files', required=False)
-    args = parser.parse_args()
-
-    # 兼容旧逻辑：如果没有传参，尝试使用默认路径（但不建议，应强制传参）
-    # 为了保证项目隔离，我们不应该 chdir，而是直接使用绝对路径
+    Args:
+        input_dir: AI初筛结果JSON文件所在目录
+        output_dir: 输出目录
     
-    # os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # REMOVED
+    Returns:
+        dict: 包含统计信息的字典 {'success_count': int, 'failed_count': int, 'output_files': [str]}
+    """
+    global all_df
     
-    input_dir = args.input_dir
-    output_dir = args.output_dir
+    if not os.path.exists(input_dir):
+        print(f"Error: Input directory does not exist: {input_dir}")
+        return {'success_count': 0, 'failed_count': 0, 'output_files': [], 'error': 'Input directory does not exist'}
     
-    if not input_dir:
-        # Fallback (仅用于本地单独测试，生产环境 tasks.py 必须传参)
-        # 假设在 structural_screening/03_result_aggregation 运行
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        input_dir = os.path.join(base_dir, "02_screening_ai", "results")
-        print(f"Warning: No input_dir provided, using default: {input_dir}")
-
-    if not output_dir:
-         output_dir = os.path.join(os.path.dirname(input_dir), "results") # 默认输出到 input_dir 同级的 results
-         print(f"Warning: No output_dir provided, using default: {output_dir}")
-
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     output_file = os.path.join(output_dir, "AI初筛结果.xlsx")
     final_file = os.path.join(output_dir, "AI初筛结果_合并版.xlsx")
-    
-    if not os.path.exists(input_dir):
-        print(f"Error: Input directory does not exist: {input_dir}")
-        sys.exit(1)
     
     files = traverse_directory(input_dir)
     print(f"Found {len(files)} JSON files to aggregate")
@@ -431,7 +417,6 @@ if __name__ == "__main__":
         cnt = cnt + 1
         if not success:
             failed_cnt = failed_cnt + 1
-            # print("file ", file, " not success, failed count = ", cnt)
         else:
             succ_cnt = succ_cnt + 1
 
@@ -440,11 +425,41 @@ if __name__ == "__main__":
         print("警告：没有可导出的数据 (all_df is None)，生成空表格")
         all_df = pd.DataFrame(columns=["id", "title", "authors", "journal", "year", "exclusion_reason", "include_or_not", "url", "source_xml"])
     
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        
     all_df.to_excel(output_file, index=False, engine='openpyxl')
-    print (f"成功写入{succ_cnt}篇，失败{failed_cnt}篇")
+    print(f"成功写入{succ_cnt}篇，失败{failed_cnt}篇")
     print(f"数据已成功保存到 {output_file}")
 
     merge_same_cells_advanced(output_file, final_file)
+    
+    return {
+        'success_count': succ_cnt,
+        'failed_count': failed_cnt,
+        'output_files': [output_file, final_file]
+    }
+
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+    
+    parser = argparse.ArgumentParser(description="聚合AI初筛结果JSON文件到Excel")
+    parser.add_argument('--input_dir', type=str, help='AI初筛结果JSON文件所在目录', required=False)
+    parser.add_argument('--output_dir', type=str, help='输出目录', required=False)
+    args = parser.parse_args()
+    
+    input_dir = args.input_dir
+    output_dir = args.output_dir
+    
+    if not input_dir:
+        # Fallback (仅用于本地单独测试，生产环境 tasks.py 必须传参)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        input_dir = os.path.join(base_dir, "02_screening_ai", "results")
+        print(f"Warning: No input_dir provided, using default: {input_dir}")
+
+    if not output_dir:
+         output_dir = os.path.join(os.path.dirname(input_dir), "results")
+         print(f"Warning: No output_dir provided, using default: {output_dir}")
+    
+    result = main(input_dir, output_dir)
+    if 'error' in result:
+        sys.exit(1)

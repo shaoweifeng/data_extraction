@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Inappropriate Ventilatory Homeostatic Responses in Hospitalized COVID-19 Patients</Title>
+    <Authors>
+      <Author>Jareonsettasin, P</Author>
+      <Author>Zeicu, C</Author>
+      <Author>Diehl, B</Author>
+      <Author>Harper, RM</Author>
+      <Author>Astin, R</Author>
+    </Authors>
+    <Journal>FRONTIERS IN NEUROLOGY</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>13</Volume>
+    <Date>JUN 15 2022</Date>
+    <Address>[Jareonsettasin, Prem; Zeicu, Claudia; Diehl, Beate] UCL, Queen Sq Inst Neurol, Dept Clin &amp; Expt Epilepsy, London, England; [Jareonsettasin, Prem; Zeicu, Claudia; Astin, Ronan] Univ Coll London Hosp NHS Fdn Trust, Div Med Specialties, London, England; [Diehl, Beate] Univ Coll London Hosp NHS Fdn Trust Natl Hosp Neur, Dept Clin Neurophysiol, London, England; [Harper, Ronald M.] Univ Calif Los Angeles, Dept Neurobiol, Los Angeles, CA USA; [Astin, Ronan] NIHR Univ Coll London Hosp Biomed Res Ctr, London, England; [Harper, Ronald M.] Univ Calif Los Angeles, Brain Res Inst, David Geffen Sch Med, Los Angeles, CA USA</Address>
+    <Abstract>BackgroundThe clinical presentation of COVID-19 suggests altered breathing control - tachypnoea, relative lack of dyspnoea, and often a discrepancy between severity of clinical and radiological findings. Few studies characterize and analyse the contribution of breathing drivers and their ventilatory and perceptual responses. AimTo establish the prevalence of inappropriate ventilatory and perceptual response in COVID-19, by characterizing the relationships between respiratory rate (RR), dyspnoea and arterial blood gas (ABG) in a cohort of COVID-19 patients at presentation to hospital, and their post-Covid respiratory sequelae at follow-up. MethodsWe conducted a retrospective cohort study including consecutive adult patients admitted to hospital with confirmed COVID-19 between 1st March 2020 and 30th April 2020. In those with concurrent ABG, RR and documented dyspnoea status on presentation, we documented patient characteristics, disease severity, and outcomes at hospital and 6-week post-discharge. ResultsOf 492 admissions, 194 patients met the inclusion criteria. Tachypnoea was present in 75% pronounced (RR&gt;30) in 36%, and persisted during sleep. RR correlated with heart rate (HR) (r = 0.2674), temperature (r = 0.2824), CRP (r = 0.2561), Alveolar-arterial (A-a) gradient (r = 0.4189), and lower PaO2/FiO(2) (PF) ratio (r = -0.3636). RR was not correlated with any neurological symptoms. Dyspnoea was correlated with RR (r = 0.2932), A-a gradient (r = 0.1723), and lower PF ratio (r = -0.1914), but not correlated with PaO2 (r = -0.1095), PaCO2 (r = -0.0598) or any recorded neurological symptom except for altered consciousness. Impaired ventilatory homeostatic control of pH/PaCO2 [tachypnoea (RR&gt;20), hypocapnia (PaCO2 &lt;4.6 kPa), and alkalosis (pH&gt;7.45)] was observed in 29%. This group, of which 37% reported no dyspnoea, had more severe respiratory disease (A-a gradient 38.9 vs. 12.4 mmHg; PF ratio 120 vs. 238), and higher prevalence of anosmia (21 vs. 15%), dysgeusia (25 vs. 12%), headache (33 vs. 23%) and nausea (33 vs. 14%) with similar rates of new anxiety/depression (26 vs. 23%), but lower incidence of past neurological or psychiatric diagnoses (5 vs. 21%) compared to appropriate responders. Only 5% had hypoxia sufficiently severe to drive breathing (i.e. PaO2 &lt;6.6 kPa). At 6 weeks post-discharge, 24% (8/34) showed a new breathing pattern disorder with no other neurological findings, nor previous respiratory, neurological, or psychiatric disorder diagnoses. ConclusionsImpaired homeostatic control of ventilation i.e., tachypnoea, despite hypocapnia to the point of alkalosis appears prevalent in patients admitted to hospital with COVID-19, a finding typically accompanying more severe disease. Tachypnoea prevalence was between 12 and 29%. Data suggest that excessive tachypnoea is driven by both peripheral and central mechanisms, but not hypoxia. Over a third of patients with impaired homeostatic ventilatory control did not experience dyspnoea despite tachypnoea. A subset of followed-up patients developed post-covid breathing pattern disorder.</Abstract>
+    <DOI>10.3389/fneur.2022.909915</DOI>
+    <URL>https://doi.org/10.3389/fneur.2022.909915</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

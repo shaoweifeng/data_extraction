@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Variation in 60-day Readmission for Surgical-site Infections (SSIs) and Reoperation Following Spinal Fusion Operations for Neuromuscular Scoliosis</Title>
+    <Authors>
+      <Author>McLeod, L</Author>
+      <Author>Flynn, J</Author>
+      <Author>Erickson, M</Author>
+      <Author>Miller, N</Author>
+      <Author>Keren, R</Author>
+      <Author>Dormans, J</Author>
+    </Authors>
+    <Journal>JOURNAL OF PEDIATRIC ORTHOPAEDICS</Journal>
+    <Year>2016</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>36</Volume>
+    <Issue>6</Issue>
+    <Page>634-639</Page>
+    <Date>SEP 2016</Date>
+    <Address>[McLeod, Lisa] Childrens Hosp Colorado, Sect Hosp Med, 13123 East 16th Ave,B290, Aurora, CO 80045 USA; [Erickson, Mark; Miller, Nancy] Childrens Hosp Colorado, Div Orthoped Surg, 13123 East 16th Ave,B290, Aurora, CO 80045 USA; [Flynn, John; Dormans, John] Childrens Hosp Philadelphia, Div Orthoped Surg, Philadelphia, PA 19104 USA; [Keren, Ron] Childrens Hosp Philadelphia, Dept Pediat, Philadelphia, PA 19104 USA</Address>
+    <Abstract>Background: Readmission for surgical-site infection (SSIs) following spinal fusion for NMS impacts costs, patient risk, and family burden; however, it may be preventable. The purpose of this study was to examine variation in hospital performance based on risk-standardized 60-day readmission rates for SSI and reoperation across 39 US Children's Hospitals.Methods: Retrospective cohort study using the Pediatric Health Information Systems (PHIS) database involving children aged 10 to 18 years with ICD9 codes indicating spinal fusion, scoliosis, and neuromuscular disease discharged from 39 US children's hospitals between January 1, 2007 and September 1, 2012. Readmissions within 60 days for SSI were identified based on the presence of ICD9 codes for (1) infectious complication of device or procedure, or (2) sepsis or specific bacterial infection with an accompanying reoperation. Logistic regression models accounting for patient-level risk factors for SSI were used to estimate expected (patient-level risk across all hospitals) and predicted (weighted average of hospital-specific and all-hospital estimates) outcomes. Relative performance was determined using the hospital-specific predicted versus expected (pe) ratios.Results: Average volume across hospitals ranged from 2 to 23 fusions/quarter and was not associated with readmissions. Of the 7560 children in the cohort, 534 (7%) were readmitted for reoperation and 451 (6%) were readmitted for SSI within 60 days of discharge. Reoperations were associated with an SSI in 70% of cases. Across hospitals, SSI and reoperation rates ranged from 1% to 11% and 1% to 12%, respectively. After adjusting for age, sex, insurance, presence of a gastric tube, ventriculoperitoneal shunt, tracheostomy, prior admissions, number of chronic conditions, procedure type (anterior/posterior), and level (&gt; 9 or &lt; 9 vertebrae), pe ratios indicating hospital performance varied by 2-fold for each outcome.Conclusions: After standardizing outcomes using patient-level factors and relative case mix, several hospitals in this cohort were more successful at preventing readmissions for SSIs and reoperations. Closer examination of the organization and implementation of strategies for SSI prevention at high-performing centers may offer valuable clues for improving care at lower performing institutions.</Abstract>
+    <DOI>10.1097/BPO.0000000000000495</DOI>
+    <URL>https://doi.org/10.1097/BPO.0000000000000495</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

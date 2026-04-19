@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Extracorporeal Membrane Oxygenation for Pediatric Respiratory Failure: Risk Factors Associated With Center Volume and Mortality</Title>
+    <Authors>
+      <Author>Kirkland, BW</Author>
+      <Author>Wilkes, J</Author>
+      <Author>Bailly, DK</Author>
+      <Author>Bratton, SL</Author>
+    </Authors>
+    <Journal>PEDIATRIC CRITICAL CARE MEDICINE</Journal>
+    <Year>2016</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>17</Volume>
+    <Issue>8</Issue>
+    <Page>779-788</Page>
+    <Date>AUG 2016</Date>
+    <Address>[Kirkland, Brandon W.; Bailly, David K.; Bratton, Susan L.] Univ Utah, Sch Med, Dept Pediat, Salt Lake City, UT 84112 USA; [Wilkes, Jacob] Intermt Healthcare, Pediat Clin Program, Salt Lake City, UT USA</Address>
+    <Abstract>Objectives: Recent analyses show higher mortality at low-volume centers providing extracorporeal membrane oxygenation. We sought to identify factors associated with center volume and mortality to explain survival differences and identify areas for improvement.Design: Retrospective cohort study.Setting: Patients admitted to children's hospitals in the Pediatric Health Information System database and supported with extracorporeal membrane oxygenation for respiratory failure from 2003 to 2014.Patients: A total of 5,303 patients aged 0-18 years old met inclusion criteria: 3,349 neonates and 1,954 children.Interventions: None.Measurements and Main Results: Low center volume was defined as less than 20, medium 20-49, and large greater than or equal to 50 cases per year. Center volume was also assessed as a continuous integer. Among neonates, clinical factors including intraventricular hemorrhage (relative risk, 1.4; 95% CI, 1.24-1.56) and acute renal failure (relative risk, 1.38; 95% CI, 1.20-1.60) were more common at low-volume compared to larger centers and were associated with in-hospital death. After adjustment for differences in demographic factors and primary pulmonary conditions, mild prematurity, acute renal failure, intraventricular hemorrhage, and receipt of dialysis remained independently associated with mortality, as did center volume measured as a continuous number. Among children, the risk of acute renal failure was almost 20% greater (relative risk, 1.18; 95% CI, 1.02-1.38) in small compared to large centers, but dialysis and bronchoscopy were used significantly less but were associated with mortality. After adjustment for differences in demographic factors and primary pulmonary conditions, acute renal failure, acute liver necrosis, acute pancreatitis, and receipt of bronchoscopy remained independently associated with mortality. Center volume measurement was not associated with mortality given these factors.Conclusions: Among neonates, investigation for intraventricular hemorrhage prior to extracorporeal membrane oxygenation and preservation of renal function are important factors for improvement. Earlier initiation of extracorporeal membrane oxygenation and careful attention to preservation of organ function are important to improve survival for children.</Abstract>
+    <DOI>10.1097/PCC.0000000000000775</DOI>
+    <URL>https://doi.org/10.1097/PCC.0000000000000775</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Airflow patterns due to door motion and pressurization in hospital isolation rooms</Title>
+    <Authors>
+      <Author>Mousavi, ES</Author>
+      <Author>Grosskopf, KR</Author>
+    </Authors>
+    <Journal>SCIENCE AND TECHNOLOGY FOR THE BUILT ENVIRONMENT</Journal>
+    <Year>2016</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>22</Volume>
+    <Issue>4</Issue>
+    <Page>379-384</Page>
+    <Date>2016</Date>
+    <Address>[Mousavi, Ehsan S.; Grosskopf, Kevin R.] Univ Nebraska, Durham Sch Architectural Engn &amp; Construct, 113 Nebraska Hall,POB 880500, Lincoln, NE 68588 USA</Address>
+    <Abstract>Certain pathogens are transmitted through air by respiratory droplets that desiccate shortly after emission and form droplet nuclei (Nicas etal. 2005). Droplet nuclei are sufficiently small (&lt;5.0m) to remain suspended in air indefinitely and, thus, create a pathway between an infected and susceptible person (Sehulster etal. 2003). This process is called airborne transmission. Patients with an airborne infectious disease (e.g., measles, SARS, tuberculosis, varicella, etc.) are isolated from the healthcare environment in an airborne infection isolation room to protect other patients and healthcare workers. These rooms have special features to effectively contain and remove airborne pathogens. For example, a 2.5-Pa negative pressure relationship with adjoining spaces is required for an airborne infection isolation room to create directional airflow into the room and prevent the transmission of airborne pathogens from the airborne infection isolation room to adjacent healthcare spaces. Directional airflow, however, may be disrupted and even reversed by door-opening motion and the movement of people and equipment into and out of the airborne infection isolation room. This article highlights the results of both experimental and computation studies that explore air exchange and particle movement between an isolation room and anteroom relative to 3-, 5-, and 7-s door cycle speeds and between neutral and negative air pressure relationships.</Abstract>
+    <DOI>10.1080/23744731.2016.1155959</DOI>
+    <URL>https://doi.org/10.1080/23744731.2016.1155959</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

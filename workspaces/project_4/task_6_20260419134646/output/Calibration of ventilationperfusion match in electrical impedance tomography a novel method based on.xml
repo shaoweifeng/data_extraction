@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Calibration of ventilation/perfusion match in electrical impedance tomography: a novel method based on arterial blood pressure</Title>
+    <Authors>
+      <Author>Han, TX</Author>
+      <Author>Qin, YC</Author>
+      <Author>Zhao, ZB</Author>
+      <Author>Yang, B</Author>
+      <Author>Liu, XC</Author>
+      <Author>Li, L</Author>
+      <Author>Wei, ZY</Author>
+      <Author>Wei, LP</Author>
+      <Author>Liu, YF</Author>
+      <Author>Fu, F</Author>
+    </Authors>
+    <Journal>FRONTIERS IN PHYSIOLOGY</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>16</Volume>
+    <Date>MAR 13 2025</Date>
+    <Address>[Han, Tixin; Qin, Yangchun; Zhao, Zhibo; Yang, Bin; Liu, Xuechao; Li, Lei; Wei, Ziyu; Wei, Liping; Liu, Yifan; Fu, Feng] Fourth Mil Med Univ, Mil Biomed Engn Sch, Shaanxi Key Lab Bioelectromagnet Detect &amp; Intellig, Xian, Peoples R China</Address>
+    <Abstract>Introduction: Electrical impedance tomography (EIT) enables non-invasive, continuous, bedside evaluation of ventilation/perfusion (V/Q) match. To avoid the presence of invasive monitoring for cardiac output in relative V/Q ratio calculation, we proposed a novel calibration method based on arterial blood pressure to optimize EIT V/Q match assessments. Methods: We involved 12 mechanically ventilated piglets in three experimental phases: baseline, pulmonary embolism, and atelectasis. After a thorough measurement of EIT signals, arterial blood pressure, cardiac output, and additional physiological parameters, EIT V/Q match was evaluated using existing area limited method (ALM), cardiac output calibrated method (COCM), and our proposed novel blood pressure calibrated method (BPCM). Finally, V-D/V-T and P/F ratio were calculated and correlated with V/Q match indicators derived from COCM and BPCM. Results: Arterial blood pressure waveform integration demonstrated strong correlation with cardiac output (R-2 = 0.80, p &lt; 0.001), validating its utility for cardiac output estimation and V/Q match calibration. Both COCM and BPCM provided enhanced V/Q match region segmentation compared to ALM, yielding comprehensive diagnostic information with statistically significant differences across all three states (p &lt; 0.05). COCM demonstrates a slightly higher correlation compared to BPCM (r = -0.63 vs. -0.52) between low ventilation index (LVI) and V-D/V-T, while BPCM demonstrates a slightly higher correlation compared to COCM (r = 0.49 vs. 0.44) between low perfusion index (LQI) and P/F ratio. Conclusion: This study described a novel calibration method for calculating corrected EIT-based V/Q match that utilized arterial blood pressure. Our method exhibited comparable capability in distinguishing V/Q mismatch areas compared to conventional cardiac output-based calibration techniques. With clinical data to establish a linear regression model, our method will ultimately enable us to calculate calibrated EIT V/Q match without cardiac output monitoring.</Abstract>
+    <DOI>10.3389/fphys.2025.1545652</DOI>
+    <URL>https://doi.org/10.3389/fphys.2025.1545652</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

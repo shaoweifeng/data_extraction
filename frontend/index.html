@@ -149,17 +149,23 @@
                     <!-- 项目列表 -->
                     <div v-if="!currentProject" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div v-for="project in projects" :key="project.id" 
-                             @click="selectProject(project)" 
-                             class="bg-white p-6 rounded-xl border hover:shadow-lg transition cursor-pointer">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="p-3 rounded-lg bg-blue-50 text-blue-600">
-                                    <i class="fas fa-folder-open text-xl"></i>
+                             class="bg-white p-6 rounded-xl border hover:shadow-lg transition group relative">
+                            <div @click="selectProject(project)" class="cursor-pointer">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="p-3 rounded-lg bg-blue-50 text-blue-600">
+                                        <i class="fas fa-folder-open text-xl"></i>
+                                    </div>
+                                    <!-- 删除按钮 -->
+                                    <button @click.stop="deleteProject(project.id)" 
+                                            class="opacity-0 group-hover:opacity-100 transition text-gray-400 hover:text-red-600 p-2">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
-                            </div>
-                            <h3 class="text-lg font-bold mb-2">{{ project.name }}</h3>
-                            <p class="text-gray-500 text-sm line-clamp-2 mb-4">{{ project.description || '暂无描述' }}</p>
-                            <div class="text-xs text-gray-400">
-                                {{ new Date(project.created_at).toLocaleDateString() }}
+                                <h3 class="text-lg font-bold mb-2">{{ project.name }}</h3>
+                                <p class="text-gray-500 text-sm line-clamp-2 mb-4">{{ project.description || '暂无描述' }}</p>
+                                <div class="text-xs text-gray-400">
+                                    {{ new Date(project.created_at).toLocaleDateString() }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -630,6 +636,29 @@
                     await fetchStages(project.id);
                 };
 
+                const deleteProject = async (projectId) => {
+                    if (!confirm('确定要删除该项目吗？此操作将删除项目下所有数据，且不可恢复！')) {
+                        return;
+                    }
+                    
+                    try {
+                        const res = await apiRequest(`${API_BASE}/projects/${projectId}/`, {
+                            method: 'DELETE'
+                        });
+                        
+                        if (res.ok) {
+                            // 从列表中移除
+                            projects.value = projects.value.filter(p => p.id !== projectId);
+                            alert('项目已删除');
+                        } else {
+                            const data = await res.json();
+                            alert(data.error || '删除失败');
+                        }
+                    } catch (err) {
+                        alert(`删除项目出错: ${err.message}`);
+                    }
+                };
+
                 const fetchStages = async (projectId) => {
                     try {
                         const res = await apiRequest(`${API_BASE}/projects/${projectId}/stages/`);
@@ -661,6 +690,9 @@
                     } catch (err) {
                         console.error('加载文件失败', err);
                     }
+                    
+                    // 同时加载纳排标准
+                    await loadCriteria();
                 };
 
                 const skipStep = async (stepId) => {
@@ -688,9 +720,12 @@
                     const files = event.target.files;
                     if (!files.length) return;
 
+                    const uploadedFileIds = [];
+                    
                     for (const file of files) {
                         const formData = new FormData();
                         formData.append('file', file);
+                        formData.append('filename', file.name);
                         formData.append('project', currentProject.value.id);
                         formData.append('data_category', 'input');
 
@@ -705,44 +740,115 @@
                             });
 
                             if (res.ok) {
-                                await loadScreen1Files();
+                                const uploadedFile = await res.json();
+                                uploadedFileIds.push(uploadedFile.id);
+                                // 不要在循环中调用 loadScreen1Files()
                             } else {
                                 const data = await res.json();
                                 console.error('上传失败', data);
+                                alert(`上传失败: ${data.error || '未知错误'}`);
                             }
                         } catch (err) {
                             console.error('上传出错', err);
+                            alert(`上传出错: ${err.message}`);
                         }
+                    }
+                    
+                    // 所有文件上传完成后，刷新一次文件列表
+                    if (uploadedFileIds.length > 0) {
+                        await loadScreen1Files();
+                        // 然后自动触发解析任务
+                        await triggerParsingTask(uploadedFileIds);
                     }
                 };
 
-                // 去重处理
+                // 触发文献解析任务
+                const triggerParsingTask = async (fileIds) => {
+                    try {
+                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                project: currentProject.value.id,
+                                task_type: 'reference_parsing',
+                                config: { file_ids: fileIds }
+                            })
+                        });
+
+                        if (res.ok) {
+                            const task = await res.json();
+                            latestTask.value = task;
+                            alert('文献解析任务已启动，请稍候...');
+                            // 开始轮询任务状态
+                            pollTaskStatus(task.id);
+                        } else {
+                            const data = await res.json();
+                            alert(`启动解析任务失败: ${data.error || '未知错误'}`);
+                        }
+                    } catch (err) {
+                        console.error('启动解析任务失败', err);
+                        alert(`启动解析任务失败: ${err.message}`);
+                    }
+                };
+
+                // 去重处理（参考 xxc/develop 分支的同步逻辑）
                 const handleDeduplication = async () => {
+                    console.log('=== 开始去重 ===');
+                    console.log('stagesData:', stagesData.value);
+                    
+                    // 找到 SCREEN_1 阶段
+                    const screen1Stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                    console.log('screen1Stage:', screen1Stage);
+                    
+                    if (!screen1Stage) {
+                        alert('未找到文献初筛阶段，请刷新页面');
+                        return;
+                    }
+                    
                     if (referenceFiles.value.length === 0) {
                         alert('请先上传文献文件');
                         return;
                     }
 
                     isDeduplicating.value = true;
+                    console.log('调用 process_references API...');
                     
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                        const url = `${API_BASE}/stages/${screen1Stage.id}/process_references/`;
+                        console.log('API URL:', url);
+                        
+                        const res = await fetch(url, {
                             method: 'POST',
-                            body: JSON.stringify({
-                                project: currentProject.value.id,
-                                task_type: 'deduplication',
-                                config: {}
-                            })
+                            credentials: 'include',
+                            headers: {
+                                'X-CSRFToken': getCSRFToken() || ''
+                            }
                         });
 
+                        console.log('去重响应:', res.status);
+                        
                         if (res.ok) {
-                            latestTask.value = await res.json();
-                            // 轮询任务状态
-                            pollTaskStatus(latestTask.value.id);
+                            const data = await res.json();
+                            console.log('去重结果:', data);
+                            
+                            // 保存去重报告
+                            if (data.dedup_report) {
+                                dedupCompleted.value = true;
+                                alert(`去重完成！总条目 ${data.dedup_report.total_entries_found}，去重后保留 ${data.total_entries} 篇文献。`);
+                                // 刷新阶段数据
+                                await fetchStages(currentProject.value.id);
+                            }
                         } else {
-                            alert('启动去重任务失败');
+                            const errorText = await res.text();
+                            console.error('去重失败:', res.status, errorText);
+                            try {
+                                const errorJson = JSON.parse(errorText);
+                                alert(`去重失败: ${errorJson.error || JSON.stringify(errorJson)}`);
+                            } catch {
+                                alert(`去重失败: ${res.status} - ${errorText}`);
+                            }
                         }
                     } catch (err) {
+                        console.error('去重异常:', err);
                         alert(`去重失败: ${err.message}`);
                     } finally {
                         isDeduplicating.value = false;
@@ -769,15 +875,52 @@
                 };
 
                 // 纳排标准
-                const addCriteria = () => {
+                const addCriteria = async () => {
                     if (newCriteria.value.trim()) {
                         criteriaList.value.push(newCriteria.value.trim());
                         newCriteria.value = '';
+                        // 自动保存到后端
+                        await saveCriteria();
                     }
                 };
 
-                const removeCriteria = (index) => {
+                const removeCriteria = async (index) => {
                     criteriaList.value.splice(index, 1);
+                    // 自动保存到后端
+                    await saveCriteria();
+                };
+                
+                const saveCriteria = async () => {
+                    try {
+                        const screen1Stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                        if (!screen1Stage) return;
+                        
+                        const criteriaStep = screen1Stage.steps.find(s => s.step_key === 'criteria');
+                        if (!criteriaStep) return;
+                        
+                        await apiRequest(`${API_BASE}/steps/${criteriaStep.id}/update_metadata/`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({
+                                metadata: { criteria: criteriaList.value }
+                            })
+                        });
+                    } catch (err) {
+                        console.error('保存纳排标准失败', err);
+                    }
+                };
+                
+                const loadCriteria = async () => {
+                    try {
+                        const screen1Stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                        if (!screen1Stage) return;
+                        
+                        const criteriaStep = screen1Stage.steps.find(s => s.step_key === 'criteria');
+                        if (criteriaStep && criteriaStep.metadata && criteriaStep.metadata.criteria) {
+                            criteriaList.value = criteriaStep.metadata.criteria;
+                        }
+                    } catch (err) {
+                        console.error('加载纳排标准失败', err);
+                    }
                 };
 
                 // AI初筛
@@ -814,7 +957,60 @@
 
                 // 导出结果
                 const exportResults = async () => {
-                    alert('导出功能开发中...');
+                    isProcessing.value = true;
+                    
+                    try {
+                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                project: currentProject.value.id,
+                                task_type: 'result_aggregation',
+                                config: {}
+                            })
+                        });
+
+                        if (res.ok) {
+                            latestTask.value = await res.json();
+                            alert('结果归纳任务已启动，请稍候...');
+                            pollTaskStatus(latestTask.value.id);
+                            
+                            // 轮询完成后，获取导出的文件
+                            const pollForFiles = async () => {
+                                if (latestTask.value.status === 'completed') {
+                                    // 获取导出步骤的文件
+                                    const screen1Stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                                    if (screen1Stage) {
+                                        const exportStep = screen1Stage.steps.find(s => s.step_key === 'export');
+                                        if (exportStep) {
+                                            const filesRes = await apiRequest(`${API_BASE}/files/?project=${currentProject.value.id}&step=${exportStep.id}`);
+                                            if (filesRes.ok) {
+                                                const data = await filesRes.json();
+                                                const files = extractListData(data);
+                                                
+                                                if (files.length > 0) {
+                                                    // 自动下载第一个文件（通常是Excel）
+                                                    const firstFile = files.find(f => f.filename.endsWith('.xlsx'));
+                                                    if (firstFile) {
+                                                        window.open(firstFile.file, '_blank');
+                                                        alert(`结果已生成！共 ${files.length} 个文件`);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+                            
+                            // 延迟检查文件
+                            setTimeout(pollForFiles, 3000);
+                        } else {
+                            alert('启动结果归纳任务失败');
+                        }
+                    } catch (err) {
+                        alert(`启动失败: ${err.message}`);
+                    } finally {
+                        isProcessing.value = false;
+                    }
                 };
 
                 // 辅助函数
@@ -889,7 +1085,7 @@
                     loginForm, registerForm, login, register, logout,
                     projects, currentProject, currentStage, stagesData,
                     showNewProjectModal, newProject,
-                    createProject, selectProject, skipStep,
+                    createProject, selectProject, deleteProject, skipStep,
                     currentStep, screen1Steps, getStepClass,
                     referenceFiles, handleReferenceUpload, deleteFile,
                     isDeduplicating, dedupCompleted, handleDeduplication,

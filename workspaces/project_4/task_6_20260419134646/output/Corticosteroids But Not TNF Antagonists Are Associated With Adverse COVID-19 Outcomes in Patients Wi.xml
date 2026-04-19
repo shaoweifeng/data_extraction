@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Corticosteroids, But Not TNF Antagonists, Are Associated With Adverse COVID-19 Outcomes in Patients With Inflammatory Bowel Diseases: Results From an International Registry</Title>
+    <Authors>
+      <Author>Brenner, EJ</Author>
+      <Author>Ungaro, RC</Author>
+      <Author>Gearry, RB</Author>
+      <Author>Kaplan, GG</Author>
+      <Author>Kissous-Hunt, M</Author>
+      <Author>Lewis, JD</Author>
+      <Author>Ng, SC</Author>
+      <Author>Rahier, JF</Author>
+      <Author>Reinisch, W</Author>
+      <Author>Ruemmele, FM</Author>
+      <Author>Steinwurz, F</Author>
+      <Author>Underwood, FE</Author>
+      <Author>Zhang, X</Author>
+      <Author>Colombel, JF</Author>
+      <Author>Kappelman, MD</Author>
+    </Authors>
+    <Journal>GASTROENTEROLOGY</Journal>
+    <Year>2020</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>159</Volume>
+    <Issue>2</Issue>
+    <Page>481-+</Page>
+    <Date>AUG 2020</Date>
+    <Address>[Brenner, Erica J.; Kappelman, Michael D.] Univ N Carolina, Childrens Hosp, Dept Pediat Gastroenterol, Chapel Hill, NC 27599 USA; [Ungaro, Ryan C.; Colombel, Jean-Frederic] Icahn Sch Med Mt Sinai, Henry Janowitz Div Gastroenterol, 17 E 102nd St 5th Floor, New York, NY 10029 USA; [Gearry, Richard B.] Univ Otago, Dept Med, Christchurch, New Zealand; [Kaplan, Gilaad G.; Underwood, Fox E.] Univ Calgary, Dept Med &amp; Community Hlth Sci, Calgary, AB, Canada; [Kissous-Hunt, Michele] Mt Sinai Med Ctr, New York, NY 10029 USA; [Lewis, James D.] Univ Penn, Philadelphia, PA 19104 USA; [Ng, Siew C.] Chinese Univ Hong Kong, Inst Digest Dis, Li Ka Shing Inst Hlth Sci, Dept Med &amp; Therapeut,State Key Lab Digest Dis,Sha, Hong Kong, Peoples R China; [Rahier, Jean-Francois] Catholic Univ Louvain, Dept Gastroenterol, CHU UCL Namur, B-5530 Yvoir, Belgium; [Reinisch, Walter] Med Univ Vienna, Dept Internal Med 3, Div Gastroenterol &amp; Hepatol, Vienna, Austria; [Ruemmele, Frank M.] Univ Paris, Hop Necker Enfants Malad, France Assistance Publ Hop Paris, Serv Gastroenterol Pediat, Paris, France; [Steinwurz, Flavio] Hosp Israelita Albert Einstein, Sao Paulo, Brazil; [Zhang, Xian] Univ N Carolina, Dept Gastroenterol, Chapel Hill, NC 27599 USA</Address>
+    <Abstract>BACKGROUND AND AIMS: The impact of Coronavirus disease 2019 (COVID-19) on patients with inflammatory bowel disease (IBD) is unknown. We sought to characterize the clinical course of COVID-19 among patients with IBD and evaluate the association among demographics, clinical characteristics, and immunosuppressant treatments on COVID-19 outcomes. METHODS: Surveillance Epidemiology of Coronavirus Under Research Exclusion for Inflammatory Bowel Disease (SECUREIBD) is a large, international registry created to monitor outcomes of patients with IBD with confirmed COVID-19. We calculated age-standardized mortality ratios and used multivariable logistic regression to identify factors associated with severe COVID-19, defined as intensive care unit admission, ventilator use, and/or death. RESULTS: 525 cases from 33 countries were reported (median age 43 years, 53% men). Thirty-seven patients (7%) had severe COVID-19, 161 (31%) were hospitalized, and 16 patients died (3% case fatality rate). Standardized mortality ratios for patients with IBD were 1.8 (95% confidence interval [CI], 0.9-2.6), 1.5 (95% CI, 0.7-2.2), and 1.7 (95% CI, 0.9-2.5) relative to data from China, Italy, and the United States, respectively. Risk factors for severe COVID-19 among patients with IBD included increasing age (adjusted odds ratio [a0R], 1.04; 95% CI, 1.011.02), &gt;= 2 comorbidities (aOR, 2.9; 95% CI, 1.1-7.8), systemic corticosteroids (aOR, 6.9; 95% CI, 2.3-20.5), and sulfasalazine or 5-aminosalicylate use (aOR, 3.1; 95% CI, 1.3-7.7). Tumor necrosis factor antagonist treatment was not associated with severe COVID-19 (aOR, 0.9; 95% CI, 0.4-2.2). CONCLUSIONS: Increasing age, comorbidities, and corticosteroids are associated with severe COVID-19 among patients with IBD, although a causal relationship cannot be definitively established. Notably, tumor necrosis factor antagonists do not appear to be associated with severe COVID-19.</Abstract>
+    <DOI>10.1053/j.gastro.2020.05.032</DOI>
+    <URL>https://doi.org/10.1053/j.gastro.2020.05.032</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

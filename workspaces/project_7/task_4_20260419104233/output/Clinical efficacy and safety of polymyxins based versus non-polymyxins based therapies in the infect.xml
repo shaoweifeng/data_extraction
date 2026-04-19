@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Clinical efficacy and safety of polymyxins based versus non-polymyxins based therapies in the infections caused by carbapenem-resistant Acinetobacter baumannii: a systematic review and meta-analysis</Title>
+    <Authors>
+      <Author>Lyu, C</Author>
+      <Author>Zhang, YY</Author>
+      <Author>Liu, XF</Author>
+      <Author>Wu, JF</Author>
+      <Author>Zhang, J</Author>
+    </Authors>
+    <Journal>BMC INFECTIOUS DISEASES</Journal>
+    <Year>2020</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>20</Volume>
+    <Issue>1</Issue>
+    <Date>APR 21 2020</Date>
+    <Address>[Lyu, Cheng; Liu, Xiaofen; Wu, Jufang; Zhang, Jing] Fudan Univ, Inst Antibiot, Huashan Hosp, 12 Middle Wulumuqi Rd, Shanghai 200040, Peoples R China; [Lyu, Cheng; Liu, Xiaofen; Zhang, Jing] Natl Hlth Commiss, Key Lab Clin Pharmacol Antibiot, Shanghai, Peoples R China; [Zhang, Yuyi] Shanghai Publ Hlth Clin Ctr, Shanghai, Peoples R China</Address>
+    <Abstract>Background The prevalence of infections due to carbapenem-resistant Acinetobacter baumannii (CRAB) is on the rise worldwide. Polymyxins are considered as last-resort drugs for CRAB infections, but there is still controversy regarding the efficacy and safety of polymyxins based therapies in CRAB infections. The present systematic review was designed to compare the efficacy and safety of polymyxins based therapies versus non-polymyxins based therapies in CRAB infections. Methods We performed a systematic literature search in PubMed, Embase, CINAHL, Cochrane Library, and to identify eligible studies reporting the clinical outcomes of patients with CRAB infections. The meta-analysis employed a random-effects model to estimate the odds ratio (OR) and standardized mean difference (SMD) with 95% confidence interval (CI). The primary outcome was 1-month mortality for any cause. We also examined clinical response, microbiological response, length of stay in hospital, and adverse events. Results Eleven eligible studies were analyzed (1052 patients in total), including 2 randomized clinical trials. Serious risk of bias was found in 8 out of the 11 studies. There was no statistically significant difference between polymyxins based therapies and non-polymyxins based therapies in 1-month mortality for any cause (OR, 0.95; 95% CI, 0.59 to 1.53), microbiological response (OR, 3.83; 95% CI, 0.90 to 16.29) and length of stay in hospital (SMD, 0.24; 95% CI, - 0.08 to 0.56). The pooled OR of clinical response indicated a significant difference in favor of polymyxin based therapies (OR, 1.99; 95% CI, 1.31 to 3.03). The pooled OR of adverse events showed that non-polymyxins based therapies were associated with fewer adverse events (OR, 4.32; 95% CI, 1.39 to 13.48). Conclusion The performance of polymyxins based therapies was better than non-polymyxin based therapies in clinical response rate and similar to non-polymyxin based therapies in terms of 1-month mortality and microbiological response in treating CRAB infections. Due to the limitations of our study, we cannot draw a firm conclusion on the optimal treatment of CRAB infections, but polymyxins would be a relatively effective treatment for CRAB infections. Adequate and well-designed large scale randomized controlled trials are required to clarify the relative efficacy of polymyxins based and non-polymyxins based therapies.</Abstract>
+    <DOI>10.1186/s12879-020-05026-2</DOI>
+    <URL>https://doi.org/10.1186/s12879-020-05026-2</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Efficacy of different analgesic or sedative drug therapies in pediatric patients with congenital heart disease undergoing surgery: a network meta-analysis</Title>
+    <Authors>
+      <Author>Liu, RZ</Author>
+      <Author>Li, BT</Author>
+      <Author>Zhao, GQ</Author>
+    </Authors>
+    <Journal>WORLD JOURNAL OF PEDIATRICS</Journal>
+    <Year>2019</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>15</Volume>
+    <Issue>3</Issue>
+    <Page>235-245</Page>
+    <Date>JUN 2019</Date>
+    <Address>[Liu, Rui-Zhu; Zhao, Guo-Qing] Jilin Univ, China Japan Union Hosp, Dept Anesthesiol, Changchun 130000, Jilin, Peoples R China; [Li, Bing-Tong] Jilin Univ, China Japan Union Hosp, Dept Rheumatol &amp; Immunol, Changchun 130000, Jilin, Peoples R China</Address>
+    <Abstract>BackgroundSurgery is an effective therapy for congenital heart disease (CHD) and the management after surgery poses challenges for the clinical workers. We performed this network meta-analysis to enhance the corresponding evidence with respect to the relative efficacy of different drug treatments applied after the CHD surgery.MethodsEmbase and PubMed were systematically retrieved to identify all published controlled trials investigating the effectiveness of drugs for patients up to 25 August, 2018. Mean differences (MD), odds ratios and their 95% credible intervals (CrIs) were used to evaluate multi-aspect comparisons. Surface under cumulative ranking curve (SUCRA) was used to analyze the relative ranking of different treatments in each endpoint.ResultsCompared to saline, all the drugs achieved better preference under the efficacy endpoints except fentanyl in JET. As for ventilator time, all drugs were more effective than saline while only the difference of dexmedetomidine was statistically obvious (MD=6.92, 95% CrIs 1.77-12.54). Under the endpoint of ICU time, dexmedetomidine was superior to saline as well (MD=1.26, 95% CrIs 0.11-2.45). When all the endpoints were taken into consideration and with the help of ranking probabilities and SUCRA values, fentanyl combined with dexmedetomidine was one of the recommended drugs due to its shorter time on ventilator and stay in hospital as well as lower mortality.ConclusionsOverall, based on the comprehensive consideration of all the endpoints, fentanyl combined with dexmedetomidine was considered to be the best-recommended clinical interventions among all the methods.</Abstract>
+    <DOI>10.1007/s12519-019-00252-4</DOI>
+    <URL>https://doi.org/10.1007/s12519-019-00252-4</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

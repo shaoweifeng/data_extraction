@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Complication Burden IndexA tool for comprehensive evaluation of the effect of complications on functional outcome after status epilepticus</Title>
+    <Authors>
+      <Author>Kämppi, L</Author>
+      <Author>Ritvanen, J</Author>
+      <Author>Strbian, D</Author>
+      <Author>Mustonen, H</Author>
+      <Author>Soinila, S</Author>
+    </Authors>
+    <Journal>EPILEPSIA</Journal>
+    <Year>2018</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>59</Volume>
+    <Page>176-181</Page>
+    <Date>OCT 2018</Date>
+    <Address>[Kamppi, Leena; Ritvanen, Jaakko; Strbian, Daniel] Univ Helsinki, Neurol Dept, Clin Neurosci, Neurol, Helsinki, Finland; [Kamppi, Leena; Ritvanen, Jaakko; Strbian, Daniel; Mustonen, Harri] Univ Helsinki, Cent Hosp, Helsinki, Finland; [Mustonen, Harri] Univ Helsinki, Dept Surg, Helsinki, Finland; [Soinila, Seppo] Univ Turku, Turku Univ Hosp, Dept Neurol, Div Clin Neurosci Gen Neurol, Turku, Finland</Address>
+    <Abstract>Systemic complications are common in status epilepticus. We have no tools to evaluate total burden of complications and its effect on the outcome of status epilepticus. For Complication Burden Index (CBI) a patient is assessed for 13 complication categories: respiratory, cardiovascular, nervous, renal, hepatic, coagulation, gastrointestinal and musculoskeletal systems, electrolyte/acid-base balance, infection, hypo-/hyperglycemia, skin/allergic reactions, and mental condition. Maximum CBI is 13. CBI was internally validated in a retrospective cohort of 70 consecutive adult patients with generalized convulsive status epilepticus (GCSE) treated in a tertiary hospital over a period of 2years. Functional outcome at discharge was defined Poor for Glascow Outcome Scale (GOS) 1-3 or worse-than-baseline condition and Good for GOS&gt;3 or return to baseline condition. Relative risks (RRs) and receiver-operating characteristic (ROC) -curves were calculated to obtain optimal cutoff. Functional outcome was poor in 40% and worse-than-baseline in 59%. In-hospital mortality was 7%. Average CBI was 3.8 (range 0-10, median 3). Cutoff value predicting poor functional outcome was a CBI&gt;3 (GOS 1-3 RR 1.84, P=.045, 95% confidence interval [CI 1.01-3.33; ROC-AUC [area under the curve] 0.687, P=.008, sensitivity 64%, specificity 61%; worse-than-baseline condition RR 1.52, P=.04, 95% CI 1.02-2.26; ROC-AUC 0.662, P=.022, sensitivity 56%, specificity 69%). CBI with cutoff &gt;3 and as a continuous variable was associated with GOS1-3 (P=.046, P=.002) and with worse-than-baseline condition (P=.041, P=.004). CBI is a novel tool for comprehensive assessment of status epilepticus complications predicting poor/worse-than-baseline functional outcome with cutoff &gt;3.</Abstract>
+    <DOI>10.1111/epi.14491</DOI>
+    <URL>https://doi.org/10.1111/epi.14491</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

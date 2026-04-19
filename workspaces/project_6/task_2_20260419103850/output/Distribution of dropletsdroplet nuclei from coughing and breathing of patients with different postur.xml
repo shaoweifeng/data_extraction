@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Distribution of droplets/droplet nuclei from coughing and breathing of patients with different postures in a hospital isolation ward</Title>
+    <Authors>
+      <Author>Liu, HY</Author>
+      <Author>Liu, ZJ</Author>
+      <Author>Wang, YX</Author>
+      <Author>Hu, CX</Author>
+      <Author>Rong, R</Author>
+    </Authors>
+    <Journal>BUILDING AND ENVIRONMENT</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>225</Volume>
+    <Date>NOV 2022</Date>
+    <Address>[Liu, Haiyang; Liu, Zhijian; Wang, Yongxin; Rong, Rui] North China Elect Power Univ, Dept Power Engn, Baoding 071003, Hebei, Peoples R China; [Hu, Chenxing] Beijing Inst Technol, Sch Mech Engn, Beijing 100081, Peoples R China</Address>
+    <Abstract>Suspected and confirmed cases of infectious diseases such as COVID-19 are diagnosed and treated in specific hospital isolation wards, posing a challenge to preventing cross-infection between patients and healthcare workers. In this study, the Euler-Lagrange method was used to simulate the evaporation and dispersion of droplets with full-size distribution produced by fluctuating coughing and breathing activities in an isolation ward. The effects of supply air temperature and relative humidity, ventilation rates and patient postures on droplet distribution were investigated. The numerical models were validated by an aerosol experiment with an artificial saliva solution containing E. coli bacteria conducted in a typical isolation ward. The results showed that the small size group of droplets (initial size &lt;= 87.5 mu m) exhibited airborne transmission in the isolation ward, while the large size group (initial size &gt;= 112.5 mu m) were rapidly deposited by gravitational effects. The venti-lation rate had a greater effect on the diffusion of droplet nuclei than the supply air temperature and relative humidity. As the air changes per hour (ACH) increased from 8 to 16, the number fraction of suspended droplet nuclei reduced by 14.2% and 6.4% in the lying and sitting cases, respectively, while the number fraction of escaped droplet nuclei increased by 16.2% and 14.6%. Regardless of whether the patient was lying or sitting, the amount of droplet nuclei deposited on the ceiling was highest at lower ventilation rates. These results may provide some guidance for routine disinfection and ventilation strategies in hospital isolation wards.</Abstract>
+    <DOI>10.1016/j.buildenv.2022.109690</DOI>
+    <URL>https://doi.org/10.1016/j.buildenv.2022.109690</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

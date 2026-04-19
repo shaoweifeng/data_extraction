@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Methicillin-resistant Staphylococcus aureus lung infection in coronavirus disease 2019: how common?</Title>
+    <Authors>
+      <Author>Bassetti, M</Author>
+      <Author>Magnasco, L</Author>
+      <Author>Vena, A</Author>
+      <Author>Portunato, F</Author>
+      <Author>Giacobbe, DR</Author>
+    </Authors>
+    <Journal>CURRENT OPINION IN INFECTIOUS DISEASES</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>35</Volume>
+    <Issue>2</Issue>
+    <Page>149-162</Page>
+    <Date>APR 2022</Date>
+    <Address>[Bassetti, Matteo; Magnasco, Laura; Vena, Antonio; Portunato, Federica; Giacobbe, Daniele Roberto] IRCCS, San Martino Policlin Hosp, Infect Dis Unit, Genoa, Italy; [Bassetti, Matteo; Vena, Antonio; Giacobbe, Daniele Roberto] Univ Genoa, Dept Hlth Sci, Genoa, Italy; [Bassetti, Matteo] IRCCS, Osped Policlin San Martino, Clin Malattie Infett, Lgo R Benzi 10, I-16132 Genoa, Italy</Address>
+    <Abstract>Purpose of reviewSome patients with coronavirus disease 2019 (COVID-19) may develop pulmonary bacterial coinfection or superinfection, that could unfavorably impact their prognosis.Recent findingsThe exact burden of methicillin-resistant Staphylococcus aureus (MRSA) lung infection in peculiar populations such as patients with COVID-19 remains somewhat elusive, possibly because of wide heterogeneity in methods and endpoints across studies.There was important heterogeneity in the retrieved literature on the epidemiology of MRSA lung infection in patients with COVID-19, both when considering all other bacteria as the denominator (relative prevalence ranging from 2% to 29%) and when considering only S. aureus as the denominator (relative prevalence ranging from 11% to 65%). Overall, MRSA is among the most frequent causative agents of pulmonary infection in patients with COVID-19. Improving our ability to rapidly reach etiological diagnosis of bacterial lung infection in COVID-19 patients remains fundamental if we are to improve the rates of appropriate antibiotic therapy in patients with COVID-19 and concomitant/superimposed MRSA infection, at the same time avoiding antibiotic overuse in line with antimicrobial stewardship principles.</Abstract>
+    <DOI>10.1097/QCO.0000000000000813</DOI>
+    <URL>https://doi.org/10.1097/QCO.0000000000000813</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A national analysis of whole blood versus component therapy in pediatric trauma resuscitations</Title>
+    <Authors>
+      <Author>Kumar, S</Author>
+      <Author>Nasef, H</Author>
+      <Author>Chin, B</Author>
+      <Author>Rogers, L</Author>
+      <Author>Bundschu, I</Author>
+      <Author>Kumar, S</Author>
+      <Author>Brown, A</Author>
+      <Author>Elkbuli, A</Author>
+    </Authors>
+    <Journal>AMERICAN JOURNAL OF EMERGENCY MEDICINE</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>95</Volume>
+    <Page>187-194</Page>
+    <Date>SEP 2025</Date>
+    <Address>[Kumar, Sanjan] Univ Cent Florida, Coll Med, Orlando, FL USA; [Nasef, Hazem] Nova Southeastern Univ, Dr Kiran C Patel Coll Allopath Med, Ft Lauderdale, FL USA; [Chin, Brian] Univ Hawaii, John A Burns Sch Med, Honolulu, HI USA; [Rogers, Logan; Kumar, Sarthak] William Carey Univ, Coll Osteopath Med, Hattiesburg, MS USA; [Bundschu, Ian] Univ Miami, Miller Sch Med, Miami, FL USA; [Brown, Alexander] NOVA Southeastern Univ, Ft Lauderdale, FL USA; [Elkbuli, Adel] Orlando Reg Med Ctr Inc, Dept Surg, Div Trauma &amp; Surg Crit Care, 86 W Underwood St, Orlando, FL 32806 USA; [Elkbuli, Adel] Orlando Reg Med Ctr Inc, Dept Surg Educ, Orlando, FL USA</Address>
+    <Abstract>Introduction: The aim of this study is to evaluate clinical outcomes among pediatric patients receiving whole blood (WB) transfusion, in addition to evaluating the ratio of WB to total transfused volume (TTV) based on trauma type. Methods: Pediatric trauma patients who received WB or component therapy (CT) were identified from the American College of Surgeons Trauma Quality Improvement Program Participant Use File (ACS-TQIP-PUF) from 2020 to 2023. The primary outcomes measured were mortality at 4-h and 24-h. Secondary outcomes included intensive care unit length of stay (ICU-LOS), ventilator-free days (VFD), complication rates and if the proportion of whole blood (WB) transfused relative to total transfusion volume (WB/TTV ratio) has any impact on outcomes such as amount of total transfusion volume required. Results: A total of 9091 pediatric trauma patients were included. A higher whole blood ratio reduced odds of 4-h (92 %, OR0.077, p = 0.156), 24-h (96%, OR 0.035, p = 0.016), and in-hospital (47 %, OR0.531, p = 0.124) mortality. In penetrating trauma, whole blood reduced odds of 4-h (82 %, OR 0.176, p = 0.033), 24-h (66 %, OR 0.337, p = 0.025), and in-hospital (7 %, OR 0.925, p = 0.819) mortality, with further reductions at higher whole blood ratios. Conclusion: Pediatric patients with blunt or penetrating injuries receiving an increasing amount of whole blood had reduced odds of 24-h mortality and required significantly less total blood products compared to patients receiving component therapy. Future research is required to further evaluate the potential benefits of whole blood in pediatric patients with specific injuries to provide additional evidence supporting its benefits. (c) 2025 Elsevier Inc. All rights are reserved, including those for text and data mining, AI training, and similar technologies.</Abstract>
+    <DOI>10.1016/j.ajem.2025.06.003</DOI>
+    <URL>https://doi.org/10.1016/j.ajem.2025.06.003</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

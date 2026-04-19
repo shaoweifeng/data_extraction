@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Early and late results of ascending aorta surgery: Risk factors for early and late outcome</Title>
+    <Authors>
+      <Author>Biglioli, P</Author>
+      <Author>Parolari, A</Author>
+      <Author>Spirito, R</Author>
+      <Author>Musumeci, S</Author>
+      <Author>Agrifoglio, M</Author>
+      <Author>Alamanni, F</Author>
+      <Author>Antona, C</Author>
+      <Author>Camilleri, L</Author>
+      <Author>Sala, A</Author>
+    </Authors>
+    <Journal>WORLD JOURNAL OF SURGERY</Journal>
+    <Year>1997</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>21</Volume>
+    <Issue>6</Issue>
+    <Page>590-598</Page>
+    <Date>JUL-AUG 1997</Date>
+    <Address>UNIV MILAN, CTR CARDIOL,FDN MONZINO 1,IRCCS,DEPT CARDIAC SURG, I-20138 MILAN, ITALY; Ctr Hosp Univ Clermont Ferrand, DEPT CARDIOVASC SURG, F-63000 CLERMONT FERRAND, FRANCE</Address>
+    <Abstract>This study was designed to evaluate risk factors for in-hospital mortality and midterm survival in patients undergoing ascending aorta surgery at a single institution during an 11-year period. Between 1984 and 1994 a total of 158 patients underwent an ascending aorta procedure at our institution. Their mean age was 59.6 +/- 12.3; 115 (73%) were male, 33 (21%) had a history of congestive heart failure, 61 (39%) had an acute type A dissection, 21 (13%) underwent redo operations, and 55 (35%) were operated on an emergency basis. In-hospital mortality was 9.7% (10/103) for elective procedures and 36.4% (20/55) for emergency operations (p &lt; 0.0001). Multivariable stepwise logistic regression analysis identified the cardiopulmonary bypass time [odds ratio (OR) = 1.01/min, p = 0.0021], emergency operation (OR = 2.27, p = 0.0022), arch replacement (OR = 2.71, p = 0.0067), and the need of femoral vein cannulation at intervention (OR = 1.89, p = 0.0375) as independent predictors of in-hospital death. When this kind of analysis was performed, evaluating only the variables:known before surgery, acute type A dissection (OR = 2.21, p = 0.0009) and preoperative NYHA class (OR = 1.88 per class, p = 0.0290) were independent risk factors for in-hospital death. Follow-up ranged from 10 to 126 months (median 42 months), with Kaplan-Meier survivals of 69 +/- 4%, and 60 +/- 5% at 5 and 7 years, respectively; survival rates for hospital survivors were 85 +/- 4% and 67 +/- 7% at 5 and 7 years, respectively. Cox regression analysis has identified arch replacement [relative risk (RR) = 2.48, p &lt; 0.0001], perioperative myocardial infarction (RR = 2.44, p = 0.0003), preoperative NYHA class (RR = 1.97 per class, p = 0.0009), acute type A aortic dissection (RR = 1.44, p = 0.0238), the need of femoral vein cannulation at intervention (RR = 1.55, p = 0.0332), and redo operation (RR = 1.44, p = 0.0851) as independent predictors of reduced survival at follow-up. When this kind of analysis was performed on hospital survivors only, postoperative tracheostomy (p = 0.0003, RR = 3.42), reexploration for bleeding (p = 0.0003, RR = 3.77), and the occurrence of postoperative ventricular arrhythmias (p = 0.0007, RR = 2.45) emerged as risk factors. Multiple factors affect the early and late outcome after ascending aorta surgery; our data suggest that the preoperative clinical status of the patients and the priority of surgery and aortic dissection are the main determinants of the early results; on the other hand, the early postoperative course is the main determinant of the late outcome of hospital survivors.</Abstract>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/9230655/</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

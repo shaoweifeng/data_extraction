@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Environmental monitoring and infection control of fever clinics in general hospitals during COVID-19 pandemic</Title>
+    <Authors>
+      <Author>Lu, YR</Author>
+      <Author>Li, YF</Author>
+      <Author>Lin, MG</Author>
+      <Author>Liu, L</Author>
+      <Author>Lin, BR</Author>
+      <Author>Zhou, H</Author>
+      <Author>Lin, JL</Author>
+      <Author>Xu, HJ</Author>
+    </Authors>
+    <Journal>CHINESE SCIENCE BULLETIN-CHINESE</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>66</Volume>
+    <Issue>4-5</Issue>
+    <Page>475-485</Page>
+    <Date>2021</Date>
+    <Address>[Lu, Yiran; Li, Yifan; Liu, Li; Lin, Borong; Zhou, Hao] Tsinghua Univ, Sch Architecture, Beijing 100084, Peoples R China; [Lu, Yiran; Li, Yifan; Liu, Li; Lin, Borong; Zhou, Hao] Tsinghua Univ, Minist Educ, Lab Ecoplanning &amp; Green Bldg, Beijing 100084, Peoples R China; [Lin, Minggui; Lin, Jinlan; Xu, Huji] Tsinghua Univ, Dept Infect, Affiliated Beijing Tsinghua Changgung Hosp, Beijing 102218, Peoples R China</Address>
+    <Abstract>The early stage of the COVID-19 epidemic happened to be the flu season. Since some symptoms of influenza and COVID-19 are similar, symptomatic patients flocked to fever clinics and emergency departments. Meanwhile, asymptomatic COVID-19 patients attending other departments in general hospitals made things worse. Lack of knowledge of the pathogen, absence of awareness and short of personal protective equipment all posed threat to healthcare workers as well as other patients. As SARS-CoV-2 can be spread via droplets, direct contacts and potentially aerosols, the indoor air environment of hospitals, especially fever clinics, must have strict measures to prevent hospital-acquired infection.Thirty-two sensors were deployed in the Tsinghua University Affiliated Beijing Tsinghua Changgung Hospital (mentioned as Changgung Hospital hereinafter) from January 30, 2020, in order to monitor high-resolution real-time indoor environmental parameters at its fever clinic, isolation wards and other departments. One sensor monitors and records CO2 concentration, PM2.5 mass concentration, relative humidity, temperature and illuminance every 5 minutes. Six sensors were located at the fever clinic, where all patients with fever and/or other COVID-19 related symptoms firstly attended after arriving at the hospital. The clinic has two parts, one for diagnosis and the other for quarantine. Three sensors were placed in doctor's office, nursing station and waiting area in the diagnosis part, respectively. Natural ventilation was chosen to dilute the environment, as the flowrate of outdoor airflow was abundant in Beijing's winter.Atmospheric CO2 concentration surrounding Changgung Hospital was stable, and the rise of indoor CO2 concentration was caused by human exhalation. During this pandemic, CO2 concentration can be regarded as an indicator of room ventilation condition and hospital congestion, if all the people in hospital were regarded as potential infector of SARS-CoV-2. According to the usage pattern of the fever clinic, the maximum number of patients in each functional area was set as 4 for doctor's office, 4 for nursing station and 11 for waiting area. According to the ventilation regulation of infectious disease hospital, the air change rate at fever clinics should be at least 6 h(-1). In addition, the outdoor CO2 concentration was assumed to be 400 ppm. Based on these conditions, the upper limits of indoor CO2 concentration were 902, 864 and 867 ppm for doctor's office, nursing station and waiting area at the Changgung Hospital's fever clinic, respectively. Indoor CO2 concentration exceeding these thresholds stands for poor ventilation or overcrowds. Fortunately, this didn't happen during the monitoring period and indoor CO2 concentration didn't exceed 609-711 ppm. In another word, natural ventilation was sufficient and effective in this specific case at the Changgung Hospital's fever clinic. Moreover, together with environment disinfection and personal protective measures, good ventilation condition led to no COVID-19 hospitalacquired infection.To conclude, this article introduced a real-time environmental monitoring campaign at the Changgung Hospital's fever clinic. Similar methodology can help assess ventilation conditions and risk of hospital-acquired infection at the fever clinic during and after COVID-19 pandemic. Once indoor CO2 concentration exceeds the set thresholds, areas with high infection risk can be identified rapidly and timely, so that prevention measures can be taken in time.</Abstract>
+    <DOI>10.1360/TB-2020-0969</DOI>
+    <URL>https://doi.org/10.1360/TB-2020-0969</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

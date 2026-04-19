@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Perioperative morbidity and mortality after lumbar trauma in the elderly</Title>
+    <Authors>
+      <Author>Winkler, EA</Author>
+      <Author>Yue, JK</Author>
+      <Author>Birk, H</Author>
+      <Author>Robinson, CK</Author>
+      <Author>Manley, GT</Author>
+      <Author>Dhall, SS</Author>
+      <Author>Tarapore, PE</Author>
+    </Authors>
+    <Journal>NEUROSURGICAL FOCUS</Journal>
+    <Year>2015</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>39</Volume>
+    <Issue>4</Issue>
+    <Date>OCT 2015</Date>
+    <Address>Univ Calif San Francisco, Dept Neurol Surg, San Francisco, CA 94143 USA; San Francisco Gen Hosp, Brain &amp; Spinal Injury Ctr, San Francisco, CA 94110 USA</Address>
+    <Abstract>OBJECT Traumatic fractures of the thoracolumbar spine are common injuries, accounting for approximately 90% of all spinal trauma. Lumbar spine trauma in the elderly is a growing public health problem with relatively little evidence to guide clinical management. The authors sought to characterize the complications, morbidity, and mortality associated with surgical and nonsurgical management in elderly patients with traumatic fractures of the lumbar spine.METHODS Using the National Sample Program of the National Trauma Data Bank, the authors performed a retrospective analysis of patients &gt;= 55 years of age who had traumatic fracture to the lumbar spine. This group was divided into middle-aged (55-69 years) and elderly (&gt;= 70 years) cohorts. Cohorts were subdivided into nonoperative, vertebroplasty or kyphoplasty, noninstrumented surgery, and instrumented surgery. Univariate and multivariable analyses were used to characterize and identify predictors of medical and surgical complications, mortality, hospital length of stay, ICU length of stay, number of days on ventilator, and hospital discharge in each subgroup. Adjusted odds ratios, mean differences, and associated 95% CIs were reported. Statistical significance was assessed at p &lt; 0.05, and the Bonferroni correction for multiple comparisons was applied for each outcome analysis.RESULTS Between 2003 and 2012, 22,835 people met the inclusion criteria, which represents 94,103 incidents nationally. Analyses revealed a similar medical and surgical complication profile between age groups. The most prevalent medical complications were pneumonia (7.0%), acute respiratory distress syndrome (3.6%), and deep venous thrombosis (3%). Surgical site infections occurred in 6.3% of cases. Instrumented surgery was associated with the highest odds of each complication (p &lt; 0.001). The inpatient mortality rate was 6.8% for all subjects. Multivariable analyses demonstrated that age &gt;= 70 years was an independent predictor of mortality (OR 3.16, 95% CI 2.77-3.60), whereas instrumented surgery (multivariable OR 0.38, 95% CI 0.28-0.52) and vertebroplasty or kyphoplasty (OR 0.27, 95% CI 0.17-0.45) were associated with decreased odds of death. In surviving patients, both older age (OR 0.32, 95% CI 0.30-0.34) and instrumented fusion (OR 0.37, 95% CI 0.33-0.41) were associated with decreased odds of discharge to home.CONCLUSIONS The present study confirms that lumbar surgery in the elderly is associated with increased morbidity. In particular, instrumented fusion is associated with periprocedural complications, prolonged hospitalization, and a decreased likelihood of being discharged home. However, fusion surgery is also associated with reduced mortality. Age alone should not be an exclusionary factor in identifying surgical candidates for instrumented lumbar spinal fusion. Future studies are needed to confirm these findings.</Abstract>
+    <DOI>10.3171/2015.7.FOCUS15270</DOI>
+    <URL>https://doi.org/10.3171/2015.7.FOCUS15270</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

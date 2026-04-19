@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Risk factors for late-onset health care-associated bloodstream infections in patients in neonatal intensive care units</Title>
+    <Authors>
+      <Author>Perlman, SE</Author>
+      <Author>Saiman, L</Author>
+      <Author>Larson, EL</Author>
+    </Authors>
+    <Journal>AMERICAN JOURNAL OF INFECTION CONTROL</Journal>
+    <Year>2007</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>35</Volume>
+    <Issue>3</Issue>
+    <Page>177-182</Page>
+    <Date>APR 2007</Date>
+    <Address>Columbia Univ, Sch Nursing, New York, NY 10032 USA; Columbia Univ, Coll Phys &amp; Surg, New York Presbyterian Hosp, Dept Pediat, New York, NY USA; Columbia Univ, Coll Phys &amp; Surg, New York Presbyterian Hosp, Dept Epidemiol, New York, NY USA; Columbia Univ, Mailman Sch Publ Hlth, New York, NY USA</Address>
+    <Abstract>Background: There are few data comparing risk factors for catheter-related (CR) versus non-CR bloodstream infection (BSI) or for BSI caused by gram-positive versus gram-negative organisms. The aims of this study were to compare risk factors for CR versus non-CR BSI and to compare risk factors for BSI associated with gram-negative versus gram-positive organisms among infants hospitalized in two neonatal intensive care units (NICUs).Methods: Data were collected prospectively over a 2-year period to assess risk factors among 2,935 neonates from two NICUs.Results: Among all neonates, in addition to low birth weight and presence of a central venous catheter, hospitalization in NICU 1 (relative risk [RR]: 1.60, 95% confidence intervals [CI]: 1.14, 2.24) was a significant predictor of BSI. In neonates with a central catheter total parenteral nutrition (TPN) was a significant risk factor for BSI (RR: 4.69, 95% CI: 2.22, 9.87). Ventilator use was a significant risk factor for CR versus non-CR BSI (RR: 3.74, 95% CI: 1.87, 7.48), and significantly more CR BSI were caused by gram-positive (77.1 %) than by gram-negative organisms (61.4%), P = .03.Conclusions: This study confirmed that central venous catheters and low birth weight were risk factors for neonates with late-onset healthcare-associated BSI and further elucidated the potential risks associated with TPN and ventilator use in subgroups of neonates with BSI. Additional studies are needed to examine the incremental risk of TPN among infants with central venous catheters and to understand the link between CR BSI and ventilator use. Preventive strategies for BSI in neonates in NICUs should continue to focus on limiting the use of invasive devices.</Abstract>
+    <DOI>10.1016/j.ajic.2006.01.002</DOI>
+    <URL>https://doi.org/10.1016/j.ajic.2006.01.002</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Comparison of impedance measurements near the skin of newborns and adults</Title>
+    <Authors>
+      <Author>Amm, B</Author>
+      <Author>Kao, TJ</Author>
+      <Author>Newell, J</Author>
+      <Author>Isaacson, D</Author>
+      <Author>Saulnier, G</Author>
+      <Author>Shoudy, D</Author>
+      <Author>Boverman, G</Author>
+      <Author>Sahni, R</Author>
+      <Author>Weindler, M</Author>
+      <Author>Chong, D</Author>
+      <Author>DiBardino, D</Author>
+      <Author>Davenport, D</Author>
+      <Author>Ashe, J</Author>
+    </Authors>
+    <Journal>PHYSIOLOGICAL MEASUREMENT</Journal>
+    <Year>2016</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>37</Volume>
+    <Issue>6</Issue>
+    <Page>938-950</Page>
+    <Date>JUN 2016</Date>
+    <Address>[Amm, Bruce; Kao, Tzu-Jen; Isaacson, David; Boverman, Greg; Davenport, David; Ashe, Jeffrey] GE Global Res Ctr, Diagnost Imaging &amp; Biomed Technol, Niskayuna, NY 12309 USA; [Newell, Jonathan] Rensselaer Polytech Inst, Dept Biomed Engn, Troy, NY 12180 USA; [Isaacson, David] Rensselaer Polytech Inst, Dept Math Sci, Troy, NY 12180 USA; [Saulnier, Gary] Rensselaer Polytech Inst, Dept Elect Comp &amp; Syst Engn, Troy, NY 12180 USA; [Sahni, Rakesh; Weindler, Marilyn] Columbia Univ, Med Ctr, Div Neonatol, New York, NY 10032 USA; [Chong, David; DiBardino, David] Columbia Univ, Med Ctr, Div Pulm Allergy &amp; Crit Care Med, New York, NY 10032 USA</Address>
+    <Abstract>Electrical impedance tomography (EIT) is a non-invasive imaging technology that has been extensively studied for monitoring lung function of neonatal and adult subjects, especially in neonatal intensive care unit (NICU) and intensive care unit (ICU) environments. The sources of the total impedance in these applications include internal organs, near-boundary tissues, electrode-skin impedance, electrodes and conducting wires. This total impedance must be considered for system design and setting voltage gain since it will contribute to the measured voltage. To adapt a single instrument for use on infants and adults, we studied the difference between the impedance near the skin in both classes of patients. We used a simultaneous multi-source EIT (SMS-EIT) system to make impedance measurements. Characteristic resistance was calculated for two different current patterns: one that is more sensitive to boundary region impedance and another that is more sensitive to interior changes. We present ratios of these resistances to assess the relative contribution of near-skin effects to the overall impedance. Twenty adult ICU subjects (10 male, 10 female, age: 49.05 +/- 16.32 years (mean +/- standard deviation)) and 45 neonates (23 male, 22 female, gestational age: 37.67 +/- 2.11 weeks, postnatal age, 2.56 +/- 2.67 d) were studied at Columbia University Medical Center. Impedance measurements at 10 kHz were collected for approximately one hour from each subject. The characteristic resistance ratio for each subject was computed and analyzed. The result shows the impedance at or near the skin of newborns is significantly higher than in adult subjects.</Abstract>
+    <DOI>10.1088/0967-3334/37/6/938</DOI>
+    <URL>https://doi.org/10.1088/0967-3334/37/6/938</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

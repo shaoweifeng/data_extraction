@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Surgical Outcomes in Octogenarians with Central Cord Syndrome: A Propensity-Score Matched Analysis</Title>
+    <Authors>
+      <Author>Jiang, SH</Author>
+      <Author>Deysher, D</Author>
+      <Author>Adachi, K</Author>
+      <Author>Bhaskara, M</Author>
+      <Author>Almadidy, Z</Author>
+      <Author>Sadeh, M</Author>
+      <Author>Mehta, AI</Author>
+      <Author>Chaudhry, NS</Author>
+    </Authors>
+    <Journal>WORLD NEUROSURGERY</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>184</Volume>
+    <Page>E228-E236</Page>
+    <Date>APR 2024</Date>
+    <Address>[Jiang, Sam H.; Deysher, Daniel; Adachi, Kaho; Bhaskara, Mounika; Mehta, Ankit I.] Univ Illinois, Coll Med, Chicago, IL 60607 USA; [Almadidy, Zayed; Sadeh, Morteza; Mehta, Ankit I.] Univ Illinois, Dept Neurosurg, Chicago, IL USA; [Chaudhry, Nauman S.] Univ S Florida, Dept Neurosurg &amp; Brain Repair, Lakeland, FL 33620 USA</Address>
+    <Abstract>Objective: Central cord syndrome (CCS) is a traumatic cervical spine injury that is treated with surgical decompression. In octogenarians (80-89), surgeons often opt for conservative management instead due to fears of postoperative complications and prolonged recovery times. This study aims to assess the in-hospital complications and outcomes in octogenarians undergoing surgery compared to those undergoing nonsurgical management for CCS. Methods: The National Trauma Data Bank was queried from 2017 to 2019 for octogenarians with CCS. Patients who received surgical fusion or decompression were divided into the surgery group and the remaining into the nonsurgical group. The surgery group was sampled and propensity score matched with the non-surgery group. Student t tests and Pearson chi(2) tests were used to test for group differences. Results: A total of 759 octogenarians with CCS were identified. Following sampling and propensity score matching, 225 patients were identified in each group. The surgery group experienced longer intensive care unit (6.8 days vs. 3.21 days, P &lt; 0.001) and hospital (13.79 days vs. 7.8 days, P &lt; 0.001) lengths of stay and higher rates of deep vein thrombosis (4.89% vs. 0.44%, P = 0.02) and ventilator-associated pneumonia (4% vs. 0%, P = 0.02). Patients did not otherwise differ in mortality rate, other hospital complications, and discharge disposition. Conclusions: Octogenarians undergoing surgery for CCS experience longer length of stay and complications consistent with prolonged hospitalization but otherwise have similar mortality, hospital complications, and discharge disposition compared to non-surgical treatment. Given the relative lack of short-term drawbacks, surgery should be considered first-line management when the long-term benefits are substantive.</Abstract>
+    <DOI>10.1016/j.wneu.2024.01.090</DOI>
+    <URL>https://doi.org/10.1016/j.wneu.2024.01.090</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

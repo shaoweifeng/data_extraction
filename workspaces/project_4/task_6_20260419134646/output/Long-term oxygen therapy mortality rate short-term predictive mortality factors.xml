@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Long-term oxygen therapy: mortality rate, short-term predictive mortality factors</Title>
+    <Authors>
+      <Author>Van Cauwenberge, H</Author>
+      <Author>Thonnard, AS</Author>
+      <Author>Dang, DN</Author>
+      <Author>Corhay, JL</Author>
+      <Author>Louis, R</Author>
+    </Authors>
+    <Journal>REVUE DES MALADIES RESPIRATOIRES</Journal>
+    <Year>2018</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>35</Volume>
+    <Issue>9</Issue>
+    <Page>939-947</Page>
+    <Date>NOV 2018</Date>
+    <Address>[Van Cauwenberge, H.; Dang, D. Nguyen; Corhay, J. L.; Louis, R.] CHU Liege, Serv Pneumol B35, B-4000 Liege, Belgium; [Thonnard, A. S.] CHR Verviers, Serv Pneumol, B-4800 Verviers, Belgium</Address>
+    <Abstract>Objectives. - The aims of this study were to assess the survival rate at one year of patients receiving long-term oxygen therapy (LTOT) as prescribed by the National Institute for Health and Disability Insurance's imposed criteria based on international recommendations, to search for short-term predictive factors for mortality and to measure the impact of LTOT on the frequency of hospitalization due to COPD exacerbations.Methods. - We conducted a retrospective analysis of 416 patients suffering from chronic respiratory insufficiency and started on long-term oxygen therapy between 2012 and 2014. The survival curves were estimated by the Kaplan-Meier method. Cox regression models were used to estimate the impact of the variables on survival. The evolution of patients hospitalized for COPD exacerbation was analysed by the McNemar test.Results. - The average age of our cohort was 70 +/- 10 years. It included 57% women and 78% patients with COPD. The one-year survival rate (n=416) under LTOT was 75%. Identified predictive mortality factors were coronary insufficiency [HR (95% CI): 1.8 (1.2-2.8); P=0.0083], reduction of the left ventricular ejection fraction [HR (95% CI): 2.5 (1.3-4.9); P=0.0080], the presence of osteoporosis [HR (95% CI): 1.7 (1.0-2.9); P=0.040]. There was a 28% reduction in the frequency of hospitalization for exacerbations of COPD during the year after starting LTOT.Conclusions. - Mortality at one year with LTOT was about 25%. Factors predictive of mortality at one year included coronary insufficiency, reduction of the left ventricular ejection fraction and osteoporosis. LTOT seems to reduce hospitalizations due to exacerbations of COPD. (C) 2018 SPLF. Published by Elsevier Masson SAS. All rights reserved.</Abstract>
+    <DOI>10.1016/j.rmr.2018.09.001</DOI>
+    <URL>https://doi.org/10.1016/j.rmr.2018.09.001</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Factors Associated With Severity of COVID-19 Disease in a Multicenter Cohort of People With HIV in the United States, March-December 2020</Title>
+    <Authors>
+      <Author>Shapiro, AE</Author>
+      <Author>Ignacio, RAB</Author>
+      <Author>Whitney, BM</Author>
+      <Author>Delaney, JA</Author>
+      <Author>Nance, RM</Author>
+      <Author>Bamford, L</Author>
+      <Author>Wooten, D</Author>
+      <Author>Keruly, JC</Author>
+      <Author>Burkholder, G</Author>
+      <Author>Napravnik, S</Author>
+      <Author>Mayer, KH</Author>
+      <Author>Webel, AR</Author>
+      <Author>Kim, HN</Author>
+      <Author>Van Rompaey, SE</Author>
+      <Author>Christopoulos, K</Author>
+      <Author>Jacobson, J</Author>
+      <Author>Karris, M</Author>
+      <Author>Smith, D</Author>
+      <Author>Johnson, MO</Author>
+      <Author>Willig, A</Author>
+      <Author>Eron, JJ</Author>
+      <Author>Hunt, P</Author>
+      <Author>Moore, RD</Author>
+      <Author>Saag, MS</Author>
+      <Author>Mathews, WC</Author>
+      <Author>Crane, HM</Author>
+      <Author>Cachay, ER</Author>
+      <Author>Kitahata, MM</Author>
+    </Authors>
+    <Journal>JAIDS-JOURNAL OF ACQUIRED IMMUNE DEFICIENCY SYNDROMES</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>90</Volume>
+    <Issue>4</Issue>
+    <Page>369-376</Page>
+    <Date>AUG 1 2022</Date>
+    <Address>[Shapiro, Adrienne E.; Ignacio, Rachel A. Bender; Whitney, Bridget M.; Nance, Robin M.; Kim, H. Nina; Van Rompaey, Stephen E.; Crane, Heidi M.; Kitahata, Mari M.] Univ Washington, Seattle, WA 98195 USA; [Delaney, Joseph A.] Univ Manitoba, Winnipeg, MB, Canada; [Bamford, Laura; Wooten, Darcy; Karris, Maile; Smith, Davey] Univ Calif San Diego, San Diego, CA 92103 USA; [Keruly, Jeanne C.; Moore, Richard D.] Johns Hopkins Sch Med, Baltimore, MD USA; [Burkholder, Greer; Willig, Amanda; Saag, Michael S.] Univ Alabama Birmingham, Birmingham, AL USA; [Napravnik, Sonia; Eron, Joseph J.] Univ North Carolina, Chapel Hill, NC 27515 USA; [Mayer, Kenneth H.] Fenway Hlth, Boston, MA USA; [Webel, Allison R.; Jacobson, Jeffrey] Case Western Reserve Univ, Cleveland, OH 44106 USA; [Christopoulos, Katerina; Johnson, Mallory O.; Hunt, Peter; Mathews, W. Christopher; Cachay, Edward R.] Univ Calif San Francisco, San Francisco, CA 94143 USA</Address>
+    <Abstract>Background: Understanding the spectrum of COVID-19 in people with HIV (PWH) is critical to provide clinical guidance and risk reduction strategies.Setting: Centers for AIDS Research Network of Integrated Clinic System, a US multisite clinical cohort of PWH in care.Methods: We identified COVID-19 cases and severity (hospitalization, intensive care, and death) in a large, diverse HIV cohort during March 1, 2020-December 31, 2020. We determined predictors and relative risks of hospitalization among PWH with COVID-19, adjusted for disease risk scores.Results: Of 16,056 PWH in care, 649 were diagnosed with COVID-19 between March and December 2020. Case fatality was 2%; 106 (16.3%) were hospitalized, and 12 died. PWH with current CD4 count &lt;350 cells/mm(3) [aRR 2.68; 95% confidence interval (CI): 1.93 to 3.71; P &lt; 0.001] or lowest recorded CD4 count &lt;200 cells/mm(3) (aRR 1.67; 95% CI: 1.18 to 2.36; P &lt; 0.005) had greater risks of hospitalization. HIV viral load and antiretroviral therapy status were not associated with hospitalization, although most of the PWH were suppressed (86%). Black PWH were 51% more likely to be hospitalized with COVID-19 compared with other racial/ethnic groups (aRR 1.51; 95% CI: 1.04 to 2.19; P = 0.03). Chronic kidney disease, chronic obstructive pulmonary disease, diabetes, hypertension, obesity, and increased cardiovascular and hepatic fibrosis risk scores were associated with higher hospitalization risk. PWH who were older, not on antiretroviral therapy, and with current CD4 count &lt;350 cells/mm(3), diabetes, and chronic kidney disease were overrepresented among PWH who required intubation or died.Conclusions: PWH with CD4 count &lt;350 cells/mm(3), and a history of CD4 count &lt;200 cells/mm(3), have a clear excess risk of severe COVID-19, accounting for comorbidities associated with severe outcomes. PWH with these risk factors should be prioritized for COVID-19 vaccination and early treatment and monitored closely for worsening illness.</Abstract>
+    <DOI>10.1097/QAI.0000000000002989</DOI>
+    <URL>https://doi.org/10.1097/QAI.0000000000002989</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Linezolid - A pharmacoeconomic review of its use in serious gram-positive infections</Title>
+    <Authors>
+      <Author>Plosker, GL</Author>
+      <Author>Figgitt, DP</Author>
+    </Authors>
+    <Journal>PHARMACOECONOMICS</Journal>
+    <Year>2005</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>23</Volume>
+    <Issue>9</Issue>
+    <Page>945-964</Page>
+    <Date>2005</Date>
+    <Address>Adis Int Ltd, Auckland 1311, New Zealand</Address>
+    <Abstract>Linezolid (Zyvox (R)), the first available oxazolidinone antibacterial agent, has good activity against Gram-positive pathogens, including multidrug-resistant organisms such as methicillin-resistant Staphylococcus aureus (MRSA) and vancomycin-resistant Enterococcus faecium. Randomised multicentre trials in patients with various types of serious Gram-positive infections showed that clinical cure rates with linezolid were similar to those with vancomycin or teicoplanin. In some subgroup analyses, which must be interpreted with a degree of caution, clinical advantages were noted for linezolid (e.g. versus vancomycin in confirmed MRSA nosocomial pneumonia and MRSA-complicated skin and soft tissue infections). Although generally well tolerated, gastrointestinal adverse effects are relatively common with linezolid and it has been associated with thrombocytopenia and myelosuppression.The oral bioavailability of linezolid is approximate to 100%, thus allowing sequential intravenous-to-oral administration without changing the drug or dosage regimen. Healthcare resource use data from various countries indicate that this practical advantage translates into at least a trend towards reduced length of hospital stay compared with vancomycin, which may offset its several-fold higher acquisition cost. Modelled analyses from the US, despite some limitations, indicate that, compared with vancomycin, linezolid is associated with lower total hospitalisation costs for the treatment of patients with cellulitis and has a favourable incremental cost-effectiveness ratio of approximate to$US30 000 per QALY gained (2001 value) for patients with ventilator-associated pneumonia. Broadly similar results have also been reported in Modelled analyses from other countries.In conclusion, for patients with serious Gram-positive infections, including those caused by suspected or proven multidrug-resistant pathogens such as MRSA, linezolid is an effective and generally well tolerated therapeutic option. Linezolid is currently the only antibacterial agent with good activity against MRSA that can be administered orally (as well as intravenously). It may be particularly useful as an alternative to vancomycin in patients who have impaired renal function, poor or no intravenous access, require outpatient therapy, or who have been unable to tolerate glycopeptides. Healthcare resource use studies and pharmacoeconomic analyses generally support the use of linezolid in some subgroups of patients, although results should be interpreted with due consideration of the study limitations.</Abstract>
+    <DOI>10.2165/00019053-200523090-00006</DOI>
+    <URL>https://doi.org/10.2165/00019053-200523090-00006</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

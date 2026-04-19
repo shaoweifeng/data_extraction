@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Breathing irregularities before sleep onset on polysomnography in patients with heart diseases</Title>
+    <Authors>
+      <Author>Okamoto, S</Author>
+      <Author>Ishii, M</Author>
+      <Author>Hibi, S</Author>
+      <Author>Akishita, M</Author>
+      <Author>Yamaguchi, Y</Author>
+    </Authors>
+    <Journal>SLEEP AND BREATHING</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>26</Volume>
+    <Issue>2</Issue>
+    <Page>605-612</Page>
+    <Date>JUN 2022</Date>
+    <Address>[Okamoto, Soshi; Ishii, Masaki; Hibi, Shinichiro; Akishita, Masahiro; Yamaguchi, Yasuhiro] Univ Tokyo, Grad Sch Med, Dept Geriatr Med, Bunkyo Ku, 7-3-1 Hongo, Tokyo 1138655, Japan; [Yamaguchi, Yasuhiro] Jichi Med Univ, Saitama Med Ctr, Dept Resp Med, Omiya Ku, 1-847 Amanumacho, Saitama, Saitama 3308503, Japan</Address>
+    <Abstract>Purpose Severe cardiac dysfunction can manifest with diurnal breathing irregularity. However, it remains to be clarified whether or not diurnal breathing irregularity is observed in patients with heart diseases, including relatively mild chronic heart failure (CHF), compared to those without heart diseases. Methods In this cross-sectional study, consecutive inpatients who were admitted for evaluation of sleep-disordered breathing were enrolled. We extracted 3.5 min of stable respiratory signals before sleep onset using polysomnography, analyzed the airflow data using fast Fourier transform, and quantified breathing irregularities using Shannon entropy S. Results A total of 162 subjects were evaluated. Among these, 39 subjects had heart diseases, including ischemic heart disease (IHD), atrial fibrillation (Af), CHF, and a history of aortic dissection. The values of Shannon entropy S of airflow signals in subjects with heart diseases were significantly higher than in those without heart diseases (p &lt; 0.001). After excluding CHF, the Shannon entropy S was also significantly higher in subjects with heart diseases than in those without heart diseases (p &lt; 0.001). The values of Shannon entropy S were significantly correlated with plasma brain natriuretic peptide levels (r = 0.443, p &lt; 0.001). Although the values were also significantly correlated with body mass index, the presence of heart diseases was independently associated with breathing irregularity in the multiple logistic analysis. Matching analysis revealed consistent differences between subjects with heart diseases and without heart diseases. Conclusion Breathing irregularity was observed before sleep onset in subjects with heart diseases who underwent polysomnography to diagnose sleep-disordered breathing.</Abstract>
+    <DOI>10.1007/s11325-021-02403-2</DOI>
+    <URL>https://doi.org/10.1007/s11325-021-02403-2</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

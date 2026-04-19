@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Distribution of selected healthcare resources for influenza pandemic response in Cambodia</Title>
+    <Authors>
+      <Author>Khilji, SUS</Author>
+      <Author>Rudge, JW</Author>
+      <Author>Drake, T</Author>
+      <Author>Chavez, I</Author>
+      <Author>Borin, K</Author>
+      <Author>Touch, S</Author>
+      <Author>Coker, R</Author>
+    </Authors>
+    <Journal>INTERNATIONAL JOURNAL FOR EQUITY IN HEALTH</Journal>
+    <Year>2013</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>12</Volume>
+    <Date>OCT 4 2013</Date>
+    <Address>[Khilji, Sara U. Schwanke; Rudge, James W.; Drake, Tom; Coker, Richard] Mahidol Univ, Communicable Dis Policy Res Grp, London Sch Hyg &amp; Trop Med, Bangkok 10400, Thailand; [Chavez, Irwin] Mahidol Univ, Fac Trop Med, Bangkok 10400, Thailand; [Borin, Khieu] Ctr Livestock &amp; Agr Dev CelAgrid, Phnom Penh, Cambodia; [Touch, Sok] Cambodia Minist Hlth, Dept Communicable Dis Control, Phnom Penh, Cambodia</Address>
+    <Abstract>Introduction: Human influenza infection poses a serious public health threat in Cambodia, a country at risk for the emergence and spread of novel influenza viruses with pandemic potential. Prior pandemics demonstrated the adverse impact of influenza on poor communities in developing countries. Investigation of healthcare resource distribution can inform decisions regarding resource mobilization and investment for pandemic mitigation.Methods: A health facility survey performed across Cambodia obtained data on availability of healthcare resources important for pandemic influenza response. Focusing on five key resources considered most necessary for treating severe influenza (inpatient beds, doctors, nurses, oseltamivir, and ventilators), resource distributions were analyzed at the Operational District (OD) and Province levels, refining data analysis from earlier studies. Resources were stratified by respondent type (hospital vs. District Health Office [DHO]). A summary index of distribution inequality was calculated using the Gini coefficient. Indices for local spatial autocorrelation were measured at the OD level using geographical information system (GIS) analysis. Finally, a potential link between socioeconomic status and resource distribution was explored by mapping resource densities against poverty rates.Results: Gini coefficient calculation revealed variable inequality in distribution of the five key resources at the Province and OD levels. A greater percentage of the population resides in areas of relative under-supply (28.5%) than over-supply (21.3%). Areas with more resources per capita showed significant clustering in central Cambodia while areas with fewer resources clustered in the northern and western provinces. Hospital-based inpatient beds, doctors, and nurses were most heavily concentrated in areas of the country with the lowest poverty rates; however, beds and nurses in Non-Hospital Medical Facilities (NHMF) showed increasing concentrations at higher levels of poverty.Conclusions: There is considerable heterogeneity in healthcare resource distribution across Cambodia. Distribution mapping at the local level can inform policy decisions on where to stockpile resources in advance of and for reallocation in the event of a pandemic. These findings will be useful in determining future health resource investment, both for pandemic preparedness and for general health system strengthening, and provide a foundation for future analyses of equity in health services provision for pandemic mitigation planning in Cambodia.</Abstract>
+    <DOI>10.1186/1475-9276-12-82</DOI>
+    <URL>https://doi.org/10.1186/1475-9276-12-82</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Association of Severe Acute Kidney Injury with Mortality and Healthcare Utilization Following Isolated Traumatic Brain Injury</Title>
+    <Authors>
+      <Author>Luu, D</Author>
+      <Author>Komisarow, J</Author>
+      <Author>Mills, BM</Author>
+      <Author>Vavilala, MS</Author>
+      <Author>Laskowitz, DT</Author>
+      <Author>Mathew, J</Author>
+      <Author>James, ML</Author>
+      <Author>Hernandez, A</Author>
+      <Author>Sampson, J</Author>
+      <Author>Fuller, M</Author>
+      <Author>Ohnuma, T</Author>
+      <Author>Raghunathan, K</Author>
+      <Author>Privratsky, J</Author>
+      <Author>Bartz, R</Author>
+      <Author>Krishnamoorthy, V</Author>
+    </Authors>
+    <Journal>NEUROCRITICAL CARE</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>35</Volume>
+    <Issue>2</Issue>
+    <Page>434-440</Page>
+    <Date>OCT 2021</Date>
+    <Address>[Luu, David; Mathew, Joseph; James, Michael L.; Fuller, Matt; Ohnuma, Tetsu; Raghunathan, Karthik; Privratsky, Jamie; Bartz, Raquel; Krishnamoorthy, Vijay] Duke Univ, Med Ctr, Dept Anesthesiol, DUMC 3094, Durham, NC 27710 USA; [Komisarow, Jordan; Sampson, John] Duke Univ, Dept Neurosurg, Durham, NC USA; [Mills, Brianna M.; Vavilala, Monica S.] Univ Washington, Harborview Injury Prevent &amp; Res Ctr, Seattle, WA 98195 USA; [Vavilala, Monica S.] Univ Washington, Dept Anesthesiol, Seattle, WA 98195 USA; [Vavilala, Monica S.] Univ Washington, Dept Pain Med, Seattle, WA 98195 USA; [Laskowitz, Daniel T.; James, Michael L.] Duke Univ, Dept Neurol, Durham, NC USA; [Hernandez, Adrian] Duke Univ, Dept Med, Durham, NC USA; [Luu, David; Komisarow, Jordan; James, Michael L.; Fuller, Matt; Ohnuma, Tetsu; Raghunathan, Karthik; Privratsky, Jamie; Bartz, Raquel; Krishnamoorthy, Vijay] Duke Univ, Dept Anesthesiol, Crit Care &amp; Perioperat Populat Hlth Res CAPER Uni, Durham, NC USA; [Mills, Brianna M.] Univ Washington, Dept Epidemiol, Seattle, WA 98195 USA; [Hernandez, Adrian; Raghunathan, Karthik; Krishnamoorthy, Vijay] Duke Univ, Populat Hlth Sci, Durham, NC USA</Address>
+    <Abstract>Background/Objective: Traumatic brain injury (TBI) is a leading cause of morbidity, mortality, and disability in the USA. While cardiopulmonary dysfunction can result in poor outcomes following severe TBI, the impact of acute kidney injury (AKI) is poorly understood. We examined the association of severe AKI with hospital mortality and healthcare utilization following isolate severe TBI.Methods: We conducted a retrospective cohort study using the National Trauma Data Bank from 2007 to 2014. We identified a cohort of adult patients with isolated severe TBI and described the incidence of severe AKI, corresponding to Acute Kidney Injury Network stage 3 disease or greater. We examined the association of severe AKI with the primary outcome of hospital mortality using multivariable logistic regression models. In secondary analyses, we examined the association of severe AKI with dialysis catheter placement, tracheostomy and gastrostomy utilization, and hospital length of stay.Results: There were 37,851 patients who experienced isolated severe TBI during the study period. Among these patients, 787 (2.1%) experienced severe (Stage 3 or greater) AKI. In multivariable models, the development of severe AKI in the hospital was associated with in-hospital mortality (OR 2.03, 95% CI 1.64-2.52), need for tracheostomy (OR 2.10, 95% CI 1.52-2.89), PEG tube placement (OR 1.88, 95% CI 1.45-2.45), and increased hospital length of stay (p &lt; 0.001).Conclusions: The overall incidence of severe AKI is relatively low (2.1%), but is associated with increased mortality and multiple markers of increased healthcare utilization following severe TBI.</Abstract>
+    <DOI>10.1007/s12028-020-01183-z</DOI>
+    <URL>https://doi.org/10.1007/s12028-020-01183-z</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

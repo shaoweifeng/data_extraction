@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Blood component utilization in COVID-19 patients in New York City: Transfusions do not follow the curve</Title>
+    <Authors>
+      <Author>DeSimone, RA</Author>
+      <Author>Costa, VA</Author>
+      <Author>Kane, K</Author>
+      <Author>Sepulveda, JL</Author>
+      <Author>Ellsworth, GB</Author>
+      <Author>Gulick, RM</Author>
+      <Author>Zucker, J</Author>
+      <Author>Sobieszcyk, ME</Author>
+      <Author>Schwartz, J</Author>
+      <Author>Cushing, MM</Author>
+    </Authors>
+    <Journal>TRANSFUSION</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>61</Volume>
+    <Issue>3</Issue>
+    <Page>692-698</Page>
+    <Date>MAR 2021</Date>
+    <Address>[DeSimone, Robert A.; Costa, Victoria A.; Kane, Kathleen; Cushing, Melissa M.] Weill Cornell Med, New York Presbyterian Hosp, Dept Pathol &amp; Lab Med, New York, NY USA; [Kane, Kathleen; Sepulveda, Jorge L.; Schwartz, Joseph] Columbia Univ Irving, Med Ctr, New York Presbyterian Hosp, Dept Pathol &amp; Cell Biol, New York, NY USA; [Ellsworth, Grant B.; Gulick, Roy M.] Weill Cornell Med, New York Presbyterian Hosp, Div Infect Dis, New York, NY USA; [Zucker, Jason; Sobieszcyk, Magdalena E.] Columbia Univ, Med Ctr, New York Presbyterian Hosp, Div Infect Dis, New York, NY USA</Address>
+    <Abstract>Background Blood suppliers and transfusion services have worked diligently to maintain an adequate blood supply during the COVID-19 pandemic. Our experience has shown that some COVID-19 inpatients require transfusion support; understanding this need is critical to blood product inventory management.Study Design and Methods Hospital-wide and COVID-19 specific inpatient blood product utilization data were collected retrospectively for our network's two tertiary academic medical centers over a 9-week period (March 1, 2020-May 2, 2020), when most inpatients had COVID-19. Utilization data were merged with a COVID-19 patient database to investigate clinical demographic characteristics of transfused COVID-19 inpatients relative to non-transfused ones.Results Overall, 11 041 COVID-19 patients were admitted and 364 received blood product transfusions for an overall transfusion rate of 3.3%. COVID-19 patients received 1746 blood components in total, the majority of which were red blood cells. COVID-19 patients' weekly transfusion rate increased as the pandemic progressed, possibly reflecting their increased severity of illness. Transfusion was significantly associated with several indicators of severe disease, including mortality, intubation, thrombosis, longer hospital admission, lower hemoglobin and platelet nadirs, and longer prothrombin and activated partial thromboplastin times. As the pandemic progressed, institutional adherence to transfusion guidelines improved for RBC transfusions compared to prior year trends but did not improve for platelets or plasma.Conclusion There is a need to closely monitor the blood product inventory and demand throughout the COVID-19 pandemic as patients' transfusion needs may increase over time. Daily or weekly trending of patients' clinical status and laboratory values may assist blood banks in inventory management.</Abstract>
+    <DOI>10.1111/trf.16202</DOI>
+    <URL>https://doi.org/10.1111/trf.16202</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

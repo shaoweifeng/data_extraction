@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Factors Associated with Discussion of Care Plans and Code Status at the Time of Hospital Admission: Results from the Multicenter Hospitalist Study</Title>
+    <Authors>
+      <Author>Auerbach, AD</Author>
+      <Author>Katz, R</Author>
+      <Author>Pantilat, SZ</Author>
+      <Author>Bernacki, R</Author>
+      <Author>Schnipper, J</Author>
+      <Author>Kaboli, P</Author>
+      <Author>Wetterneck, T</Author>
+      <Author>Gonzales, D</Author>
+      <Author>Arora, V</Author>
+      <Author>Zhang, J</Author>
+      <Author>Meltzer, D</Author>
+    </Authors>
+    <Journal>JOURNAL OF HOSPITAL MEDICINE</Journal>
+    <Year>2008</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>3</Volume>
+    <Issue>6</Issue>
+    <Page>437-445</Page>
+    <Date>NOV-DEC 2008</Date>
+    <Address>[Auerbach, Andrew D.] Univ Calif San Francisco, Dept Hosp Med, San Francisco, CA 94143 USA; [Schnipper, Jeffrey] Brigham &amp; Womens Hosp, Boston, MA 02115 USA; [Schnipper, Jeffrey] Harvard Univ, Sch Med, Boston, MA 02115 USA; [Kaboli, Peter] VA Iowa City Healthcare Syst, Iowa City, IA USA; [Kaboli, Peter] Univ Iowa, Coll Med, Iowa City, IA USA; [Wetterneck, Tosha] Univ Wisconsin, Madison, WI USA; [Gonzales, David] Univ New Mexico, Albuquerque, NM 87131 USA; [Arora, Vineet; Zhang, James; Meltzer, David] Univ Chicago, Chicago, IL 60637 USA</Address>
+    <Abstract>BACKGROUND: Hospital admission is a time when patients are sickest and also often encountering an entirely new set of caregivers. As a result, understanding and documenting a patient's care preferences at hospital admission is critically important.OBJECTIVE: To understand factors associated with documentation of care planning discussions in patients admitted to general medical services at 6 academic medical centers.DESIGN: Observational cohort study using data collected during the Multicenter Hospitalist Study, conducted between July 1, 2002 and June 30, 2004.SETTING: Prospective trial enrolling patients admitted to general medicine services at 6 University-based teaching hospitals.PATIENTS: Patients were eligible for this study if they were 18 years of age or older, admitted to a hospitalist or nonhospitalist physician, and able to give informed consent.MEASUREMENTS: Presence of chart documentation that the admitting team had discussed care plans with the patient within the first 24 hours of hospitalization. Notations Such as &quot;full code&quot; were not counted as a discussion, whereas notations such as &quot;discussed care wishes and plan with patient&quot; were counted.RESULTS: A total of 17,097 patients over the age of 18 gave informed consent and completed an interview and chart abstraction; of these, 1776 (10.3%) had a code status discussion (CD) documented in the first 24 hours of their admission. Patients with a CD were older (69 years vs. 56 years, P &lt; 0.000.1), more often white (52.8% vs. 43.3%, P &lt; 0.0001), and more likely to have cancer (19.8% vs. 11.4%, P &lt; 0.0001), or depression (35.1% vs. 30.9%, P &lt; 0.0001). There was marked variability in CD documentation across sites of enrollment (2.8%-24.9%, P &lt; 0.0001). Despite strong associations seen in unadjusted comparisons, in multivariable models many socioeconomic factors, functional status, comorbid illness, and documentation of a surrogate decision maker were only moderately associated with a CD (adjusted odds ratios all less than 2.0). However, patients' site of enrollment (odds ratios 1.74-5.14) and informal notations describing prehospital care wishes (eg, orders for &quot;do not resuscitate&quot;/&quot;do not intubate;&quot; odds ratios 3.22-11.32 compared with no preexisting documentation) were powerfully associated with CD documentation. Site remained a powerful influence even in patients with no documented prehospital wishes.LIMITATIONS: Our results are derived from a relatively small number of academic sites, and we cannot connect documentation differences to differences in patient outcomes.CONCLUSIONS: Documentation of a CD at admission was more strongly associated with informal documentation of prehospital care wishes and where the patient was hospitalized than legal care planning documents (Such as durable power of attorney), or comorbid illnesses. Efforts to improve communication between hospitalists and their patients might target local documentation practices and Culture. Journal of Hospital Medicine 2008;3(6):437-445. (C) 2008 Society of Hospital Medicine.</Abstract>
+    <DOI>10.1002/jhm.369</DOI>
+    <URL>https://doi.org/10.1002/jhm.369</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

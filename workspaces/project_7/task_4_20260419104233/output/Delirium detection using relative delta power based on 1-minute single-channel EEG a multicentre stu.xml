@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Delirium detection using relative delta power based on 1-minute single-channel EEG: a multicentre study</Title>
+    <Authors>
+      <Author>Numan, T</Author>
+      <Author>van den Boogaard, M</Author>
+      <Author>Kamper, AM</Author>
+      <Author>Rood, PJT</Author>
+      <Author>Peelen, LM</Author>
+      <Author>Slooter, AJC</Author>
+    </Authors>
+    <Journal>BRITISH JOURNAL OF ANAESTHESIA</Journal>
+    <Year>2019</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>122</Volume>
+    <Issue>1</Issue>
+    <Page>60-68</Page>
+    <Date>JAN 2019</Date>
+    <Address>[Numan, T.; Peelen, L. M.; Slooter, A. J. C.] Univ Utrecht, Univ Med Ctr Utrecht, Dept Intens Care Med, Utrecht, Netherlands; [Numan, T.; Peelen, L. M.; Slooter, A. J. C.] Univ Utrecht, Univ Med Ctr Utrecht, Brain Ctr Rudolf Magnus, Utrecht, Netherlands; [van den Boogaard, M.; Rood, P. J. T.] Radboud Univ Nijmegen, Med Ctr Nijmegen, Dept Intens Care Med, Nijmegen, Netherlands; [Kamper, A. M.] Isala Hosp, Dept Internal Med, Sect Geriatr, Zwolle, Netherlands; [Peelen, L. M.] Univ Utrecht, Univ Med Ctr Utrecht, Julius Ctr Hlth Sci &amp; Primary Care, Dept Epidemiol, Utrecht, Netherlands</Address>
+    <Abstract>Background: Delirium is frequently unrecognised. EEG shows slower frequencies (i.e. below 4 Hz) during delirium, which might be useful in improving delirium recognition. We studied the discriminative performance of a brief single-channel EEG recording for delirium detection in an independent cohort of patients.Methods: In this prospective, multicentre study, postoperative patients aged &gt;= 60 yr were included (n = 159). Before operation and during the first 3 postoperative days, patients underwent a 5-min EEG recording, followed by a video-recorded standardised cognitive assessment. Two or, in case of disagreement, three delirium experts classified each postoperative day based on the video and chart review. Relative delta power (1-4 Hz) was based on 1-min artifact-free EEG. The diagnostic value of the relative delta power was evaluated by the area under the receiver operating characteristic curve (AUROC), using the expert classification as the gold standard.Results: Experts classified 84 (23.3%) postoperative days as either delirium or possible delirium, and 276 (76.7%) nondelirium days. The AUROC of the relative EEG delta power was 0.75 [95% confidence interval (CI) 0.69-0.82]. Exploratory analysis showed that relative power from 1 to 6 Hz had significantly higher AUROC (0.78, 95% CI 0.72-0.84, P = 0.014).Conclusions: Delirium/possible delirium can be detected in older postoperative patients based on a single-channel EEG recording that can be automatically analysed. This objective detection method with a continuous scale instead of a dichotomised outcome is a promising approach for routine detection of delirium.</Abstract>
+    <DOI>10.1016/j.bja.2018.08.021</DOI>
+    <URL>https://doi.org/10.1016/j.bja.2018.08.021</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

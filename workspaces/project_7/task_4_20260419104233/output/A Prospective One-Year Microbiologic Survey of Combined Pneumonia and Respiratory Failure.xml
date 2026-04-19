@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A Prospective One-Year Microbiologic Survey of Combined Pneumonia and Respiratory Failure</Title>
+    <Authors>
+      <Author>Fisher, K</Author>
+      <Author>Trupka, T</Author>
+      <Author>Micek, ST</Author>
+      <Author>Juang, P</Author>
+      <Author>Kollef, MH</Author>
+    </Authors>
+    <Journal>SURGICAL INFECTIONS</Journal>
+    <Year>2017</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>18</Volume>
+    <Issue>7</Issue>
+    <Page>827-833</Page>
+    <Date>OCT 2017</Date>
+    <Address>[Fisher, Kristen; Trupka, Tracy; Kollef, Marin H.] Washington Univ, Sch Med, Div Pulm &amp; Crit Care Med, 4523 Clayton Ave,Campus Box 8052, St Louis, MO 63110 USA; [Micek, Scott T.; Juang, Paul] St Louis Coll Pharm, Div Pharm Practice, St Louis, MO USA</Address>
+    <Abstract>Background: Pneumonia and respiratory failure are common problems in the intensive care unit (ICU) setting, often occurring together. The relative prevalence of pneumonia types (community acquired, hospital acquired, ventilator associated) and causative pathogens is not well described in patients with respiratory failure.Methods: This was a prospective observational cohort study conducted in the medical ICU (34 beds) of Barnes-Jewish Hospital, an academic referral center of 1,300 beds from January 2016-December 2016. All patients who were prospectively adjudicated to have respiratory failure and pneumonia (RFP) regardless of pneumonia type were classified into one of four microbiologic categories: pathogen negative, antibiotic-susceptible pathogen (according to ceftriaxone susceptibility), antibiotic-resistant pathogen, and viruses. The primary outcomes assessed were the hospital mortality rate and inappropriate initial antibiotic therapy (IIAT) for non-viral pathogens.Results: Among 364 consecutive patients with RFP, 63 (17.3%) had organisms that were antibiotic susceptible, 104 (28.6%) had antibiotic-resistant organisms, 118 (32.4%) were pathogen negative, and 79 (21.7%) had viral infections. For these categories, IIAT occurred in 3.2%, 21.2%, 0.8%, and 0, respectively (p&lt;0.001). Vasopressor-requiring shock was present in 61.9%, 72.1%, 68.6%, and 67.1%, respectively (p=0.585), and the hospital mortality rates were 27.0%, 48.1%, 31.4%, and 36.7%, respectively (p=0.020). Multivariable logistic regression analysis identified IIAT as an independent predictor of in-hospital death (adjusted odds ratio 5.28; 95% confidence interval 2.72-10.22; p=0.012). Male gender, increasing Acute Physiology and Chronic Health Evaluation (APACHE) II scores, greater age, and the presence of shock also predicted death.Conclusions: Microbiologic categorization of patients with RFP suggests that antibiotic-resistant pathogens and viruses are associated with the highest mortality rates. Vasopressor-requiring shock was common regardless of the microbiologic categorization of RFP. Future development and use of rapid diagnostics and novel therapeutics targeting specific RFP pathogens may allow more timely administration of appropriate antimicrobial therapy and enhance antibiotic stewardship practices.</Abstract>
+    <DOI>10.1089/sur.2017.111</DOI>
+    <URL>https://doi.org/10.1089/sur.2017.111</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

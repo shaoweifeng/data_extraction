@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Elective surgery resource utilization</Title>
+    <Authors>
+      <Author>Magno-Padron, DA</Author>
+      <Author>Holoyda, KA</Author>
+      <Author>Moss, W</Author>
+      <Author>Pires, G</Author>
+      <Author>Carter, GC</Author>
+      <Author>Agarwal, JP</Author>
+      <Author>Kwok, AC</Author>
+    </Authors>
+    <Journal>LANGENBECKS ARCHIVES OF SURGERY</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>407</Volume>
+    <Issue>2</Issue>
+    <Page>829-833</Page>
+    <Date>MAR 2022</Date>
+    <Address>[Magno-Padron, David A.; Holoyda, Kathleen A.; Moss, Whitney; Pires, Giovanna; Agarwal, Jayant P.] Univ Utah, Sch Med, Div Plast Surg, Salt Lake City, UT 84132 USA; [Carter, Gentry C.] Univ Utah, Dept Populat Hlth Sci, Sch Med, Salt Lake City, UT 84132 USA; [Kwok, Alvin C.] Univ Utah, Dept Surg, Div Plast Surg, Sch Med, 30 North 1900 East,3B400, Salt Lake City, UT 84132 USA</Address>
+    <Abstract>Purpose Cessation of elective surgery during COVID-19 was partly driven by concern for consumption of hospital resources required by critically ill patients. We aim to determine the extent of resource utilization by elective outpatient surgery to assist in ensuring future resource conservation decisions are data driven. Methods The study utilized a retrospective cohort gathered from the American College of Surgeons National Surgical Quality Improvement Program database. Participants were adult patients who underwent elective or non-elective surgery between 2017 and 2018. Outcomes included patient characteristics and post-operative outcomes for elective and non-elective surgeries. Post-operative outcomes were used as a surrogate for the consumption of hospital resources. Results A total of 1,558,938 (79.8%) elective and 393,339 (20.2%) non-elective surgeries were identified. Elective surgery patients were more likely to be outpatient status, have an ASA class &lt; 3, and exhibited lower rates of prolonged ventilation, 30-day reoperation, and 30-day readmissions, and averaged 5 days less of inpatient stay. Elective outpatient surgery (vs. elective inpatient surgery) averaged shorter operative times and exhibited lower rates of readmissions (2.1% vs. 5.5%; p &lt; 0.001), reoperations (1.1% vs. 2.8%; p &lt; 0.001), prolonged ventilation (0.0% vs. 0.3%; p &lt; 0.001), and 30-day mortality (0.1% vs. 0.5%; p &lt; 0.001) and accounted for 30.2% of the overall relative value units ($339,815,038). Conclusion We evaluated utilization of hospital resources by patients undergoing elective outpatient surgery by identifying surgeries performed in 2017-2018 then stratifying them by outpatient status. Elective outpatient surgeries consumed negligible amounts of hospital resources and should not be considered a threat to resources in the setting of high demand by critically ill COVID-19 patients.</Abstract>
+    <DOI>10.1007/s00423-021-02363-x</DOI>
+    <URL>https://doi.org/10.1007/s00423-021-02363-x</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

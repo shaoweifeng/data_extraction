@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Reproducibility of the blood flow index as noninvasive, bedside estimation of cerebral blood flow</Title>
+    <Authors>
+      <Author>Wagner, BP</Author>
+      <Author>Gertsch, S</Author>
+      <Author>Ammann, RA</Author>
+      <Author>Pfenninger, J</Author>
+    </Authors>
+    <Journal>INTENSIVE CARE MEDICINE</Journal>
+    <Year>2003</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>29</Volume>
+    <Issue>2</Issue>
+    <Page>196-200</Page>
+    <Date>FEB 2003</Date>
+    <Address>Univ Bern, Inselspital, Dept Pediat, CH-3010 Bern, Switzerland; Univ Bern, Dept Pediat, Bern, Switzerland</Address>
+    <Abstract>Objective: To investigate the feasibility and reproducibility of the blood flow index (BFI) method for measuring cerebral blood flow. Design and setting Prospective functional study in pediatric intensive care. Patients and participants: 14 consecutive patients with median age of 2 months (range 1 days-11 years) requiring artificial ventilation, invasive arterial blood pressure monitoring, and central venous access. Interventions: The first passage of an intravenous indocyanine green (ICG) bolus through the cerebral vasculature was monitored by noninvasive near-infrared spectroscopy. BFI was calculated by dividing maximal ICG absorption change by rise time. Reproducibility was evaluated by six ICG injections at 5-min intervals. Results: Of all ICG injections 6% were canceled, and 4% were eliminated due to injection failures. Median BFI of 17 reproducibility determinations was 71 (range 12-213) and median coefficient of variation (CV) of BFI was 10% (4.9-18.5). The quantity of ICG bolus did not affect the CV (0.1 vs. 0.3 mg ICG/kg). Eight reproducibility tests in patients after cardiac surgery had smaller CV than the others, and the eight in new-borns had higher CV than in older children. Patient parameters such as arterial blood pressure, endtidal CO2, and percutaneous oxygen saturation were stable and showed CV below 2% during reproducibility determination. Conclusions: The BFI method allows rapid and repeated measurements of CBF with good feasibility and reproducibility. As a relative but not absolute measure of CBF, BFI seems to be suited for clinical evaluation of intraindividual CBF changes during determination of cerebrovascular reactivities or during therapeutic interventions.</Abstract>
+    <DOI>10.1007/s00134-002-1592-z</DOI>
+    <URL>https://doi.org/10.1007/s00134-002-1592-z</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Difficult-to-treat resistant Pseudomonas aeruginosa infections in Lebanese hospitals: Impact on mortality and the role of initial antibiotic therapy</Title>
+    <Authors>
+      <Author>Itani, R</Author>
+      <Author>Khojah, HMJ</Author>
+      <Author>Mukattash, TL</Author>
+      <Author>Shuhaiber, P</Author>
+      <Author>Raychouni, H</Author>
+      <Author>Dib, C</Author>
+      <Author>Hassan, M</Author>
+      <Author>El-Lakany, A</Author>
+    </Authors>
+    <Journal>PLOS ONE</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>20</Volume>
+    <Issue>5</Issue>
+    <Date>2025</Date>
+    <Address>[Itani, Rania] Beirut Arab Univ, Fac Pharm, Pharm Practice Dept, Beirut, Lebanon; [Khojah, Hani M. J.] Taibah Univ, Coll Pharm, Dept Pharm Practice, Madinah, Saudi Arabia; [Mukattash, Tareq L.] Jordan Univ Sci &amp; Technol, Fac Pharm, Dept Clin Pharm, Irbid, Jordan; [Shuhaiber, Patricia] Balamand Univ, Mt Lebanon Hosp, Med Ctr, Pharm Dept, Hazmieh, Lebanon; [Raychouni, Hamza] Cent Mil Hosp, Anesthesia Dept, Intens Care Unit, Mil Healthcare, Beirut, Lebanon; [Raychouni, Hamza] Amer Univ Beirut, Med Ctr, Resp Care Dept, Intens Care Unit, Beirut, Lebanon; [Raychouni, Hamza] Aboujaoude Hosp, Intens Care Unit, Jal El Dib, Maten, Lebanon; [Dib, Carole] Geitaoui Univ, Lebanese Hosp, Med Ctr, Pharm Dept, Beirut, Lebanon; [Hassan, Mariam] Sahel Gen Hosp, Emergency Dept, Beirut, Lebanon; [El-Lakany, Abdalla] Beirut Arab Univ, Fac Pharm, Dept Pharmaceut Sci, Beirut, Lebanon; [El-Lakany, Abdalla] Alexandria Univ, Fac Pharm, Dept Pharmacognosy, Alexandria, Egypt</Address>
+    <Abstract>Background Difficult-to-treat resistant (DTR) Pseudomonas aeruginosa infections have emerged as a significant global public health threat, characterized by limited treatment options and a heightened mortality risk. This study aimed to assess the appropriateness of initial antibiotic therapy, estimate 30-day all-cause mortality, and determine the impact of DTR P. aeruginosa infections on mortality. Methods A retrospective, multicenter study was conducted at four teaching hospitals in Beirut, Lebanon, between January 2021 and December 2023. The primary outcome was 30-day all-cause mortality. Kaplan-Meier survival analysis was used to assess time-to-mortality, and the log-rank test was applied to compare survival outcomes relative to DTR infections and the appropriateness of initial antibiotic therapy. Multivariable logistic regression was performed to identify predictors of mortality. Results Out of 2,639 screened cases, 477 patients met the inclusion criteria. Respiratory tract infections accounted for 38.8% of cases. Carbapenem-resistant P. aeruginosa (CRPA) comprised nearly one-third of isolates, and 15.3% were categorized as DTR. The most common empirical antibiotics were piperacillin-tazobactam (33.9%) and meropenem (24.5%). Inappropriate initial antibiotic therapy was observed in 43.8% of cases, with 33.8% of patients receiving antibiotics to which the pathogen was resistant. DTR infections were significantly more likely to be associated with inappropriate therapy (odds ratio [OR] = 4.21, 95% CI = 2.43-7.32, P &lt; 0.001). The 30-day all-cause mortality rate was 14.8%, with a mean time-to-mortality of 13.29 +/- 9.81 days. Patients who received inappropriate therapy had a shorter time-to-mortality (11.76 +/- 8.80 days) compared to those receiving appropriate therapy (15.46 +/- 10.90 days, P = 0.03). Predictors of mortality included DTR P. aeruginosa infection (adjusted odds ratio [AOR] = 2.48, 95% CI = 1.32-4.63, P &lt; 0.01), and inappropriate initial therapy (AOR = 1.40, 95% CI = 1.04-2.35, P &lt; 0.01). Conclusion DTR P. aeruginosa infections and inappropriate initial antibiotic therapy are associated with increased mortality risk in hospitalized patients.</Abstract>
+    <DOI>10.1371/journal.pone.0321935</DOI>
+    <URL>https://doi.org/10.1371/journal.pone.0321935</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

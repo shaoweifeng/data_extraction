@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Feasibility of a Novel Augmented 6-Minute Incremental Step Test A Simplified Cardiorespiratory Fitness Assessment Tool</Title>
+    <Authors>
+      <Author>Molinger, J</Author>
+      <Author>Kittipibul, V</Author>
+      <Author>Gray, JM</Author>
+      <Author>Rao, VN</Author>
+      <Author>Barth, S</Author>
+      <Author>Swavely, A</Author>
+      <Author>Coyne, B</Author>
+      <Author>Coburn, A</Author>
+      <Author>Bakker, J</Author>
+      <Author>Wischmeyer, PE</Author>
+      <Author>Green, CL</Author>
+      <Author>MacLeod, D</Author>
+      <Author>Patel, M</Author>
+      <Author>Fudim, M</Author>
+    </Authors>
+    <Journal>JACC-ADVANCES</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>3</Volume>
+    <Issue>8</Issue>
+    <Date>AUG 2024</Date>
+    <Address>[Molinger, Jeroen; Kittipibul, Veraprapas; Gray, J. Matthew; Rao, Vishal N.; Swavely, Ashley; Coyne, Brian; Coburn, Aubrie; Patel, Manesh; Fudim, Marat] Duke Univ, Med Ctr, Dept Med, Div Cardiol, Durham, NC 27710 USA; [Molinger, Jeroen; Barth, Stratton; MacLeod, David] Duke Univ, Med Ctr, Dept Anesthesiol, Human Pharmacol &amp; Physiol Lab, Durham, NC USA; [Molinger, Jeroen; Wischmeyer, Paul E.; MacLeod, David] Duke Univ, Sch Med, Dept Anesthesiol, Div Crit Care, Durham, NC USA; [Kittipibul, Veraprapas; Rao, Vishal N.; Green, Cynthia L.; Patel, Manesh; Fudim, Marat] Duke Clin Res Inst, Durham, NC USA; [Bakker, Jan] Erasmus MC Univ Med Ctr, Dept Intens Care Adults, Rotterdam, Netherlands; [Bakker, Jan] NYU, Grossman Sch Med, Dept Med, New York, NY USA; [Green, Cynthia L.] Duke Univ, Sch Med, Dept Biostat &amp; Bioinformat, Durham, NC USA</Address>
+    <Abstract>BACKGROUND The cardiopulmonary exercise test (CPET) is considered a gold standard in assessing cardiorespiratory fitness (CRF) but has limited accessibility due to competency requirements and cost. Incorporating portable sensor devices into a simple bedside test of CRF could improve diagnostic and prognostic value. OBJECTIVES The authors sought to evaluate the association of an augmented 6-minute incremental step test (6MIST) with standard CPET. METHODS We enrolled patients undergoing clinically indicated supine cycle ergometry CPET with invasive hemodynamics (iCPET) for the same-day 6MIST. CRF-related variables were simultaneously recorded using a signal morphology-based impedance cardiograph (PhysioFlow Enduro) and a portable metabolic analyzer (VO2 Master Pro) during incremental pace stationary stepping. The correlation between CPET and hemodynamic parameters from both tests was assessed using the intraclass correlation coefficient (ICC). RESULTS Fifteen patients (mean age 60 f 14 years, 40% female, 27% Black) were included. All patients who agreed to undergo 6MIST completed the study without any test-related adverse events. We observed good to excellent correlation between iCPET-and 6MIST-measured CPET parameters: peak heart rate (ICC = 0.60; 95% CI: 0.15-0.85), absolute peak O2 consumption (VO2) (ICC = 0.77; 95% CI: 0.44-0.92), relative peak VO2 (ICC = 0.64; 95% CI: 0.20-0.86), maximum ventilation (ICC = 0.59; 95% CI: 0.13-0.84), O2 pulse (ICC = 0.71; 95% CI: 0.33-0.89), and cardiorespiratory optimal point (ICC = 0.82; 95% CI: 0.52-0.94). No significant correlation was determined between iCPET and 6MIST in measuring cardiac index at rest (ICC = 0.19; 95% CI:-0.34 to 0.63) or at peak exercise (ICC = 0.36; 95% CI:-0.17 to 0.73). CONCLUSIONS We demonstrate the feasibility of a novel augmented 6MIST with wearable devices for simultaneous CPET and hemodynamic assessment. 6MIST-measured CPET parameters were strongly correlated with the iCPET-derived measurements. Additional studies are needed to confirm the validity of the 6MIST compared to standard upright CPET. (JACC Adv. 2024;3:101079) (c) 2024 The Authors. Published by Elsevier on behalf of the American College of Cardiology Foundation. This is an open access article under the CC BY-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/).</Abstract>
+    <DOI>10.1016/j.jacadv.2024.101079</DOI>
+    <URL>https://doi.org/10.1016/j.jacadv.2024.101079</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

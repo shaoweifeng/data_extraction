@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Risk factors for post-operative respiratory failure among 94,621 neurosurgical patients from 2006 to 2013: a NSQIP analysis</Title>
+    <Authors>
+      <Author>Cote, DJ</Author>
+      <Author>Karhade, AV</Author>
+      <Author>Burke, WT</Author>
+      <Author>Larsen, AMG</Author>
+      <Author>Smith, TR</Author>
+    </Authors>
+    <Journal>ACTA NEUROCHIRURGICA</Journal>
+    <Year>2016</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>158</Volume>
+    <Issue>9</Issue>
+    <Page>1639-1645</Page>
+    <Date>SEP 2016</Date>
+    <Address>[Cote, David J.; Karhade, Aditya V.; Burke, William T.; Larsen, Alexandra M. G.; Smith, Timothy R.] Harvard Med Sch, Brigham &amp; Womens Hosp, Dept Neurosurg, Cushing Neurosurg Outcomes Ctr, 15 Francis St, Boston, MA 02115 USA</Address>
+    <Abstract>Post-operative respiratory failure can occur after neurosurgical operations. Identification of risk factors for respiratory failure after neurosurgery may help guide clinical decision-making, decrease length of stay, improve patient outcomes, and lower costs.We performed a search of the ACS-NSQIP database for all patients undergoing operations with a neurosurgeon from 2006 to 2013. We analyzed demographics, past medical history, and post-operative respiratory failure, defined as unplanned intubation and/or ventilator dependence for more than 48 h post-operatively.Of 94,621 NSQIP-reported neurosurgical patients from 2006 to 2013, 2325 (2.5 %) developed post-operative respiratory failure. Of these patients, 1270 (54.6 %) were male, with an overall mean age of 60.59 years; 571 (24.56 %) were current smokers and 756 (32.52 %) were ventilator-dependent. Past medical history included dyspnea in 204 patients (8.8 %), COPD in 198 (8.5 %), and congestive heart failure in 66 (2.8 %). The rate of post-operative respiratory failure decreased from 4.1 % in 2006 to 2.1 % in 2013 (p &lt; 0.001). Of the 2325 patients with respiratory failure, 1061 (45.6 %) underwent unplanned intubation post-operatively and 1900 (81.7 %) were ventilator-dependent for more than 48 h. The rate of both unplanned intubation (p &lt; 0.001) and ventilator dependence (p &lt; 0.001) decreased significantly from 2006 to 2013. Multivariate analysis demonstrated that significant risk factors for respiratory failure included inpatient status (p &lt; 0.001, OR = 0.165), age (p &lt; 0.001, OR = 1.014), diabetes (p = 0.001, OR = 1.489), functional dependence prior to surgery (p &lt; 0.001, OR = 2.081), ventilator dependence (p &lt; 0.001, OR = 10.304), hypertension requiring medication (p = 0.005, OR = 1.287), impaired sensorium (p &lt; 0.001, OR = 2.054), CVA/stroke with or without neurological deficit (p &lt; 0.001, OR = 2.662; p = 0.002, OR = 1.816), systemic sepsis (p &lt; 0.001, OR = 1.916), prior operation within 30 days (p = 0.026, OR = 1.439), and operation type (cranial relative to spine, p &lt; 0.001, OR = 4.344, Table 4).Based on the NSQIP database, risk factors for respiratory failure after neurosurgery include pre-operative ventilator dependence, alcohol use, functional dependence prior to surgery, stroke, and recent operation. The overall rate of respiratory failure decreased from 4.1 % in 2006 to 2.1 % in 2013 according to these data.</Abstract>
+    <DOI>10.1007/s00701-016-2871-8</DOI>
+    <URL>https://doi.org/10.1007/s00701-016-2871-8</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

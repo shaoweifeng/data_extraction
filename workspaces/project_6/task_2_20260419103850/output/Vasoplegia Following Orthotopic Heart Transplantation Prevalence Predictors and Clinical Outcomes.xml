@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Vasoplegia Following Orthotopic Heart Transplantation: Prevalence, Predictors and Clinical Outcomes</Title>
+    <Authors>
+      <Author>Batchelor, RJ</Author>
+      <Author>Wong, N</Author>
+      <Author>Liu, DH</Author>
+      <Author>Chua, C</Author>
+      <Author>William, J</Author>
+      <Author>Tee, SL</Author>
+      <Author>Sata, Y</Author>
+      <Author>Bergin, P</Author>
+      <Author>Hare, J</Author>
+      <Author>Leet, A</Author>
+      <Author>Taylor, AJ</Author>
+      <Author>Patel, HC</Author>
+      <Author>Burrell, A</Author>
+      <Author>Mcgiffin, D</Author>
+      <Author>Kaye, DM</Author>
+    </Authors>
+    <Journal>JOURNAL OF CARDIAC FAILURE</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>28</Volume>
+    <Issue>4</Issue>
+    <Page>617-626</Page>
+    <Date>APR 2022</Date>
+    <Address>[Batchelor, Riley J.; Wong, Nathan; Liu, David Hongwei; Chua, Clara; William, Jeremy; Tee, Su Ling; Sata, Yusuke; Bergin, Peter; Hare, James; Leet, Angeline; Taylor, Andrew J.; Patel, Hitesh C.; Kaye, David M.] Alfred Hlth, Dept Cardiol, 5 Commercial Rd, Melbourne, Vic 3004, Australia; [Batchelor, Riley J.; Taylor, Andrew J.; Patel, Hitesh C.; Burrell, Aidan; Mcgiffin, David; Kaye, David M.] Monash Univ, Sch Publ Hlth &amp; Prevent Med, Melbourne, Vic, Australia; [Patel, Hitesh C.; Burrell, Aidan; Kaye, David M.] Baker Heart &amp; Diabet Inst, Heart Failure Res, Melbourne, Vic, Australia; [Burrell, Aidan] Alfred Hosp, Dept Intens Care &amp; Hyperbar Med, Melbourne, Vic, Australia; [Mcgiffin, David] Alfred Hlth, Dept Cardiothorac Surg, Melbourne, Vic, Australia</Address>
+    <Abstract>Background: Patients undergoing heart transplant are at high risk for postoperative vasoplegia. Despite its frequency and association with poor clinical outcomes, there remains no consensus definition for vasoplegia, and the predisposing risk factors for vasoplegia remain unclear. Accordingly, the aim of this study was to evaluate the prevalence, predictors, and clinical outcomes associated with vasoplegia in a contemporary cohort of patients undergoing heart transplantation. Methods: This was a retrospective cohort study of patients undergoing heart transplantation from January 2015 to December 2019. A binary definition of vasoplegia of a cardiac index of 2.5 L/min/m2 or greater and requirement for norepinephrine (&gt;5 mg/min), epinephrine (&gt;4 mg/min), or vasopressin (&gt;1 unit/h) to maintain a mean arterial blood pressure of 65 mm Hg, for 6 consecutive hours during the first 48 hours postoperatively, was used in determining prevalence. Given the relatively low threshold for the binary definition of vasoplegia, patients were divided into tertiles based on their cumulative vasopressor requirement in the 48 hours following transplant. Outcomes included all-cause mortality, intubation time, intensive care unit length of stay, and length of total hospitalization. Results: After exclusion of patients with primary cardiogenic shock, major bleeding, or overt sepsis, data were collected on 95 eligible patients. By binary definition, vasoplegia incidence was 66.3%. We separately stratified by actual vasopressor requirement tertile (high, intermediate, low). Stratified by tertile, patients with vasoplegia were older (52.7 +/- 10.2 vs 46.8 +/- 12.7 vs 44.4 +/- 11.3 years, P = .02), with higher rates of chronic kidney disease (18.8% vs 32.3% vs 3.1%, P = .01) and were more likely to have been transplanted from left ventricular assist device support (n =42) (62.5% vs 32.3% vs 37.5%, P = .03). Cardiopulmonary bypass time was prolonged in those that developed vasoplegia (155 min [interquartile range 135-193] vs 131 min [interquartile range 117-152] vs 116 min [interquartile range 102-155], P = .003). Intubation time and length of intensive care unit and hospital stay were significantly increased in those that developed vasoplegia; however, this difference did not translate to a significant increase in all-cause mortality at 30 days or 1 year. Conclusions: Vasoplegia occurs at a high rate after heart transplantation. Older age, chronic kidney disease, mechanical circulatory support, and prolonged bypass time are all associated with vasoplegia; however, this study did not demonstrate an associated increase in all-cause mortality Lay Summary: Patients undergoing heart transplantation are at high risk of vasoplegia, a condition defined by low blood pressure despite normal heart function. We found that vasoplegia was common after heart transplant, occurring in 60%-70% of patients after heart transplant after excluding those with other causes for low blood pressure. Factors implicated included age, poor kidney function, prolonged cardiopulmonary bypass time and preoperative left ventricular assist device support. We found no increased risk of death in patients with vasoplegia despite longer lengths of stay in intensive care and in hospital. (J Cardiac Fail 2022;28:617-626)</Abstract>
+    <DOI>10.1016/j.cardfail.2021.11.020</DOI>
+    <URL>https://doi.org/10.1016/j.cardfail.2021.11.020</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

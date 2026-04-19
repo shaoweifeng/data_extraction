@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Association between severity of untreated sleep apnoea and postoperative complications following major cardiac surgery: a prospective observational cohort study</Title>
+    <Authors>
+      <Author>Mason, M</Author>
+      <Author>Sánchez, JH</Author>
+      <Author>Vuylsteke, A</Author>
+      <Author>Smith, I</Author>
+    </Authors>
+    <Journal>SLEEP MEDICINE</Journal>
+    <Year>2017</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>37</Volume>
+    <Page>141-146</Page>
+    <Date>SEP 2017</Date>
+    <Address>[Mason, Martina; Sanchez, Jules Hernandez; Vuylsteke, Alain; Smith, Ian] Papworth Hosp NHS Fdn Trust, Cambridge CB23 3RE, England</Address>
+    <Abstract>Objective: To examine whether untreated sleep apnoea is associated with prolonged Intensive Care Unit (ICU) stay and increased frequency of postoperative ICU complications, in patients undergoing major cardiac surgery.Patients/methods: Adult patients, undergoing elective coronary artery bypass grafting with or without cardiac valve surgery, between March 2013 and July 2014, were considered. We excluded patients participating in other interventional studies, those who had a tracheostomy before surgery, required emergency surgery or were due to be admitted on the day of surgery. Patients underwent inpatient overnight oximetry on the night prior to their surgery to assess for the presence of sleep apnoea. Since oximetry alone cannot differentiate obstructive from central apnoea, the results are reported as sleep apnoea which was diagnosed in patients with an arterial oxygen desaturation index (ODI) &gt;= 5/h.Results: The primary outcome measure was length of stay (LoS) in ICU in days. The secondary outcome was a composite measure of postoperative complications in ICU. Multivariate models were developed to assess associations between ODI and the primary and secondary outcome measures, adjusting for preselected predictor variables, relative to primary and secondary outcomes. There was no significant association between ODI and ICU LoS, HR 1.0, 95% CI 0.99-1.02; p = 0.12. However we did find a significant association between ODI and postoperative complications in the ICU, OR = 1.1; 95% CI 1.02-1.17; p = 0.014. The probability of developing complications rose with higher ODI, reflecting sleep apnoea severity.Conclusions: Acknowledging the limitations of this prospective study, untreated sleep apnoea did not predict an increased length of stay in ICU but we do report an association with postoperative complications in patients undergoing major cardiac surgery. (C) 2017 Elsevier B.V. All rights reserved.</Abstract>
+    <DOI>10.1016/j.sleep.2017.06.010</DOI>
+    <URL>https://doi.org/10.1016/j.sleep.2017.06.010</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

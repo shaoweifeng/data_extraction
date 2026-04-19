@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Pulmonary Vasodilator and Inodilator Drugs in Cardiac Surgery: A Systematic Review With Bayesian Network Meta-Analysis</Title>
+    <Authors>
+      <Author>Sardo, S</Author>
+      <Author>Tripodi, VF</Author>
+      <Author>Guerzoni, F</Author>
+      <Author>Musu, M</Author>
+      <Author>Cortegiani, A</Author>
+      <Author>Finco, G</Author>
+    </Authors>
+    <Journal>JOURNAL OF CARDIOTHORACIC AND VASCULAR ANESTHESIA</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>37</Volume>
+    <Issue>11</Issue>
+    <Page>2261-2271</Page>
+    <Date>NOV 2023</Date>
+    <Address>[Sardo, Salvatore; Guerzoni, Filippo; Musu, Mario; Finco, Gabriele] Univ Cagliari, Dept Med Sci &amp; Publ Hlth, Monserrato, Italy; [Tripodi, Vincenzo Francesco] Univ Hosp Messina, Dept Human Pathol, Unit Anesthesia &amp; Intens Care, Messina, Italy; [Cortegiani, Andrea] Univ Palermo, Dept Surg Oncol &amp; Oral Sci, Palermo, Italy; [Cortegiani, Andrea] Univ Hosp Policlin Paolo Giaccone, Dept Anesthesia Intens Care &amp; Emergency, Palermo, Italy</Address>
+    <Abstract>Objective: The authors performed a systematic review to evaluate the effect of pharmacologic therapy on pulmonary hypertension in the periop-erative setting of elective cardiac surgery (PROSPERO CRD42023321041). Design: Systematic review of randomized controlled trials with a Bayesian network meta-analysis. Setting: The authors searched biomedical databases for randomized controlled trials on the perioperative use of inodilators and pulmonary vasodilators in adult cardiac surgery, with in-hospital mortality as the primary outcome and duration of ventilation, length of stay in the intensive care unit, stage 3 acute kidney injury, cardiogenic shock requiring mechanical support, and change in mean pulmonary artery pressure as secondary outcomes. Participants: Twenty-eight studies randomizing 1,879 patients were included. Interventions: Catecholamines and noncatecholamine inodilators, arterial pulmonary vasodilators, vasodilators, or their combination were considered eligible interventions compared with placebo or standard care. Measurements and Main Results: Ten studies reported in-hospital mortality and assigned 855 patients to 12 interventions. Only inhaled prostacyclin use was supported by a statistically discernible improvement in mortality, with a number-needed-to-treat estimate of at least 3.3, but a wide credible interval (relative risk 1.26 x 10(-17 )-0.7). Inhaled prostacyclin and nitric oxide were associated with a reduction in intensive care unit stay, and none of the included interventions reached a statistically evident difference compared to usual care or placebo in the other secondary clinical outcomes. Conclusions: Inhaled prostacyclin was the only pharmacologic intervention whose use is supported by a statistically discernible improvement in mortality in the perioperative cardiac surgery setting as treatment of pulmonary hypertension. However, available evidence has significant limitations, mainly the low number of events and imprecision. (c) 2023 The Author(s). Published by Elsevier Inc. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/)</Abstract>
+    <DOI>10.1053/j.jvca.2023.07.041</DOI>
+    <URL>https://doi.org/10.1053/j.jvca.2023.07.041</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

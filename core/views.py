@@ -240,6 +240,59 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     status="pending"
                 )
     
+    def perform_destroy(self, instance):
+        """删除项目时清理所有相关文件和数据"""
+        import shutil
+        import os
+        from django.conf import settings
+        
+        # 检查权限
+        user = self.request.user
+        permission_code = 'project.delete'
+        
+        if not user.is_superuser:
+            has_perm = UserPermission.objects.filter(
+                user=user,
+                permission__code=permission_code
+            ).filter(
+                Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
+            ).exists()
+            
+            if not has_perm:
+                raise PermissionError(f"缺少权限：{permission_code}")
+        
+        # 检查是否是项目所有者
+        if instance.owner != user and not user.is_superuser:
+            raise PermissionError("无权删除该项目")
+        
+        # 获取项目文件夹路径
+        project_dir = os.path.join(settings.MEDIA_ROOT, 'projects', f'project_{instance.id}')
+        
+        # 删除所有关联的文件记录（级联删除会自动处理）
+        # 但我们需要手动删除物理文件
+        
+        # 方式1：遍历所有 DataFile，删除物理文件
+        try:
+            for data_file in instance.files.all():
+                if data_file.file and os.path.exists(data_file.file.path):
+                    try:
+                        os.remove(data_file.file.path)
+                    except Exception as e:
+                        print(f"删除文件失败: {data_file.file.path}, 错误: {e}")
+        except Exception as e:
+            print(f"清理文件时出错: {e}")
+        
+        # 方式2：删除整个项目文件夹（更彻底）
+        try:
+            if os.path.exists(project_dir):
+                shutil.rmtree(project_dir)
+                print(f"已删除项目文件夹: {project_dir}")
+        except Exception as e:
+            print(f"删除项目文件夹失败: {project_dir}, 错误: {e}")
+        
+        # 最后删除数据库记录（级联删除会自动处理所有关联记录）
+        instance.delete()
+    
     @action(detail=True, methods=['get'])
     def stages(self, request, pk=None):
         """获取项目的所有阶段"""
@@ -261,6 +314,130 @@ class ProjectStageViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             return ProjectStage.objects.all()
         return ProjectStage.objects.filter(project__owner=user)
+    
+    @action(detail=True, methods=['post'])
+    def process_references(self, request, pk=None):
+        """
+        解析并去重文献索引文件（同步执行，参考 xxc/develop 分支）
+        
+        步骤：
+        1. 获取该阶段的所有输入文件（.ris, .bib, .nbib, .xml, .ciw）
+        2. 调用 parser.process_directory 解析并去重
+        3. 保存合并后的 references.xml 和去重报告
+        4. 返回去重报告给前端
+        """
+        stage = self.get_object()
+        project = stage.project
+        
+        # 检查权限
+        if project.owner != request.user and not request.user.is_superuser:
+            return Response({"error": "无权操作该项目"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # 创建工作区
+        import tempfile
+        import shutil
+        import os
+        
+        work_dir = tempfile.mkdtemp(prefix=f'project_{project.id}_dedup_')
+        input_dir = os.path.join(work_dir, 'input')
+        output_dir = os.path.join(work_dir, 'output')
+        os.makedirs(input_dir, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        try:
+            # 1. 复制所有输入文件到工作区
+            input_files = DataFile.objects.filter(
+                project=project,
+                data_category='input'
+            )
+            
+            file_count = 0
+            for data_file in input_files:
+                if data_file.file and os.path.exists(data_file.file.path):
+                    # 复制文件到输入目录
+                    dest_path = os.path.join(input_dir, data_file.filename)
+                    shutil.copy2(data_file.file.path, dest_path)
+                    file_count += 1
+            
+            if file_count == 0:
+                return Response({"error": "未找到任何输入文件，请先上传文献索引"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 2. 调用 parser.process_directory
+            from structural_screening.reference_parsing.parser import process_directory
+            
+            merged_xml_path = os.path.join(output_dir, 'references.xml')
+            result = process_directory(input_dir, merged_xml_path, return_report=True)
+            
+            # 解析返回值：return_report=True 时返回 (final_entries, report)
+            if isinstance(result, tuple):
+                final_entries, report = result
+            else:
+                final_entries = result
+                report = {'total_entries_found': len(final_entries), 'duplicates_removed': 0}
+            
+            # 3. 保存结果文件
+            # 保存合并后的 references.xml
+            if os.path.exists(merged_xml_path):
+                with open(merged_xml_path, 'rb') as f:
+                    from django.core.files import File
+                    data_file = DataFile.objects.create(
+                        project=project,
+                        stage=stage,
+                        filename='references.xml',
+                        file=File(f, name='references.xml'),
+                        data_category='output',
+                        description='合并后的文献 XML',
+                        metadata={'source': 'dedup', 'entries': len(final_entries)}
+                    )
+            
+            # 保存去重报告
+            import json
+            report_path = os.path.join(output_dir, 'dedup_report.json')
+            with open(report_path, 'w', encoding='utf-8') as f:
+                json.dump(report, f, ensure_ascii=False, indent=2)
+            
+            with open(report_path, 'rb') as f:
+                from django.core.files import File
+                report_file = DataFile.objects.create(
+                    project=project,
+                    stage=stage,
+                    filename='dedup_report.json',
+                    file=File(f, name='dedup_report.json'),
+                    data_category='output',
+                    description='去重报告',
+                    metadata={'source': 'dedup'}
+                )
+            
+            # 更新阶段状态
+            stage.status = 'completed'
+            stage.completed_at = timezone.now()
+            stage.metadata.update({
+                'total_entries_found': report.get('total_entries_found', 0),
+                'duplicates_removed': report.get('duplicates_removed', 0),
+                'final_unique_entries': report.get('final_unique_entries', len(final_entries))
+            })
+            stage.save()
+            
+            return Response({
+                'message': '去重完成',
+                'total_entries': len(final_entries),
+                'dedup_report': report
+            })
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'error': f'处理失败: {str(e)}',
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        finally:
+            # 清理临时目录
+            try:
+                shutil.rmtree(work_dir)
+            except:
+                pass
     
     @action(detail=True, methods=['post'])
     def skip(self, request, pk=None):
@@ -360,6 +537,43 @@ class DataFileViewSet(viewsets.ModelViewSet):
             if not has_perm:
                 raise PermissionError(f"缺少权限：{permission_code}")
         
+        # 自动提取文件名
+        uploaded_file = self.request.FILES.get('file')
+        if uploaded_file and not serializer.validated_data.get('filename'):
+            serializer.validated_data['filename'] = uploaded_file.name
+        
+        # 自动关联 stage 和 step
+        project = serializer.validated_data.get('project')
+        if project:
+            project_id = project.id
+            data_category = serializer.validated_data.get('data_category', 'input')
+            
+            # 如果是 input 类型且没有指定 stage，自动关联到 SCREEN_1 阶段的 parse 步骤
+            if data_category == 'input' and not serializer.validated_data.get('stage'):
+                try:
+                    screen1_stage = ProjectStage.objects.get(project_id=project_id, stage_key='SCREEN_1')
+                    serializer.validated_data['stage'] = screen1_stage
+                    
+                    # 自动关联到 parse 步骤
+                    try:
+                        parse_step = StageStep.objects.get(stage=screen1_stage, step_key='parse')
+                        serializer.validated_data['step'] = parse_step
+                    except StageStep.DoesNotExist:
+                        pass
+                except ProjectStage.DoesNotExist:
+                    pass
+        
+        # 自动计算文件大小
+        if uploaded_file and not serializer.validated_data.get('file_size'):
+            serializer.validated_data['file_size'] = uploaded_file.size
+        
+        # 自动检测文件类型
+        if uploaded_file and not serializer.validated_data.get('file_type'):
+            import mimetypes
+            file_type, _ = mimetypes.guess_type(uploaded_file.name)
+            if file_type:
+                serializer.validated_data['file_type'] = file_type
+        
         serializer.save(created_by=user)
     
     @action(detail=True, methods=['get'])
@@ -383,6 +597,40 @@ class TaskViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             return Task.objects.all()
         return Task.objects.filter(project__owner=user)
+    
+    def perform_create(self, serializer):
+        """创建任务时自动调度 Celery 任务"""
+        task_obj = serializer.save()
+        
+        # 根据任务类型调度对应的 Celery 任务
+        from .tasks import (
+            run_reference_parsing_pipeline,
+            run_deduplication_pipeline,
+            run_ai_screening_pipeline,
+            run_result_aggregation
+        )
+        
+        task_type = task_obj.task_type
+        project_id = task_obj.project.id
+        config = task_obj.config or {}
+        
+        celery_task = None
+        
+        if task_type == 'reference_parsing':
+            file_ids = config.get('file_ids')
+            celery_task = run_reference_parsing_pipeline.delay(project_id, file_ids)
+        elif task_type == 'deduplication':
+            celery_task = run_deduplication_pipeline.delay(project_id)
+        elif task_type == 'ai_screening':
+            criteria = config.get('criteria')
+            celery_task = run_ai_screening_pipeline.delay(project_id, criteria)
+        elif task_type == 'result_aggregation':
+            celery_task = run_result_aggregation.delay(project_id)
+        
+        # 更新任务的 celery_task_id
+        if celery_task:
+            task_obj.celery_task_id = celery_task.id
+            task_obj.save()
     
     @action(detail=True, methods=['post'])
     def stop(self, request, pk=None):

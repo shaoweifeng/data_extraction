@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Circulating Nucleosomes as Potential Markers to Monitor COVID-19 Disease Progression</Title>
+    <Authors>
+      <Author>Cavalier, E</Author>
+      <Author>Guiot, J</Author>
+      <Author>Lechner, K</Author>
+      <Author>Dutsch, A</Author>
+      <Author>Eccleston, M</Author>
+      <Author>Herzog, M</Author>
+      <Author>Bygott, T</Author>
+      <Author>Schomburg, A</Author>
+      <Author>Kelly, T</Author>
+      <Author>Holdenrieder, S</Author>
+    </Authors>
+    <Journal>FRONTIERS IN MOLECULAR BIOSCIENCES</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>8</Volume>
+    <Date>MAR 18 2021</Date>
+    <Address>[Cavalier, Etienne] Domaine Univ Du Sart Tilman, Ctr Hosp Univ Liege, Clin Chem Dept, Liege, Belgium; [Guiot, Julien] Domaine Univ Du Sart Tilman, Ctr Hosp Univ Liege, Pneumol Dept, Liege, Belgium; [Lechner, Katharina; Dutsch, Alexander] Tech Univ Munich, German Heart Ctr Munich, Dept Cardiol, Munich, Germany; [Lechner, Katharina; Dutsch, Alexander] DZHK German Ctr Cardiovasc Res, Partner Site Munich, Munich Heart Alliance, Munich, Germany; [Eccleston, Mark; Herzog, Marielle; Bygott, Thomas] Belgian Volit SRL, Isnes, Belgium; [Schomburg, Adrian] Eisbach Bio GmbH, Munich, Germany; [Schomburg, Adrian] Ludwig Maximilians Univ Munchen, Fac Med, Biomed Ctr BMC, Dept Physiol Chem, Munich, Germany; [Schomburg, Adrian] Volit Germany GmbH, Grafelfing, Germany; [Kelly, Theresa] Volit Amer, Austin, TX USA; [Holdenrieder, Stefan] Tech Univ Munich, German Heart Ctr, Inst Lab Med, Munich, Germany</Address>
+    <Abstract>The severity of coronavirus disease 2019 (COVID-19) varies significantly with cases spanning from asymptomatic to lethal with a subset of individuals developing Severe Acute Respiratory Syndrome (SARS) and death from respiratory failure. To determine whether global nucleosome and citrullinated nucleosome levels were elevated in COVID-19 patients, we tested two independent cohorts of COVID-19 positive patients with quantitative nucleosome immunoassays and found that nucleosomes were highly elevated in plasma of COVID-19 patients with a severe course of the disease relative to healthy controls and that both histone 3.1 variant and citrullinated nucleosomes increase with disease severity. Elevated citrullination of circulating nucleosomes is indicative of neutrophil extracellular trap formation, neutrophil activation and NETosis in severely affected individuals. Importantly, using hospital setting (outpatient, inpatient or ICU) as a proxy for disease severity, nucleosome levels increased with disease severity and may serve as a guiding biomarker for treatment. Owing to the limited availability of mechanical ventilators and extracorporal membrane oxygenation (ECMO) equipment, there is an urgent need for effective tools to rapidly assess disease severity and guide treatment selection. Based on our studies of two independent cohorts of COVID-19 patients from Belgium and Germany, we suggest further investigation of circulating nucleosomes and citrullination as biomarkers for clinical triage, treatment allocation and clinical drug discovery.</Abstract>
+    <DOI>10.3389/fmolb.2021.600881</DOI>
+    <URL>https://doi.org/10.3389/fmolb.2021.600881</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

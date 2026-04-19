@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>External validation in an intermediate unit of a respiratory decompensation model trained in an intensive care unit</Title>
+    <Authors>
+      <Author>Blackburn, HN</Author>
+      <Author>Clark, MT</Author>
+      <Author>Moss, TJ</Author>
+      <Author>Young, JS</Author>
+      <Author>Moorman, JR</Author>
+      <Author>Lake, DE</Author>
+      <Author>Calland, JF</Author>
+    </Authors>
+    <Journal>SURGERY</Journal>
+    <Year>2017</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>161</Volume>
+    <Issue>3</Issue>
+    <Page>760-770</Page>
+    <Date>MAR 2017</Date>
+    <Address>[Blackburn, Holly N.; Clark, Matthew T.; Moss, Travis J.; Young, Jeffrey S.; Moorman, J. Randall; Lake, Douglas E.; Calland, J. Forrest] Univ Virginia, Sch Med, Dept Surg, Div Acute Care Surg, 1300 Jefferson Pk Ave, Charlottesville, VA 22908 USA</Address>
+    <Abstract>Background. Preventing urgent intubation and upgrade in level of care in patients with subclinical deterioration could be of great utility in hospitalized patients. Early detection should result in decreased mortality, duration of stay, and/or resource use. The goal of this study was to externally validate a previously developed, vital sign-based, intensive care unit, respiratory instability model on a separate population, intermediate care patients.Methods. From May 2014 to May 2016, the model calculated relative risk of adverse events every 15 minutes (n = 373,271 observations) for 2,050 patients in a surgical intermediate care unit.Results. We identified 167 upgrades and 57 intubations. The performance of the model for predicting upgrades within 12 hours was highly significant with an area under the curve of 0.693 (95% confidence interval, 0.658-0.724). The model was well calibrated with relative risks in the highest and lowest deciles of 2.99 and 0.45, respectively (a 6.6-fold increase). The model was effective at predicting intubation, with a demonstrated area under the curve within 12 hours of the event of 0.748 (95 % confidence interval, 0.685-0.800). The highest and lowest deciles of observed relative risk were 3.91 and 0.39, respectively (a 10.1-fold increase). Univariate analysis of vital signs showed that transfer upgrades were associated, in order of importance, with rising respiration rate, rising heart rate, and falling pulse-oxygen saturation level.Conclusion. The respiratory instability model developed previously is valid in intermediate care patients to predict both urgent intubations and requirements for upgrade in level of care to an intensive care unit.</Abstract>
+    <DOI>10.1016/j.surg.2016.09.018</DOI>
+    <URL>https://doi.org/10.1016/j.surg.2016.09.018</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

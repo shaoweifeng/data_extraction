@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>On the transport of heavy particles through an upward displacement-ventilated space</Title>
+    <Authors>
+      <Author>Mingotti, N</Author>
+      <Author>Woods, AW</Author>
+    </Authors>
+    <Journal>JOURNAL OF FLUID MECHANICS</Journal>
+    <Year>2015</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>772</Volume>
+    <Page>478-507</Page>
+    <Date>JUN 2015</Date>
+    <Address>[Mingotti, Nicola; Woods, Andrew W.] Univ Cambridge, BP Inst, Cambridge CB3 0EZ, England; [Mingotti, Nicola] Univ Cambridge, Dept Architecture, Cambridge CB2 1PX, England</Address>
+    <Abstract>We explore the transport of heavy particles through an upward displacement-ventilated space. The space incorporates a localised source of buoyancy which generates a turbulent buoyant plume. The plume fluid is contaminated with a small concentration of particles, which are subject to gravitational settling. A constant flow of uncontaminated fluid is supplied at a low level into the space, while an equal amount of fluid is vented from the space at a high level. At steady state, a two-layer density stratification develops associated with the source of buoyancy. New laboratory experiments are conducted to explore how particles are transported by this flow. The experiments identify that the upper layer may either become well-mixed in particles or it may develop a vertical stratification in particle concentration, with the particle concentration decreasing with height. We develop a quantitative model which identifies that such stratification develops for larger particle setting speeds, or smaller ventilation rates. In accord with our experiments, the model predicts that the number of particles extracted from the space through the high-level vent is controlled by the magnitude of the particle stratification in the upper layer, and this in turn depends on the particle settling speed relative to the ventilation speed and also the cross-sectional area and height of the space. We compare the predictions of the model with measurements of the flux of particles vented from the space for a range of operating conditions. We explore the relevance of the model for the removal of airborne contaminants by displacement ventilation in hospital rooms, and we discuss how contamination is propagated in the room as a result of lateral mixing of pathogens in the upper layer.</Abstract>
+    <DOI>10.1017/jfm.2015.204</DOI>
+    <URL>https://doi.org/10.1017/jfm.2015.204</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

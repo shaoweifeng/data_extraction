@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Assessment of Regional Ventilation Distribution: Comparison of Vibration Response Imaging (VRI) with Electrical Impedance Tomography (EIT)</Title>
+    <Authors>
+      <Author>Shi, C</Author>
+      <Author>Boehme, S</Author>
+      <Author>Bentley, AH</Author>
+      <Author>Hartmann, EK</Author>
+      <Author>Klein, KU</Author>
+      <Author>Bodenstein, M</Author>
+      <Author>Baumgardner, JE</Author>
+      <Author>David, M</Author>
+      <Author>Ullrich, R</Author>
+      <Author>Markstaller, K</Author>
+    </Authors>
+    <Journal>PLOS ONE</Journal>
+    <Year>2014</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>9</Volume>
+    <Issue>1</Issue>
+    <Date>JAN 27 2014</Date>
+    <Address>[Shi, Chang; Boehme, Stefan; Bentley, Alexander H.; Hartmann, Erik K.; Klein, Klaus U.; Bodenstein, Marc; David, Matthias; Markstaller, Klaus] Johannes Gutenberg Univ Mainz, Dept Anaesthesiol, Med Ctr, D-55122 Mainz, Germany; [Boehme, Stefan; Klein, Klaus U.; Ullrich, Roman; Markstaller, Klaus] Med Univ Vienna, Dept Anaesthesia Gen Intens Care &amp; Pain Managemen, Vienna, Austria; [Shi, Chang] Natl Beijing Ctr Drug Safety Evaluat &amp; Res, Beijing Inst Pharmacol &amp; Toxicol, Beijing, Peoples R China; [Baumgardner, James E.] Oscillogy LLC, Folsom, PA USA</Address>
+    <Abstract>Background: Vibration response imaging (VRI) is a bedside technology to monitor ventilation by detecting lung sound vibrations. It is currently unknown whether VRI is able to accurately monitor the local distribution of ventilation within the lungs. We therefore compared VRI to electrical impedance tomography (EIT), an established technique used for the assessment of regional ventilation.Methodology/Principal Findings: Simultaneous EIT and VRI measurements were performed in the healthy and injured lungs (ALI; induced by saline lavage) at different PEEP levels (0, 5, 10, 15 mbar) in nine piglets. Vibration energy amplitude (VEA) by VRI, and amplitudes of relative impedance changes (rel.Delta Z) by EIT, were evaluated in seven regions of interest (ROIs). To assess the distribution of tidal volume (V-T) by VRI and EIT, absolute values were normalized to the V-T obtained by simultaneous spirometry measurements. Redistribution of ventilation by ALI and PEEP was detected by VRI and EIT. The linear correlation between pooled V-T by VEA and rel.Delta Z was R-2 = 0.96. Bland-Altman analysis showed a bias of -1.07 +/- 24.71 ml and limits of agreement of -49.05 to +47.36 ml. Within the different ROIs, correlations of V-T-distribution by EIT and VRI ranged between R-2 values of 0.29 and 0.96. ALI and PEEP did not alter the agreement of V-T between VRI and EIT.Conclusions/Significance: Measurements of regional ventilation distribution by VRI are comparable to those obtained by EIT.</Abstract>
+    <DOI>10.1371/journal.pone.0086638</DOI>
+    <URL>https://doi.org/10.1371/journal.pone.0086638</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

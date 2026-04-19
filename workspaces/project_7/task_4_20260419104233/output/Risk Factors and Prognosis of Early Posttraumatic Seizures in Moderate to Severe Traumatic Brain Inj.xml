@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Risk Factors and Prognosis of Early Posttraumatic Seizures in Moderate to Severe Traumatic Brain Injury</Title>
+    <Authors>
+      <Author>Laing, J</Author>
+      <Author>Gabbe, B</Author>
+      <Author>Chen, ZB</Author>
+      <Author>Perucca, P</Author>
+      <Author>Kwan, P</Author>
+      <Author>O'Brien, TJ</Author>
+    </Authors>
+    <Journal>JAMA NEUROLOGY</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>79</Volume>
+    <Issue>4</Issue>
+    <Page>334-341</Page>
+    <Date>APR 2022</Date>
+    <Address>[Laing, Joshua; Chen, Zhibin; Perucca, Piero; Kwan, Patrick; O'Brien, Terence J.] Monash Univ, Cent Clin Sch, Dept Neurosci, Melbourne, Vic, Australia; [Laing, Joshua; Perucca, Piero; Kwan, Patrick; O'Brien, Terence J.] Alfred Hosp, Epilepsy Unit, Melbourne, Vic, Australia; [Laing, Joshua; Chen, Zhibin; Perucca, Piero; Kwan, Patrick; O'Brien, Terence J.] Univ Melbourne, Royal Melbourne Hosp, Dept Med, Melbourne, Vic, Australia; [Laing, Joshua; Chen, Zhibin; Perucca, Piero; Kwan, Patrick; O'Brien, Terence J.] Univ Melbourne, Royal Melbourne Hosp, Dept Neurol, Melbourne, Vic, Australia; [Laing, Joshua] Peninsula Hlth, Dept Neurol, Melbourne, Vic, Australia; [Gabbe, Belinda; Chen, Zhibin] Monash Univ, Sch Publ Hlth &amp; Prevent Med, Melbourne, Vic, Australia; [Gabbe, Belinda] Swansea Univ, Hlth Data Res UK, Swansea, W Glam, Wales; [Perucca, Piero] Univ Melbourne, Dept Med, Austin Hlth, Melbourne, Vic, Australia; [Perucca, Piero] Austin Hlth, Comprehens Epilepsy Program, Melbourne, Vic, Australia</Address>
+    <Abstract>IMPORTANCE Early posttraumatic seizures (EPS) that may occur following a traumatic brain injury (TBI) are associated with poorer outcomes and development of posttraumatic epilepsy (PTE).OBJECTIVE To evaluate risk factors for EPS, associated morbidity and mortality, and contribution to PTE.DESIGN, SETTING, AND PARTICIPANTS Data were collected from an Australian registry-based cohort study of adults (age &gt;= 18 years) with moderate to severe TBI from January 2005 to December 2019, with 2-year follow-up. The statewide trauma registry, conducted on an opt-out basis in Victoria (population 6.5 million), had 15 152 patients with moderate to severe TBI identified via Abbreviated Injury Scale (AIS) head severity score, with an opt-out rate less than 0.5% (opt-out n = 136).MAIN OUTCOMES AND MEASURES EPS were identified via International Statistical Classification of Diseases, Tenth Revision, Australian Modification (ICD-10-AM) codes recorded after the acute admission. Outcome measures also included in-hospital metrics, 2-year outcomes including PTE, and post-discharge mortality. Adaptive least absolute shrinkage and selection operator (LASSO) regression was used to build a prediction model for risk factors of EPS.RESULTS Among the 15 152 participants (10 457 [69%] male; median [IQR] age, 60 [35-79] y), 416 (2.7%) were identified with EPS, including 27 (0.2%) with status epilepticus. Significant risk factors on multivariable analysis for developing EPS were younger age, higher Charlson Comorbidity Index, TBI sustained from a low fall, subdural hemorrhage, subarachnoid hemorrhage, higher Injury Severity Score, and greater head injury severity, measured using the AIS and Glasgow Coma Score. After adjustment for confounders, EPS were associated with increased ICU admission and ICU length of stay, ventilation and duration, hospital length of stay, and discharge to inpatient rehabilitation rather than home, but not in-hospital mortality. Outcomes in TBI admission survivors at 24 months, including mortality (relative risk [RR] = 2.14; 95% CI, 1.32-3.46; P = .002), development of PTE (RR = 2.91; 95% CI, 2.22-3.81; P &lt; .001), and use of antiseizure medications (RR = 2.44; 95% CI, 1.98-3.02; P &lt; .001), were poorer for cases with EPS after adjustment for confounders. The prediction model for EPS had an area under the receiver operating characteristic curve of 0.72 (95% CI, 0.66-0.79), sensitivity of 66%, and specificity of 73% in the validation set.DISCUSSION We identified important risk factors for EPS following moderate to severe TBI. Early posttraumatic seizures were associated with longer ICU and hospital admissions, ICU ventilation, and poorer 24-month outcomes including mortality and development of PTE.</Abstract>
+    <DOI>10.1001/jamaneurol.2021.5420</DOI>
+    <URL>https://doi.org/10.1001/jamaneurol.2021.5420</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

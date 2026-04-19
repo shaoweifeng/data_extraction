@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Gastroenterology manifestations and COVID-19 outcomes: A meta-analysis of 25,252 cohorts among the first and second waves</Title>
+    <Authors>
+      <Author>Elshazli, RM</Author>
+      <Author>Kline, A</Author>
+      <Author>Elgaml, A</Author>
+      <Author>Aboutaleb, MH</Author>
+      <Author>Salim, MM</Author>
+      <Author>Omar, M</Author>
+      <Author>Munshi, R</Author>
+      <Author>Mankowski, N</Author>
+      <Author>Hussein, MH</Author>
+      <Author>Attia, AS</Author>
+      <Author>Toraih, EA</Author>
+      <Author>Settin, A</Author>
+      <Author>Killackey, M</Author>
+      <Author>Fawzy, MS</Author>
+      <Author>Kandil, E</Author>
+    </Authors>
+    <Journal>JOURNAL OF MEDICAL VIROLOGY</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>93</Volume>
+    <Issue>5</Issue>
+    <Page>2740-2768</Page>
+    <Date>MAY 2021</Date>
+    <Address>[Elshazli, Rami M.] Horus Univ Egypt, Fac Phys Therapy, Dept Biochem &amp; Mol Genet, New Damietta, Egypt; [Kline, Adam; Mankowski, Nicholas] Tulane Univ, Sch Med, 1430 Tulane Ave, New Orleans, LA 70112 USA; [Elgaml, Abdelaziz] Mansoura Univ, Fac Pharm, Dept Microbiol &amp; Immunol, Mansoura, Egypt; [Elgaml, Abdelaziz] Horus Univ Egypt, Fac Pharm, Dept Microbiol &amp; Immunol, New Damietta, Egypt; [Aboutaleb, Mohamed H.; Salim, Mohamed M.] Horus Univ Egypt, Fac Pharm, Dept Pharmaceut Chem, New Damietta, Egypt; [Salim, Mohamed M.] Mansoura Univ, Fac Pharm, Dept Pharmaceut Analyt Chem, Mansoura, Egypt; [Omar, Mahmoud; Hussein, Mohammad H.; Attia, Abdallah S.; Toraih, Eman A.; Killackey, Mary] Tulane Univ, Sch Med, Dept Surg, New Orleans, LA 70112 USA; [Munshi, Ruhul; Kandil, Emad] Tulane Univ, Sch Med, Dept Surg, Div Endocrine &amp; Oncol Surg, New Orleans, LA 70112 USA; [Toraih, Eman A.] Suez Canal Univ, Fac Med, Histol &amp; Cell Biol Dept, Genet Unit, Ismailia, Egypt; [Settin, Ahmad] Mansoura Univ, Fac Med, Pediat &amp; Genet Dept, Mansoura, Egypt; [Fawzy, Manal S.] Suez Canal Univ, Fac Med, Dept Med Biochem &amp; Mol Biol, Ismailia, Egypt; [Fawzy, Manal S.] Northern Border Univ, Coll Med, Dept Biochem, Ar Ar, Saudi Arabia</Address>
+    <Abstract>A meta-analysis was performed to identify patients with coronavirus disease 2019 (COVID-19) presenting with gastrointestinal (GI) symptoms during the first and second pandemic waves and investigate their association with the disease outcomes. A systematic search in PubMed, Scopus, Web of Science, ScienceDirect, and EMBASE was performed up to July 25, 2020. The pooled prevalence of the GI presentations was estimated using the random-effects model. Pairwise comparison for the outcomes was performed according to the GI manifestations' presentation and the pandemic wave of infection. Data were reported as relative risk (RR), or odds ratio and 95% confidence interval. Of 125 articles with 25,252 patients, 20.3% presented with GI manifestations. Anorexia (19.9%), dysgeusia/ageusia (15.4%), diarrhea (13.2%), nausea (10.3%), and hematemesis (9.1%) were the most common. About 26.7% had confirmed positive fecal RNA, with persistent viral shedding for an average time of 19.2 days before being negative. Patients presenting with GI symptoms on admission showed a higher risk of complications, including acute respiratory distress syndrome (RR = 8.16), acute cardiac injury (RR = 5.36), and acute kidney injury (RR = 5.52), intensive care unit (ICU) admission (RR = 2.56), and mortality (RR = 2.01). Although not reach significant levels, subgroup-analysis revealed that affected cohorts in the first wave had a higher risk of being hospitalized, ventilated, ICU admitted, and expired. This meta-analysis suggests an association between GI symptoms in COVID-19 patients and unfavorable outcomes. The analysis also showed improved overall outcomes for COVID-19 patients during the second wave compared to the first wave of the outbreak.</Abstract>
+    <DOI>10.1002/jmv.26836</DOI>
+    <URL>https://doi.org/10.1002/jmv.26836</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

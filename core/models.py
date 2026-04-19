@@ -251,9 +251,14 @@ class StageStep(models.Model):
 
 def data_file_upload_path(instance, filename):
     """文件上传路径"""
-    project_id = instance.project.id
+    # 处理 project 可能为 None 的情况（在保存之前）
+    try:
+        project_id = instance.project.id if instance.project else 'unknown'
+    except:
+        project_id = 'unknown'
+    
     stage_key = instance.stage.stage_key if instance.stage else 'general'
-    category = instance.data_category
+    category = instance.data_category if hasattr(instance, 'data_category') else 'unknown'
     
     return f"projects/project_{project_id}/stages/{stage_key}/{category}/{filename}"
 

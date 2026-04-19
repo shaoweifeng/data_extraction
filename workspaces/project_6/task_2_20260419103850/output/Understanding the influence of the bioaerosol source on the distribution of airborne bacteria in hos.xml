@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Understanding the influence of the bioaerosol source on the distribution of airborne bacteria in hospital indoor air</Title>
+    <Authors>
+      <Author>Pertegal, V</Author>
+      <Author>Lacasa, E</Author>
+      <Author>Cañizares, P</Author>
+      <Author>Rodrigo, MA</Author>
+      <Author>Sáez, C</Author>
+    </Authors>
+    <Journal>ENVIRONMENTAL RESEARCH</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>216</Volume>
+    <Date>JAN 1 2023</Date>
+    <Address>[Pertegal, Victor; Lacasa, Engracia] Univ Castilla La Mancha, Higher Tech Sch Ind Engn, Dept Chem Engn, Edificio Infante Don Juan Manuel,Campus Univ S-N, Albacete 02071, Spain; [Canizares, Pablo; Rodrigo, Manuel A.; Saez, Cristina] Univ Castilla La Mancha, Fac Chem Sci &amp; Technol, Dept Chem Engn, Edificio Enrique Costa Novella,Campus Univ S-N, Ciudad Real 13005, Spain</Address>
+    <Abstract>The composition and concentration of airborne microorganisms in hospital indoor air has been reported to contain airborne bacteria and fungi concentrations ranged 101-103 CFU/m3 in inpatients facilities which mostly exceed recommendations from the World Health Organization (WHO). In this work, a deeper knowledge of the performance of airborne microorganisms would allow improving the designs of the air-conditioning installations to restrict hospital-acquired infections (HAIs). A solution containing Escherichia coli (E. coli) as a model of airborne bacteria was nebulized using the Collison nebulizer to simulate bioaerosols in various hospital areas such as patients' rooms or bathrooms. Results showed that the bioaerosol source had a significant influence on the airborne bacteria concentrations since 4.00 102, 6.84 103 and 1.39 104 CFU mL-1 were monitored during the aerosolization for 10 min of urine, saliva and urban wastewater, respectively. These results may be explained considering the quite narrow distribution profile of drop sizes around 1.10-1.29 mu m obtained for urban waste-water, with much vaster distribution profiles during the aerosolization of urine or saliva. The airborne bacteria concentration may increase up to 107 CFU mL-1 for longer sampling times and higher aerosolization pressures, causing several cell damages. The cell membrane damage index (ID) can vary from 0 to 1, depending on the genomic DNA releases from bacteria. In fact, the ID of E. coli was more than two times higher (0.33 vs. 0.72) when increasing the pressure of air flow was applied from 1 to 2 bar. Finally, the ventilation air flow also affected the distribution of bioaerosols due to its direct relationship with the relative humidity of indoor air. Specifically, the airborne bacteria concentration diminished almost below 3-logs by applying more than 10 L min-1 during the aerosolization of urine due to their inactivation by an increase in their osmotic pressure.</Abstract>
+    <DOI>10.1016/j.envres.2022.114458</DOI>
+    <URL>https://doi.org/10.1016/j.envres.2022.114458</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

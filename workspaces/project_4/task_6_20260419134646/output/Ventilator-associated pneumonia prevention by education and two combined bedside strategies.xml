@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Ventilator-associated pneumonia prevention by education and two combined bedside strategies</Title>
+    <Authors>
+      <Author>Viana, WN</Author>
+      <Author>Bragazzi, C</Author>
+      <Author>de Castro, JEC</Author>
+      <Author>Alves, MB</Author>
+      <Author>Rocco, JR</Author>
+    </Authors>
+    <Journal>INTERNATIONAL JOURNAL FOR QUALITY IN HEALTH CARE</Journal>
+    <Year>2013</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>25</Volume>
+    <Issue>3</Issue>
+    <Page>308-313</Page>
+    <Date>JUL 2013</Date>
+    <Address>[Viana, William Nascimento; Bragazzi, Cristiane; Couto de Castro, Jose Eduardo] Copa DOr Hosp, BR-22031011 Rio De Janeiro, Brazil; [Alves, Mariane Branco] Univ Fed Rio de Janeiro, Inst Math, BR-21940970 Rio De Janeiro, Brazil; [Rocco, Jose Rodolfo] Univ Fed Rio de Janeiro, Clementino Fraga Filho Hosp, BR-21940970 Rio De Janeiro, Brazil</Address>
+    <Abstract>The objective of the study was to reduce the ventilator-associated pneumonia (VAP) incidence rates through a rational prevention program.The study was a non-controlled clinical trial with a set of interventions in mechanically ventilated patients from April 2006 until June 2008. Pneumonia rates were analyzed as time series and their mean risks of development were compared before and after the interventions with a non-concurrent cohort using the same time frame (January 2004March 2006).The study was conducted in a 14-bed medical intensive care unit of private general hospital in Rio de Janeiro, Brazil.The study included invasively ventilated patients (n 224; intervention group) compared with 294 controls (historical cohort).An educational module about VAP prevention was introduced at the start of the trial (April 2006). A bundle checklist was used daily concomitantly with a standardized oral care in all patients afterwards.The main outcome measure was reduction in VAP incidence rates.The observed mean rate before the intervention was 18.6 7.8/1000 ventilator-days (95 CI 8.714.9), decreasing to 11.8 7.8/1000 ventilator-days (95 CI 15.521.7) (P 0.002) after the interventions. Under the adoption of non-informative prior distributions for the parameters of the proposed statistical model, there was a 70 posterior probability in favor of the hypothesis of risk reduction associated with the interventions, regardless their seasonality or secular trends. There was a 38 relative risk reduction.A reduction in VAP rates and on their risk after a set of preventive tools was observed. However, some other co-interventions not related to the primary interventions may have contributed to these results.</Abstract>
+    <DOI>10.1093/intqhc/mzt025</DOI>
+    <URL>https://doi.org/10.1093/intqhc/mzt025</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

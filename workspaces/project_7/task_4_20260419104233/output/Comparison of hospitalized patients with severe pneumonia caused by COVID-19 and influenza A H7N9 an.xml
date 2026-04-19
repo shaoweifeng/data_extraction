@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Comparison of hospitalized patients with severe pneumonia caused by COVID-19 and influenza A (H7N9 and H1N1): A retrospective study from a designated hospital</Title>
+    <Authors>
+      <Author>Gu, BB</Author>
+      <Author>Yao, L</Author>
+      <Author>Zhu, XY</Author>
+      <Author>Tang, PJ</Author>
+      <Author>Chen, C</Author>
+    </Authors>
+    <Journal>OPEN MEDICINE</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>17</Volume>
+    <Issue>1</Issue>
+    <Page>1965-1972</Page>
+    <Date>DEC 9 2022</Date>
+    <Address>[Tang, Peijun] Soochow Univ, Peoples Hosp Suzhou 5, Affiliated Infect Dis Hosp, Dept Pulm, 10 Guangqian Rd, Suzhou 215000, Jiangsu, Peoples R China; [Chen, Cheng] Soochow Univ, Affiliated Hosp 1, Dept Resp &amp; Crit Med, 899 Pinghai Rd, Suzhou 215000, Jiangsu, Peoples R China; [Gu, Binbin] Soochow Univ, Peoples Hosp Suzhou 5, Affiliated Infect Dis Hosp, Dept Intens Care Unit, Suzhou 215000, Jiangsu, Peoples R China; [Yao, Lin] Soochow Univ, Peoples Hosp Suzhou 5, Affiliated Infect Dis Hosp, Dept Pulm, Suzhou 215000, Jiangsu, Peoples R China; [Zhu, Xinyun] Soochow Univ, Affiliated Hosp 1, Dept Resp &amp; Crit Med, Suzhou 215000, Jiangsu, Peoples R China</Address>
+    <Abstract>Considerable attention has been focused on the clinical features of coronavirus disease 2019 (COVID-19), but it is also important for clinicians to differentiate it from influenza virus infections. In the present study, the rate of coexisting disease was lower in the severe COVID-19 group than in the influenza A group (p = 0.003). Radiologically, severe COVID-19 patients had fewer instances of pleural effusion (p &lt; 0.001). Clinically, severe COVID-19 patients had relatively better disease severity scores, less secondary bacterial infections, shorter times to beginning absorption on computed tomography, but longer durations of viral shedding from the time of admission (p &lt; 0.05). Although the more severe influenza A patients required noninvasive respiratory support, these two groups ultimately yielded comparable mortalities. Based on the multiple logistic regression analysis, severe COVID-19 infection was associated with a lower risk of severe acute respiratory distress syndrome [odds ratio (OR) 1.016, 95% [confidence interval (CI)] 1.001-1.032, p = 0.041] and a better pneumonia severity index (OR 0.945, 95% [CI] 0.905-0.986, p = 0.009); however, these patients exhibited longer durations of viral shedding (OR 1.192, 95% [CI] 1.047-1.357, p = 0.008) than patients with severe influenza A infection. In conclusion, the conditions of severe influenza A patients appeared to be more critical than that of severe COVID-19 patients. However, relatively lower mortalities of these two severe cases are expected in the context of sufficient medical supplies.</Abstract>
+    <DOI>10.1515/med-2022-0610</DOI>
+    <URL>https://doi.org/10.1515/med-2022-0610</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

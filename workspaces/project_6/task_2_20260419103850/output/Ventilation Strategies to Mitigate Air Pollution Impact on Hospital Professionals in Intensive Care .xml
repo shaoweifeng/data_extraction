@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Ventilation Strategies to Mitigate Air Pollution Impact on Hospital Professionals in Intensive Care Units in the Democratic Republic of Congo</Title>
+    <Authors>
+      <Author>Nyembwe, JPKB</Author>
+      <Author>Munanga, JK</Author>
+      <Author>Simoes, N</Author>
+      <Author>da Silva, MG</Author>
+    </Authors>
+    <Journal>BUILDINGS</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>14</Volume>
+    <Issue>7</Issue>
+    <Date>JUL 2024</Date>
+    <Address>[Nyembwe, Jean-Paul Kapuya Bulaba; da Silva, Manuel Gameiro] Univ Coimbra, Dept Mech Engn, ADAI, Polo II,Rua Luis Reis Santos, P-3030788 Coimbra, Portugal; [Nyembwe, Jean-Paul Kapuya Bulaba; Munanga, Joel Kwaleso] New Horizons Univ, Dept Architectural Route Kasapa, 2465 Gambela, Lubumbashi 1280, DEM REP CONGO; [Nyembwe, Jean-Paul Kapuya Bulaba] Official Univ Mbuji Mayi, Dept Civil Engn, Av Kalonji 27,Q-Kansele, Mbuji Mayi 8330, DEM REP CONGO; [Simoes, Nuno] Itecons Inst Res &amp; Technol Dev Construct Energy En, Rua Pedro Hispano, P-3030289 Coimbra, Portugal; [Simoes, Nuno] Univ Coimbra, Dept Civil Engn, CERIS, P-3030788 Coimbra, Portugal</Address>
+    <Abstract>This study critically examines the impact of indoor air quality (IAQ) on occupant health in two critical care units (ICUs) at Jason Sendwe Hospital (JSH) and General Carrier de Mine Hospital (GCMH) within the Southern DRC metropolitan area, focusing on their impact on occupant health and well-being. Utilizing a mixed methods approach that includes health questionnaires, continuous environmental monitoring (monitoring CO2, VOCs, PM2.5, PM10, temperature, and relative humidity), and computational fluid dynamics (CFD) analysis, this research aims to identify correlations between environmental factors and the health of hospital staff and patients. The investigation was conducted across both the rainy and dry seasons, revealing significant seasonal variations in IEQ parameters and exploring the incidence of symptoms commonly associated with sick building syndrome among hospital staff. Higher CO2, VOCs, and particulate matter levels during the dry season indicated the inadequacy of current ventilation strategies to maintain optimal air quality. This study proposes the implementation of air filtration and purification systems and the refurbishment of natural ventilation systems as effective measures to improve IAQ. Additionally, alternative ventilation strategies, including occupancy reduction and the integration of supply and exhaust ventilation, were explored to address the challenges of inadequate ventilation. The findings reveal the urgent need for hospitals to adopt ventilation strategies that ensure the health and well-being of occupants, highlighting the importance of continuous IAQ monitoring, community engagement, and the integration of advanced ventilation technologies in healthcare settings. This comprehensive exploration offers valuable insights for improving ventilation in ICUs, contributing to creating healthier indoor environments in hospital settings, especially in regions facing unique environmental challenges.</Abstract>
+    <DOI>10.3390/buildings14071996</DOI>
+    <URL>https://doi.org/10.3390/buildings14071996</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

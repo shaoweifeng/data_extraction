@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Associations between COVID-19 therapies and outcomes in rural and urban America: A multisite, temporal analysis from the Alpha to Omicron SARS-CoV-2 variants</Title>
+    <Authors>
+      <Author>Anzalone, AJ</Author>
+      <Author>Beasley, WH</Author>
+      <Author>Murray, K</Author>
+      <Author>Hillegass, WB</Author>
+      <Author>Schissel, M</Author>
+      <Author>Vest, MT</Author>
+      <Author>Chapman, SA</Author>
+      <Author>Horswell, R</Author>
+      <Author>Miele, L</Author>
+      <Author>Porterfield, JZ</Author>
+      <Author>Bunnell, HT</Author>
+      <Author>Price, BS</Author>
+      <Author>Patrick, S</Author>
+      <Author>Rosen, CJ</Author>
+      <Author>Santangelo, SL</Author>
+      <Author>Mcclay, JC</Author>
+      <Author>Hodder, SL</Author>
+    </Authors>
+    <Journal>JOURNAL OF RURAL HEALTH</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>41</Volume>
+    <Issue>1</Issue>
+    <Date>JAN 2025</Date>
+    <Address>[Anzalone, A. Jerrod; Schissel, Makayla] Univ Nebraska Med Ctr, Omaha, NE 68198 USA; [Beasley, William H.] Univ Oklahoma, Norman, OK USA; [Murray, Kimberly; Rosen, Clifford J.; Santangelo, Susan L.] Maine Hlth Inst Res, Portland, ME USA; [Hillegass, William B.] Univ Mississippi, Med Ctr, Jackson, MS USA; [Vest, Michael T.] Christiana Care Hlth Syst, Newark, DE USA; [Chapman, Scott A.] Univ Minnesota, Coll Pharm, Minneapolis, MN USA; [Horswell, Ronald; Miele, Lucio] Louisiana State Univ, Hlth Sci Ctr, New Orleans, LA USA; [Porterfield, J. Zachary] Univ Kentucky, Lexington, KY USA; [Bunnell, H. Timothy] Nemours Childrens Hlth, Wilmington, DE USA; [Price, Bradley S.; Patrick, Sharon; Hodder, Sally L.] West Virginia Univ, Morgantown, WV USA; [Santangelo, Susan L.] Tufts Univ, Sch Med, Boston, MA USA; [Mcclay, James C.] Univ Missouri, Sch Med, Columbia, MO USA</Address>
+    <Abstract>PurposeTo investigate the enduring disparities in adverse COVID-19 events between urban and rural communities in the United States, focusing on the effects of SARS-CoV-2 vaccination and therapeutic advances on patient outcomes.MethodsUsing National COVID Cohort Collaborative (N3C) data from 2021 to 2023, this retrospective cohort study examined COVID-19 hospitalization, inpatient death, and other adverse events. Populations were categorized into urban, urban-adjacent rural (UAR), and nonurban-adjacent rural (NAR). Adjustments included demographics, variant-dominant waves, comorbidities, region, and SARS-CoV-2 treatment and vaccination. Statistical methods included Kaplan-Meier survival estimates, multivariable logistic, and Cox regression.FindingsThe study included 3,018,646 patients, with rural residents constituting 506,204. These rural dwellers were older, had more comorbidities, and were less vaccinated than their urban counterparts. Adjusted analyses revealed higher hospitalization odds in UAR and NAR (aOR 1.07 [1.05-1.08] and 1.06 [1.03-1.08]), greater inpatient death hazard (aHR 1.30 [1.26-1.35] UAR and 1.37 [1.30-1.45] NAR), and greater risk of other adverse events compared to urban dwellers. Delta increased, while Omicron decreased, inpatient adverse events relative to pre-Delta, with rural disparities persisting throughout. Treatment effectiveness and vaccination were similarly protective across all cohorts, but dexamethasone post-ventilation was effective only in urban areas. Nirmatrelvir/ritonavir and molnupiravir better protected rural residents against hospitalization.ConclusionsDespite advancements in treatment and vaccinations, disparities in adverse COVID-19 outcomes persist between urban and rural communities. The effectiveness of some therapeutic agents appears to vary based on rurality, suggesting a nuanced relationship between treatment and geographic location while highlighting the need for targeted rural health care strategies.</Abstract>
+    <DOI>10.1111/jrh.12857</DOI>
+    <URL>https://doi.org/10.1111/jrh.12857</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

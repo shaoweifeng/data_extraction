@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Association between early ondansetron use and the risk of sepsis in intensive care unit patients: a secondary data of the Medical Information Mart for Intensive Care IV database</Title>
+    <Authors>
+      <Author>Liu, X</Author>
+      <Author>Liu, EH</Author>
+      <Author>Kou, QY</Author>
+    </Authors>
+    <Journal>BMJ OPEN</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>15</Volume>
+    <Issue>1</Issue>
+    <Date>JAN 15 2025</Date>
+    <Address>[Liu, Xuan; Liu, Enhe; Kou, Qiuye] Foresea Life Insurance Guangzhou Gen Hosp, Dept Crit Care Med, Guangzhou, Peoples R China</Address>
+    <Abstract>Objective This study planned to analyse the association between ondansetron use within 24 hours before intensive care unit (ICU) admission to within 48 hours after ICU admission and the risk of sepsis in ICU patients. Design A cohort study. Setting and participants Data of 65 366 participants in Medical Information Mart for Intensive Care IV from ICU in the Beth Israel Deaconess Medical Center. Primary and secondary outcome measures Sepsis was the primary outcome, which indicated patients with documented or suspected infection and acute change in total Sequential Organ Failure Assessment (SOFA) score &gt;= 2 points. In-hospital mortality was the secondary outcome. Results There were 6737 patients with early ondansetron use. In total, 1646 patients suffered sepsis. According to the data from multivariate cox regression model, compared with participants without early ondansetron use, the risk of sepsis was reduced in participants with early ondansetron use relative to those without HR (HR=0.84, 95% CI: 0.76 to 0.93). The risk of in-hospital mortality was reduced in those with early ondansetron use (HR=0.63, 95% CI: 0.55 to 0.72). Subgroup analysis revealed that the association between early ondansetron use and decreased risk of sepsis was significant in participants aged &lt;65 years, men, not complicated with trauma, no surgery, systemic inflammatory response syndrome &gt;= 2, Charlson Comorbidity Index &gt;= 2, with ventilation use, without antibiotics use or without insulin use. In both patients with SOFA &lt;3 or SOFA &gt;= 3, early ondansetron use was correlated with a reduced risk of sepsis. Conclusion Patients with early ondansetron use had lower odds of experiencing sepsis than patients without early ondansetron use, which might provide a reference for the management of sepsis in ICU patients.</Abstract>
+    <DOI>10.1136/bmjopen-2024-087613</DOI>
+    <URL>https://doi.org/10.1136/bmjopen-2024-087613</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Iatrogenic rib fractures and the associated risks of mortality</Title>
+    <Authors>
+      <Author>Coffey, MR</Author>
+      <Author>Bachman, KC</Author>
+      <Author>Ho, VP</Author>
+      <Author>Worrell, SG</Author>
+      <Author>Moorman, ML</Author>
+      <Author>Linden, PA</Author>
+      <Author>Towe, CW</Author>
+    </Authors>
+    <Journal>EUROPEAN JOURNAL OF TRAUMA AND EMERGENCY SURGERY</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>48</Volume>
+    <Issue>1</Issue>
+    <Page>231-241</Page>
+    <Date>FEB 2022</Date>
+    <Address>[Coffey, Max R.; Bachman, Katelynn C.; Ho, Vanessa P.; Worrell, Stephanie G.; Moorman, Matthew L.; Linden, Philip A.; Towe, Christopher W.] Case Western Reserve Univ, Sch Med, Cleveland, OH 44106 USA; [Coffey, Max R.; Bachman, Katelynn C.; Worrell, Stephanie G.; Moorman, Matthew L.; Linden, Philip A.; Towe, Christopher W.] Univ Hosp Cleveland, Med Ctr, Dept Surg, Cleveland, OH 44106 USA; [Ho, Vanessa P.] MetroHlth Med Ctr, Dept Surg, Div Trauma Crit Care Burns &amp; Acute Care Surg, Cleveland, OH USA</Address>
+    <Abstract>Purpose Rib fractures, though typically associated with blunt trauma, can also result from complications of medical or surgical care, including cardiopulmonary resuscitation. The purpose of this study is to describe the demographics and outcomes of iatrogenic rib fractures. Methods Patients with rib fractures were identified in the 2016 National Inpatient Sample. Mechanism of injury was defined as blunt traumatic rib fracture (BTRF) or iatrogenic rib fracture (IRF). IRF was identified as fractures from the following mechanisms: complications of care, drowning, suffocation, and poisoning. Differences between BTRF and IRF were compared using rank-sum test, Chi-square test, and multivariable regression. Results 34,644 patients were identified: 33,464 BTRF and 1180 IRF. IRF patients were older and had higher rates of many comorbid medical disorders. IRF patients were more likely to have flail chest (6.1% versus 3.1%, p &lt; 0.001). IRF patients were more likely to have in-hospital death (20.7% versus 4.2%, p &lt; 0.001) and longer length of hospitalization (11.8 versus 6.9 days, p &lt; 0.001). IRF patients had higher rates of tracheostomy (30.2% versus 9.1%, p &lt; 0.001). In a multivariable logistic regression of all rib fractures, IRF was independently associated with death (OR 3.13, p &lt; 0.001). A propensity matched analysis of IRF and BTRF groups corroborated these findings. Conclusion IRF injuries are sustained in a subset of extremely ill patients. Relative to BTRF, IRF is associated with greater mortality and other adverse outcomes. This population is understudied. The etiology of worse outcomes in IRF compared to BTRF is unclear. Further study of this population could address this disparity.</Abstract>
+    <DOI>10.1007/s00068-020-01598-5</DOI>
+    <URL>https://doi.org/10.1007/s00068-020-01598-5</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

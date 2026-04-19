@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Failed Extubation in Neonates After Cardiac Surgery: A Single-Center, Retrospective Study</Title>
+    <Authors>
+      <Author>Wilson, HC</Author>
+      <Author>Gunsaulus, ME</Author>
+      <Author>Owens, GE</Author>
+      <Author>Goldstein, SA</Author>
+      <Author>Yu, S</Author>
+      <Author>Lowery, RE</Author>
+      <Author>Olive, MK</Author>
+    </Authors>
+    <Journal>PEDIATRIC CRITICAL CARE MEDICINE</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>24</Volume>
+    <Issue>11</Issue>
+    <Page>E547-E555</Page>
+    <Date>NOV 2023</Date>
+    <Address>[Wilson, Hunter C.; Owens, Gabe E.; Yu, Sunkyung; Lowery, Ray E.; Olive, Mary K.] Univ Michigan, Dept Pediat, Div Pediat Cardiol, CS Mott Childrens Hosp, Ann Arbor, MI 48109 USA; [Gunsaulus, Megan E.] Univ Pittsburgh, Dept Pediat, Div Cardiol, Med Ctr, Pittsburgh, PA USA; [Goldstein, Stephanie A.] Univ Utah, Dept Pediat, Div Pediat Crit Care, Salt Lake City, UT USA; [Wilson, Hunter C.] Emory Univ, Div Pediat, Sch Med, Atlanta, GA USA</Address>
+    <Abstract>OBJECTIVES: To describe factors associated with failed extubation (FE) in neonates following cardiovascular surgery, and the relationship with clinical outcomes.DESIGN: Retrospective cohort study.SETTING: Twenty-bed pediatric cardiac ICU (PCICU) in an academic tertiary care children's hospital.PATIENTS: Neonates admitted to the PCICU following cardiac surgery between July 2015 and June 2018.INTERVENTIONS: None.MEASUREMENTS AND MAIN RESULTS: Patients who experienced FE were compared with patients who were successfully extubated. Variables associated with FE (p &lt; 0.05) from univariate analysis were considered for inclusion in multivariable logistic regression. Univariate associations of FE with clinical outcomes were also examined. Of 240 patients, 40 (17%) experienced FE. Univariate analyses revealed associations of FE with upper airway (UA) abnormality (25% vs 8%, p = 0.003) and delayed sternal closure (50% vs 24%, p = 0.001). There were weaker associations of FE with hypoplastic left heart syndrome (25% vs 13%, p = 0.04), postoperative ventilation greater than 7 days (33% vs 15%, p = 0.01), Society of Thoracic Surgeons-European Association for Cardio-Thoracic Surgery (STAT) category 5 operations (38% vs 21%, p = 0.02), and respiratory rate during spontaneous breathing trial (median 42 vs 37 breaths/min, p = 0.01). In multivariable analysis, UA abnormalities (adjusted odds ratio [AOR] 3.5; 95% CI, 1.4-9.0), postoperative ventilation greater than 7 days (AOR 2.3; 95% CI, 1.0-5.2), and STAT category 5 operations (AOR 2.4; 95% CI, 1.1-5.2) were independently associated with FE. FE was also associated with unplanned reoperation/reintervention during hospital course (38% vs 22%, p = 0.04), longer hospitalization (median 29 vs 16.5 d, p &lt; 0.0001), and in-hospital mortality (13% vs 3%, p = 0.02).CONCLUSIONS: FE in neonates occurs relatively commonly following cardiac surgery and is associated with adverse clinical outcomes. Additional data are needed to further optimize periextubation decision-making in patients with multiple clinical factors associated with FE.</Abstract>
+    <DOI>10.1097/PCC.0000000000003283</DOI>
+    <URL>https://doi.org/10.1097/PCC.0000000000003283</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

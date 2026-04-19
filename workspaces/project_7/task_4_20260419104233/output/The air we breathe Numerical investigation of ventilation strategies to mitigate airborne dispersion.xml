@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The air we breathe: Numerical investigation of ventilation strategies to mitigate airborne dispersion of MERS-CoV in inpatient wards</Title>
+    <Authors>
+      <Author>Satheesan, MK</Author>
+      <Author>Tsang, TW</Author>
+      <Author>Wong, LT</Author>
+      <Author>Mui, KW</Author>
+    </Authors>
+    <Journal>HELIYON</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>10</Volume>
+    <Issue>4</Issue>
+    <Date>FEB 29 2024</Date>
+    <Address>[Satheesan, Manoj Kumar; Tsang, Tsz Wun; Wong, Ling Tim; Mui, Kwok Wai] Hong Kong Polytech Univ, Dept Bldg Environm &amp; Energy Engn, Hong Kong, Peoples R China</Address>
+    <Abstract>Ventilation strategies for infection control in hospitals has been predominantly directed towards isolation rooms and operating theatres, with relatively less emphasis on perceived low risk spaces, such as general wards. Typically, the ventilation systems in general wards are intended to optimize patient thermal comfort and energy conservation. The emission of pathogens from exhalation activity, such as sneezing, by an undiagnosed infectious patient admitted to general wards, is a significant concern for infection outbreaks. However, the ventilation guidelines for general wards with respect to infection control are vague. This research article presents a numerical study on the effect of varying air change rates (3 h-1, 6 h-1, 9 h- 1, 13 h-1) and exhaust flow rates (10%, 50% of supply air quantity) on the concentration of airborne pathogens in a mechanically ventilated general inpatient ward. The findings imply that the breathing zone directly above the source patient has the highest level of pathogen exposure, followed by the breathing zones at the bedside and adjacent patients close to the source patient. The dispersion of pathogens throughout the ward over time is also apparent. However, a key difference while adopting a lower ACH (3 h-1) and a higher ACH (13 h-1) in this study was that the latter had a significantly lower number of suspended pathogens in the breathing zone than the former. Thus, this research suggests high ventilation rates for general wards, contrary to current ventilation standards. In addition, combining a higher air change rate (13 h-1) with a high exhaust flow rate (50% of supply air) through a local exhaust grille dramatically reduced suspended pathogens within the breathing zone, further mitigating the risk of pathogen exposure for ward users. Therefore, this study presents an effective ventilation technique to dilute and eliminate airborne infectious pathogens, minimizing their concentration and the risk of infection.</Abstract>
+    <DOI>10.1016/j.heliyon.2024.e26159</DOI>
+    <URL>https://doi.org/10.1016/j.heliyon.2024.e26159</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

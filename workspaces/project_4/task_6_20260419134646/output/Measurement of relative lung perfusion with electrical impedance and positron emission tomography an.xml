@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Measurement of relative lung perfusion with electrical impedance and positron emission tomography: an experimental comparative study in pigs</Title>
+    <Authors>
+      <Author>Bluth, T</Author>
+      <Author>Kiss, T</Author>
+      <Author>Kircher, M</Author>
+      <Author>Braune, A</Author>
+      <Author>Bozsak, C</Author>
+      <Author>Huhle, R</Author>
+      <Author>Scharffenberg, M</Author>
+      <Author>Herzog, M</Author>
+      <Author>Roegner, J</Author>
+      <Author>Herzog, P</Author>
+      <Author>Vivona, L</Author>
+      <Author>Millone, M</Author>
+      <Author>Dössel, O</Author>
+      <Author>Andreeff, M</Author>
+      <Author>Koch, T</Author>
+      <Author>Kotzerke, J</Author>
+      <Author>Stender, B</Author>
+      <Author>de Abreu, MG</Author>
+    </Authors>
+    <Journal>BRITISH JOURNAL OF ANAESTHESIA</Journal>
+    <Year>2019</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>123</Volume>
+    <Issue>2</Issue>
+    <Page>246-254</Page>
+    <Date>AUG 2019</Date>
+    <Address>[Bluth, T.; Kiss, T.; Braune, A.; Huhle, R.; Scharffenberg, M.; Herzog, M.; Roegner, J.; Herzog, P.; Vivona, L.; Millone, M.; Koch, T.; de Abreu, M. Gama] Tech Univ Dresden, Univ Hosp Carl Gustav Carus, Pulm Engn Grp Dresden, Dept Anesthesiol &amp; Intens Care Med,Pulm Engn Grp, Dresden, Germany; [Kircher, M.; Doessel, O.] Karlsruhe Inst Technol, Inst Biomed Engn, Karlsruhe, Germany; [Bozsak, C.; Stender, B.] Dragerwerk AG &amp; Co KGaA, Lubeck, Germany; [Vivona, L.] Univ Naples Federico II, Dept Neurosci Reprod &amp; Odontostomatol Sci, Naples, Italy; [Millone, M.] Univ Genoa, IRCCS AOU San Martino IST, Dept Surg Sci &amp; Integrated Diagnost, Genoa, Italy; [Andreeff, M.; Kotzerke, J.] Univ Hosp Carl Gustav Carus, Dept Nucl Med, Dresden, Germany</Address>
+    <Abstract>Background: Electrical impedance tomography (EIT) with indicator dilution may be clinically useful to measure relative lung perfusion, but there is limited information on the performance of this technique.Methods: Thirteen pigs (50-66 kg) were anaesthetised and mechanically ventilated. Sequential changes in ventilation were made: (i) right-lung ventilation with left-lung collapse, (ii) two-lung ventilation with optimised PEEP, (iii) two-lung ventilation with zero PEEP after saline lung lavage, (iv) two-lung ventilation with maximum PEEP (20/25 cm H2O to achieve peak airway pressure 45 cm H2O), and (v) two-lung ventilation under unilateral pulmonary artery occlusion. Relative lung perfusion was assessed with EIT and central venous injection of saline 3%, 5%, and 10% (10 ml) during breath holds. Relative perfusion was determined by positron emission tomography (PET) using 68 Gallium-labelled microspheres. EIT and PET were compared in eight regions of equal ventro-dorsal height (right, left, ventral, mid-ventral, mid-dorsal, and dorsal), and directional changes in regional perfusion were determined.Results: Differences between methods were relatively small (95% of values differed by less than 8.7%, 8.9%, and 9.5% for saline 10%, 5%, and 3%, respectively). Compared with PET, EIT underestimated relative perfusion in dependent, and overestimated it in non-dependent, regions. EIT and PET detected the same direction of change in relative lung perfusion in 68.9-95.9% of measurements.Conclusions: The agreement between EIT and PET for measuring and tracking changes of relative lung perfusion was satisfactory for clinical purposes. Indicator-based EIT may prove useful for measuring pulmonary perfusion at bedside.</Abstract>
+    <DOI>10.1016/j.bja.2019.04.056</DOI>
+    <URL>https://doi.org/10.1016/j.bja.2019.04.056</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

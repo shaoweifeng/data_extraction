@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A Before-and-After Study of Evidence-Based Recommendations for On-Call Bronchoscopy</Title>
+    <Authors>
+      <Author>Duesberg, CB</Author>
+      <Author>Valtin, C</Author>
+      <Author>Fuge, J</Author>
+      <Author>Logemann, F</Author>
+      <Author>Fuehner, T</Author>
+      <Author>Welte, T</Author>
+      <Author>Gottlieb, J</Author>
+    </Authors>
+    <Journal>RESPIRATION</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>100</Volume>
+    <Issue>7</Issue>
+    <Page>600-610</Page>
+    <Date>JUL 2021</Date>
+    <Address>[Duesberg, Christoph Benedikt] Hosp Braunschweig, Emergency Dept, Braunschweig, Germany; [Valtin, Christina; Fuge, Jan; Welte, Tobias; Gottlieb, Jens] Hannover Med Sch, Dept Resp Med, Hannover, Germany; [Fuge, Jan; Fuehner, Thomas; Welte, Tobias; Gottlieb, Jens] German Ctr Lung Res DZL, Hannover, Germany; [Logemann, Frank] Hannover Med Sch, Dept Anaesthesiol &amp; Intens Care Med, Hannover, Germany; [Fuehner, Thomas] Hosp Siloah, Dept Resp &amp; Intens Care Med, Hannover, Germany</Address>
+    <Abstract>Background: Bronchoscopy is widely used and regarded as standard of care in most intensive care units (ICUs). Data concerning recommendations for on-call bronchoscopy are lacking. Objectives: Evaluation of recommendations, complications, and outcome of on-call bronchoscopies. Method: A retrospective single-centre analysis was conducted in a large university hospital. All on-call bronchoscopies performed outside normal working hours in the year before (period 1) and after (period 2) establishing a catalogue of recommendations for indications of on-call bronchoscopy on November 1, 2016, were included. Results: Overall, 924 bronchoscopies in 538 patients were analysed. A relative reduction of 83.6% from 794 bronchoscopies in 432 patients (1.84 per patient) during period 1 to 130 in 107 patients (1.21 per patient) during period 2 was observed. Most bronchoscopies (812/924, 87.9%) were performed in ICUs, and 416 patients (77.3%) were intubated. Bronchoscopies for excessive secretions decreased significantly during period 2. Fifty-three of 130 bronchoscopies (40.8%) fulfilled the specified recommendations during period 2, in comparison with 16.8% in period 1 (p &lt; 0.001). Complications were recorded in 58 of 924 procedures (6.3%) and were more frequent in period 2, especially moderate bleeding. In-hospital mortality of patients undergoing on-call bronchoscopy did not differ between periods and was 28.7 and 30.2% in periods 1 and 2, respectively. Conclusion: The introduction of recommendations for on-call bronchoscopy led to a significant decline of on-call bronchoscopies without negatively affecting outcome. More evidence is needed in on-call bronchoscopy, especially for ICU patients with intrinsic higher complication rates.</Abstract>
+    <DOI>10.1159/000515134</DOI>
+    <URL>https://doi.org/10.1159/000515134</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

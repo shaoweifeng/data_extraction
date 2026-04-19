@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Early administration of COVID-19 convalescent plasma with high titer antibody content by live viral neutralization assay is associated with modest clinical efficacy</Title>
+    <Authors>
+      <Author>Belov, A</Author>
+      <Author>Huang, Y</Author>
+      <Author>Villa, CH</Author>
+      <Author>Whitaker, B</Author>
+      <Author>Forshee, R</Author>
+      <Author>Anderson, SA</Author>
+      <Author>Eder, A</Author>
+      <Author>Verdun, N</Author>
+      <Author>Joyner, MJ</Author>
+      <Author>Wright, SR</Author>
+      <Author>Carter, RE</Author>
+      <Author>Hung, DT</Author>
+      <Author>Homer, M</Author>
+      <Author>Hoffman, C</Author>
+      <Author>Lauer, M</Author>
+      <Author>Marks, P</Author>
+    </Authors>
+    <Journal>AMERICAN JOURNAL OF HEMATOLOGY</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>97</Volume>
+    <Issue>6</Issue>
+    <Page>770-779</Page>
+    <Date>JUN 1 2022</Date>
+    <Address>[Belov, Artur; Huang, Yin; Villa, Carlos H.; Whitaker, Barbee, I; Forshee, Richard; Anderson, Steven A.; Eder, Anne; Verdun, Nicole; Marks, Peter] US FDA, Ctr Biol Evaluat &amp; Res, Silver Spring, MD 20993 USA; [Joyner, Michael J.] Mayo Clin, Dept Anesthesiol &amp; Perioperat Med, Rochester, MN USA; [Wright, Scott R.] Mayo Clin, Dept Cardiol, Rochester, MN USA; [Wright, Scott R.] Mayo Clin, Human Res Protect Program, Rochester, MN USA; [Carter, Rickey E.] Mayo Clin, Dept Quantitat Hlth Sci, Jacksonville, FL 32224 USA; [Hung, Deborah T.; Broad Inst COVID-19 Antibody Team] Broad Inst, Infect Dis &amp; Microbiome Program, Cambridge, MA USA; [Homer, Mary; Hoffman, Corey] Biomed Adv Res &amp; Dev Author BARDA, Washington, DC USA; [Lauer, Michael] NIH, Off Director, Bethesda, MD 20892 USA</Address>
+    <Abstract>The efficacy of COVID-19 convalescent plasma (CCP) as a treatment for hospitalized patients with COVID-19 remains somewhat controversial; however, many studies have not evaluated CCP documented to have high neutralizing antibody titer by a highly accurate assay. To evaluate the correlation of the administration of CCP with titer determined by a live viral neutralization assay with 7- and 28-day death rates during hospitalization, a total of 23 118 patients receiving a single unit of CCP were stratified into two groups: those receiving high titer CCP (&gt;250 50% inhibitory dilution, ID50; n = 13 636) or low titer CCP (&lt;= 250 ID50; n = 9482). Multivariable Cox regression was performed to assess risk factors. Non-intubated patients who were transfused with high titer CCP showed 1.1% and 1.7% absolute reductions in overall 7- and 28-day death rates, respectively, compared to those non-intubated patients receiving low titer CCP. No benefit of CCP was observed in intubated patients. The relative benefit of high titer CCP was confirmed in multivariable Cox regression. Administration of CCP with high titer antibody content determined by live viral neutralization assay to non-intubated patients is associated with modest clinical efficacy. Although shown to be only of modest clinical benefit, CCP may play a role in the future should viral variants develop that are not neutralized by other available therapeutics.</Abstract>
+    <DOI>10.1002/ajh.26531</DOI>
+    <URL>https://doi.org/10.1002/ajh.26531</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

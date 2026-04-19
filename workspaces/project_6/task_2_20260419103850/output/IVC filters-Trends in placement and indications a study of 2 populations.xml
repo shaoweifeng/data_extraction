@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>IVC filters-Trends in placement and indications, a study of 2 populations</Title>
+    <Authors>
+      <Author>Shah, M</Author>
+      <Author>Alnabelsi, T</Author>
+      <Author>Patil, S</Author>
+      <Author>Reddy, S</Author>
+      <Author>Patel, B</Author>
+      <Author>Lu, M</Author>
+      <Author>Chandorkar, A</Author>
+      <Author>Perelas, A</Author>
+      <Author>Arora, S</Author>
+      <Author>Patel, N</Author>
+      <Author>Jacobs, L</Author>
+      <Author>Eiger, GG</Author>
+    </Authors>
+    <Journal>MEDICINE</Journal>
+    <Year>2017</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>96</Volume>
+    <Issue>12</Issue>
+    <Date>MAR 2017</Date>
+    <Address>[Shah, Mahek; Patel, Brijesh; Jacobs, Larry] Lehigh Valley Hosp, Dept Cardiol, Allentown, PA USA; [Alnabelsi, Talal; Patil, Shantanu; Lu, Marvin; Chandorkar, Aditya; Perelas, Apostholos] Einstein Med Ctr, Dept Med, Philadelphia, PA USA; [Reddy, Shilpa] Einstein Med Ctr, Dept Radiol, Philadelphia, PA USA; [Patel, Nilay] Mt Sinai St Lukes Roosevelt Hosp, New Brunswick, NJ USA; [Eiger, Glenn G.] Einstein Med Ctr, Div Pulm &amp; Crit Care, Philadelphia, PA USA; [Patel, Nilay] St Peters Univ Hosp, New Brunswick, NJ USA</Address>
+    <Abstract>Inferior vena cava filter (IVCF) placement appears to be expanding over time despite absence of clear directing evidence.Two populations were studied. The first population included patients who received an IVCF between January 2005 and August 2013 at our community hospital center. Demographic information, indications for placement, and retrieval rate was recorded among other variables. The second population comprised of patients receiving an IVCF from 2005 to 2012 according to the Nationwide Inpatient Sample (NIS) using ICD-9CM coding. Patients were divided into 2 groups based on the year of admission for comparison, that is, first group from 2005 to 2008 and the second from 2009 to 2012. In addition, we analyzed annual trends in filter placement, acute venothromboembolic events (VTE) and several underlying comorbidities within this population.At our center, 802 IVCFs were placed (55.2% retrievable); 34% for absolute, 61% for relative, and 5% for prophylactic indications. Major bleeding (27.5%), minor self- limited bleeding (13.7%), and fall history (11.2%) were the commonest indications. Periprocedural complication rate was 0.7%, and filter retrieval rate was 7%. The NIS population (811,487 filters) saw a decline in IVCF placement after year 2009, following an initial uptrend (Ptrend&lt; 0.01). IVCF use among patients with neither acute VTE nor bleeding among prior VTE saw a 3-fold absolute reduction from 2005 to 2012 (33,075-11,655; Ptrend&lt; 0.01). Patients from 2009 to 2012 were more likely to be male and had higher rates of acute VTE, thrombolytic use, cancer, bleeding, hypotension, acute cardiorespiratory failure, shock, prior falls, blood product transfusion, hospital mortality including higher Charlson comorbidity scores. The patients were younger, had shorter length of stay, and were less likely to be associated with strokes including hemorrhagic or require ventilator support. Prior falls (adjusted odds ratio-aOR 2.8), thrombolytic use (aOR 1.76), and shock (aOR 1.45) were most predictive of IVCF placement between 2009 and 2012 on regression analysis.Recent trends suggest that a higher proportion of patients receive temporary IVCF, for predominantly relative indications. Nationally, the number of filters being placed is decreasing, especially among those who did not experience acute VTE or bleeding events. Prior falls, thrombolytic therapy, and shock were most predictive of IVCF placement in latter half of the study period.</Abstract>
+    <DOI>10.1097/MD.0000000000006449</DOI>
+    <URL>https://doi.org/10.1097/MD.0000000000006449</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

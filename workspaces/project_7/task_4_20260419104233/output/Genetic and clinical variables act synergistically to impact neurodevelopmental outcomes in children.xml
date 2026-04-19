@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Genetic and clinical variables act synergistically to impact neurodevelopmental outcomes in children with single ventricle heart disease</Title>
+    <Authors>
+      <Author>Miller, TA</Author>
+      <Author>Hernandez, EJ</Author>
+      <Author>Gaynor, JW</Author>
+      <Author>Russell, MW</Author>
+      <Author>Newburger, JW</Author>
+      <Author>Chung, WY</Author>
+      <Author>Goldmuntz, E</Author>
+      <Author>Cnota, JF</Author>
+      <Author>Zyblewski, SC</Author>
+      <Author>Mahle, WT</Author>
+      <Author>Zak, V</Author>
+      <Author>Ravishankar, C</Author>
+      <Author>Kaltman, JR</Author>
+      <Author>Mccrindle, BW</Author>
+      <Author>Clarke, S</Author>
+      <Author>Votava-Smith, JK</Author>
+      <Author>Graham, EM</Author>
+      <Author>Seed, M</Author>
+      <Author>Rudd, N</Author>
+      <Author>Bernstein, D</Author>
+      <Author>Lee, TM</Author>
+      <Author>Yandell, M</Author>
+      <Author>Tristani-Firouzi, M</Author>
+    </Authors>
+    <Journal>COMMUNICATIONS MEDICINE</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>3</Volume>
+    <Issue>1</Issue>
+    <Date>SEP 27 2023</Date>
+    <Address>[Miller, Thomas A.] Maine Med Ctr, Dept Pediat, Portland, ME 04102 USA; [Hernandez, Edgar J.; Yandell, Mark] Univ Utah, Dept Human Genet, Salt Lake City, UT 84112 USA; [Hernandez, Edgar J.; Yandell, Mark] Univ Utah, Utah Ctr Genet Discovery, Salt Lake City, UT 84112 USA; [Gaynor, J. William] Childrens Hosp Philadelphia, Dept Surg, Philadelphia, PA USA; [Gaynor, J. William] Univ Penn, Perelman Sch Med, Philadelphia, PA USA; [Russell, Mark W.] Univ Michigan, Dept Pediat, Ann Arbor, MI USA; [Newburger, Jane W.] Harvard Med Sch, Boston Childrens Hosp, Dept Cardiol, Dept Pediat, Boston, MA USA; [Chung, Wendy; Lee, Teresa M.] Columbia Univ, Dept Med, New York, NY USA; [Chung, Wendy; Lee, Teresa M.] Columbia Univ, Dept Pediat, New York, NY USA; [Goldmuntz, Elizabeth; Ravishankar, Chitra] Univ Penn, Childrens Hosp Philadelphia, Perelman Sch Med, Div Cardiol,Dept Pediat, Philadelphia, PA USA; [Cnota, James F.] Cincinnati Childrens Hosp, Heart Inst, Cincinnati, OH USA; [Zyblewski, Sinai C.; Graham, Eric M.] Med Univ South Carolina, Dept Pediat, Charleston, SC USA; [Mahle, William T.] Childrens Healthcare Atlanta, Atlanta, GA USA; [Zak, Victor] Healthcore, Watertown, MA USA; [Kaltman, Jonathan R.] Childrens Natl Hosp, Div Cardiol, Washington, DC USA; [Mccrindle, Brian W.] Univ Toronto, Hosp Sick Children, Labatt Family Heart Ctr, Dept Pediat, Toronto, ON, Canada; [Clarke, Shanelle] Emory Univ, Sch Med, Dept Pediat, Atlanta, GA USA; [Votava-Smith, Jodie K.] Childrens Hosp Los Angeles, Dept Pediat, Los Angeles, CA USA; [Rudd, Nancy] Med Coll Wisconsin, Dept Pediat, Milwaukee, WI USA; [Bernstein, Daniel] Stanford Univ, Sch Med, Stanford, CA USA; [Tristani-Firouzi, Martin] Univ Utah, Dept Pediat, Salt Lake City, UT 84112 USA</Address>
+    <Abstract>BackgroundRecent large-scale sequencing efforts have shed light on the genetic contribution to the etiology of congenital heart defects (CHD); however, the relative impact of genetics on clinical outcomes remains less understood. Outcomes analyses using genetics are complicated by the intrinsic severity of the CHD lesion and interactions with conditionally dependent clinical variables.MethodsBayesian Networks were applied to describe the intertwined relationships between clinical variables, demography, and genetics in a cohort of children with single ventricle CHD.ResultsAs isolated variables, a damaging genetic variant in a gene related to abnormal heart morphology and prolonged ventilator support following stage I palliative surgery increase the probability of having a low Mental Developmental Index (MDI) score at 14 months of age by 1.9- and 5.8-fold, respectively. However, in combination, these variables act synergistically to further increase the probability of a low MDI score by 10-fold. The absence of a damaging variant in a known syndromic CHD gene and a shorter post-operative ventilator support increase the probability of a normal MDI score 1.7- and 2.4-fold, respectively, but in combination increase the probability of a good outcome by 59-fold.ConclusionsOur analyses suggest a modest genetic contribution to neurodevelopmental outcomes as isolated variables, similar to known clinical predictors. By contrast, genetic, demographic, and clinical variables interact synergistically to markedly impact clinical outcomes. These findings underscore the importance of capturing and quantifying the impact of damaging genomic variants in the context of multiple, conditionally dependent variables, such as pre- and post-operative factors, and demography.Single ventricle congenital heart disease is a birth defect. In these children, the heart has only one effective blood-pumping chamber instead of two. Surgery can reroute the blood to use only one chamber, but multiple risk factors influence how well a child develops afterwards. Studying these risk factors can be challenging because they are interconnected, i.e. children with a genetic birth defect may be more likely to have a lower birthweight, and hence more likely to spend longer in hospital after surgery. Here, we used a statistical approach not commonly applied to study congenital heart disease and describe that whether a genetic variant (a small difference in a child's DNA) is important for how a child with single ventricle heart disease develops and grows after surgery depends on the presence of other risk factors.Miller, Hernandez et al. demonstrate a modest genetic contribution to neurodevelopmental and growth outcomes in single ventricle heart disease, and a markedly synergistic effect of genetic, demographic, and clinical variables. This shows the importance of quantifying the impact of genomic variants in the context of conditionally dependent variables.</Abstract>
+    <DOI>10.1038/s43856-023-00361-2</DOI>
+    <URL>https://doi.org/10.1038/s43856-023-00361-2</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

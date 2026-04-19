@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Model-based assessment of autonomic control in obstructive sleep apnea syndrome during sleep</Title>
+    <Authors>
+      <Author>Jo, JA</Author>
+      <Author>Blasi, A</Author>
+      <Author>Valladares, E</Author>
+      <Author>Juarez, R</Author>
+      <Author>Baydur, A</Author>
+      <Author>Khoo, MCK</Author>
+    </Authors>
+    <Journal>AMERICAN JOURNAL OF RESPIRATORY AND CRITICAL CARE MEDICINE</Journal>
+    <Year>2003</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>167</Volume>
+    <Issue>2</Issue>
+    <Page>128-136</Page>
+    <Date>JAN 15 2003</Date>
+    <Address>Univ So Calif, Dept Biomed Engn, Los Angeles, CA 90080 USA; Univ So Calif, Dept Med, Los Angeles, CA 90080 USA</Address>
+    <Abstract>Respiration, R-R interval, blood pressure, and other polysomnographic variables were recorded in eight normal subjects and nine patients with untreated obstructive sleep apnea syndrome in wakefulness and sleep. To increase respiratory and cardiovascular variability, a computer-controlled ventilator delivered randomly modulated inspiratory pressures that were superimposed on a baseline continuous positive airway pressure. A mathematical model allowed heart rate variability to be partitioned into a component mediated by respiratory-cardiac coupling and one mediated by the baroreflexes. Respiratory-cardiac coupling gain was lower in patients versus normal subjects (36.9 +/- 3.3 versus 66.1 +/- 5.6 milliseconds L-1, p &lt; 0.03). Baroreflex gain inpatients was also depressed relative to normal subjects (2.3 +/- 0.4 versus 4.9 +/- 0.7 milliseconds mm Hg-1; p &lt; 0.02). Baroreflex gain increased two- to threefold from wakefulness to sleep in normal subjects, but was relatively unaffected by state change in patients. Along with results derived from spectral analysis of cardiovascular variability, these findings confirm previous reports that obstructive sleep apnea syndrome is associated with reduced parasympathetic and elevated sympathetic activity. The model-based approach provides a more precise characterization of heart rate variability that can be employed in conjunction with spectral analysis for the noninvasive detection and assessment of autonomic cardiovascular abnormality in obstructive sleep apnea syndrome.</Abstract>
+    <DOI>10.1164/rccm.200202-096OC</DOI>
+    <URL>https://doi.org/10.1164/rccm.200202-096OC</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

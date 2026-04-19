@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>CURB-65 and other markers of illness severity in community-acquired pneumonia among HIV-positive patients</Title>
+    <Authors>
+      <Author>Almeida, A</Author>
+      <Author>Almeida, AR</Author>
+      <Author>Branco, SC</Author>
+      <Author>Vesza, Z</Author>
+      <Author>Pereira, R</Author>
+    </Authors>
+    <Journal>INTERNATIONAL JOURNAL OF STD &amp; AIDS</Journal>
+    <Year>2016</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>27</Volume>
+    <Issue>11</Issue>
+    <Page>998-1004</Page>
+    <Date>OCT 2016</Date>
+    <Address>[Almeida, Andre; Branco, Sara Castelo; Vesza, Zsofia] Hosp Santa Marta, Cent Lisbon Hosp Ctr, Dept Internal Med 4, Lisbon, Portugal; [Almeida, Andre; Branco, Sara Castelo; Vesza, Zsofia] Univ Nova Lisboa, NOVA Med Sch, Lisbon, Portugal; [Almeida, Ana Rita] Higher Inst Appl Psychol ISPA, Psychol &amp; Hlth Res Unit, Lisbon, Portugal; [Pereira, Rui] Hosp Curry Cabral, Cent Lisbon Hosp Ctr, Intens Care Unit 7, Lisbon, Portugal</Address>
+    <Abstract>As the relative burden of community-acquired bacterial pneumonia among HIV-positive patients increases, adequate prediction of case severity on presentation is crucial. We sought to determine what characteristics measurable on presentation are predictive of worse outcomes. We studied all admissions for community-acquired bacterial pneumonia over one year at a tertiary centre. Patient demographics, comorbidities, HIV-specific markers and CURB-65 scores on Emergency Department presentation were reviewed. Outcomes of interest included mortality, bacteraemia, intensive care unit admission and orotracheal intubation. A total of 396 patients were included: 49 HIV-positive and 347 HIV-negative. Mean CURB-65 score was 1.3 for HIV-positive and 2.2 for HIV-negative patients (p&lt;0.0001), its predictive value for mortality being maintained in both groups (p=0.03 and p&lt;0.001, respectively). Adjusting for CURB-65 scores, HIV infection by itself was only associated with bacteraemia (adjusted odds ratio [AOR] 7.1, 95% CI [2.6-19.5]). Patients with&lt;200 CD4 cells/mu L presented similar CURB-65 adjusted mortality (aOR 1.7, 95% CI [0.2-15.2]), but higher risk of intensive care unit admission (aOR 5.7, 95% CI [1.5-22.0]) and orotracheal intubation (aOR 9.1, 95% CI [2.2-37.1]), compared to HIV-negative patients. These two associations were not observed in the&gt;200 CD4 cells/mu L subgroup (aOR 2.2, 95% CI [0.7-7.6] and aOR 0.8, 95% CI [0.1-6.5], respectively). Antiretroviral therapy and viral load suppression were not associated with different outcomes (p&gt;0.05). High CURB-65 scores and CD4 counts&lt;200 cells/mu L were both associated with worse outcomes. Severity assessment scales and CD4 counts may both be helpful in predicting severity in HIV-positive patients presenting with community-acquired bacterial pneumonia.</Abstract>
+    <DOI>10.1177/0956462415605232</DOI>
+    <URL>https://doi.org/10.1177/0956462415605232</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

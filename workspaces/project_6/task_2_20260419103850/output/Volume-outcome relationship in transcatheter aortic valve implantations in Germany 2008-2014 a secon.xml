@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Volume-outcome relationship in transcatheter aortic valve implantations in Germany 2008-2014: a secondary data analysis of electronic health records</Title>
+    <Authors>
+      <Author>Kaier, K</Author>
+      <Author>Oettinger, V</Author>
+      <Author>Reinecke, H</Author>
+      <Author>Schmoor, C</Author>
+      <Author>Frankenstein, L</Author>
+      <Author>Vach, W</Author>
+      <Author>Hehn, P</Author>
+      <Author>von zur Mühlen, C</Author>
+      <Author>Bode, C</Author>
+      <Author>Zehender, M</Author>
+      <Author>Reinöhl, J</Author>
+    </Authors>
+    <Journal>BMJ OPEN</Journal>
+    <Year>2018</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>8</Volume>
+    <Issue>7</Issue>
+    <Date>SEP 2018</Date>
+    <Address>[Kaier, Klaus; Vach, Werner; Hehn, Philip] Univ Freiburg, Fac Med, Inst Med Biometry &amp; Stat, Freiburg, Germany; [Kaier, Klaus; Vach, Werner; Hehn, Philip] Univ Freiburg, Med Ctr, Freiburg, Germany; [Kaier, Klaus; Oettinger, Vera; von zur Muehlen, Constantin; Bode, Christoph; Zehender, Manfred; Reinoehl, Jochen] Freiburg Univ, Ctr Heart, Dept Cardiol &amp; Angiol 1, Freiburg, Germany; [Reinecke, Holger] Univ Hosp Muenster, Dept Cardiovasc Med, Div Vasc Med, Munster, Germany; [Schmoor, Claudia] Univ Freiburg, Med Ctr, Clin Trials Unit, Freiburg, Germany; [Frankenstein, Lutz] Heidelberg Univ, Dept Cardiol, Angiol, Pulmonol, Heidelberg, Germany; [Vach, Werner] Univ Hosp Basel, Dept Orthopaed &amp; Traumatol, Basel, Switzerland</Address>
+    <Abstract>Objectives We examine the volume-outcome relationship in isolated transcatheter aortic valve implantations (TAVI). Our interest was whether the volume-outcome relationship for TAVI exists on the centre level, whether it occurs equally for different outcomes and how it develops over time.Design Secondary data analysis of electronic health records. The comprehensive German Federal Bureau of Statistics Diagnosis Related Groups database was queried for data on all isolated TAVI procedures performed in Germany between 2008 and 2014. Logistic and linear regression analyses were carried out. Risk adjustment was applied using a predefined set of patient characteristics to account for differences in the risk factor composition of the patient populations between centres and over time. Centres performing TAVI were stratified into groups performing &lt;50, 50-99 and &gt;= 100 procedures per year.Setting Germany 2008-2014.Participants All patients undergoing isolated TAVI in the observation period.Interventions None.Primary and secondary outcome measures In-hospital mortality, bleeding, stroke, probability of ventilation &gt;48 hours, length of hospital stay and reimbursement.Results Between 2008 and 2014, a total of 43 996 TAVI procedures were performed in 113 different centres in Germany with a total of 2532 cases of in-hospital mortality. Risk-adjusted in-hospital mortality decreases over the years and is lower the higher the annual procedure volume at the centre is. The magnitude of the latter effect declines over the observation period. Our results indicate a ceiling effect in the volume-outcome relationship: the volume-outcome relationship is eminent in circumstances of relatively unfavourable outcomes. Alongside improving outcomes, however, the volume-outcome relationship decreases. Also, a volume-outcome relationship seems to be absent in circumstances of constantly low event rates.Conclusions The hypothesised volume-outcome relationship for TAVI exists but diminishes and may disappear over time. This should be taken into account when considering mandatory minimum thresholds.</Abstract>
+    <DOI>10.1136/bmjopen-2017-020204</DOI>
+    <URL>https://doi.org/10.1136/bmjopen-2017-020204</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

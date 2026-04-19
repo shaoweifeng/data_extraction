@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Hepatorenal dysfunction predicts operative mortality after triple valve surgery: Utility of MELD-Na</Title>
+    <Authors>
+      <Author>Lim, K</Author>
+      <Author>Chow, SCY</Author>
+      <Author>Ho, JYK</Author>
+      <Author>Wan, S</Author>
+      <Author>Underwood, MJ</Author>
+      <Author>Wong, RHL</Author>
+    </Authors>
+    <Journal>JOURNAL OF CARDIAC SURGERY</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>36</Volume>
+    <Issue>9</Issue>
+    <Page>3112-3118</Page>
+    <Date>SEP 2021</Date>
+    <Address>[Lim, Kevin; Chow, Simon Chi Ying; Ho, Jacky Yan Kit; Wan, Song; Underwood, Malcolm John; Wong, Randolph Hung Leung] Prince Wales Hosp, Div Cardiothorac Surg, Hong Kong, Peoples R China</Address>
+    <Abstract>Background Despite significant advancements in operative techniques and myocardial protection, triple valve surgery (TVS) remains a formidable operation with a relatively high in-hospital mortality. We evaluated the prognostic value of Model for End-stage Liver Disease score including sodium (MELD-Na) for mortality after TVS and its predictive value when incorporated in the EuroSCORE risk model.Methods We performed a retrospective cohort study of 61 consecutive patients who underwent TVS from November 2005 to June 2016. Demographics, clinical, biochemical, and operative data were collected and analyzed.Results Median follow-up duration was 8.0 years. The majority (70.5%) of patients suffered from rheumatic heart disease and underwent mechanical double valve replacement with tricuspid valve repair. There were six operative deaths (9.84%), with the most common cause of death being multiorgan failure (83.3%). In 26.2% of the cohort, the MELD-Na score was moderately elevated at 9 to 15. A small fraction (4.9%) had a severely elevated MELD-Na greater than 15. Patients with a MELD-Na greater than 9 had a higher unadjusted rate of operative mortality, prolonged ventilation, need for dialysis and acute liver failure after TVS. Hierarchical logistic regression was performed using logistic EuroSCORE as the base model. After risk adjustment, each point of MELD-Na score increase was associated with 1.405 times increase in odds of operative mortality. The regression analysis was repeated by incorporating individual components of the MELD-Na score, including bilirubin, sodium, and albumin. All three biochemical parameters were significantly associated with operative mortalityConclusion MELD-Na score as a quantifier of hepatorenal dysfunction is sensitive and specific for operative mortality after triple valve surgery.</Abstract>
+    <DOI>10.1111/jocs.15745</DOI>
+    <URL>https://doi.org/10.1111/jocs.15745</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

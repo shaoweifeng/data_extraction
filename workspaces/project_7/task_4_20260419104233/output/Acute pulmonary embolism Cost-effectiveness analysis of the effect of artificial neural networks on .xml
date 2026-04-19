@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Acute pulmonary embolism: Cost-effectiveness analysis of the effect of artificial neural networks on patient care</Title>
+    <Authors>
+      <Author>Tourassi, GD</Author>
+      <Author>Floyd, CE</Author>
+      <Author>Coleman, RE</Author>
+    </Authors>
+    <Journal>RADIOLOGY</Journal>
+    <Year>1998</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>206</Volume>
+    <Issue>1</Issue>
+    <Page>81-88</Page>
+    <Date>JAN 1998</Date>
+    <Address>Duke Univ, Med Ctr, Dept Radiol, Durham, NC 27710 USA; Univ Louisville Hosp, Dept Diagnost Radiol, Louisville, KY USA; Duke Univ, Med Ctr, Dept Biomed Engn, Durham, NC USA</Address>
+    <Abstract>PURPOSE: To evaluate the cost-effectiveness of artificial neural networks for diagnosis inpatients suspected of having acute pulmonary embolism who are typically referred for pulmonary angiography.MATERIALS AND METHODS: Four diagnostic strategies were explored to help define the diagnostic role of neural networks in patients suspected of having pulmonary embolism in whom nondiagnostic ventilation-perfusion lung scans were obtained. First, a network was used to determine which patients could be directly referred for treatment without angiography. Second, the network was applied,to determine in which patients treatment could be withheld. Third, the network was used:to distinguish patients in whom the network gave indeterminate responses and who should proceed to angiography. Each strategy was compared with use of angiography in terms of morbidity, mortality, and cost per life saved.RESULTS-The use of the neural network reduced the average cost per patient by more than one-half relative to the cost of angiography. Morbidity and mortality rates were also comparable to or lower than those associated with angiography. The results were consistent regardless of the prevalence of disease,CONCLUSION: The use of neural networks in the diagnosis:of pulmonary embolism is a promising way to improve cost-effectiveness in:the care of patients with nondiagnostic lung scans.</Abstract>
+    <DOI>10.1148/radiology.206.1.9423655</DOI>
+    <URL>https://doi.org/10.1148/radiology.206.1.9423655</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

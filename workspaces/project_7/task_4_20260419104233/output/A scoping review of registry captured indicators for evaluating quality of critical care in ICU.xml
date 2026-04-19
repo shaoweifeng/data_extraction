@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>A scoping review of registry captured indicators for evaluating quality of critical care in ICU</Title>
+    <Authors>
+      <Author>Jawad, I</Author>
+      <Author>Rashan, S</Author>
+      <Author>Sigera, C</Author>
+      <Author>Salluh, J</Author>
+      <Author>Dondorp, AM</Author>
+      <Author>Haniffa, R</Author>
+      <Author>Beane, A</Author>
+    </Authors>
+    <Journal>JOURNAL OF INTENSIVE CARE</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>9</Volume>
+    <Issue>1</Issue>
+    <Date>AUG 5 2021</Date>
+    <Address>[Jawad, Issrah; Rashan, Sumayyah; Sigera, Chathurani] Natl Intens Care Surveillance MORU, Colombo 08, Western Provinc, Sri Lanka; [Salluh, Jorge] DOr Inst Res &amp; Educ, Dept Crit Care, Rio De Janeiro, Brazil; [Salluh, Jorge] DOr Inst Res &amp; Educ, Grad Program Translat Med, Rio De Janeiro, Brazil; [Dondorp, Arjen M.; Haniffa, Rashan; Beane, Abi] Mahidol Oxford Trop Med Res Unit, Crit Care, Bangkok 10400, Cent Thailand, Thailand; [Dondorp, Arjen M.; Haniffa, Rashan; Beane, Abi] Univ Oxford, Nuffield Dept Clin Med, Oxford, England</Address>
+    <Abstract>Background Excess morbidity and mortality following critical illness is increasingly attributed to potentially avoidable complications occurring as a result of complex ICU management (Berenholtz et al., J Crit Care 17:1-2, 2002; De Vos et al., J Crit Care 22:267-74, 2007; Zimmerman J Crit Care 1:12-5, 2002). Routine measurement of quality indicators (QIs) through an Electronic Health Record (EHR) or registries are increasingly used to benchmark care and evaluate improvement interventions. However, existing indicators of quality for intensive care are derived almost exclusively from relatively narrow subsets of ICU patients from high-income healthcare systems. The aim of this scoping review is to systematically review the literature on QIs for evaluating critical care, identify QIs, map their definitions, evidence base, and describe the variances in measurement, and both the reported advantages and challenges of implementation. Method We searched MEDLINE, EMBASE, CINAHL, and the Cochrane libraries from the earliest available date through to January 2019. To increase the sensitivity of the search, grey literature and reference lists were reviewed. Minimum inclusion criteria were a description of one or more QIs designed to evaluate care for patients in ICU captured through a registry platform or EHR adapted for quality of care surveillance. Results The search identified 4780 citations. Review of abstracts led to retrieval of 276 full-text articles, of which 123 articles were accepted. Fifty-one unique QIs in ICU were classified using the three components of health care quality proposed by the High Quality Health Systems (HQSS) framework. Adverse events including hospital acquired infections (13.7%), hospital processes (54.9%), and outcomes (31.4%) were the most common QIs identified. Patient reported outcome QIs accounted for less than 6%. Barriers to the implementation of QIs were described in 35.7% of articles and divided into operational barriers (51%) and acceptability barriers (49%). Conclusions Despite the complexity and risk associated with ICU care, there are only a small number of operational indicators used. Future selection of QIs would benefit from a stakeholder-driven approach, whereby the values of patients and communities and the priorities for actionable improvement as perceived by healthcare providers are prioritized and include greater focus on measuring discriminable processes of care.</Abstract>
+    <DOI>10.1186/s40560-021-00556-6</DOI>
+    <URL>https://doi.org/10.1186/s40560-021-00556-6</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

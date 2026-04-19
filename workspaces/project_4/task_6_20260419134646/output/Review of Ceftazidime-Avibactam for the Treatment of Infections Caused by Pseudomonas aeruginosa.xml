@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Review of Ceftazidime-Avibactam for the Treatment of Infections Caused by Pseudomonas aeruginosa</Title>
+    <Authors>
+      <Author>Daikos, GL</Author>
+      <Author>da Cunha, CA</Author>
+      <Author>Rossolini, GM</Author>
+      <Author>Stone, GG</Author>
+      <Author>Baillon-Plot, N</Author>
+      <Author>Tawadrous, M</Author>
+      <Author>Irani, P</Author>
+    </Authors>
+    <Journal>ANTIBIOTICS-BASEL</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>10</Volume>
+    <Issue>9</Issue>
+    <Date>SEP 2021</Date>
+    <Address>[Daikos, George L.] Natl &amp; Kapodistrian Univ Athens, Dept Med, Athens 11527, Greece; [da Cunha, Clovis Arns] Hosp Nossa Senhora das Gracas, BR-80810040 Curitiba, Parana, Brazil; [Rossolini, Gian Maria] Univ Florence, Dept Expt &amp; Clin Med, I-50134 Florence, Italy; [Rossolini, Gian Maria] Careggi Univ Hosp, Clin Microbiol &amp; Virol Unit, I-50134 Florence, Italy; [Stone, Gregory G.; Tawadrous, Margaret] Pfizer, Groton, CT 06340 USA; [Baillon-Plot, Nathalie] Pfizer, F-75688 Paris 14, France; [Irani, Paurus] Pfizer, Tadworth KT20 7NS, Surrey, England</Address>
+    <Abstract>Pseudomonas aeruginosa is an opportunistic Gram-negative pathogen that causes a range of serious infections that are often challenging to treat, as this pathogen can express multiple resistance mechanisms, including multidrug-resistant (MDR) and extensively drug-resistant (XDR) phenotypes. Ceftazidime-avibactam is a combination antimicrobial agent comprising ceftazidime, a third-generation semisynthetic cephalosporin, and avibactam, a novel non-beta-lactam beta-lactamase inhibitor. This review explores the potential role of ceftazidime-avibactam for the treatment of P. aeruginosa infections. Ceftazidime-avibactam has good in vitro activity against P. aeruginosa relative to comparator beta-lactam agents and fluoroquinolones, comparable to amikacin and ceftolozane-tazobactam. In Phase 3 clinical trials, ceftazidime-avibactam has generally demonstrated similar clinical and microbiological outcomes to comparators in patients with complicated intra-abdominal infections, complicated urinary tract infections or hospital-acquired/ventilator-associated pneumonia caused by P. aeruginosa. Although real-world data are limited, favourable outcomes with ceftazidime-avibactam treatment have been reported in some patients with MDR and XDR P. aeruginosa infections. Thus, ceftazidime-avibactam may have a potentially important role in the management of serious and complicated P. aeruginosa infections, including those caused by MDR and XDR strains.</Abstract>
+    <DOI>10.3390/antibiotics10091126</DOI>
+    <URL>https://doi.org/10.3390/antibiotics10091126</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

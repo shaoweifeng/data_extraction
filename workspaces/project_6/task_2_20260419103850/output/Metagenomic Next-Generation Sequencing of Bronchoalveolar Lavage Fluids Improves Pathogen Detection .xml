@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Metagenomic Next-Generation Sequencing of Bronchoalveolar Lavage Fluids Improves Pathogen Detection and Antimicrobial Stewardship in Lower Respiratory Tract Infections: A Retrospective Study</Title>
+    <Authors>
+      <Author>Ma, XS</Author>
+      <Author>Zhang, QQ</Author>
+      <Author>Ji, XL</Author>
+      <Author>Xia, Y</Author>
+      <Author>Cao, J</Author>
+      <Author>Xu, XY</Author>
+    </Authors>
+    <Journal>INFECTION AND DRUG RESISTANCE</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>18</Volume>
+    <Page>6611-6632</Page>
+    <Date>2025</Date>
+    <Address>[Ma, Xiangsong; Zhang, Qinqin; Ji, Xuelian; Xia, Yun; Cao, Ju; Xu, Xiuyu] Chongqing Med Univ, Affiliated Hosp 1, Dept Lab Med, 1 Youyi Rd, Chongqing 400016, Peoples R China; [Zhang, Qinqin] Peoples Hosp Mingshan Dist, Dept Lab Med, Yaan 625100, Sichuan, Peoples R China</Address>
+    <Abstract>Purpose: With the advancement of metagenomic next-generation sequencing (mNGS), its role in diagnosing lower respiratory tract infections (LRTIs) has expanded rapidly. LRTIs remain a major global health burden, particularly in critically ill patients where diagnosis is challenging. Routine microbiological testing (RMT), including culture, microscopy, antigen detection, and PCR-are limited by low sensitivity, long turnaround times, and restricted pathogen coverage. This study assesses the diagnostic performance of mNGS in LRTIs, with emphasis on pathogen detection and resistance gene prediction, and compares it with traditional methods to clarify its clinical benefits and limitations. Methods: This retrospective study included 367 hospitalized patients with suspected LRTIs. All patients underwent mNGS testing, which was compared with traditional diagnostic methods. We also used mNGS to explore the pathogen spectrum characteristics in critically ill patients with pneumonia and evaluated its applicability in predicting antimicrobial resistance genes and adjusting antibiotic treatment. Results: For patients diagnosed with LRTIs, mNGS demonstrated superior microbial detection efficacy, particularly for bacteria and fungi, relative to culture (bacteria: 56.58% vs 17.37%, P &lt; 0.0001; fungi: 49.65% vs 16.78%, P &lt; 0.0001) and PCR (65.14% vs 45.14%, P &lt; 0.05). In contrast to the non-severe pneumonia group, the detection rate of Enterococcus faecium was highest in the severe pneumonia group (P &lt; 0.001), and the severe pneumonia group had more mixed infections (P &lt; 0.001). In addition, mNGS showed high accuracy in predicting antibiotic resistance genes, with 90.57% agreement with antibiotic susceptibility testing (AST) results. Based on the mNGS results, 97.82% of patients underwent active adjustment to their antibiotic treatment regimen. Conclusion: mNGS is an effective tool for diagnosing LRTIs, with significantly higher pathogen detection rates than traditional methods. mNGS also demonstrates high accuracy in predicting antimicrobial resistance, providing crucial support for clinical</Abstract>
+    <DOI>10.2147/IDR.S572028</DOI>
+    <URL>https://doi.org/10.2147/IDR.S572028</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

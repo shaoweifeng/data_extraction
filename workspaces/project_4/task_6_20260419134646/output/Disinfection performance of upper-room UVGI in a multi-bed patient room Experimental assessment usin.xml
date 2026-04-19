@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Disinfection performance of upper-room UVGI in a multi-bed patient room: Experimental assessment using equivalent clean airflow</Title>
+    <Authors>
+      <Author>Bang, JI</Author>
+      <Author>Choi, A</Author>
+      <Author>Rim, D</Author>
+      <Author>Sung, M</Author>
+    </Authors>
+    <Journal>JOURNAL OF BUILDING ENGINEERING</Journal>
+    <Year>2026</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>119</Volume>
+    <Date>FEB 1 2026</Date>
+    <Address>[Bang, Jong-Il; Choi, Anseop; Sung, Minki] Sejong Univ, Dept Architectural Engn, Seoul 05006, South Korea; [Rim, Donghyun] Penn State Univ, Dept Architectural Engn, University Pk, PA 16802 USA</Address>
+    <Abstract>Upper-room ultraviolet germicidal irradiation (UR-UVGI) is an established technology for controlling airborne pathogens, and its application has gained renewed attention following the COVID-19 pandemic. In hospital environments, both safety and quantitative performance should be carefully considered. This study experimentally evaluated the effectiveness of UR-UVGI in a full-scale multi-bed patient room using Bacillus subtilis (ATCC 6633) as a surrogate for airborne pathogens. Viable airborne bacteria were cultured and quantified to determine the equivalent air change rate (eACH), which was converted into equivalent clean airflow (ECAi) according to ASHRAE Standard 241. Experiments were conducted under two ventilation rates (2.5 h- 1 and 6.9 h- 1) and three UR-UVGI conditions: 1) OFF, 2) one-lamp, and 3) two-lamps. Considering the effect of UR-UVGI alone, relative improvements were approximately 44 % at 2.5 h- 1 and 26 % at 6.9 h- 1. Using the measured ventilation rates as a baseline, incremental eACH due to UR-UVGI ranged from 2.94 to 2.98 h- 1 at 2.5 h- 1 and 1.43-1.99 h- 1 at 6.9 h- 1. When accounting for total clean-air delivery, the 6.9 h- 1 condition met the ASHRAE 241 criterion, while the 2.5 h- 1 condition showed meaningful improvement and approached the criterion. Overall, these results demonstrate that UR-UVGI can significantly enhance clean-air delivery in under-ventilated patient rooms operating below the ASHRAE Standard 170 minimum requirement for healthcare buildings (&gt;= 4 ACH) and serves as an effective supplementary strategy. In practice, its performance may be further optimized when combined with improved air distribution and filtration.</Abstract>
+    <DOI>10.1016/j.jobe.2026.115233</DOI>
+    <URL>https://doi.org/10.1016/j.jobe.2026.115233</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

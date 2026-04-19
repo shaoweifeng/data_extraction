@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>High-Flow Nasal Cannula Versus Conventional Oxygen Therapy in Patients Undergoing Thoracic Surgery: A Randomized Controlled Trial</Title>
+    <Authors>
+      <Author>Maioli, DT</Author>
+      <Author>Corbellini, LM</Author>
+      <Author>Santos, CL</Author>
+      <Author>Bevilacqua, CT</Author>
+      <Author>Andrade, CF</Author>
+      <Author>Schmidt, AP</Author>
+    </Authors>
+    <Journal>THORACIC CANCER</Journal>
+    <Year>2026</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>17</Volume>
+    <Issue>4</Issue>
+    <Date>FEB 20 2026</Date>
+    <Address>[Maioli, Desire T.; Bevilacqua Filho, Clovis T.; Andrade, Cristiano F.; Schmidt, Andre P.] Univ Fed Rio Grande Sul UFRGS, Fac Med, Programa Posgrad Ciencias Pneumol, Porto Alegre, RS, Brazil; [Maioli, Desire T.; Corbellini, Louise M.; Santos, Cintia L.] Hosp Tacchini, Clin Anestesiol &amp; Tratamento Dor Bento Goncalves, Bento Goncalves, RS, Brazil; [Bevilacqua Filho, Clovis T.; Schmidt, Andre P.] Hosp Clin Porto Alegre HCPA, Serv Anestesia &amp; Med Perioperatoria, Porto Alegre, RS, Brazil; [Schmidt, Andre P.] Univ Fed Rio Grande Sul UFRGS, Fac Med, Programa Posgrad Ciencias Cirurg, Porto Alegre, Rio Grande do S, Brazil; [Schmidt, Andre P.] Univ Fed Rio Grande Sul UFRGS, Dept Bioquim, Inst Ciencias Bas Saude ICBS, Porto Alegre, RS, Brazil; [Schmidt, Andre P.] Univ Fed Ciencias Saude Porto Alegre UFCSPA, Serv Anestesia, Santa Casa Porto Alegre, Porto Alegre, RS, Brazil; [Schmidt, Andre P.] Hosp Nossa Senhora Conceicao, Serv Anestesia, Porto Alegre, RS, Brazil; [Schmidt, Andre P.] Fac Med Univ Sao Paulo FMUSP, Programa Posgrad Anestesiol, Ciencias Cirurg &amp; Med Perioperatoria, Sao Paulo, SP, Brazil</Address>
+    <Abstract>Background and Objective Postoperative pulmonary complications (PPC) are linked to higher morbidity and healthcare costs. High-flow nasal cannula (HFNC) oxygen therapy may mitigate PPC by enhancing oxygenation and easing respiratory effort. This study assessed HFNC's efficacy versus conventional oxygen therapy in reducing PPC during anesthetic induction and extubation in elective thoracic surgery for lung resection.Methods In a single-center randomized clinical trial, 90 patients undergoing elective thoracic surgery were randomized (1:1) to HFNC or conventional oxygen therapy during induction and extubation. The primary outcome was in-hospital PPC incidence within 30 days. Secondary outcomes included intubation hypoxemia, 30-day mortality, and ICU admission. Poisson regression identified PPC predictors.Results PPC rates were 20.0% in the HFNC group and 26.7% in controls (relative risk [RR] 0.75, 95% CI 0.35-1.60, p = 0.455), with no significant difference. Poisson regression revealed independent predictors: chronic obstructive pulmonary disease, preoperative SpO2 &lt;= 94%, surgery &gt; 2 h, and left lung ventilation (p &lt; 0.05). No differences occurred in intubation hypoxemia (0% both groups), 30-day mortality (2.22% HFNC vs. 4.44% controls, p = 0.553), or ICU admission (13.33% HFNC vs. 17.78% controls, p = 0.526). HFNC was well-tolerated without device issues.Conclusion HFNC, applied during intubation and extubation, did not significantly reduce the incidence of PPC or secondary outcomes compared to conventional oxygen therapy in patients undergoing elective thoracic surgery. Further research is needed to explore HFNC's potential in high-risk populations or with optimized protocols, such as extended application periods or varied flow rates, to enhance perioperative respiratory management.</Abstract>
+    <DOI>10.1111/1759-7714.70251</DOI>
+    <URL>https://doi.org/10.1111/1759-7714.70251</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

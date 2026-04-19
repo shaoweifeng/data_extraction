@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The diagnostic value of RNA-mNGS and DNA-mNGS in differentiating bacterial infection from colonization in the lower respiratory tract</Title>
+    <Authors>
+      <Author>Duan, YF</Author>
+      <Author>Li, Q</Author>
+      <Author>Fei, HT</Author>
+      <Author>Song, JF</Author>
+      <Author>Xu, CY</Author>
+    </Authors>
+    <Journal>FRONTIERS IN CELLULAR AND INFECTION MICROBIOLOGY</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>15</Volume>
+    <Date>SEP 9 2025</Date>
+    <Address>[Duan, Yuanfang; Li, Qin; Fei, Haitao; Song, Jiafu] First Peoples Hosp Lianyungang, Dept Resp &amp; Crit Care Med, Lianyungang, Peoples R China; [Xu, Caiyun] First Peoples Hosp Lianyungang, Dept Crit Care Med, Lianyungang, Peoples R China</Address>
+    <Abstract>Background Metagenomic next-generation sequencing(mNGS) has been widely used in the pathogenetic diagnosis of lower respiratory tract infections. However, the interpretation of pathogens detected by mNGS remains inconclusive. Objective Our study aimed to compare the differential diagnostic value of sequencing reads and the relative abundance of bacteria detected by RNA-mNGS versus DNA-mNGS in distinguishing between bacterial infection and colonization in the lower respiratory tract. Methods The hospitalized patients with suspected lower respiratory tract infections who had completed RNA-mNGS and DNA-mNGS testing at our hospital from June 2021 to December 2023 were reviewed and divided into two groups: the infected group and the colonized group, based on their final diagnoses. The Mann-Whitney U test was used to analyze differences in the number of bacterial sequencing reads and relative abundance between the two groups; the predictive capability of bacterial sequencing reads and relative abundance for identifying bacterial infections was evaluated using receiver operating characteristic (ROC) curves. Results A total of 69 eligible patients were enrolled, with 85 detections of the four target bacterial species (Pseudomonas aeruginosa, Acinetobacter baumannii, Klebsiella pneumoniae, and Corynebacterium striatum) identified: 46 in infected patients and 39 in colonized patients. The number of sequencing reads and relative abundance of bacterial RNA and DNA in the pathogenic bacteria were significantly higher than those in the non-pathogenic bacteria (all P-values &lt;0.01). ROC curves were used to evaluate the performance of the sequencing reads and relative abundance of bacterial species in predicting the responsible pathogens. The AUC value for RNA relative abundance was the highest at 0.991 (95% CI: 0.977-1.000, P &lt; 0.001), with a cutoff value of 26.28%, a sensitivity of 0.957, and a specificity of 0.974. In the DNA-mNGS results, the AUC value for the ratio of the sequencing reads between the first and the second ranked bacterial sequences in predicting bacterial infection was [0.835 (95% CI: 0.742-0.928), P &lt; 0.001], and the AUC value for the ratio of relative abundance in predicting bacterial infection was [0.839 (95% CI: 0.749-0.929), P &lt; 0.001)], both having a cutoff value of 47.26, a sensitivity of 0.644 and a specificity of 0.929. Conclusions Bacterial relative abundance and sequencing reads can serve as indicators to distinguish between infection and colonization, and the relative abundance based on RNA-mNGS exhibits the best differential diagnostic performance; when DNA-mNGS results stand alone, the relative abundance of the detected bacteria and the ratio of relative abundance between the first-ranked and the second-ranked detected bacteria can be utilized for a comprehensive assessment of infection versus colonization.</Abstract>
+    <DOI>10.3389/fcimb.2025.1639148</DOI>
+    <URL>https://doi.org/10.3389/fcimb.2025.1639148</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Arterial oxygen saturation during Cheyne-Stokes respiration in heart failure patients: does measurement site matter?</Title>
+    <Authors>
+      <Author>Maestri, R</Author>
+      <Author>Robbi, E</Author>
+      <Author>Lovagnini, M</Author>
+      <Author>Bruschi, C</Author>
+      <Author>La Rovere, MT</Author>
+      <Author>Pinna, GD</Author>
+    </Authors>
+    <Journal>SLEEP MEDICINE</Journal>
+    <Year>2019</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>55</Volume>
+    <Page>6-13</Page>
+    <Date>MAR 2019</Date>
+    <Address>[Maestri, Roberto; Pinna, Gian Domenico] Ist Clin Sci Maugeri IRCCS, Dept Biomed Engn, Pavia, Italy; [Robbi, Elena; Lovagnini, Marta; La Rovere, Maria Teresa] Ist Clin Sci Maugeri IRCCS, Dept Cardiol, Pavia, Italy; [Robbi, Elena; Bruschi, Claudio] Ist Clin Sci Maugeri IRCCS, Dept Pneumol, Pavia, Italy</Address>
+    <Abstract>Objective: Despite the fact that the ear is the site to monitor arterial oxygen saturation by pulse oximetry (SpO2) closest to carotid chemoreceptors, sleep studies almost invariably use finger probes. This study aimed to assess the timing and morphological differences between SpO2 signals at the ear and finger during CheyneeStokes respiration (CSR) in heart failure (HF) patients.Methods: We studied 21 HF patients with CSR during a 40-min in-laboratory resting recording. SpO2 was recorded by: (1) two identical bedside pulse-oximeters with an ear (SpO2_Ear) and a finger probe (SpO2_Finger), and (2) a standard polysomnograph with a finger probe (SpO2_PSG). We estimated the delays between signals and, for each signal, computed the mean and minimum SpO2, the magnitude of cyclic desaturations and the overall time spent with SpO2&lt;90% (T90%).Results: The SpO2_Finger signal was significantly delayed [bias: 12.7 s (95% limits of agreement: 2.2, 23.0 s)] and slightly but not significantly downward-shifted with respect to SpO2_Ear. SpO2_PSG was almost synchronous with SpO2_Finger; however, a further significant downward shift was observed relative to the latter. In particular, minimum SpO2_PSG was significantly lower [-2.1% (-4.8, 0.6%)], and desaturations and T90% were significantly higher than SpO2_Finger [1.2% (-1.3, 3.7%), and 13.9% (-12.3, 40.0%), respectively].Conclusion: During CSR in HF patients, the marked delay between SpO2_Ear and SpO2_Finger makes the interpretation of the timing relationship between peripheral chemoreceptor stimulation and ventilatory events rather difficult. The observed discrepancies between SpO2_PSG and SpO2_Finger, which may be due to differences in the processing of raw SpO2 signals, call for a standardization of processing algorithms. (c) 2018 Elsevier B.V. All rights reserved.</Abstract>
+    <DOI>10.1016/j.sleep.2018.10.043</DOI>
+    <URL>https://doi.org/10.1016/j.sleep.2018.10.043</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

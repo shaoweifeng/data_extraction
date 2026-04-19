@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Association of Discharge Location Following Pediatric Tracheostomy with Social Determinants of Health: A National Analysis</Title>
+    <Authors>
+      <Author>Ramanathan, D</Author>
+      <Author>Bruckman, D</Author>
+      <Author>Appachi, S</Author>
+      <Author>Hopkins, B</Author>
+    </Authors>
+    <Journal>OTOLARYNGOLOGY-HEAD AND NECK SURGERY</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>170</Volume>
+    <Issue>2</Issue>
+    <Page>522-534</Page>
+    <Date>FEB 2024</Date>
+    <Address>[Ramanathan, Diya] Case Western Reserve Univ Sch Med, Sch Med, Cleveland, OH USA; [Bruckman, David] Cleveland Clin, Ctr Populat Hlth Res, Dept Quantitat Hlth Sci, Cleveland, OH USA; [Appachi, Swathi; Hopkins, Brandon] Cleveland Clin, Head &amp; Neck Inst, Cleveland, OH 44103 USA</Address>
+    <Abstract>Objective. To evaluate the breakdown of discharge locations among pediatric tracheostomy patients and determine the impact of demographic variables and social determinants of health.Study Design. Retrospective review of the 2016 and 2019 Healthcare Cost and Utilization Project Kids' Inpatient Database (HCUP KID).Setting. A total of 4000 United States community hospitals, defined as short-term, non-Federal, general, and specialty hospitals.Methods. ICD-10-PCS, ICD-10 CM codes, and HCUP data elements were selected for patients and variables of interest. Bivariate comparisons were performed using Rao-Scott Chi-square tests; significance levels in post hoc pairwise testing were adjusted using Bonferroni adjustment. Multinomial generalized logistic regression models were used to determine the average annual odds ratio (OR) of 3 dispositions at discharge relative to discharge home for self-care.Results. Patients aged 11-17, patients from large metropolitan areas, and patients of &quot;Other&quot; race have an increased odds of discharge to a short- or long-term care facility (all P &lt;.001). Weekend admissions, nonelective admissions, patients in Northeast hospitals, and patients at urban nonteaching hospitals are also more likely to be discharged to a short-or long-term care facility (all P &lt;.001). Mean and median total costs of admission were $424,387 and $243,479, respectively, with a median total charge of $854,499.Conclusion. Among pediatric tracheostomy patients, demographic factors that affect discharge disposition include age, community type, and race, and significant hospital factors include day and type of admission, geographic region, and hospital type. Hospitalizations are associated with high overall costs and charges to the patient, which are increasing over time.</Abstract>
+    <DOI>10.1002/ohn.516</DOI>
+    <URL>https://doi.org/10.1002/ohn.516</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

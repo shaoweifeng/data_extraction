@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Performance of Point-of-Care Ultrasonography in Confirming Feeding Tube Placement in Mechanically Ventilated Patients</Title>
+    <Authors>
+      <Author>Ragunathan, T</Author>
+      <Author>Teo, R</Author>
+      <Author>Yusof, AM</Author>
+      <Author>Mahdi, SNM</Author>
+      <Author>Izaham, A</Author>
+      <Author>Liu, CY</Author>
+      <Author>Budiman, M</Author>
+      <Author>Masri, SNNS</Author>
+      <Author>Rahman, RA</Author>
+    </Authors>
+    <Journal>DIAGNOSTICS</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>13</Volume>
+    <Issue>16</Issue>
+    <Date>AUG 2023</Date>
+    <Address>[Ragunathan, Thanalachumy; Teo, Rufinah; Yusof, Aliza Mohamad; Mahdi, Siti Nidzwani Mohamad; Izaham, Azarinah; Liu, Chian Yong; Budiman, Maryam; Masri, Syarifah Noor Nazihah Sayed; Abdul Rahman, Raha] Univ Kebangsaan Malaysia, Fac Med, Dept Anaesthesiol &amp; Intens Care, Kuala Lumpur 56000, Malaysia</Address>
+    <Abstract>Background: A feeding tube (FT) is routinely placed in critically ill patients, and its correct placement is confirmed with a chest X-ray (CXR), which is considered the gold standard. This study evaluated the diagnostic accuracy of ultrasonography (USG) in verifying FT placement compared to a CXR in an intensive care unit (ICU). Method: This was a prospective single-blind study conducted on patients admitted to the ICU of a tertiary hospital in Malaysia. The FT placements were verified through a fogging test and USG at the neck and subxiphoid points. The results of confirmation of FT placement through USG were compared with those obtained using CXRs. Results: A total of 80 patients were included in this study. The FT positions were accurately confirmed by overall USG assessments in 71 patients. The percentage of FT placements correctly identified by neck USG was 97.5%, while the percentage of those identified by epigastric USG was 75%. The corresponding patients' CXRs confirmed correct FT placement in 76 patients. The overall USG assessment had a sensitivity of 92.11% and specificity of 75%, a positive predictive value of 98.59%, and a negative predictive value of 33.33%. The USG findings also showed a significant association between FT size and BMI. FTs with a size of 14Fr were better visualized (p = 0.008), and negative USG findings had a significantly higher BMI (p &lt; 0.001). Conclusion: USG is a simple, safe, and reliable bedside assessment that offers relatively high sensitivity in confirming correct FT placement in critically ill patients.</Abstract>
+    <DOI>10.3390/diagnostics13162679</DOI>
+    <URL>https://doi.org/10.3390/diagnostics13162679</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

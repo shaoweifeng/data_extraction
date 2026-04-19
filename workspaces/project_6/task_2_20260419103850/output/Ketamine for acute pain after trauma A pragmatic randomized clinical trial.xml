@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Ketamine for acute pain after trauma: A pragmatic, randomized clinical trial</Title>
+    <Authors>
+      <Author>Klugh, JM</Author>
+      <Author>Puzio, TJ</Author>
+      <Author>Wandling, MW</Author>
+      <Author>Guy-Frank, CJ</Author>
+      <Author>Green, C</Author>
+      <Author>Sergot, PB</Author>
+      <Author>Prater, SJ</Author>
+      <Author>Balogh, J</Author>
+      <Author>Stephens, CT</Author>
+      <Author>Wade, CE</Author>
+      <Author>Kao, LS</Author>
+      <Author>Harvin, JA</Author>
+    </Authors>
+    <Journal>JOURNAL OF TRAUMA AND ACUTE CARE SURGERY</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>97</Volume>
+    <Issue>4</Issue>
+    <Page>514-519</Page>
+    <Date>OCT 2024</Date>
+    <Address>[Klugh, James M.; Puzio, Thaddeus J.; Wandling, Michael W.; Guy-Frank, Chelsea J.; Kao, Lillian S.; Harvin, John A.] UTHlth, Dept Surg, McGovern Med Sch, Houston, TX USA; [Green, Charles; Wade, Charles E.] UTHlth, Ctr Translat Injury Res, McGovern Med Sch, Dept Surg, Houston, TX USA; [Sergot, Paulina B.; Prater, Samuel J.] Univ Texas Med Ctr Houston, Dept Emergency Med, Houston, TX USA; [Balogh, Julius] Univ Arkansas Med Sci, Dept Anesthesia, Little Rock, AR USA; [Stephens, Christopher T.] UTHlth, McGovern Med Sch, Dept Anesthesiol, Houston, TX USA</Address>
+    <Abstract>BACKGROUND: Non-narcotic intravenous medications may be a beneficial adjunct to oral multimodal pain regimens (MMPRs) which reduce but do not eliminate opioid exposure and prescribing after trauma. We hypothesized that the addition of a subdissociative ketamine infusion (KI) to a standardized oral MMPR reduces inpatient opioid exposure.METHODS: Eligible adult trauma patients admitted to the intermediate or intensive care unit were randomized upon admission to our institutional MMPR per usual care (UC) or UC plus subdissociative KI for 24 hours to 72 hours after arrival. The primary outcome was morphine milligram equivalents per day (MME/d) and secondary outcomes included total MME, discharge with an opioid prescription (OP%), and rates of ketamine side effects. Bayesian posterior probabilities (pp) were calculated using neutral priors.RESULTS: A total of 300 patients were included in the final analysis with 144 randomized to KI and 156 to UC. Baseline characteristics were similar between groups. The Injury Severity Scores for KI were 19 [14, 29] versus UC 22 [14, 29]. The KI group had a lower rate of long-bone fracture (37% vs. 49%) and laparotomy (16% vs. 24%). Patients receiving KI had an absolute reduction of 7 MME/day, 96 total MME, and 5% in OP%. In addition, KI had a relative risk (RR) reduction of 19% in MME/day (RR, 0.81 [0.69-0.95], pp = 99%), 20% in total MME (RR, 0.80 [0.64-0.99], pp = 98%), and 8% in OP% (RR, 0.92 [0.76-1.11], pp = 81%). The KI group had a higher rate of delirium (11% vs. 6%); however, rates of other side effects such as arrythmias and unplanned intubations were similar between groups.CONCLUSION: Addition of a subdissociative ketamine infusion to an oral MMPR resulted in a decrease in opioid exposure in severely injured patients. Subdissociative ketamine infusions can be used as a safe adjunct to decrease opioid exposure in monitored settings.</Abstract>
+    <DOI>10.1097/TA.0000000000004325</DOI>
+    <URL>https://doi.org/10.1097/TA.0000000000004325</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Comparative Effectiveness of Second Vasoactive Agents in Septic Shock Refractory to Norepinephrine</Title>
+    <Authors>
+      <Author>Nguyen, HB</Author>
+      <Author>Lu, S</Author>
+      <Author>Possagnoli, I</Author>
+      <Author>Stokes, P</Author>
+    </Authors>
+    <Journal>JOURNAL OF INTENSIVE CARE MEDICINE</Journal>
+    <Year>2017</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>32</Volume>
+    <Issue>7</Issue>
+    <Page>451-459</Page>
+    <Date>AUG 2017</Date>
+    <Address>[Nguyen, H. Bryant] Loma Linda Univ, Div Pulm &amp; Crit Care Med, Loma Linda, CA 92354 USA; [Nguyen, H. Bryant; Possagnoli, Isabella] Loma Linda Univ, Dept Med, Loma Linda, CA 92354 USA; [Nguyen, H. Bryant] Loma Linda Univ, Dept Emergency Med, Loma Linda, CA 92354 USA; [Lu, Samantha; Stokes, Phillip] Loma Linda Univ, Sch Med, Loma Linda, CA 92354 USA</Address>
+    <Abstract>Objective: We aim to identify the appropriate vasoactive agent in patients with septic shock who are refractory to optimal doses of norepinephrine.Methods: In this retrospective observational cohort study over a 4-year period, patients who received norepinephrine within 24 hours of ICU admission and a second agent within 48 hours were enrolled. Results: Among 2640 patients screened, 234 patients were enrolled, aged 60.8 17.8 years, Acute Physiology and Chronic Health Evaluation IV 98.3 +/- 27.5, 81.6% mechanically ventilated, and 65.8% in-hospital mortality. Within 96 hours, 2.8 +/- 1.0 vasoactive agents were administered. Fifty, 50, 66, and 68 patients received dobutamine, dopamine, phenylephrine, and vasopressin as the second agent, with crude in-hospital mortality 40.0%, 66.0%, 74.2%, and 76.5%, respectively, P &lt; .001. Survival analysis showed a statistically significant difference in survival time by second vasoactive agent, P &lt; .001. After adjusting for confounding variables, dobutamine showed significant decreased odds ratio (OR) for mortality compared to vasopressin: OR 0.34 (95% confidence interval 0.14-0.84, P = .04). The relative risk of dying was 55.8% lower in patients receiving dobutamine versus vasopressin, P &lt; .01. Conclusion: Dobutamine is associated with decreased mortality compared to other second vasoactive agents in septic shock when norepinephrine is not sufficient. A prospective randomized trial examining the outcome impact of the second vasoactive agent is needed.</Abstract>
+    <DOI>10.1177/0885066616647941</DOI>
+    <URL>https://doi.org/10.1177/0885066616647941</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Hypothyroidism Is Correlated with Ventilator Complications and Longer Hospital Days after Coronary Artery Bypass Grafting Surgery in a Relatively Young Population: A Nationwide, Population-Based Study</Title>
+    <Authors>
+      <Author>Lin, JY</Author>
+      <Author>Kao, PC</Author>
+      <Author>Tsai, YT</Author>
+      <Author>Chung, CH</Author>
+      <Author>Chien, WC</Author>
+      <Author>Lin, CY</Author>
+      <Author>Lu, CH</Author>
+      <Author>Tsai, CS</Author>
+    </Authors>
+    <Journal>JOURNAL OF CLINICAL MEDICINE</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>11</Volume>
+    <Issue>13</Issue>
+    <Date>JUL 2022</Date>
+    <Address>[Lin, Jiun-Yu; Tsai, Yi-Ting; Lin, Chih-Yuan; Tsai, Chien-Sung] Natl Def Med Ctr, Triserv Gen Hosp, Dept Surg, Div Cardiovasc Surg, Taipei 11490, Taiwan; [Kao, Pei-Chi] Univ Queensland, Sch Publ Hlth, Brisbane, Qld 4072, Australia; [Chung, Chi-Hsiang; Chien, Wu-Chien] Natl Def Med Ctr, Triserv Gen Hosp, Dept Med Res, Taipei 11490, Taiwan; [Chung, Chi-Hsiang; Chien, Wu-Chien; Lu, Chieh-Hua] Natl Def Med Ctr, Sch Publ Hlth, Taipei 11490, Taiwan; [Lu, Chieh-Hua] Natl Def Med Ctr, Triserv Gen Hosp, Dept Internal Med, Div Endocrinol &amp; Metab, Taipei 11490, Taiwan</Address>
+    <Abstract>Background: Some research indicated that hypothyroidism has huge adverse effects for the metabolic, cardiovascular, respiratory, and immune systems. However, there is no confirmed conclusion for the effect of cardiovascular surgery. This cohort study aims to investigate the prognosis of hypothyroidism patient at the age under 65-year-old after coronary artery bypass grafting (CABG) surgery. Method: From the National Health Insurance Research Database of Taiwan, 1586 patients with hypothyroidism who underwent elective CABG surgery were selected, along with 6334 patients who underwent surgery in a ratio of 1:4 sex-, age- and index year-matched controls, who were out of hypothyroidism. We used Cox proportional hazard analysis to compare the rate of 30-day, 5-year mortality, post-operative atrial fibrillation, respiratory complication during an average of 10-year follow-up. Result: Post-CABG patients had more hospital days, which was associated with hypothyroidism, male, DM and higher CCI_R (p &lt; 0.001). Post-CABG patients had more inpatient respiratory complications, which was associated with hypothyroidism (p = 0.041), DM and CCI_R (p &lt; 0.001, p = 0.046), and there was no difference in 1-year respiratory complication, tracheostomy in the same hospital course and within 1 year, repeated PCI, Af, CVVH, cerebral infarction, 30-day and 5-year mortality rate. Conclusions: Hypothyroidism correlates to post-CABG ventilator-related complications and pneumonia, and prolonged hospital days, but no effect on 30-day, 5-year mortality, post-operative atrial fibrillation and cerebral infarction rate. Thyroid function survey might include routinely preoperative survey for CABG outcome prognosis.</Abstract>
+    <DOI>10.3390/jcm11133881</DOI>
+    <URL>https://doi.org/10.3390/jcm11133881</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

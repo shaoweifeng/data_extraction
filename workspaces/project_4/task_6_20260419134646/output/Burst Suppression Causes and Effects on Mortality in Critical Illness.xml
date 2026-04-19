@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Burst Suppression: Causes and Effects on Mortality in Critical Illness</Title>
+    <Authors>
+      <Author>Hogan, J</Author>
+      <Author>Sun, HQ</Author>
+      <Author>Nour, HA</Author>
+      <Author>Jing, J</Author>
+      <Author>Tabaeizadeh, M</Author>
+      <Author>Shoukat, M</Author>
+      <Author>Javed, F</Author>
+      <Author>Kassa, S</Author>
+      <Author>Edhi, MM</Author>
+      <Author>Bordbar, E</Author>
+      <Author>Gallagher, J</Author>
+      <Author>Moura, V</Author>
+      <Author>Ghanta, M</Author>
+      <Author>Shao, YP</Author>
+      <Author>Akeju, O</Author>
+      <Author>Cole, AJ</Author>
+      <Author>Rosenthal, ES</Author>
+      <Author>Zafar, S</Author>
+      <Author>Westover, MB</Author>
+    </Authors>
+    <Journal>NEUROCRITICAL CARE</Journal>
+    <Year>2020</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>33</Volume>
+    <Issue>2</Issue>
+    <Page>565-574</Page>
+    <Date>OCT 2020</Date>
+    <Address>[Hogan, Jacob; Sun, Haoqi; Nour, Hassan Aboul; Jing, Jin; Tabaeizadeh, Mohammad; Shoukat, Maryum; Javed, Farrukh; Kassa, Solomon; Edhi, Muhammad M.; Bordbar, Elahe; Gallagher, Justin; Moura, Valdery, Jr.; Ghanta, Manohar; Shao, Yu-Ping; Cole, Andrew J.; Rosenthal, Eric S.; Zafar, Sahar; Westover, M. Brandon] Massachusetts Gen Hosp, Dept Neurol, 55 Fruit St, Boston, MA 02114 USA; [Hogan, Jacob] Brigham Young Univ, Dept Biol, Provo, UT 84602 USA; [Jing, Jin] Nanyang Technol Univ, Sch Elect &amp; Elect Engn, Singapore, Singapore; [Edhi, Muhammad M.] Brown Inst Brain Sci, Providence, RI 02903 USA; [Akeju, Oluwaseun] Massachusetts Gen Hosp, Dept Anesthesia Crit Care &amp; Pain Med, Boston, MA 02114 USA; [Nour, Hassan Aboul] Henry Ford Hosp, Dept Neurol, Detroit, MI 48202 USA</Address>
+    <Abstract>Background Burst suppression in mechanically ventilated intensive care unit (ICU) patients is associated with increased mortality. However, the relative contributions of propofol use and critical illness itself to burst suppression; of burst suppression, propofol, and critical illness to mortality; and whether preventing burst suppression might reduce mortality, have not been quantified. Methods The dataset contains 471 adults from seven ICUs, after excluding anoxic encephalopathy due to cardiac arrest or intentional burst suppression for therapeutic reasons. We used multiple prediction and causal inference methods to estimate the effects connecting burst suppression, propofol, critical illness, and in-hospital mortality in an observational retrospective study. We also estimated the effects mediated by burst suppression. Sensitivity analysis was used to assess for unmeasured confounding. Results The expected outcomes in a &quot;counterfactual&quot; randomized controlled trial (cRCT) that assigned patients to mild versus severe illness are expected to show a difference in burst suppression burden of 39%, 95% CI [8-66]%, and in mortality of 35% [29-41]%. Assigning patients to maximal (100%) burst suppression burden is expected to increase mortality by 12% [7-17]% compared to 0% burden. Burst suppression mediates 10% [2-21]% of the effect of critical illness on mortality. A high cumulative propofol dose (1316 mg/kg) is expected to increase burst suppression burden by 6% [0.8-12]% compared to a low dose (284 mg/kg). Propofol exposure has no significant direct effect on mortality; its effect is entirely mediated through burst suppression. Conclusions Our analysis clarifies how important factors contribute to mortality in ICU patients. Burst suppression appears to contribute to mortality but is primarily an effect of critical illness rather than iatrogenic use of propofol.</Abstract>
+    <DOI>10.1007/s12028-020-00932-4</DOI>
+    <URL>https://doi.org/10.1007/s12028-020-00932-4</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

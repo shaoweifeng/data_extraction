@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Mild traumatic brain injury: not always a mild injury</Title>
+    <Authors>
+      <Author>Schellenberg, M</Author>
+      <Author>Arase, M</Author>
+      <Author>Wong, MD</Author>
+      <Author>Demetriades, D</Author>
+    </Authors>
+    <Journal>EUROPEAN JOURNAL OF TRAUMA AND EMERGENCY SURGERY</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>50</Volume>
+    <Issue>4</Issue>
+    <Page>1229-1235</Page>
+    <Date>AUG 2024</Date>
+    <Address>[Schellenberg, Morgan; Arase, Miharu; Wong, Monica D.; Demetriades, Demetrios] Univ Southern Calif, LAC USC Med Ctr, Div Acute Care Surg, 2051 Marengo St,Inpatient Tower,C5L100, Los Angeles, CA 90033 USA</Address>
+    <Abstract>Purpose In general, risk of mortality after trauma correlates with injury severity. Despite arriving in relatively stable clinical condition, however, some patients are at risk of death following mild traumatic brain injury (TBI). The study objective was delineation of patients who die in-hospital following mild isolated TBI in order to inform Emergency Department (ED) disposition and care discussions with patients and families.Methods In this retrospective cohort study, patients from the National Trauma Data Bank (NTDB) (2007-2018) were included if they were injured by blunt trauma and sustained a mild TBI (defined as Head Abbreviated Injury Scale [AIS] score of 1 or 2 and arrival Glasgow Coma Scale [GCS] score of 13-15). Exclusions were severe associated injuries (extracranial AIS &gt; 2); transfers; and missing data. Patients were defined by in-hospital mortality: Survivors vs. Mortalities. Demographics, clinical/injury data, and the outcomes were collected and compared with univariate analysis. Multivariate analysis established independent factors associated with in-hospital mortality following mild TBI.Results In total, 932,107 patients (10% of NTDB population) met study criteria: 928,542 (99.6%) Survivors and 3,565 (0.4%) Mortalities. In general, comorbidities (including home anticoagulation, cardiac disease, and diabetes mellitus) were significantly more common among patients who died (p &lt; 0.001), although drug and alcohol intoxication on arrival were more common among Survivors (16% vs. 7%, p &lt; 0.001; 13% vs. 10%, p &lt; 0.001). In terms of insurance status, Private/Commercial insurance was more common among Survivors (39% vs. 20%, p &lt; 0.001) while Governmental Insurance was more common among Mortalities (55% vs. 36%, p &lt; 0.001). On multivariate analysis, age &gt;= 65 was most strongly associated with death (OR 26.43, p &lt; 0.001), followed by ED intubation (OR 10.08, p &lt; 0.001), admission hypotension (OR 4.55, p &lt; 0.001), and comorbidities, particularly end-stage renal disease (ESRD) (OR 3.03, p &lt; 0.001) and immunosuppression (OR 2.18, p &lt; 0.001).Conclusions Survivors differed substantially from Mortalities after mild TBI in terms of comorbidities, intoxicants, and insurance status. Independent variables most strongly associated with in-hospital death following mild head injury included age &gt;= 65, intubation in the ED, admission hypotension, and comorbidities (particularly ESRD and immunosuppression). Increased clinical vigilance, including a mandatory period of clinical observation, for patients with these risk factors should be considered to optimize outcomes and potentially mitigate death after mild TBI.</Abstract>
+    <DOI>10.1007/s00068-023-02365-y</DOI>
+    <URL>https://doi.org/10.1007/s00068-023-02365-y</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

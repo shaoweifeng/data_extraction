@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Acute kidney injury, the present on admission (POA) indicator and sex disparities: observational study of inpatient real-world data in a Swiss tertiary healthcare system. Explorative analysis</Title>
+    <Authors>
+      <Author>Triep, K</Author>
+      <Author>Musy, SN</Author>
+      <Author>Simon, M</Author>
+      <Author>Endrich, O</Author>
+    </Authors>
+    <Journal>BMJ PUBLIC HEALTH</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>2</Volume>
+    <Issue>1</Issue>
+    <Date>FEB 13 2024</Date>
+    <Address>[Triep, Karen] Univ Hosp Bern, Inselspital, Med Directorate, Bern, Switzerland; [Musy, Sarah N.] Univ Basel, Fac Med, Dept Publ Hlth, Basel, Switzerland; [Simon, Michael] Univ Basel, Inst Nursing Sci, Fac Med, Basel, Switzerland; [Endrich, Olga] Univ Hosp Bern, Inselspital, Univ Inst Clin Chem, Bern, Switzerland</Address>
+    <Abstract>Background Regarding kidney disease (KD), sex differences in epidemiology and clinical relevance have been reported. Related to absolute and relative changes of baseline creatinine, different criteria for staging may induce underdiagnosis or overdiagnosis related to sex. At the largest Swiss provider of inpatient acute healthcare, a clinic decision support algorithm ensures exact staging of KD (2012 KDIGO Kidney Disease Improving Global Outcomes Clinical Practice Guideline). Coding of the indicator 'Present On Admission' (POA) was introduced at this institution in 2018 to flag postadmission conditions.Objective The explorative analysis aimed at differences in diagnosis groups. Defined indicators and the distribution of stages in acute kidney injury (AKI) were analysed using the POA flag. Sex differences were reported.Methods Retrospective observational study. Explorative analysis. Routinely collected health data, 2019 and 2020 (121 757 cases) on the patient history and intensive care treatment duration, comorbidity levels, coded diagnoses, age and sex. Software and statistic: program R, V.4.1.1, SD; median, IQR; prop.test; standardised mean difference.Methods Retrospective observational study. Explorative analysis. Routinely collected health data, 2019 and 2020 (121 757 cases) on the patient history and intensive care treatment duration, comorbidity levels, coded diagnoses, age and sex. Software and statistic: program R, V.4.1.1, SD; median, IQR; prop.test; standardised mean difference.Results The reporting of postadmission diagnoses showed more interhospital transfers, more intensive care stays, higher scores of severity and treatment intensity, more often mechanical ventilation, a higher age, a higher number of diagnoses, a higher complexity level of the related cases and mortality. This observation could be made to a lesser degree for the female population. However, for the female population mortality was higher (stage III AKI 41.6%).Conclusion Using the POA flag, the results reflect the clinical situation of complications and comorbidities evolving unexpectedly. As our results show sex differences, that is, a lower morbidity of female patients for each stage, but a higher mortality, a deeper evaluation of the implied sex differences in staging of KD should follow. The general results confirm the necessity of a diagnosis-onset reporting in health statistics.Conclusion Using the POA flag, the results reflect the clinical situation of complications and comorbidities evolving unexpectedly. As our results show sex differences, that is, a lower morbidity of female patients for each stage, but a higher mortality, a deeper evaluation of the implied sex differences in staging of KD should follow. The general results confirm the necessity of a diagnosis-onset reporting in health statistics.</Abstract>
+    <DOI>10.1136/bmjph-2023-000131</DOI>
+    <URL>https://doi.org/10.1136/bmjph-2023-000131</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

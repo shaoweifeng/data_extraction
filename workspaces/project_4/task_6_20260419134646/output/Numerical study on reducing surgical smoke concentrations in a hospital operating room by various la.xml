@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Numerical study on reducing surgical smoke concentrations in a hospital operating room by various laminar airflow strategies</Title>
+    <Authors>
+      <Author>Lee, JH</Author>
+      <Author>Eom, YS</Author>
+      <Author>Choi, DH</Author>
+      <Author>Kang, DH</Author>
+    </Authors>
+    <Journal>JOURNAL OF BUILDING ENGINEERING</Journal>
+    <Year>2026</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>118</Volume>
+    <Date>JAN 15 2026</Date>
+    <Address>[Lee, Jung Ho] Univ Seoul, Grad Sch, Dept Architectural Engn, Seoul, South Korea; [Eom, Ye Seul] Korea Inst Civil Engn &amp; Bldg Technol, Dept Bldg Res, Goyang, South Korea; [Choi, Dong Hee] Seoul Natl Univ, Inst Construct &amp; Environm Engn, Seoul, South Korea; [Kang, Dong Hwa] Univ Seoul, Coll Urban Sci, Dept Architectural Engn, Seoul, South Korea</Address>
+    <Abstract>The objective of this study is to compare the effectiveness of different laminar airflow systems in reducing surgical smoke in hospital operating rooms using computational fluid dynamics simulations. Three types of laminar airflow (LAF) systems were evaluated: a vertical laminar airflow (VLAF) system, a horizontal laminar airflow (HLAF) system, and a mobile laminar airflow (MLAF) unit with a vertical laminar airflow system (MVLAF). The surgical smoke removal efficiency of each system was analyzed by dividing the operating room into three zones based on the surgical staff's position and assessing exposure levels. This zone-based analysis reflects the actual distribution of surgical staff and equipment during laparoscopic surgery, providing a more comprehensive understanding of exposure risks. The results showed that the VLAF system led to higher normalized concentrations of surgical smoke in the surgical region, reaching up to 5.06 x 10-3, due to airflow disturbances caused by the surgical lamp's downward exhaust, resulting in relatively higher exposure risks for surgical staff. In contrast, the HLAF system significantly reduced normalized surgical smoke concentration in the same region, with a peak value of 1.72 x 10-3, approximately three times lower than that of the VLAF case. The MVLAF unit (Case 3-a), when equipped with a smoke removal filter, further improved air quality, reducing the highest normalized benzene concentration to 1.09 x 10-3, about five times lower than in the VLAF case. Notably, the MLAF unit exhibited superior performance by mitigating weak airflow above the surgical region and enhancing local contaminant removal when equipped with a smoke removal filter. These findings provide critical insights for optimizing ventilation strategies to minimize surgical smoke exposure, thereby contributing to safer and healthier environments for operating room personnel.</Abstract>
+    <DOI>10.1016/j.jobe.2025.115029</DOI>
+    <URL>https://doi.org/10.1016/j.jobe.2025.115029</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>How Introducing a Registry With Automated Alerts for Carbapenem-resistant Enterobacteriaceae (CRE) May Help Control CRE Spread in a Region</Title>
+    <Authors>
+      <Author>Lee, BY</Author>
+      <Author>Bartsch, SM</Author>
+      <Author>Hayden, MK</Author>
+      <Author>Welling, J</Author>
+      <Author>DePasse, JV</Author>
+      <Author>Kemble, SK</Author>
+      <Author>Leonard, J</Author>
+      <Author>Weinstein, RA</Author>
+      <Author>Mueller, LE</Author>
+      <Author>Doshi, K</Author>
+      <Author>Brown, ST</Author>
+      <Author>Trick, WE</Author>
+      <Author>Lin, MY</Author>
+    </Authors>
+    <Journal>CLINICAL INFECTIOUS DISEASES</Journal>
+    <Year>2020</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>70</Volume>
+    <Issue>5</Issue>
+    <Page>843-849</Page>
+    <Date>MAR 1 2020</Date>
+    <Address>[Lee, Bruce Y.; Bartsch, Sarah M.; Mueller, Leslie E.] Johns Hopkins Bloomberg Sch Publ Hlth, Publ Hlth Computat &amp; Operat Res, Baltimore, MD USA; [Lee, Bruce Y.; Bartsch, Sarah M.; Mueller, Leslie E.] Johns Hopkins Bloomberg Sch Publ Hlth, Global Obes Prevent Ctr, Baltimore, MD USA; [Hayden, Mary K.; Kemble, Sarah K.; Weinstein, Robert A.; Trick, William E.; Lin, Michael Y.] Rush Univ, Med Ctr, Chicago, IL 60612 USA; [Welling, Joel; DePasse, Jay V.; Leonard, Jim] Pittsburgh Supercomp Ctr, Publ Hlth Applicat, Pittsburgh, PA USA; [Kemble, Sarah K.] Chicago Dept Publ Hlth, Chicago, IL USA; [Weinstein, Robert A.; Doshi, Kruti; Trick, William E.] Cook Cty Hlth, Chicago, IL USA; [Brown, Shawn T.] McGill Univ, McGill Ctr Integrat Neurosci, Montreal, PQ, Canada</Address>
+    <Abstract>Background. Regions are considering the use of electronic registries to track patients who carry antibiotic-resistant bacteria, including carbapenem-resistant Enterobacteriaceae (CRE). Implementing such a registry can be challenging and requires time, effort, and resources; therefore, there is a need to better understand the potential impact.Methods. We developed an agent-based model of all inpatient healthcare facilities (90 acute care hospitals, 9 long-term acute care hospitals, 351 skilled nursing facilities, and 12 ventilator-capable skilled nursing facilities) in the Chicago metropolitan area, surrounding communities, and patient flow using our Regional Healthcare Ecosystem Analyst software platform. Scenarios explored the impact of a registry that tracked patients carrying CRE to help guide infection prevention and control.Results. When all Illinois facilities participated (n = 402), the registry reduced the number of new carriers by 11.7% and CRE prevalence by 7.6% over a 3-year period. When 75% of the largest Illinois facilities participated (n = 304), registry use resulted in a 11.6% relative reduction in new carriers (16.9% and 1.2% in participating and nonparticipating facilities, respectively) and 5.0% relative reduction in prevalence. When 50% participated (n = 201), there were 10.7% and 5.6% relative reductions in incident carriers and prevalence, respectively. When 25% participated (n = 101), there was a 9.1% relative reduction in incident carriers (20.4% and 1.6% in participating and nonparticipating facilities, respectively) and 2.8% relative reduction in prevalence.Conclusions. Implementing an extensively drug-resistant organism registry reduced CRE spread, even when only 25% of the largest Illinois facilities participated due to patient sharing. Nonparticipating facilities garnered benefits, with reductions in new carriers.</Abstract>
+    <DOI>10.1093/cid/ciz300</DOI>
+    <URL>https://doi.org/10.1093/cid/ciz300</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

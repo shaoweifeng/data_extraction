@@ -65,9 +65,9 @@ class DataFileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = DataFile
-        fields = ['id', 'filename', 'file', 'file_url', 'file_size', 'file_type',
-                  'data_category', 'source', 'description', 'metadata',
-                  'versions_count', 'created_at', 'updated_at']
+        fields = ['id', 'project', 'stage', 'step', 'filename', 'file', 'file_url', 
+                  'file_size', 'file_type', 'data_category', 'source', 'description', 
+                  'metadata', 'versions_count', 'created_at', 'updated_at']
         read_only_fields = ['file_size', 'file_type', 'created_at', 'updated_at']
     
     def get_versions_count(self, obj):
@@ -84,7 +84,7 @@ class DataFileSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ['id', 'task_type', 'celery_task_id', 'status', 'progress',
+        fields = ['id', 'project', 'task_type', 'celery_task_id', 'status', 'progress',
                   'result', 'logs', 'error_message', 'config',
                   'started_at', 'completed_at', 'created_at', 'updated_at']
         read_only_fields = ['celery_task_id', 'created_at', 'updated_at']

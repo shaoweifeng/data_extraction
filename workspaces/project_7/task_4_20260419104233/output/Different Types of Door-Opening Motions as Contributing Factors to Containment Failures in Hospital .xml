@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Different Types of Door-Opening Motions as Contributing Factors to Containment Failures in Hospital Isolation Rooms</Title>
+    <Authors>
+      <Author>Tang, JLW</Author>
+      <Author>Nicolle, A</Author>
+      <Author>Pantelic, J</Author>
+      <Author>Klettner, CA</Author>
+      <Author>Su, R</Author>
+      <Author>Kalliomaki, P</Author>
+      <Author>Saarinen, P</Author>
+      <Author>Koskela, H</Author>
+      <Author>Reijula, K</Author>
+      <Author>Mustakallio, P</Author>
+      <Author>Cheong, DKW</Author>
+      <Author>Sekhar, C</Author>
+      <Author>Tham, KW</Author>
+    </Authors>
+    <Journal>PLOS ONE</Journal>
+    <Year>2013</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>8</Volume>
+    <Issue>6</Issue>
+    <Date>JUN 24 2013</Date>
+    <Address>[Tang, Julian W.; Nicolle, Andre; Klettner, Christian A.; Su, Ruikun] Natl Univ Singapore Hosp, Dept Lab Med, Singapore, Singapore; [Tang, Julian W.] Alberta Prov Lab Publ Hlth, Edmonton, AB, Canada; [Tang, Julian W.] Univ Alberta, Dept Med Microbiol &amp; Immunol, Edmonton, AB, Canada; [Pantelic, Jovan; Cheong, David K. W.; Sekhar, Chandra; Tham, Kwok Wai] Natl Univ Singapore, Sch Design &amp; Environm, Dept Bldg, Singapore 117548, Singapore; [Kalliomaki, Petri; Saarinen, Pekka; Koskela, Hannu; Reijula, Kari] Finnish Inst Occupat Hlth, Helsinki, Finland; [Mustakallio, Panu] Oy Halton Grp Ltd, Vantaa, Finland</Address>
+    <Abstract>Hospital isolation rooms are vital for the containment (when under negative pressure) of patients with, or the protection (when under positive pressure) of patients, from airborne infectious agents. Such facilities were essential for the management of highly contagious patients during the 2003 severe acute respiratory syndrome (SARS) outbreaks and the more recent 2009 A/H1N1 influenza pandemic. Many different types of door designs are used in the construction of such isolation rooms, which may be related to the space available and affordability. Using colored food dye as a tracer, the qualitative effects of door-opening motions on the dissemination of potentially contaminated air into and out of a single isolation room were visualized and filmed using Reynolds-number-equivalent, small-scale, water-tank models fitted with programmable door-opening and moving human figure motions. Careful scaling considerations involved in the design and construction of these water-tank models enabled these results to be accurately extrapolated to the full-scale situation. Four simple types of door design were tested: variable speed single and double, sliding and hinged doors, in combination with the moving human figure. The resulting video footage was edited, synchronized and presented in a series of split-screen formats. From these experiments, it is clear that double-hinged doors pose the greatest risk of leakage into or out of the room, followed by (in order of decreasing risk) single-hinged, double-sliding and single-sliding doors. The relative effect of the moving human figure on spreading any potential contamination was greatest with the sliding doors, as the bulk airflows induced were large relative to those resulting from these door-opening motions. However, with the hinged doors, the airflows induced by these door-opening motions were significantly greater. Further experiments involving a simulated ventilated environment are required, but from these findings alone, it appears that sliding-doors are far more effective for hospital isolation room containment.</Abstract>
+    <DOI>10.1371/journal.pone.0066663</DOI>
+    <URL>https://doi.org/10.1371/journal.pone.0066663</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

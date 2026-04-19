@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Multiple postoperative complications: Making sense of the trajectories</Title>
+    <Authors>
+      <Author>Feld, SI</Author>
+      <Author>Tevis, SE</Author>
+      <Author>Cobian, AG</Author>
+      <Author>Craven, MW</Author>
+      <Author>Kennedy, GD</Author>
+    </Authors>
+    <Journal>SURGERY</Journal>
+    <Year>2016</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>160</Volume>
+    <Issue>6</Issue>
+    <Page>1666-1674</Page>
+    <Date>DEC 2016</Date>
+    <Address>[Feld, Shara I.; Tevis, Sarah E.] Univ Wisconsin Madison, Dept Surg, Madison, WI USA; [Cobian, Alexander G.; Craven, Mark W.] Univ Wisconsin Madison, Dept Comp Sci, Madison, WI USA; [Cobian, Alexander G.; Craven, Mark W.] Univ Wisconsin Madison, Dept Biostat &amp; Med Informat, Madison, WI USA; [Kennedy, Gregory D.] Univ Alabama Birmingham, Dept Surg, KB 430,1720 2nd Ave, Birmingham, AL 35294 USA</Address>
+    <Abstract>Background. Many studies have evaluated predictors of postoperative complications, yet little is known about the development of multiple complications. The goal of this study was to assess complication timing in cascades of multiple complications and the risk of future complications given a patient first complication.Methods. This study includes 30-day, postoperative complications from the American College of Surgeons National Surgical Quality Improvement Program for all patients who underwent major inpatient and outpatient operative procedures from 2005-2013. The timing and sequencing of complications were evaluated using x(2) analysis and pairwise comparisons.Results. More severe postoperative complications (cardiac arrest or myocardial infarction, renal insufficiency or failure, stroke, intubation, septic shock, coma) had the greatest impact on the risk for developing further complications, increasing the relative risk of developing future, specific, severe complications by more than 40-fold. These more severe complications occur within a few days of other complications (whether as a preceding factor or an outcome), while less severe complications, such as surgical site infection and urinary tract infection, are linked less tightly to complication cascades.Conclusion. This analysis highlights both the risk for secondary complications after an initial complication and when those future complications are likely to occur. Physicians can use this information to target interventions to prevent high-risk complications. (Surgery 2016;160:1666-74.)</Abstract>
+    <DOI>10.1016/j.surg.2016.08.047</DOI>
+    <URL>https://doi.org/10.1016/j.surg.2016.08.047</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Continuous positive airway pressure versus high-flow nasal cannula oxygen therapy for acute hypoxemic respiratory failure: A randomized controlled trial</Title>
+    <Authors>
+      <Author>Nagata, K</Author>
+      <Author>Yokoyama, T</Author>
+      <Author>Tsugitomi, R</Author>
+      <Author>Nakashima, H</Author>
+      <Author>Kuraishi, H</Author>
+      <Author>Ohshimo, S</Author>
+      <Author>Mori, Y</Author>
+      <Author>Sakuraya, M</Author>
+      <Author>Kagami, R</Author>
+      <Author>Tanigawa, M</Author>
+      <Author>Tobino, K</Author>
+      <Author>Kamo, T</Author>
+      <Author>Kadowaki, T</Author>
+      <Author>Koga, Y</Author>
+      <Author>Ogata, Y</Author>
+      <Author>Nishimura, N</Author>
+      <Author>Kondoh, Y</Author>
+      <Author>Taniuchi, S</Author>
+      <Author>Shintani, A</Author>
+      <Author>Tomii, K</Author>
+    </Authors>
+    <Journal>RESPIROLOGY</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>29</Volume>
+    <Issue>1</Issue>
+    <Page>36-45</Page>
+    <Date>JAN 2024</Date>
+    <Address>[Nagata, Kazuma; Tomii, Keisuke] Kobe City Med Ctr Gen Hosp, Dept Resp Med, Kobe, Hyogo, Japan; [Yokoyama, Toshiki] Tosei Gen Hosp, Dept Resp Med &amp; Allergy, Seto, Aichi, Japan; [Tsugitomi, Ryosuke] St Lukes Int Hosp, Thorac Ctr, Dept Pulm Med, Chuo, Tokyo, Japan; [Nakashima, Harunori] Ogaki Municipal Hosp, Dept Resp Med, Ogaki, Gifu, Japan; [Kuraishi, Hiroshi] Nagano Red Cross Hosp, Dept Pulm Med, Nagano, Nagano, Japan; [Ohshimo, Shinichiro] Hiroshima Univ, Grad Sch Biomed &amp; Hlth Sci, Dept Emergency &amp; Crit Care Med, Hiroshima, Hiroshima, Japan; [Mori, Yoshihiro] KKR Takamatsu Hosp, Dept Resp Med, Takamatsu, Kagawa, Japan; [Sakuraya, Masaaki] JA Hiroshima Gen Hosp, Dept Emergency &amp; Intens Care Med, Hiroshima, Hiroshima, Japan; [Kagami, Ryogo] Natl Hosp Org Himeji Med Ctr, Dept Pulm Med, Himeji, Hyogo, Japan; [Tanigawa, Motoaki] Japanese Red Cross Ise Hosp, Dept Resp Med, Ise, Mie, Japan; [Tobino, Kazunori] Iizuka Hosp, Dept Resp Med, Iizuka, Fukuoka, Japan; [Kamo, Tetsuro] Saiseikai Utsunomiya Hosp, Dept Resp Med, Utsunomiya, Tochigi, Japan; [Kadowaki, Toru] Natl Hosp Org, Matsue Med Ctr, Dept Pulm Med, Matsue, Shimane, Japan; [Koga, Yasutaka] Yamaguchi Univ, Adv Med Emergency &amp; Crit Care Ctr, Ube, Yamaguchi, Japan; [Ogata, Yoshitaka] Yao Tokushukai Gen Hosp, Dept Crit Care Med, Yao, Osaka, Japan; [Taniuchi, Satsuki; Shintani, Ayumi] Osaka Metropolitan Univ, Grad Sch Med, Dept Med Stat, Osaka, Osaka, Japan</Address>
+    <Abstract>Background and Objective: The relative effectiveness of initial non-invasive respiratory strategies for acute respiratory failure using continuous positive airway pressure (CPAP) or high-flow nasal cannula (HFNC) is unclear.Methods: We conducted a multicenter, open-label, parallel-group randomized controlled trial to compare the efficacy of CPAP and HFNC on reducing the risk of meeting the prespecified criteria for intubation and improving clinical outcomes of acute hypoxemic respiratory failure. The primary endpoint was the time taken to meet the prespecified criteria for intubation within 28 days.Results: Eighty-five patients were randomly assigned to the CPAP or HFNC group. Eleven (28.9%) in the CPAP group and twenty (42.6%) in the HFNC group met the criteria for intubation within 28 days. Compared with HFNC, CPAP reduced the risk of meeting the intubation criteria (hazard ratio [HR], 0.327; 95% CI, 0.148-0.724; p = 0.006). There were no significant between-group differences in the intubation rates, in-hospital and 28-day mortality rates, ventilator-free days, duration of the need for respiratory support, or duration of hospitalization for respiratory illness. Pulmonary oxygenation was significantly better in the CPAP group, with significantly lower pH and higher partial pressure of carbon dioxide, but there were no differences in the respiratory rate between groups. CPAP and HFNC were associated with few possibly causal adverse events.Conclusion: CPAP is more effective than HFNC at reducing the risk of meeting the intubation criteria in patients with acute hypoxemic respiratory failure.</Abstract>
+    <DOI>10.1111/resp.14588</DOI>
+    <URL>https://doi.org/10.1111/resp.14588</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

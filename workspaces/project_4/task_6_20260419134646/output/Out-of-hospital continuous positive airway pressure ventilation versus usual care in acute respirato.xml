@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Out-of-hospital continuous positive airway pressure ventilation versus usual care in acute respiratory failure: A randomized controlled trial</Title>
+    <Authors>
+      <Author>Thompson, J</Author>
+      <Author>Petrie, DA</Author>
+      <Author>Ackroyd-Stolarz, S</Author>
+      <Author>Bardua, DJ</Author>
+    </Authors>
+    <Journal>ANNALS OF EMERGENCY MEDICINE</Journal>
+    <Year>2008</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>52</Volume>
+    <Issue>3</Issue>
+    <Page>232-241</Page>
+    <Date>SEP 2008</Date>
+    <Address>[Petrie, David A.; Ackroyd-Stolarz, Stacy] Dalhousie Univ, Dept Emergency Med, Halifax, NS B3H 2Y9, Canada; [Thompson, James] St Pauls Hosp, Dept Emergency Med, Vancouver, BC V6Z 1Y6, Canada; [Bardua, Darrell J.] Emergency Hlth Serv, Dartmouth, NS, Canada</Address>
+    <Abstract>Study objective: Continuous positive airway pressure ventilation (CPAP) in appropriately selected patients with acute respiratory failure has been shown to reduce the need for tracheal intubation in hospital. Despite several case series, the effectiveness of out-of-hospital CPAP has not been rigorously studied. We performed a prospective, randomized, nonblinded, controlled trial to determine whether patients in severe respiratory distress treated with CPAP in the out-of-hospital setting have lower overall tracheal intubation rates than those treated with usual care.Methods: Out-of-hospital patients in severe respiratory distress, with failing respiratory efforts, were eligible for the study. The study was approved under exception to informed consent guidelines. Patients were randomized to receive either usual care, including conventional medications plus oxygen by facemask, bag-valve-mask ventilation, or tracheal intubation, or conventional medications plus out-of-hospital CPAP. The primary outcome was need for tracheal intubation during the out-of-hospital/hospital episode of care. Mortality and length of stay were secondary outcomes of interest.Results: In total, 71 patients were enrolled into the study, with 1 patient in each group lost to follow-up after refusing full consent. There were no important differences in baseline physiologic parameters, out-of-hospital scene times, or emergency department diagnosis between groups. In the usual care group, 17 of 34 (50%) patients were intubated versus 7 of 35 (20%) in the CPAP group (unadjusted odds ratio [OR] 0.25; 95% confidence interval [CI] 0.09 to 0.73; adjusted OR 0.16; 95% Cl 0.04 to 0.7; number needed to treat 3; 95% Cl 2 to 12). Mortality was 12 of 34 (35.3%) in the usual care versus 5 of 35 (14.3%) in the CPAP group (unadjusted OR 0.3; 95% Cl 0.09 to 0.99).Conclusion: Paramedics can be trained to use CPAP for patients in severe respiratory failure. There was an absolute reduction in tracheal intubation rate of 30% and an absolute reduction in mortality of 21% in appropriately selected out-of-hospital patients who received CPAP instead of usual care. Larger, multicenter studies are recommended to confirm this observed benefit seen in this relatively small trial.</Abstract>
+    <DOI>10.1016/j.annemergmed.2008.01.006</DOI>
+    <URL>https://doi.org/10.1016/j.annemergmed.2008.01.006</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

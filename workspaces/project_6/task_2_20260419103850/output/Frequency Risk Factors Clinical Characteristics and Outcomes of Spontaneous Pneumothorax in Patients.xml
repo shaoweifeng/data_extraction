@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Frequency, Risk Factors, Clinical Characteristics, and Outcomes of Spontaneous Pneumothorax in Patients With Coronavirus Disease 2019 A Case-Control, Emergency Medicine-Based Multicenter Study</Title>
+    <Authors>
+      <Author>Miró, O</Author>
+      <Author>Llorens, P</Author>
+      <Author>Jiménez, S</Author>
+      <Author>Piñera, P</Author>
+      <Author>Burillo-Putze, G</Author>
+      <Author>Martín, A</Author>
+      <Author>Martin-Sánchez, FJ</Author>
+      <Author>García-Lamberetchs, EJ</Author>
+      <Author>Jacob, J</Author>
+      <Author>Alquézar-Arbé, A</Author>
+      <Author>Módol, JM</Author>
+      <Author>López-Díez, MP</Author>
+      <Author>Guardiola, JM</Author>
+      <Author>Cardozo, C</Author>
+      <Author>Imbernón, FJL</Author>
+      <Author>Tejedo, AA</Author>
+      <Author>García, AG</Author>
+      <Author>Grinspan, MR</Author>
+      <Author>Roca, FL</Author>
+      <Author>del Castillo, JG</Author>
+    </Authors>
+    <Journal>CHEST</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>159</Volume>
+    <Issue>3</Issue>
+    <Page>1241-1255</Page>
+    <Date>MAR 2021</Date>
+    <Address>[Miro, Oscar; Jimenez, Sonia; Cardozo, Carlos] Univ Barcelona, Hosp Clin, IDIBAPS, Emergency Dept, Barcelona, Spain; [Llorens, Pere] Univ Miguel Hernandez, Hosp Gen Alicante, Emergency Dept, Elche, Spain; [Pinera, Pascual] Hosp Reina Sofia, Emergency Dept, Murcia, Spain; [Burillo-Putze, Guillermo] Hosp Univ Canarias, Emergency Dept, Tenerife, Spain; [Martin, Alfonso] Hosp Severo Ochoa, Emergency Dept, Madrid, Spain; [Martin-Sanchez, Francisco Javier; Garcia-Lamberetchs, Eric Jorge; del Castillo, Juan Gonzalez] Univ Complutense, IDISSC, Hosp Clin San Carlos, Emergency Dept, Madrid, Spain; [Jacob, Javier; Roca, Ferran Llopis] Hosp Univ Bellvitge, Emergency Dept, Barcelona, Spain; [Alquezar-Arbe, Aitor; Guardiola, Josep Maria] Hosp Santa Creu &amp; Sant Pau, Emergency Dept, Barcelona, Spain; [Modol, Josep Maria] Hosp Badalona Germans Trias &amp; Pujol, Emergency Dept, Barcelona, Spain; [Lopez-Diez, Maria Pilar] Hosp Univ Burgos, Emergency Dept, Madrid, Spain; [Cardozo, Carlos] Hosp Austral, Emergency Dept, Buenos Aires, DF, Argentina; [Imbernon, Francisco Javier Lucas] Hosp Gen Albacete, Emergency Dept, Albacete, Spain; [Tejedo, Alfons Aguirre] Hosp del Mar, Emergency Dept, Barcelona, Spain; [Garcia, Angel Garcia] Hosp Clin Univ Salamanca, Salamanca, Spain; [Grinspan, Martin Ruiz] Hosp Henares, Emergency Dept, Madrid, Spain</Address>
+    <Abstract>BACKGROUND Recent reports of patients with coronavirus disease 2019 (COVID-19) developing pneumothorax correspond mainly to case reports describing mechanically ventilated patients. The real incidence, clinical characteristics, and outcome of spontaneous pneumothorax (SP) as a form of COVID-19 presentation remain to be defined.RESEARCH QUESTION: Do the incidence, risk factors, clinical characteristics, and outcomes of SP in patients with COVID-19 attending EDs differ compared with COVID-19 patients without SP and non-COVID-19 patients with SP?STUDY DESIGN AND METHOD: This case-control study retrospectively reviewed all patients with COVID-19 diagnosed with SP (case group) in 61 Spanish EDs (20% of Spanish EDs) and compared them with two control groups: COVID-19 patients without SP and non-COVID-19 patients with SP. The relative frequencies of SP were estimated in COVID-19 and non-COVID-19 patients in the ED, and annual standardized incidences were estimated for both populations. Comparisons between case subjects and control subjects included 52 clinical, analytical, and radiologic characteristics and four outcomes.RESULTS: We identified 40 occurrences of SP in 71,904 patients with COVID-19 attending EDs (0.56 parts per thousand; 95% CI, 0.40% 0 -0.76 parts per thousand). This relative frequency was higher than that among non-COVID-19 patients (387 of 1,358,134, 0.28 parts per thousand; 95% CI, 0.26 parts per thousand 0 -0.32 parts per thousand; OR, 1.93; 95% CI, 1.41-2.71). The standardized incidence of SP was also higher in patients with COVID-19 (34.2 vs 8.2/100,000/year; OR, 4.19; 95% CI, 3.64-4.81). Compared with COVID-19 patients without SP, COVID-19 patients developing SP more frequently had dyspnea and chest pain, low pulse oximetry readings, tachypnea, and increased leukocyte count. Compared with non-COVID-19 patients with SP, case subjects differed in 19 clinical variables, the most prominent being a higher frequency of dysgeusia/ anosmia, headache, diarrhea, fever, and lymphopenia (all with OR &gt; 10). All the outcomes measured, including in-hospital death, were worse in case subjects than in both control groups.INTERPRETATION: SP as a form of COVID-19 presentation at the ED is unusual (&lt; 1 parts per thousand cases) but is more frequent than in the non-COVID-19 population and could be associated with worse outcomes than SP in non-COVID-19 patients and COVID-19 patients without SP.</Abstract>
+    <DOI>10.1016/j.chest.2020.11.013</DOI>
+    <URL>https://doi.org/10.1016/j.chest.2020.11.013</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Association of Expanded VA Hospice Care With Aggressive Care and Cost for Veterans With Advanced Lung Cancer</Title>
+    <Authors>
+      <Author>Mor, V</Author>
+      <Author>Wagner, TH</Author>
+      <Author>Levy, C</Author>
+      <Author>Ersek, M</Author>
+      <Author>Miller, SC</Author>
+      <Author>Gidwani-Marszowski, R</Author>
+      <Author>Joyce, N</Author>
+      <Author>Faricy-Anderson, K</Author>
+      <Author>Corneau, EA</Author>
+      <Author>Lorenz, K</Author>
+      <Author>Kinosian, B</Author>
+      <Author>Shreve, S</Author>
+    </Authors>
+    <Journal>JAMA ONCOLOGY</Journal>
+    <Year>2019</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>5</Volume>
+    <Issue>6</Issue>
+    <Page>810-816</Page>
+    <Date>JUN 2019</Date>
+    <Address>[Mor, Vincent; Faricy-Anderson, Katherine; Corneau, Emily A.] Providence VA Med Ctr, Ctr Innovat Long Term Serv &amp; Supports LTSS COIN, Providence, RI USA; [Mor, Vincent; Miller, Susan C.; Joyce, Nina] Brown Univ, Sch Publ Hlth, Dept Hlth Serv Policy &amp; Practice, 121 S Main St,POB G-121-6, Providence, RI 02912 USA; [Wagner, Todd H.; Gidwani-Marszowski, Risha] VA Palo Alto Healthcare Syst, Hlth Econ Resource Ctr, Palo Alto, CA USA; [Wagner, Todd H.; Gidwani-Marszowski, Risha; Lorenz, Karl] VA Palo Alto Healthcare Syst, Ctr Innovat Implementat, Palo Alto, CA USA; [Wagner, Todd H.; Lorenz, Karl] Stanford Univ, Sch Med, Palo Alto, CA 94304 USA; [Levy, Cari] Eastern Colorado VA Healthcare Syst, Denver, CO USA; [Levy, Cari] Univ Colorado, Div Hlth Care Policy &amp; Res, Aurora, CO USA; [Ersek, Mary] Corporal Michael J Crescenz VA Med Ctr, Vet Experience Ctr, Philadelphia, PA USA; [Ersek, Mary] Univ Penn, Sch Nursing, Philadelphia, PA 19104 USA; [Gidwani-Marszowski, Risha] Stanford Univ, Div Primary Care &amp; Populat Hlth, Stanford, CA 94305 USA; [Faricy-Anderson, Katherine] Brown Univ, Alpert Med Sch, Providence, RI 02912 USA; [Kinosian, Bruce] Corporal Michael J Crescenz VA Med Ctr, Philadelphia, PA USA; [Shreve, Scott] US Dept Vet Affairs, Hosp &amp; Palliat Care Program, Hershey, PA USA; [Shreve, Scott] Penn State Coll Med, Hershey, PA USA</Address>
+    <Abstract>ImportanceMedicare hospice beneficiaries discontinue disease-modifying treatments because the hospice benefit limits access. While veterans have concurrent access to hospice care and Veterans Affairs (VA) Medical Center (VAMC)-provided treatments, the association of this with changes in treatment and costs of veterans' end-of-life care is unknown. ObjectiveTo determine whether increasing availability of hospice care, without restrictions on disease-modifying treatments, is associated with reduced aggressive treatments and medical care costs at the end of life. Design, Setting, and ParticipantsA modified difference-in-differences study design, using facility fixed effects, compared patient outcomes during years with relatively high vs lower hospice use. This study evaluated 13085 veterans newly diagnosed with stage IV non-small cell lung cancer (NSCLC) from 113 VAMCs with a minimum of 5 veterans diagnosed with stage IV NSCLC per year, between 2006 and 2012. Data analyses were conducted between January 2017 and July 2018. ExposuresUsing VA inpatient, outpatient, pharmacy claims, and similar Medicare data, we created VAMC-level annual aggregates of all patients who died of cancer for hospice use, cancer treatment, and/or concurrent receipt of both in the last month of life, dividing all VAMC years into quintiles of exposure to hospice availability. Main Outcomes and MeasuresReceipt of aggressive treatments (2 or more hospital admissions within 30 days, tube feeding, mechanical ventilation, intensive care unit [ICU] admission) and total costs in the first 6 months after diagnosis. ResultsOf the 13085 veterans included in the study, 12858 (98%) were men; 10531 (81%) were white, and 5949 (46%) were older than 65 years. Veterans with NSCLC treated in a VAMC in the top hospice quintile (79% hospice users), relative to the bottom quintile (55% hospice users), were more than twice as likely to have concurrent cancer treatment after initiating hospice care (adjusted odds ratio [AOR], 2.28; 95% CI, 1.67-3.31). Nonetheless, for veterans with NSCLC seen in VAMCs in the top hospice quintile, the AOR of receiving aggressive treatment in the 6 months after diagnosis was 0.66 (95% CI, 0.53-0.81), and the AOR of ICU use was 0.78 (95% CI, 0.62-0.99) relative to patients seen in VAMCs in the bottom hospice quintile. The 6-month costs were lower by an estimated $266 (95% CI, -$358 to -$164) per day for the high-quintile group vs the low-quintile group. There was no survival difference. Conclusions and RelevanceIncreasing the availability of hospice care without restricting treatment access for veterans with advanced lung cancer was associated with less aggressive medical treatment and significantly lower costs while still providing cancer treatment.</Abstract>
+    <DOI>10.1001/jamaoncol.2019.0081</DOI>
+    <URL>https://doi.org/10.1001/jamaoncol.2019.0081</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

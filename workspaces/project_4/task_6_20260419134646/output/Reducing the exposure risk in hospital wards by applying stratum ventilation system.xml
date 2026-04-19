@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Reducing the exposure risk in hospital wards by applying stratum ventilation system</Title>
+    <Authors>
+      <Author>Lu, YL</Author>
+      <Author>Oladokun, M</Author>
+      <Author>Lin, Z</Author>
+    </Authors>
+    <Journal>BUILDING AND ENVIRONMENT</Journal>
+    <Year>2020</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>183</Volume>
+    <Date>OCT 2020</Date>
+    <Address>[Lu, Yalin] City Univ Hong Kong, Dept Architecture &amp; Civil Engn, Hong Kong, Peoples R China; [Oladokun, Majeed; Lin, Zhang] City Univ Hong Kong, Div Bldg Sci &amp; Technol, Hong Kong, Peoples R China</Address>
+    <Abstract>In order to improve the ventilation design for hospital wards and protect the healthcare workers from respiratory infections, stratum ventilation is proposed to reduce the exposure risk. A numerical (CFD) approach is applied to investigate contaminant distribution in a two-bed hospital ward with two patients and one healthcare worker under stratum ventilation, mixing ventilation, downward ventilation and displacement ventilation. Tracer gas (CO2) is also applied to simulate the exhaled and coughed contaminants by patients. The patients are in positions of lying or sitting in bed. The contaminant concentration distributions and contaminant removal effectiveness under the different air distributions are compared. The results show that under stratum ventilation, with two patients breathing, the contaminant concentration in the breathing zone (1.3-1.7 m above the floor) is comparably lower, the contaminant removal effectiveness is relatively higher. The contaminant concentration at different moments after a patient's cough is also compared. The results show that the coughed contaminant is diluted quickly under stratum ventilation, and the high concentration spot is substantially reduced. The results show that stratum ventilation minimises the exposure risk of healthcare workers in hospital wards.</Abstract>
+    <DOI>10.1016/j.buildenv.2020.107204</DOI>
+    <URL>https://doi.org/10.1016/j.buildenv.2020.107204</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

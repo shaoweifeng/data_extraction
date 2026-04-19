@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Performance of the CURB-65 Score in Predicting Critical Care Interventions in Patients Admitted With Community-Acquired Pneumonia</Title>
+    <Authors>
+      <Author>Ilg, A</Author>
+      <Author>Moskowitz, A</Author>
+      <Author>Konanki, V</Author>
+      <Author>Patel, PV</Author>
+      <Author>Chase, M</Author>
+      <Author>Grossestreuer, AV</Author>
+      <Author>Donnino, MW</Author>
+    </Authors>
+    <Journal>ANNALS OF EMERGENCY MEDICINE</Journal>
+    <Year>2019</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>74</Volume>
+    <Issue>1</Issue>
+    <Page>60-68</Page>
+    <Date>JUL 2019</Date>
+    <Address>[Ilg, Annette; Konanki, Varun; Patel, Parth, V; Chase, Maureen; Grossestreuer, Anne, V; Donnino, Michael W.] Beth Israel Deaconess Med Ctr, Dept Emergency Med, Boston, MA 02215 USA; [Moskowitz, Ari; Donnino, Michael W.] Beth Israel Deaconess Med Ctr, Dept Med, Div Pulm Crit Care &amp; Sleep Med, Boston, MA 02215 USA</Address>
+    <Abstract>Study objective: Confusion, uremia, elevated respiratory rate, hypotension, and aged 65 years or older (CURB-65) is a clinical prediction rule intended to stratify patients with pneumonia by expected mortality. We assess the predictive performance of CURB-65 for the proximal endpoint of receipt of critical care intervention in emergency department (ED) patients admitted with community-acquired pneumonia.Methods: We performed a retrospective analysis of electronic health records from a single tertiary center for ED patients admitted as inpatients with a primary diagnosis of pneumonia from 2010 to 2014. Patients with a history of malignancy, tuberculosis, bronchiectasis, HIV, or readmission within 14 days were excluded. We assessed the predictive accuracy of CURB-65 for receipt of critical care interventions (ie, vasopressors, large-volume intravenous fluids, invasive catheters, assisted ventilation, insulin infusions, or renal replacement therapy) and inhospital mortality. Logistic regression was performed to assess the increase in odds of critical care intervention or inhospital mortality by increasing CURB-65 score.Results: There were 2,322 patients admitted with community-acquired pneumonia in the study cohort; 630 (27.1%) were admitted to the ICU within 48 hours of ED triage and 343 (14.8%) received a critical care intervention. Of patients with a CURB-65 score of 0 to 1, 181 (15.6%) were admitted to the ICU, 74 (6.4%) received a critical care intervention, and 7 (0.6%) died. Of patients with a CURB-65 score of 2, 223 (27.0%) were admitted to the ICU, 127 (15.4%) received a critical care intervention, and 47 (5.7%) died. Among patients with CURB-65 score greater than or equal to 3, 226 (67.0%) were admitted to the ICU, 142 (42.1%) received a critical care intervention, and 43 (12.8%) died. The areas under the receiver operating characteristic for CURB-65 as a predictor of critical care intervention and mortality were 0.73 and 0.77, whereas sensitivity of CURB-65 score greater than or equal to 2 in predicting critical care intervention was 78.4%; for mortality, 92.8%.Conclusion: Patients with CURB-65 score less than or equal to 2 were often admitted to the ICU and received critical care interventions. Given this finding and the relatively low sensitivity of CURB-65 for critical care intervention, clinicians should exercise caution when using CURB-65 to guide disposition. Future ED-based clinical prediction rules may benefit from calibration to proximal endpoints.</Abstract>
+    <DOI>10.1016/j.annemergmed.2018.06.017</DOI>
+    <URL>https://doi.org/10.1016/j.annemergmed.2018.06.017</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

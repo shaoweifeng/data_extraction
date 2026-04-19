@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Predictors of severe H1N1 infection in children presenting within Pediatric Emergency Research Networks (PERN): retrospective case-control study</Title>
+    <Authors>
+      <Author>Dalziel, SR</Author>
+      <Author>Thompson, JMD</Author>
+      <Author>Macias, CG</Author>
+      <Author>Fernandes, RM</Author>
+      <Author>Johnson, DW</Author>
+      <Author>Waisman, Y</Author>
+      <Author>Cheng, N</Author>
+      <Author>Acworth, J</Author>
+      <Author>Chamberlain, JM</Author>
+      <Author>Osmond, MH</Author>
+      <Author>Plint, A</Author>
+      <Author>Valerio, P</Author>
+      <Author>Black, KJL</Author>
+      <Author>Fitzpatrick, E</Author>
+      <Author>Newton, AS</Author>
+      <Author>Kuppermann, N</Author>
+      <Author>Klassen, TP</Author>
+    </Authors>
+    <Journal>BMJ-BRITISH MEDICAL JOURNAL</Journal>
+    <Year>2013</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>347</Volume>
+    <Date>AUG 12 2013</Date>
+    <Address>[Dalziel, Stuart R.] Starship Childrens Hosp, Auckland, New Zealand; [Dalziel, Stuart R.; Thompson, John M. D.] Univ Auckland, Auckland 1, New Zealand; [Macias, Charles G.] Baylor Coll Med, Houston, TX 77030 USA; [Macias, Charles G.] Texas Childrens Hosp, Houston, TX 77030 USA; [Fernandes, Ricardo M.] Hosp Santa Maria, Dept Pediat, Lisbon, Portugal; [Fernandes, Ricardo M.] Inst Mol Med, Fac Med, Lab Clin Pharmacol &amp; Therapeut, Lisbon, Portugal; [Johnson, David W.] Univ Calgary, Alberta Childrens Hosp, Res Inst, Calgary, AB, Canada; [Waisman, Yehezkel] Schneider Childrens Med Ctr Israel, Petah Tiqwa, Israel; [Cheng, Nicholas] Childrens Hosp Westmead, Sydney, NSW, Australia; [Acworth, Jason] Royal Childrens Hosp, Brisbane, Qld, Australia; [Chamberlain, James M.] Childrens Natl Med Ctr, Washington, DC 20010 USA; [Osmond, Martin H.; Plint, Amy] Univ Ottawa, Ottawa, ON, Canada; [Osmond, Martin H.; Plint, Amy] Childrens Hosp Eastern Ontario, Ottawa, ON K1H 8L1, Canada; [Valerio, Paolo] Onze Lieve Vrouw Hosp, Amsterdam, Netherlands; [Black, Karen J. L.; Fitzpatrick, Eleanor] IWK Hlth Ctr, Halifax, NS, Canada; [Newton, Amanda S.] Univ Alberta, Edmonton, AB, Canada; [Kuppermann, Nathan] Univ Calif Davis, Sch Med, Dept Emergency Med, Davis, CA 95616 USA; [Kuppermann, Nathan] Univ Calif Davis, Sch Med, Dept Pediat, Davis, CA 95616 USA; [Klassen, Terry P.] Univ Manitoba, Manitoba Inst Child Hlth, Winnipeg, MB, Canada</Address>
+    <Abstract>Objective To identify historical and clinical findings at emergency department presentation associated with severe H1N1 outcome in children presenting with influenza-like illness.Design Multicentre retrospective case-control study.Setting 79 emergency departments of hospitals associated with the Pediatric Emergency Research Networks in 12 countries.Participants 265 children (&lt;16 years), presenting between 16 April and 31 December 2009, who fulfilled Centers for Disease Control and Prevention criteria for influenza-like illness and developed severe outcomes from laboratory confirmed H1N1 infection. For each case, two controls presenting with influenza-like illness but without severe outcomes were included: one random control and one age matched control.Main outcome measures Severe outcomes included death or admission to intensive care for assisted ventilation, inotropic support, or both. Multivariable conditional logistic regression was used to compare cases and controls, with effect sizes measured as adjusted odds ratios.Results 151 (57%) of the 265 cases were male, the median age was 6 (interquartile range 2.3-10.0) years, and 27 (10%) died. Six factors were associated with severe outcomes in children presenting with influenza-like illness: history of chronic lung disease (odds ratio 10.3, 95% confidence interval 1.5 to 69.8), history of cerebral palsy/developmental delay (10.2, 2.0 to 51.4), signs of chest retractions (9.6, 3.2 to 29.0), signs of dehydration (8.8, 1.6 to 49.3), requirement for oxygen (5.8, 2.0 to 16.2), and tachycardia relative to age).Conclusion These independent risk factors may alert clinicians to children at risk of severe outcomes when presenting with influenza-like illness during future pandemics.</Abstract>
+    <DOI>10.1136/bmj.f4836</DOI>
+    <URL>https://doi.org/10.1136/bmj.f4836</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The impact of non-pharmaceutical interventions on the first COVID-19 epidemic wave in South Africa</Title>
+    <Authors>
+      <Author>Mabuka, T</Author>
+      <Author>Ncube, N</Author>
+      <Author>Ross, M</Author>
+      <Author>Silaji, A</Author>
+      <Author>Macharia, W</Author>
+      <Author>Ndemera, T</Author>
+      <Author>Lemeke, T</Author>
+    </Authors>
+    <Journal>BMC PUBLIC HEALTH</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>23</Volume>
+    <Issue>1</Issue>
+    <Date>AUG 5 2023</Date>
+    <Address>[Mabuka, Thabo; Ncube, Nesisa; Ross, Michael; Silaji, Andrea; Macharia, Willie; Ndemera, Tinashe; Lemeke, Tlaleng] Afrikan Res Initiat ARI, African COVID 19 Modelling Res Grp ACMRG, Cape Town, South Africa</Address>
+    <Abstract>ObjectiveIn this study, we investigated the impact of COVID-19 NPIs in South Africa to understand their effectiveness in the reduction of transmission of COVID-19 in the South African population. This study also investigated the COVID-19 testing, reporting, hospitalised cases, excess deaths and COVID-19 modelling in the first wave of the COVID-19 epidemic in South Africa.MethodsA semi-reactive stochastic COVID-19 model, the ARI COVID-19 SEIR model, was used to investigate the impact of NPIs in South Africa to understand their effectiveness in the reduction of COVID-19 transmission in the South African population. COVID-19 testing, reporting, hospitalised cases and excess deaths in the first COVID-19 epidemic wave in South Africa were investigated using regressional analysis and descriptive statistics.FindingsThe general trend in population movement in South African locations shows that the COVID-19 NPIs (National Lockdown Alert Levels 5,4,3,2) were approximately 30% more effective in reducing population movement concerning each increase by 1 Alert Level. The translated reduction in the effective SARS-CoV-2 daily contact number (&amp; beta;) was 6.12% to 36.1% concerning increasing Alert Levels. Due to the implemented NPIs, the effective SARS-CoV-2 daily contact number in the first COVID-19 epidemic wave in South Africa was reduced by 58.1-71.1% while the peak was delayed by 84 days. The estimated COVID-19 reproductive number was between 1.98 to 0.40. During South Africa's first COVID-19 epidemic wave, the mean COVID-19 admission status in South African hospitals was 58.5%, 95% CI [58.1-59.0] in the general ward, 13.4%, 95% CI [13.1-13.7] in the intensive care unit, 13.3%, 95% CI [12.6-14.0] on oxygen, 6.37%, 95% CI [6.23-6.51] in high care, 6.29%, 95% CI [6.02-6.55] on ventilator and 2.13%, 95% CI [1.87-2.43] in isolation ward respectively. The estimated mean South African COVID-19 patient discharge rate was 11.9 days per patient. While the estimated mean of the South African COVID-19 patient case fatality rate (CFR) in hospital and outside the hospital was 2.06%, 95% CI [1.86-2.25] (deaths per admitted patients) and 2.30%, 95% CI [1.12-3.83](deaths per severe and critical cases) respectively. The relatively high coefficient of variance in COVID-19 model outputs observed in this study shows the uncertainty in the accuracy of the reviewed COVID-19 models in predicting the severity of COVID-19. However, the reviewed COVID-19 models were accurate in predicting the progression of the first COVID-19 epidemic wave in South Africa.ConclusionThe results from this study show that the COVID-19 NPI policies implemented by the Government of South Africa played a significant role in the reduction of COVID-19 active, hospitalised cases and deaths in South Africa's first COVID-19 epidemic wave. The results also show the use of COVID-19 modelling to understand the COVID-19 pandemic and the impact of regressor variables in an epidemic.</Abstract>
+    <DOI>10.1186/s12889-023-16162-0</DOI>
+    <URL>https://doi.org/10.1186/s12889-023-16162-0</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

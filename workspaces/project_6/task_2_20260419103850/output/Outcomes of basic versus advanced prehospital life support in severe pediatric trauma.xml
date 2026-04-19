@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Outcomes of basic versus advanced prehospital life support in severe pediatric trauma</Title>
+    <Authors>
+      <Author>Epstein, D</Author>
+      <Author>Goldman, S</Author>
+      <Author>Radomislensky, I</Author>
+      <Author>Raz, A</Author>
+      <Author>Lipsky, AM</Author>
+      <Author>Lin, SL</Author>
+      <Author>Bodas, M</Author>
+    </Authors>
+    <Journal>AMERICAN JOURNAL OF EMERGENCY MEDICINE</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>65</Volume>
+    <Page>118-124</Page>
+    <Date>MAR 2023</Date>
+    <Address>[Epstein, Danny] Rambam Hlth Care Campus, Crit Care Div, H_efa, Israel; [Goldman, Sharon; Radomislensky, Irina; Lin, Shaul; Bodas, Moran; Israel Trauma Group] Sheba Med Ctr, Gertner Inst Epidemiol &amp; Hlth Policy Res, Israel Natl Ctr Trauma &amp; Emergency Med Res, Tel Hashomer, Israel; [Raz, Aeyal] Rambam Hlth Care Campus, Dept Anesthesiol, Haifa, Israel; [Raz, Aeyal; Lipsky, Ari M.; Lin, Shaul] Technion, Ruth &amp; Bruce Rappaport Fac Med, H_efa, Israel; [Lipsky, Ari M.] Emek Med Ctr, Emergency Dept, Afula, Israel; [Lin, Shaul] Rambam Hlth Care Ctr, Dept Endodont &amp; Dent Trauma, H_efa, Israel; [Bodas, Moran] Tel Aviv Univ, Fac Med, Sch Publ Hlth, Dept Emergency &amp; Disaster Management, Tel Aviv, Israel</Address>
+    <Abstract>Objective: The role of basic life support (BLS) vs. advanced life support (ALS) in pediatric trauma is controversial. Although ALS is widely accepted as the gold standard, previous studies have found no advantage of ALS over BLS care in adult trauma. The objective of this study was to evaluate whether ALS transport confers a survival advan-tage over BLS among severely injured children.Methods: A retrospective cohort study of data included in the Israeli National Trauma Registry from January 1, 2011, through December 31, 2020 was conducted. All the severely injured children (age &lt; 18 years and injury severity score [ISS] &gt;= 16) were included. Patient survival by mode of transport was analyzed using logistic regression.Results: Of 3167 patients included in the study, 65.1% were transported by ALS and 34.9% by BLS. Significantly more patients transported by ALS had ISS &gt;= 25 as well as abnormal vital signs at admission. The ALS and BLS cohorts were comparable in age, gender, mechanism of injury, and prehospital time. Children transported by ALS had higher in-hospital mortality (9.2% vs. 0.9%, p &lt; 0.001). Following risk adjustment, patients transported by ALS teams were significantly more likely to die than patients transported by BLS (adjusted OR 2.27, 95% CI 1.05-5.41, p = 0.04). Patients with ISS &gt;= 50 had comparable mortality rates in both groups (45.9% vs. 55.6%, p = 0.837) while patients with GCS &lt;9 transported by ALS had higher mortality (25.9% vs. 11.5%, p = 0.019). Admission to a level II trauma center vs. a level I hospital was also associated with increased mortality (adjusted OR 2.78 (95% CI 1.75-4.55, p &lt; 0.001).Conclusions: Among severely injured children, prehospital ALS care was not associated with lower mortality rates relative to BLS care. Because of potential confounding by severity in this retrospective analysis, further studies are warranted to validate these results.(c) 2023 Elsevier Inc. All rights reserved.</Abstract>
+    <DOI>10.1016/j.ajem.2022.12.045</DOI>
+    <URL>https://doi.org/10.1016/j.ajem.2022.12.045</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

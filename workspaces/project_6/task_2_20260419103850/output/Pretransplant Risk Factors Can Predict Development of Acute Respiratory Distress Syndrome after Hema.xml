@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Pretransplant Risk Factors Can Predict Development of Acute Respiratory Distress Syndrome after Hematopoietic Stem Cell Transplantation</Title>
+    <Authors>
+      <Author>Herasevich, S</Author>
+      <Author>Frank, RD</Author>
+      <Author>Bo, H</Author>
+      <Author>Alkhateeb, H</Author>
+      <Author>Hogan, WJ</Author>
+      <Author>Gajic, O</Author>
+      <Author>Yadav, H</Author>
+    </Authors>
+    <Journal>ANNALS OF THE AMERICAN THORACIC SOCIETY</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>18</Volume>
+    <Issue>6</Issue>
+    <Page>1004-1012</Page>
+    <Date>JUN 2021</Date>
+    <Address>[Herasevich, Svetlana] Mayo Clin, Dept Anesthesiol &amp; Perioperat Med, Rochester, MN 55905 USA; [Frank, Ryan D.] Mayo Clin, Div Hlth Sci Res Biomed Stat &amp; Informat, Rochester, MN 55905 USA; [Alkhateeb, Hassan; Hogan, William J.] Mayo Clin, Div Hematol, Rochester, MN 55905 USA; [Gajic, Ognjen; Yadav, Hemang] Mayo Clin, Div Pulm &amp; Crit Care Med, 200 1st St SW, Rochester, MN 55905 USA; [Bo, Hong] Sichuan Univ, Dept Crit Care Med, West China Hosp, Chengdu, Peoples R China</Address>
+    <Abstract>Rationale: Acute respiratory distress syndrome (ARDS) is a common complication after hematopoietic stem cell transplantation (HCT) and is a major contributor to nonrelapse mortality.Objectives: To better understand pretransplant risk factors for developing ARDS after HCT.Methods: This is a single-center observational study comparing risk factors for ARDS development in 164 patients who went on to develop post-HCT ARDS compared with 492 patients who did not. The patients were matched 1 to 3 on age, sex, type of transplant (allogeneic vs. autologous), and underlying disease. Pertinent risk factors were analyzed separately in multivariable conditional logistic regression after adjustment for a priori variables known to be associated with ARDS development.Results: Patients with ARDS were more likely to have a lower pretransplant pulmonary function as measured by forced vital capacity (FVC) (odds ratio [OR], 0.54 [0.42-0.70] per liter increase in FVC; P &lt; 0.001), forced expiratory volume in one second (FEV1) (OR, 0.52 [0.38-0.71] per liter increase in FEV1; P &lt; 0.001) and diffusing capacity (OR, 0.92 [0.88-0.96] per ml/min/mm Hg increase in diffusing capacity; P &lt; 0.001). Several laboratory indices were predictive of subsequent ARDS development including elevated AST (aspartate aminotransferase) (OR, 1.01 [1.00-1.01]; P &lt; 0.008), lower serum albumin (OR, 0.44 [0.30-0.66]; P &lt; 0.001), lower pretransplant hemoglobin (OR, 0.82 [0.73-0.92]; P = 0.001), and lower leukocyte count (OR, 0.88 [0.79-0.99]; P &lt; 0.03). Patients who went on to develop ARDS were more likely to have been hospitalized in the year before the transplant (OR, 1.11 [1.04-1.20]; P = 0.003), and required invasive or noninvasive ventilation during that hospitalization. Lastly, patients with ARDS were significantly more likely to have received carboplatin, thalidomide, methotrexate, and cisplatin than the non-ARDS control subjects.Conclusions: Several risk factors for developing ARDS after HCT are identifiable at the time of transplantation, well before the development of critical illness and ARDS. The identification of risk factors long before ARDS develops is relatively unique to the HCT population. Further work is needed to develop usable risk prediction tools in this setting.</Abstract>
+    <DOI>10.1513/AnnalsATS.202004-336OC</DOI>
+    <URL>https://doi.org/10.1513/AnnalsATS.202004-336OC</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

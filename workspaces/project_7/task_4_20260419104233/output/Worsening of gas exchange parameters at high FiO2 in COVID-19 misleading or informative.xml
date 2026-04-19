@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Worsening of gas exchange parameters at high FiO2 in COVID-19: misleading or informative?</Title>
+    <Authors>
+      <Author>Raimondi, F</Author>
+      <Author>Novelli, L</Author>
+      <Author>Marchesi, G</Author>
+      <Author>Fabretti, F</Author>
+      <Author>Grazioli, L</Author>
+      <Author>Riva, I</Author>
+      <Author>Allegri, C</Author>
+      <Author>Biza, R</Author>
+      <Author>Galimberti, C</Author>
+      <Author>Lorini, FL</Author>
+      <Author>Di Marco, F</Author>
+    </Authors>
+    <Journal>MULTIDISCIPLINARY RESPIRATORY MEDICINE</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>16</Volume>
+    <Date>MAY 25 2021</Date>
+    <Address>[Raimondi, Federico; Novelli, Luca; Allegri, Chiara; Biza, Roberta; Di Marco, Fabiano] ASST Papa Giovanni XXIII, Pulm Med Unit, Bergamo, Italy; [Raimondi, Federico; Allegri, Chiara; Biza, Roberta; Galimberti, Chiara; Di Marco, Fabiano] Univ Milan, Dept Med Sci, Milan, Italy; [Marchesi, Gianmariano; Fabretti, Fabrizio; Riva, Ivano] ASST Papa Giovanni XXIII, Anesthesiol Intens Care Unit 3, Bergamo, Italy; [Grazioli, Lorenzo; Lorini, Ferdinando Luca] ASST Papa Giovanni XXIII, Anesthesiol Intens Care Unit 2, Bergamo, Italy</Address>
+    <Abstract>Background: In COVID-19, higher than expected level of intrapulmonary shunt has been described, in association with a discrepancy between the initial relatively preserved lung mechanics and the hypoxia severity. This study aim was to measure the shunt fraction and variations of PaO2/FiO(2) ratio and oxygen alveolar-arterial gradient (A-a O-2) at different FiO(2).Methods: Shunt was measured by a non-invasive system during spontaneous breathing in 12 patients hospitalized at COVID-19 Semi-Intensive Care Unit of Papa Giovanni XXIII Hospital, Bergamo, Italy, between October 22 and November 23, 2020.Results: Nine patients were men, mean age (+/- SD) 62 +/- 15 years, mean BMI 27.5 +/- 4.8 Kg/m(2). Systemic hypertension, diabetes type 2 and previous myocardial infarction were referred in 33%, 17%, and 7%, respectively. Mean PaO2/FiO(2) ratio was 234 +/- 66 and 11 patients presented a bilateral chest X-ray involvement. Mean shunt was 21 +/- 6%. Mainly in patients with a more severe respiratory failure, we found a progressive decrease of PaO2/FiO(2) ratio with higher FiO(2). Considering (A-a O-2), we found a uniform tendency to increase with FiO(2) increasing. Even in this case, the more severe were the patients, the higher was the slope, suggesting FiO(2) insensitiveness due to a shunt effect, as strengthened by our measurements.Conclusion: Relying on a single evaluation of PaO2/FiO(2) ratio, especially at high FiO(2), could be misleading in COVID-19. We propose a two steps evaluation, the first at low SpO(2) value (e.g., 92-94%) and the second one at high FiO(2) (i.e., &gt;0.7), allowing to characterize both the amendable (ventilation/perfusion mismatch), and the fixed (shunt) contribution quote of respiratory impairment, respectively.</Abstract>
+    <URL>https://pubmed.ncbi.nlm.nih.gov/34123380/</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

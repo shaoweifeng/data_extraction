@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>High-Flow Nasal Cannula Compared With Noninvasive Positive Pressure Ventilation in Acute Hypoxic Respiratory Failure: A Systematic Review and Meta-Analysis</Title>
+    <Authors>
+      <Author>Chaudhuri, D</Author>
+      <Author>Trivedi, V</Author>
+      <Author>Lewis, K</Author>
+      <Author>Rochwerg, B</Author>
+    </Authors>
+    <Journal>CRITICAL CARE EXPLORATIONS</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>5</Volume>
+    <Issue>4</Issue>
+    <Date>APR 2023</Date>
+    <Address>[Chaudhuri, Dipayan; Lewis, Kimberley; Rochwerg, Bram] McMaster Univ, Dept Med, Hamilton, ON L8S 4L8, Canada; [Chaudhuri, Dipayan; Lewis, Kimberley; Rochwerg, Bram] McMaster Univ, Dept Hlth Res Methods Evidence &amp; Impact, Hamilton, ON, Canada; [Trivedi, Vatsal] Univ Toronto, Dept Anesthesiol &amp; Pain Med, Toronto, ON, Canada; [Trivedi, Vatsal] Inst Better Hlth, Dept Anesthesia, Trillium Hlth Partners, Mississauga, ON, Canada</Address>
+    <Abstract>OBJECTIVES:To evaluate the efficacy and cost-effectiveness of high-flow nasal cannula (HFNC) when compared with noninvasive positive pressure ventilation (NIPPV) in patients with acute hypoxic respiratory failure (AHRF).DATA SOURCES:We performed a comprehensive search of MEDLINE, Embase, CINAHL, the Cochrane library, and the international Health Technology Assessment database from inception to September 14, 2022.STUDY SELECTION:We included randomized control studies that compared HFNC to NIPPV in adult patients with AHRF. For clinical outcomes, we included only parallel group and crossover randomized control trials (RCTs). For economic outcomes, we included any study design that evaluated cost-effectiveness, cost-utility, or cost benefit analyses.DATA EXTRACTION:Clinical outcomes of interest included intubation, mortality, ICU and hospital length of stay (LOS), and patient-reported dyspnea. Economic outcomes of interest included costs, cost-effectiveness, and cost-utility.DATA SYNTHESIS:We included nine RCTs (n = 1,539 patients) and one cost-effectiveness study. Compared with NIPPV, HFNC may have no effect on the need for intubation (relative risk [RR], 0.93; 95% CI, 0.69-1.27; low certainty) and an uncertain effect on mortality (RR, 0.84; 95% CI, 0.59-1.21; very low certainty). In subgroup analysis, NIPPV delivered through the helmet interface-as opposed to the facemask interface-may reduce intubation compared with HFNC (p = 0.006; moderate credibility of subgroup effect). There was no difference in ICU or hospital LOS (both low certainty) and an uncertain effect on patient-reported dyspnea (very low certainty). We could make no conclusions regarding the cost-effectiveness of HFNC compared with NIPPV.CONCLUSIONS:HFNC and NIPPV may be similarly effective at reducing the need for intubation with an uncertain effect on mortality in hospitalized patients with hypoxemic respiratory failure. More research evaluating different interfaces in varying clinical contexts is needed to improve generalizability and precision of findings.</Abstract>
+    <DOI>10.1097/CCE.0000000000000892</DOI>
+    <URL>https://doi.org/10.1097/CCE.0000000000000892</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

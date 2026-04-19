@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Frequency and factors associated with hospital readmission after COVID-19 hospitalization: the importance of post-COVID diarrhea</Title>
+    <Authors>
+      <Author>Freire, MP</Author>
+      <Author>Oliveira, MS</Author>
+      <Author>Magri, MMC</Author>
+      <Author>Tavares, BM</Author>
+      <Author>Marinho, I</Author>
+      <Author>Nastri, ACDS</Author>
+      <Author>Busatto, G</Author>
+      <Author>Levin, AS</Author>
+    </Authors>
+    <Journal>CLINICS</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>77</Volume>
+    <Date>2022</Date>
+    <Address>[Freire, Maristela Pinheiro; Oliveira, Maura Salaroli; Tavares, Bruno Melo] Univ Sao Paulo HCFMUSP, Fac Med, Hosp Clin, Working Comm Hosp Epidemiol &amp; Infect Control, Sao Paulo, SP, Brazil; [Magri, Marcello Mihailenko Chaves; Marinho, Igor; Nastri, Ana Catharina De Seixas Santos; Levin, Anna S.] Univ Sao Paulo HCFMUSP, Fac Med, Hosp Clin, Dept Infect Dis, Sao Paulo, SP, Brazil; [Busatto, Geraldo Filho] Univ Sao Paulo HCFMUSP, Fac Med, Lab Psychiat Neuroimaging LIM21, Dept &amp; Inst Psychiat, Sao Paulo, SP, Brazil</Address>
+    <Abstract>Purpose: The aim of this study was to describe the incidence and risk factors for hospital readmission and infection during the months after COVID-19 hospital admission. Methods: This prospective study included adult patients who were hospitalized due to COVID-19 and had been discharged from April 2020 to August 2020. All patients had a medical evaluation with a structured questionnaire 6 to 11 months after hospital admission. The authors included only patients with confirmed COVID-19 by RT-PCR. Patients with pregnant/postpartum women, with a proven COVID-19 reinfection or incapable of answering the questionnaire were excluded. Results: A total of 822 patients completed the follow-up assessment, and 68% reported at least one recurrent symptom related to COVID-19. The most frequent symptom was myalgia (42%). Thirty-two percent of patients visited an emergency room after COVID-19 hospitalization, and 80 (10%) patients required re-hospitalization. Risk factors for hospital readmission were orotracheal intubation during COVID-19 hospitalization (p = 0.003, OR = 2.14), Charlson score (p = 0.002, OR = 1.21), congestive heart failure (p = 0.005, OR = 2.34), peripheral artery disease (p = 0.06, OR = 2.06) and persistent diarrhea after COVID-19 hospitalization discharge (p = 0.02, OR = 1.91). The main cause of hospital readmission was an infection, 43 (54%). Pneumonia was the most frequent infection (29%). Conclusions: The presence of symptoms after six months of COVID-19 diagnosis was frequent, and hospital readmission was relatively high.</Abstract>
+    <DOI>10.1016/j.clinsp.2022.100061</DOI>
+    <URL>https://doi.org/10.1016/j.clinsp.2022.100061</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

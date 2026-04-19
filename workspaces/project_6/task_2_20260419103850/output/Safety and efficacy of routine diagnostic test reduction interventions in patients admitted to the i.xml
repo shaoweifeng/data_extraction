@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Safety and efficacy of routine diagnostic test reduction interventions in patients admitted to the intensive care unit: A systematic review and meta-analysis</Title>
+    <Authors>
+      <Author>Hooper, KP</Author>
+      <Author>Anstey, MH</Author>
+      <Author>Litton, E</Author>
+    </Authors>
+    <Journal>ANAESTHESIA AND INTENSIVE CARE</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>49</Volume>
+    <Issue>1</Issue>
+    <Page>23-34</Page>
+    <Date>JAN 2021</Date>
+    <Address>[Hooper, Katherine P.; Litton, Edward] Fiona Stanley Hosp, Intens Care Unit, Perth, WA, Australia; [Hooper, Katherine P.] Royal Melbourne Hosp, Intens Care Unit, Melbourne, Vic, Australia; [Anstey, Matthew H.] Sir Charles Gairdner Hosp, Intens Care Unit, Perth, WA, Australia; [Anstey, Matthew H.; Litton, Edward] Univ Western Australia, Fac Hlth &amp; Med Sci, Med Sch, Perth, WA, Australia; [Litton, Edward] St John God Subiaco Hosp, Intens Care Unit, Perth, WA 6009, Australia</Address>
+    <Abstract>Reducing unnecessary routine diagnostic testing has been identified as a strategy to curb wasteful healthcare. However, the safety and efficacy of targeted diagnostic testing strategies are uncertain. The aim of this study was to systematically review interventions designed to reduce pathology and chest radiograph testing in patients admitted to the intensive care unit (ICU). A predetermined protocol and search strategy included OVID MEDLINE, OVID EMBASE and the Cochrane Central Register of Controlled Trials from inception until 20 November 2019. Eligible publications included interventional studies of patients admitted to an ICU. There were no language restrictions. The primary outcomes were in-hospital mortality and test reduction. Key secondary outcomes included ICU mortality, length of stay, costs and adverse events. This systematic review analysed 26 studies (with more than 44,00 patients) reporting an intervention to reduce one or more diagnostic tests. No studies were at low risk of bias. In-hospital mortality, reported in seven studies, was not significantly different in the post-implementation group (829 of 9815 patients, 8.4%) compared with the preintervention group (1007 of 9848 patients, 10.2%), (relative risk 0.89, 95% confidence intervals 0.79 to 1.01, P=0.06, I-2 39%). Of the 18 studies reporting a difference in testing rates, all reported a decrease associated with targeted testing (range 6%-72%), with 14 (82%) studies reporting &gt;20% reduction in one or more tests. Studies of ICU targeted test interventions are generally of low quality. The majority report substantial decreases in testing without evidence of a significant difference in hospital mortality.</Abstract>
+    <DOI>10.1177/0310057X20962113</DOI>
+    <URL>https://doi.org/10.1177/0310057X20962113</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

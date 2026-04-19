@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The Use of Different Components of Brain Oxygenation for the Assessment of Cerebral Haemodynamics: A Prospective Observational Study on COVID-19 Patients</Title>
+    <Authors>
+      <Author>Robba, C</Author>
+      <Author>Cardim, D</Author>
+      <Author>Ball, L</Author>
+      <Author>Battaglini, D</Author>
+      <Author>Dabrowski, W</Author>
+      <Author>Bassetti, M</Author>
+      <Author>Giacobbe, DR</Author>
+      <Author>Czosnyka, M</Author>
+      <Author>Badenes, R</Author>
+      <Author>Pelosi, P</Author>
+      <Author>Matta, B</Author>
+    </Authors>
+    <Journal>FRONTIERS IN NEUROLOGY</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>12</Volume>
+    <Date>DEC 20 2021</Date>
+    <Address>[Robba, Chiara; Ball, Lorenzo; Pelosi, Paolo] Univ Genoa, Dept Surg Sci &amp; Integrated Diagnost DISC, Genoa, Italy; [Robba, Chiara; Ball, Lorenzo; Battaglini, Denise; Pelosi, Paolo] IRCCS Oncol &amp; Neurosci, San Martino Policlin Hosp, Genoa, Italy; [Cardim, Danilo] Univ Texas Southwestern Med Ctr Dallas, Dept Neurol, Dallas, TX USA; [Battaglini, Denise] Univ Barcelona, Dept Med, Barcelona, Spain; [Dabrowski, Wojciech] Med Univ Lublin, Dept Anesthesiol &amp; Intens Care, Lublin, Poland; [Bassetti, Matteo; Giacobbe, Daniele Roberto] Univ Genoa, Dept Hlth Sci DISSAL, Genoa, Italy; [Bassetti, Matteo; Giacobbe, Daniele Roberto] IRCCS Oncol &amp; Neurosci, Osped Policlin San Martino, Infect Dis Unit, Genoa, Italy; [Czosnyka, Marek] Addenbrookes Hosp, Dept Clin Neurosci, Neurosurg Unit, Brain Phys Lab, Cambridge, England; [Badenes, Rafael] Univ Valencia, INCLIVA Res Hlth Inst, Hosp Clin Univ, Dept Anesthesia &amp; Intens Care, Valencia, Spain; [Matta, Basil] Addenbrookes Hosp, Neurocrit Care Unit, Cambridge, England</Address>
+    <Abstract>Introduction: The role of near-infrared spectroscopy (NIRS) for the evaluation of cerebral haemodynamics is gaining increasing popularity because of its noninvasive nature. The aim of this study was to evaluate the role of the integral components of regional cerebral oxygenation (rSO(2)) measured by NIRS [i.e., arterial-oxyhemoglobin (O(2)Hbi) and venous-deoxyhemoglobin (HHbi)-components], as indirect surrogates of cerebral blood flow (CBF) in a cohort of critically ill patients with coronavirus disease 2019 (COVID-19). We compared these findings to the gold standard technique for noninvasive CBF assessment, Transcranial Doppler (TCD).Methods: Mechanically ventilated patients with COVID-19 admitted to the Intensive Care Unit (ICU) of Policlinico San Martino Hospital, Genova, Italy, who underwent multimodal neuromonitoring (including NIRS and TCD), were included. rSO(2) and its components [relative changes in O(2)Hbi, HHbi, and total haemoglobin (cHbi)] were compared with TCD (cerebral blood flow velocity, CBFV). Changes (Delta) in CBFV and rSO(2), Delta O(2)Hbi, Delta HHbi, and Delta cHbi after systemic arterial blood pressure (MAP) modifications induced by different manoeuvres (e.g., rescue therapies and haemodynamic manipulation) were assessed using mixed-effect linear regression analysis and repeated measures correlation coefficients. All values were normalised as percentage changes from the baseline (Delta%).Results: One hundred and four measurements from 25 patients were included. Significant effects of Delta%MAP on Delta%CBF were observed after rescue manoeuvres for CBFV, Delta cHbi, and Delta O(2)Hbi. The highest correlation was found between Delta CBFV and Delta Delta O(2)Hbi (R = 0.88, p &lt; 0.0001), and the poorest between Delta CBFV and Delta Delta HHbi (R = 0.34, p = 0.002).Conclusions: Delta O(2)Hbi had the highest accuracy to assess CBF changes, reflecting its role as the main component for vasomotor response after changes in MAP. The use of indexes derived from the different components of rSO(2) can be useful for the bedside evaluation of cerebral haemodynamics in mechanically ventilated patients with COVID-19.</Abstract>
+    <DOI>10.3389/fneur.2021.735469</DOI>
+    <URL>https://doi.org/10.3389/fneur.2021.735469</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

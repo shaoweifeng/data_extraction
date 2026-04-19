@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Preventing respiratory viral transmission in healthcare settings</Title>
+    <Authors>
+      <Author>Zanella, MC</Author>
+      <Author>Rhee, C</Author>
+      <Author>Klompas, M</Author>
+    </Authors>
+    <Journal>CURRENT OPINION IN INFECTIOUS DISEASES</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>38</Volume>
+    <Issue>4</Issue>
+    <Page>339-346</Page>
+    <Date>AUG 2025</Date>
+    <Address>[Zanella, Marie-Celine] Univ Geneva Hosp, Fac Med, Infect Control Program, Geneva, Switzerland; [Zanella, Marie-Celine] Univ Geneva Hosp, Fac Med, WHO Collaborating Ctr, Geneva, Switzerland; [Rhee, Chanu; Klompas, Michael] Harvard Med Sch, Dept Populat Med, 401 Pk Dr,Suite 401 East, Boston, MA 02215 USA; [Rhee, Chanu; Klompas, Michael] Harvard Pilgrim Healthcare Inst, 401 Pk Dr,Suite 401 East, Boston, MA 02215 USA; [Rhee, Chanu; Klompas, Michael] Brigham &amp; Womens Hosp, Dept Med, Boston, MA USA</Address>
+    <Abstract>Purpose of reviewThe COVID-19 pandemic catalyzed new insights into respiratory viral transmission mechanisms and prevention. We review the most practical and impactful measures to prevent SARS-CoV-2 and other nosocomial respiratory viral infections in healthcare.Recent findingsNosocomial respiratory viral infection rates mirror viral activity levels in the surrounding community. During peak periods similar to 15-20% of hospitalized patients with respiratory viral infections may have acquired their virus in the hospital. Nosocomial respiratory viral infections are associated with increased lengths-of-stay, risk of respiratory failure, and hospital death. Most procedures contribute minimally to aerosol production compared to labored breathing, coughing, and forced expiration. Masking for source control and exposure control both decrease transmission risk, respirators more so than masks. Likewise, vaccinating healthcare workers decreases transmission risk and is associated with lower patient mortality rates, particularly in long-term care facilities. Increasing air changes, ultraviolet irradiation, and portable HEPA filtration units may also decrease transmission rates but their marginal benefit relative to current healthcare ventilation standards has yet to be established.SummaryPractical strategies to prevent nosocomial respiratory viral infections include maximizing staff and patient influenza and SARS-CoV-2 vaccination rates and implementing routine masking during patient interactions when community incidence is high.</Abstract>
+    <DOI>10.1097/QCO.0000000000001115</DOI>
+    <URL>https://doi.org/10.1097/QCO.0000000000001115</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

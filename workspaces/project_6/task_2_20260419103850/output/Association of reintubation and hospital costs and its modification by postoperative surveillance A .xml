@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Association of reintubation and hospital costs and its modification by postoperative surveillance: A multicenter retrospective cohort study</Title>
+    <Authors>
+      <Author>Rudolph, MI</Author>
+      <Author>Azimaraghi, O</Author>
+      <Author>Salloum, E</Author>
+      <Author>Wachtendorf, LJ</Author>
+      <Author>Suleiman, A</Author>
+      <Author>Kammerer, T</Author>
+      <Author>Schaefer, MS</Author>
+      <Author>Eikermann, M</Author>
+      <Author>Kiyatkin, ME</Author>
+    </Authors>
+    <Journal>JOURNAL OF CLINICAL ANESTHESIA</Journal>
+    <Year>2023</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>91</Volume>
+    <Date>DEC 2023</Date>
+    <Address>[Rudolph, Maira I.; Azimaraghi, Omid; Salloum, Elie; Eikermann, Matthias; Kiyatkin, Michael E.] Albert Einstein Coll Med, Montefiore Med Ctr, Dept Anesthesiol, Bronx, NY USA; [Rudolph, Maira I.; Kammerer, Tobias] Univ Hosp Cologne, Dept Anesthesiol &amp; Intens Care Med, Cologne, Germany; [Wachtendorf, Luca J.; Suleiman, Aiman; Schaefer, Maximilian S.] Harvard Med Sch, Dept Anesthesia Crit Care &amp; Pain Med, Beth Israel Deaconess Med Ctr, Boston, MA USA; [Wachtendorf, Luca J.; Suleiman, Aiman; Schaefer, Maximilian S.] Beth Israel Deaconess Med Ctr, Ctr Anesthesia Res Excellence CARE, Boston, MA USA; [Suleiman, Aiman] Univ Jordan, Fac Med, Dept Anesthesia &amp; Intens Care, Amman, Jordan; [Schaefer, Maximilian S.] Dusseldorf Univ Hosp, Dept Anesthesiol, Dusseldorf, Germany; [Eikermann, Matthias] Univ Duisburg Essen, Klin Anasthesiol &amp; Intensivmed, Essen, Germany; [Eikermann, Matthias] Montefiore Med Ctr, Dept Anesthesiol, 111 East 210th St, Bronx, NY 10467 USA</Address>
+    <Abstract>Objective: We estimated hospital costs associated with postoperative reintubation and tested the hypothesis that prolonged surveillance in the post-anesthesia care unit (PACU) modifies the hospital costs of reintubation.Design: Retrospective observational research study.Setting: Two tertiary care academic healthcare networks in the Bronx, New York and Boston, Massachusetts, USA.Patients: 68,125 adult non-cardiac surgical patients undergoing general anesthesia between 2016 and 2021.Interventions: The exposure variable was unplanned reintubation within 7 days of surgery.Measurements: The primary outcome was direct hospital costs associated with patient care related activities. We used a multivariable generalized linear model based on log-transformed costs data, adjusting for pre- and intraoperative confounders. We matched our data with data from the Healthcare Cost and Utilization Project-National Inpatient Sample (HCUP-NIS). In the key secondary analysis, we examined if prolonged postoperative surveillance, defined as PACU utilization (&gt;= 4 h) modifies the association between reintubation and costs of care.Main results: 1759 (2.6%) of patients were re-intubated within 7 days after surgery. Reintubation was associated with higher direct hospital costs (adjusted model estimate 2.05; 95% CI: 2.00-2.10) relative to no reintubation. In the HCUP-NIS matched cohort, the adjusted absolute difference (AD(adj)) in costs amounted to US$ 18,837 (95% CI: 17,921-19,777). The association was modified by the duration of PACU surveillance (p-for-interaction &lt;0.001). In patients with a shorter PACU length of stay, reintubation occurred later (median of 2 days; IQR 1, 5) versus 1 days (IQR 0, 2; p &lt; .001), and was associated with magnified effects on hospital costs compared to patients who stayed in the PACU longer (AD(adj) of US$ 23,444, 95% CI: 21,217-25,799 versus AD(adj) of US$ 17,615, 95% CI: 16,350-18,926; p &lt; .001).Conclusion: Postoperative reintubation is associated with 2-fold higher hospital costs. Prolonged surveillance in the recovery room mitigated this effect. The cost-saving effect of longer PACU length of stay was likely driven by earlier reintubation in patients who needed this intervention.</Abstract>
+    <DOI>10.1016/j.jclinane.2023.111264</DOI>
+    <URL>https://doi.org/10.1016/j.jclinane.2023.111264</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Patients Who Benefit from Intracranial Pressure Monitoring without Cerebrospinal Fluid Drainage After Severe Traumatic Brain Injury</Title>
+    <Authors>
+      <Author>Lele, A</Author>
+      <Author>Kannan, N</Author>
+      <Author>Vavilala, MS</Author>
+      <Author>Sharma, D</Author>
+      <Author>Mossa-Basha, M</Author>
+      <Author>Agyem, K</Author>
+      <Author>Mock, C</Author>
+      <Author>Pandey, RM</Author>
+      <Author>Dash, HH</Author>
+      <Author>Mahapatra, A</Author>
+      <Author>Gupta, D</Author>
+    </Authors>
+    <Journal>NEUROSURGERY</Journal>
+    <Year>2019</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>85</Volume>
+    <Issue>2</Issue>
+    <Page>231-239</Page>
+    <Date>AUG 2019</Date>
+    <Address>[Sharma, Deepak] Univ Washington, Dept Anesthesiol &amp; Pain Med, Seattle, WA 98195 USA; [Lele, Abhijit; Kannan, Nithya; Vavilala, Monica S.] Harborview Injury Prevent &amp; Res Ctr, Seattle, WA USA; [Mossa-Basha, Mahmud; Agyem, Kwesi] Univ Washington, Dept Radiol, Seattle, WA 98195 USA; [Mock, Charles] Univ Washington, Dept Surg, Seattle, WA 98195 USA; [Mock, Charles] Univ Washington, Dept Epidemiol, Seattle, WA 98195 USA; [Pandey, R. M.] All India Inst Med Sci, Dept Epidemiol, New Delhi, India; [Dash, H. H.; Mahapatra, Ashok; Gupta, Deepak] Jai Prakash Narayan Apex Trauma Ctr, Dept Neurosurg, New Delhi, India</Address>
+    <Abstract>BACKGROUND: India has a high traumatic brain injury (TBI) burden and intracranial pressure monitoring (ICP) remains controversial but some patients may benefit.OBJECTIVE: To examine the association between ICP monitor placement and outcomes, and identify Indian patients with severe TBI who benefit from ICP monitoringMETHODS: We conducted a secondary analysis of a prospective cohort study at a level 1 Indian trauma center. Patients over 18 yr with severe TBI (admission Glasgow coma scale score &lt; 8) who received tracheal intubation for at-least 48 h were examined. Propensity-based analysis using inverse probability weighting approach was used to examine ICP monitor placement within 72 h of admission and outcomes. Outcomes were in-hospital mortality and Glasgow Outcome Scale (GOS) score at discharge, 3, 6, and 12 mo. Death, vegetative, or major impairment defined unfavorable outcome.RESULTS: The 200 patients averaged 36 [18 to 85] yr of age and average injury severity score of 31.4 [2 to 73]. ICP monitors were placed in 126 (63%) patients. Patients with ICP monitor placement experienced lower in-hospital mortality (adjusted relative risk [aRR]; 0.50 [0.29, 0.87]) than patients without ICP monitoring. However, there was no benefit at 3, 6, and 12 mo. With ICP monitor placement, absence of cerebral edema (aRR 0.54, 95% confidence interval 0.35-0.84), and absence of intraventricular hemorrhage (aRR 0.52, 95% confidence interval 0.33-0.82) were associated with reduced unfavorable outcomes.CONCLUSION: ICPmonitor placement without cerebrospinal fluid drainage within 72 h of admission was associated with reduced in-patient mortality. Patients with severe TBI but without cerebral edema and without intraventricular hemorrhage may benefit from ICP monitoring.</Abstract>
+    <DOI>10.1093/neuros/nyy247</DOI>
+    <URL>https://doi.org/10.1093/neuros/nyy247</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

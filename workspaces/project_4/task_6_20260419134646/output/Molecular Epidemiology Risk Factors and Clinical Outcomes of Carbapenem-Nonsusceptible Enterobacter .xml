@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Molecular Epidemiology, Risk Factors and Clinical Outcomes of Carbapenem-Nonsusceptible Enterobacter cloacae Complex Infections in a Taiwan University Hospital</Title>
+    <Authors>
+      <Author>Chen, CJ</Author>
+      <Author>Lu, PL</Author>
+      <Author>Jian, SH</Author>
+      <Author>Fu, HL</Author>
+      <Author>Huang, PH</Author>
+      <Author>Chang, CY</Author>
+    </Authors>
+    <Journal>PATHOGENS</Journal>
+    <Year>2022</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>11</Volume>
+    <Issue>2</Issue>
+    <Date>FEB 2022</Date>
+    <Address>[Chen, Chao-Ju] Kaohsiung Med Univ, Kaohsiung Med Univ Hosp, Dept Lab Med, Kaohsiung 80756, Taiwan; [Chen, Chao-Ju; Lu, Po-Liang] Kaohsiung Med Univ, Coll Med, Kaohsiung 80708, Taiwan; [Lu, Po-Liang; Jian, Shu-Huei] Kaohsiung Med Univ, Kaohsiung Med Univ Hosp, Div Infect Dis, Dept Internal Med, Kaohsiung 80708, Taiwan; [Fu, Hsiao-Ling] Kaohsiung Med Univ, Coll Med, MSc Program Trop Med, Kaohsiung 80708, Taiwan; [Fu, Hsiao-Ling] Chang Gung Memorail Hosp, Dept Lab Med, Kaohsiung Municipal Feng Shan Hosp, Kaohsiung 83062, Taiwan; [Huang, Po-Hao; Chang, Chung-Yu] Kaohsiung Med Univ, Grad Inst Med, Coll Med, Kaohsiung 80708, Taiwan; [Chang, Chung-Yu] Kaohsiung Med Univ, Sch Med, Dept Microbiol &amp; Immunol, Coll Med, Kaohsiung 80708, Taiwan; [Chang, Chung-Yu] Kaohsiung Med Univ, Sch Postbaccalaureate Med, Coll Med, Kaohsiung 80708, Taiwan</Address>
+    <Abstract>The genus Enterobacter is a member of the ESKAPE group, which contains the major resistant bacterial pathogens. Enterobacter cloacae complex (ECC) has emerged as a clinically significant cause of a wide variety of nosocomial infections. Carbapenem-nonsusceptible Enterobacter cloacae complex (CnsECC) has become an emerging threat to public health but there is still a lack of comprehensive molecular and clinical epidemiological analysis. A total of 157 CnsECC isolates were recovered during October 2011 to August 2017. hsp60 gene sequencing and pulsed-field gel electrophoresis (PFGE) were applied to discriminate the species, genetic clusters and clonal relatedness. All the isolates were subjected to polymerase chain reaction (PCR) analysis for carbapenemase, AmpC-type 13-lactamase, and extended spectrum 13-lactamase (ESBL) genes. Clinical data were collected on all patients for comparing clinical risks and outcomes between patients with carbapenemase-producing (CP)-CnsECC compared with non-CP-CnsECC infection. The most commonly identified species was E. hormaechei subsp. hoffmannii (47.1%), followed by E. hormaechei subsp. steigerwaltii (24.8%). Different species of CnsECC isolates showed heterogeneity in resistance patterns to piperacillin/tazobactam, cefepime and levofloxacin. In the present study, we observed that E. hormaechei subsp. hoffinannii was characterized with higher cefepime and levofloxacin resistance rate but lower piperacillin/tazobactam resistance rate relative to other species of CnsECC. CP-CnsECC comprised 41.1% (65 isolates) and all of these isolates carried IMP-8. In this study, 98% of patients had antimicrobial therapy prior to culture, with a total of 57/150 (38%) patients being exposed to carbapenems. Chronic pulmonary disease (OR: 2.51, 95% CI: 1.25-5.06), received ventilator support (OR: 5.54, 95% CI: 225-12.03), steroid exposure (OR: 3.88, 95% CI: 1.91-7.88) and carbapenems exposure (OR: 2.17, 95% CI: 1.10-4.25) were considered risk factors associated with CP-CnsECC infection. The results suggest that CP-CnsECC are associated with poorer outcomes including in-hospital mortality, 30-day mortality and 100-day mortality. Our study provides insights into the epidemic potential of IMP-8-producing E. cloacae for healthcare-associated infections and underscores the importance of understanding underlying resistance mechanisms of CnsECC to direct antibiotic treatment decisions.</Abstract>
+    <DOI>10.3390/pathogens11020151</DOI>
+    <URL>https://doi.org/10.3390/pathogens11020151</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

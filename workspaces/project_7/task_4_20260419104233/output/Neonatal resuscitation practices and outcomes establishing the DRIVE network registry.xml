@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Neonatal resuscitation practices and outcomes: establishing the DRIVE network registry</Title>
+    <Authors>
+      <Author>Foglia, EE</Author>
+      <Author>Kamath-Rayne, BD</Author>
+      <Author>Gupta, A</Author>
+      <Author>Herrick, HM</Author>
+      <Author>Josephsen, JB</Author>
+      <Author>Kapadia, V</Author>
+      <Author>Lee, HC</Author>
+      <Author>Shah, BA</Author>
+      <Author>Wyckoff, MH</Author>
+      <Author>Lee, S</Author>
+      <Author>Wildenhain, P</Author>
+      <Author>Reiter, JG</Author>
+      <Author>Lander, K</Author>
+      <Author>Goins, E</Author>
+      <Author>Leone, TA</Author>
+    </Authors>
+    <Journal>RESUSCITATION</Journal>
+    <Year>2026</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>218</Volume>
+    <Date>JAN 2026</Date>
+    <Address>[Foglia, Elizabeth E.; Herrick, Heidi M.; Lee, Sura; Wildenhain, Paul; Reiter, Joseph G.] Childrens Hosp Philadelphia, Div Neonatol, Philadelphia, PA USA; [Foglia, Elizabeth E.; Herrick, Heidi M.] Univ Penn, Perelman Sch Med, Dept Pediat, Philadelphia, PA USA; [Kamath-Rayne, Beena D.; Lander, Kathryn; Goins, Elizabeth] Amer Acad Pediat, Global Hlth &amp; Clin Skills, Itasca, IL USA; [Gupta, Arun] Stanford Univ, Sch Med, Dept Pediat, Palo Alto, CA USA; [Josephsen, Justin B.] St Louis Univ, Sch Med, Div Neonatol, St Louis, MO USA; [Kapadia, Vishal] Southwestern Med Ctr, Dept Pediat, Div Neonatol, Dallas, TX USA; [Lee, Henry C.] Univ Calif San Diego, Sch Med, Div Neonatol, Tes, CA USA; [Shah, Birju A.] Univ Oklahoma Hlth, Coll Med, Dept Pediat, Oklahoma City, OK USA; [Leone, Tina A.] Columbia Univ Vagelos Coll Phys &amp; Surg, Div Neonatol, New York, NY USA</Address>
+    <Abstract>Background and objective: Little is known about the incidence, characteristics, and outcomes of neonatal resuscitation across the varied facilities in the United States where babies are born. We aimed to create a durable infrastructure to characterize delivery room resuscitation in real-world settings.Methods: We established the Delivery Room Intervention and Evaluation (DRIVE) Network Registry including all liveborn infants at participating hospitals who received continuous positive airway pressure (CPAP) or more intensive resuscitative interventions (i.e.: positive pressure ventilation, intubation, chest compressions, epinephrine). We employed standardized processes and operational definitions to collect data related to patient characteristics, delivery room interventions, and hospital outcomes for eligible patients. Intervention rates were calculated relative to the number of liveborn infants at each site. Data submitted by 10 founding hospitals in the registry's first year are summarized.Results: From July 2023 to June 2024, 6241 newborns (15.7 %) of 39,878 live births at 10 hospitals were eligible for inclusion in the DRIVE Network Registry. Delivery room intervention rates were highest among patients born &lt;= 28 weeks' gestation and decreased with increasing gestational age. There was substantial variation in hospital-level rates of delivery room resuscitation, which ranged from 8 to 34% across the 10 founding hospitals. This variation was most apparent among infants born at 34-36 weeks' gestational age.Conclusions: DRIVE is a novel multicenter delivery room registry. Registry data characterize resuscitation performance across participating hospitals and highlight inter-hospital variation in delivery room practices. Results will inform and enable future research efforts and quality improvement projects focused on optimizing delivery room resuscitation.</Abstract>
+    <DOI>10.1016/j.resuscitation.2025.110935</DOI>
+    <URL>https://doi.org/10.1016/j.resuscitation.2025.110935</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Long-term outcomes after intensive care unit-treated COVID-19, influenza and respiratory sepsis in 2020-a comparative, population-based cohort study</Title>
+    <Authors>
+      <Author>Joost, FEA</Author>
+      <Author>Rose, N</Author>
+      <Author>Kimmig, A</Author>
+      <Author>Ruhnke, T</Author>
+      <Author>Dröge, P</Author>
+      <Author>Freytag, A</Author>
+      <Author>Günster, C</Author>
+      <Author>Pletz, MW</Author>
+      <Author>Roesler, M</Author>
+      <Author>Reuken, PA</Author>
+      <Author>Schlattmann, P</Author>
+      <Author>Schmidt, KFR</Author>
+      <Author>Stallmach, A</Author>
+      <Author>Storch, J</Author>
+      <Author>Reinhart, K</Author>
+      <Author>Wedekind, L</Author>
+      <Author>Fleischmann-Struzek, C</Author>
+    </Authors>
+    <Journal>INFECTION</Journal>
+    <Year>2026</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>54</Volume>
+    <Issue>1</Issue>
+    <Page>179-189</Page>
+    <Date>FEB 2026</Date>
+    <Address>[Joost, Franka E. A.; Rose, Norman; Kimmig, Aurelia; Pletz, Mathias W.; Fleischmann-Struzek, Carolin] Jena Univ Hosp, Inst Infect Dis &amp; Infect Control, Jena, Germany; [Joost, Franka E. A.; Rose, Norman; Kimmig, Aurelia; Pletz, Mathias W.; Schmidt, Konrad F. R.; Fleischmann-Struzek, Carolin] Jena Univ Hosp, Ctr Sepsis Control &amp; Care, Jena, Germany; [Ruhnke, Thomas; Droge, Patrik; Gunster, Christian] AOK Res Inst WIdO, Berlin, Germany; [Freytag, Antje; Storch, Josephine] Jena Univ Hosp, Inst Gen Practice &amp; Family Med, Jena, Germany; [Roesler, Martin] AOK Bundesverband, Berlin, Germany; [Reuken, Philipp A.; Stallmach, Andreas] Jena Univ Hosp, Dept Internal Med Gastroenterol Hepatol &amp; Infect D, Jena, Germany; [Schlattmann, Peter; Wedekind, Lisa] Jena Univ Hosp, Inst Med Stat Comp &amp; Data Sci, Jena, Germany; [Schmidt, Konrad F. R.] Charite, Inst Gen Practice &amp; Family Med, Berlin, Germany; [Schmidt, Konrad F. R.] Brandenburg Med Sch Theodor Fontane, Inst Gen Practice, Fac Hlth Sci Brandenburg, Brandenburg, Germany; [Reinhart, Konrad] Sepsis Fdn, Berlin, Germany</Address>
+    <Abstract>Background Sepsis survivors are affected by a broad spectrum of long-term impairments, which overlap with Long-Covid and sequelae after influenza in their clinical presentation. However, we lack comparative assessments on the burden of long-term outcomes, particularly with patients being recruited from the same, contemporary patient population. Therefore we compared long-term outcomes after respiratory sepsis (RS), SARS-CoV-2-associated sepsis (SS) and influenza-associated sepsis (IS). Methods Retrospective, population-based cohort study. We included patients &gt; 15 years hospitalized with RS, SS and IS between 01/2020 and 12/2020 in Germany, who received intensive care unit treatment. We compared mortality, readmissions, prevalence of diagnoses in the cognitive, psychological or medical domain, and the number of impaired domains in the 12 months post-discharge between the three survivor cohorts, adjusting for between-group differences in relevant covariates by inverse propensity score weighting based on generalized propensity scores. Results Our study included 12,854 patients, of which 8,201 were RS, 3,964 SS and 689 IS survivors. RS survivors had a considerably higher risk for 12-month mortality compared to SS and IS survivors (relative risk, 1.77 [95% CI, 1.54-2.03]; P &lt; 0.001 and relative risk, 1.37 [95% CI, 1.14-1.65]; P = 0.001, respectively). They were more often rehospitalized, affected by multiple domain impairments, cognitive decline and impairments related to the severity of acute disease, e.g. complications of the tracheostoma, compared to survivors after SS and IS. RS survivors had a lower risk for being affected by medical diagnoses compared to SS. Risks for psychological diagnoses did not differ between RS and the other survivor groups. Conclusions Although respiratory sepsis survivors seem to be affected by more severe long-term impairments, the overall burden of post-acute sequelae among all survivor groups is high. This warrants efforts to provide targeted aftercare for all survivor populations after life-threatening infections.</Abstract>
+    <DOI>10.1007/s15010-025-02644-3</DOI>
+    <URL>https://doi.org/10.1007/s15010-025-02644-3</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

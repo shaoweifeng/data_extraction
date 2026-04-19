@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>The Research Progress of Electrical Impedance Tomography for Lung Monitoring</Title>
+    <Authors>
+      <Author>Shi, Y</Author>
+      <Author>Yang, ZG</Author>
+      <Author>Xie, F</Author>
+      <Author>Ren, S</Author>
+      <Author>Xu, SF</Author>
+    </Authors>
+    <Journal>FRONTIERS IN BIOENGINEERING AND BIOTECHNOLOGY</Journal>
+    <Year>2021</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>9</Volume>
+    <Date>OCT 1 2021</Date>
+    <Address>[Shi, Yan; Yang, ZhiGuo; Ren, Shuai; Xu, ShaoFeng] Beihang Univ, Sch Automat Sci &amp; Elect Engn, Beijing, Peoples R China; [Xie, Fei] Chinese Peoples Liberat Army Gen Hosp, Dept Pulm &amp; Crit Care Med, Beijing, Peoples R China; [Ren, Shuai] Zhejiang Univ, State Key Lab Fluid Power &amp; Mechatron Syst, Hangzhou, Zhejiang, Peoples R China</Address>
+    <Abstract>Medical imaging can intuitively show people the internal structure, morphological information, and organ functions of the organism, which is one of the most important inspection methods in clinical medical diagnosis. Currently used medical imaging methods can only be applied to some diagnostic occasions after qualitative lesions have been generated, and the general imaging technology is usually accompanied by radiation and other conditions. However, electrical impedance tomography has the advantages of being noninvasive and non-radiative. EIT (Electrical Impedance Tomography) is also widely used in the early diagnosis and treatment of some diseases because of these advantages. At present, EIT is relatively mature and more and more image reconstruction algorithms are used to improve imaging resolution. Hardware technology is also developing rapidly, and the accuracy of data collection and processing is continuously improving. In terms of clinical application, EIT has also been used for pathological treatment of lungs, the brain, and the bladder. In the future, EIT has a good application prospect in the medical field, which can meet the needs of real-time, long-term monitoring and early diagnosis. Aiming at the application of EIT in the treatment of lung pathology, this article reviews the research progress of EIT, image reconstruction algorithms, hardware system design, and clinical applications used in the treatment of lung diseases. Through the research and introduction of several core components of EIT technology, it clarifies the characteristics of EIT system complexity and its solutions, provides research ideas for subsequent research, and once again verifies the broad development prospects of EIT technology in the future.</Abstract>
+    <DOI>10.3389/fbioe.2021.726652</DOI>
+    <URL>https://doi.org/10.3389/fbioe.2021.726652</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

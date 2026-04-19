@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Angioedema following Thrombolysis in Acute Ischemic Stroke: A Population-Based Cross-Sectional Study of 99,935 Patients</Title>
+    <Authors>
+      <Author>Uddin, A</Author>
+      <Author>Huhulea, EN</Author>
+      <Author>Jain, A</Author>
+      <Author>Syed, SA</Author>
+      <Author>Lui, AK</Author>
+      <Author>Clare, K</Author>
+      <Author>Spirollari, E</Author>
+      <Author>Paul, D</Author>
+      <Author>Sacknovitz, A</Author>
+      <Author>Vazquez, S</Author>
+      <Author>Sasan, C</Author>
+      <Author>Nguyen, T</Author>
+      <Author>Mammadli, G</Author>
+      <Author>Russo, B</Author>
+      <Author>Medicherla, C</Author>
+      <Author>Etienne, M</Author>
+      <Author>Al-Mufti, F</Author>
+    </Authors>
+    <Journal>CEREBROVASCULAR DISEASES</Journal>
+    <Year>2026</Year>
+    <ReferenceType>J</ReferenceType>
+    <Address>[Uddin, Anaz; Huhulea, Ellen N.; Jain, Ankita; Syed, Shoaib A.; Lui, Aiden K.; Clare, Kevin; Spirollari, Eris; Paul, Dennis; Sacknovitz, Ariel; Vazquez, Sima; Sasan, Charanpreet; Al-Mufti, Fawaz] New York Med Coll, Sch Med, Valhalla, NY 10595 USA; [Jain, Ankita; Clare, Kevin; Sacknovitz, Ariel] Westchester Med Ctr, Dept Neurosurg, Valhalla, NY USA; [Nguyen, Terry; Mammadli, Gular; Russo, Brittany; Medicherla, Chaitanya; Al-Mufti, Fawaz] Westchester Med Ctr, Dept Neurol, Valhalla, NY USA; [Etienne, Mill] Good Samaritan Hosp, Dept Neurol, Suffern, NY USA</Address>
+    <Abstract>Introduction: Orolingual angioedema is a recognized adverse effect of thrombolytic treatment for acute ischemic stroke (AIS). Although it is generally mild with a relatively low incidence (1-5%), orolingual angioedema may trigger life-threatening airway occlusion necessitating rapid intubation. This population-based, retrospective study is the first to examine differences in complications, management, and outcomes of AIS in patients with and without thrombolysis-induced angioedema. Methods: The National Inpatient Sample (NIS) was queried by International Classification of Disease Ninth and Tenth Revision diagnostic and procedural codes (ICD-9-CM/ICD-10-CM) to identify AIS patients treated with thrombolysis who experienced subsequent angioedema. Baseline characteristics, treatment, complications, and functional outcomes were analyzed through multivariate regression and compared through a propensity-score matching (PSM) analysis. Results: We examined 99,935 patients diagnosed with AIS and administered thrombolytics between 2010 and 2019. AIS patients with thrombolytic-induced angioedema were younger (67.44 years vs. 69.32 years, p &lt; 0.01), less likely to be white (53.83% vs. 66.48%, p &lt; 0.01), and presented with higher acute stroke severity scores (0.69 vs. 0.63, p &lt; 0.01) than non-angioedema AIS patients. Following PSM analysis, patients with angioedema had higher rates of tracheostomy (5.7% vs. 0.49%, p &lt; 0.01) and lower rates of endovascular mechanical thrombectomy (4.72% vs. 9.63%, p &lt; 0.01). Though patients who developed angioedema were observed to have longer length of stay (LOS) (7.34 days vs. 5.41 days, p &lt; 0.01), they demonstrated similar rates of adverse complications, poor functional outcome (p = 0.25), and in-hospital mortality (p = 0.32) compared to their non-angioedema AIS counterparts. Conclusion: Although angioedema increased the likelihood of tracheostomy and prolonged hospitalization, outcomes were comparable to those of patients without this complication. These findings are hypothesis-generating and may help guide discussions with families when angioedema occurs, demonstrating that while the need for airway intervention is more likely, the overall prognosis remains reassuring. Future studies should further clarify acute management strategies and long-term outcomes in this patient population.</Abstract>
+    <DOI>10.1159/000549685</DOI>
+    <URL>https://doi.org/10.1159/000549685</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

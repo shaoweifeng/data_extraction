@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Demographic factors, outcomes, and patient access to transsphenoidal surgery for Cushing's disease: analysis of the Nationwide Inpatient Sample from 2002 to 2010</Title>
+    <Authors>
+      <Author>Wilson, D</Author>
+      <Author>Jin, DL</Author>
+      <Author>Wen, T</Author>
+      <Author>Carmichael, JD</Author>
+      <Author>Cen, S</Author>
+      <Author>Mack, WJ</Author>
+      <Author>Zada, G</Author>
+    </Authors>
+    <Journal>NEUROSURGICAL FOCUS</Journal>
+    <Year>2015</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>38</Volume>
+    <Issue>2</Issue>
+    <Date>FEB 2015</Date>
+    <Address>[Wilson, Daniel] Albany Med Coll, Albany, NY 12208 USA; [Jin, Diana L.; Wen, Timothy] Univ So Calif, Keck Sch Med, Los Angeles, CA 90033 USA; [Carmichael, John D.] Univ So Calif, Keck Sch Med, Dept Med, Los Angeles, CA 90033 USA; [Cen, Steven] Univ So Calif, Keck Sch Med, Dept Neurol, Los Angeles, CA 90033 USA; [Cen, Steven] Univ So Calif, Keck Sch Med, Dept Radiol, Los Angeles, CA 90033 USA; [Mack, William J.; Zada, Gabriel] Univ So Calif, Keck Sch Med, Dept Neurosurg, Los Angeles, CA 90033 USA</Address>
+    <Abstract>OBJECT Cushing's disease (CD) is a potentially lethal neuroendocrinopathy that often requires specialized multidisciplinary treatment to achieve optimized outcomes. The authors analyzed data pertaining to patient, hospital, and admission characteristics as they relate to outcomes following transsphenoidal surgery (TSS) in more than 5500 patients treated for CD.METHODS The Nationwide Inpatient Sample (NIS) database was used to identify all patients admitted with CD between 2002 and 2010. A variety of patient demographic data (e.g., age, sex, race, payer status), hospital variables (e.g., bed size, TSS volume, teaching status), and admission subtypes (e.g., elective, emergency) were tested for association with postoperative endocrine and nonendocrine complications, mortality, nonroutine discharge, length of stay, and total hospital charges. All tests were performed using univariate analysis followed by multivariate analysis, with 4 models tested via an additive methodology. Statistical significance was defined as a p value &lt; 0.05 for all analyses.RESULTS From 2002 to 2010, 5527 individuals who were admitted for TSS (54 biopsies, 4254 partial resections, and 1271 total resections; 5579 total TSS procedures) were identified as patients with CD. There were 25 deaths following TSS, resulting in a mortality incidence rate of 0.45%. Nonendocrine and endocrine complications were reported in 22.4% and 11.1% of patients, respectively. The most common nonendocrine complications were postoperative neurological complications (6.98%) and mechanical ventilation (1.71%). Diabetes insipidus was reported in 14.79% of patients. In a multivariate analysis, patients with Medicare were at increased risk of nonendocrine complications (relative risk [RR] 2.24, 95% CI 1.15-4.38; p = 0.02). Patients with Medicare had increased risk of higher charges (RR 1.89, 95% CI 1.04-3.45; p = 0.04), as did those with Medicaid (RR 1.93, 95% CI 1.10-3.41; p = 0.02). Additionally, as compared with white patients, Hispanic patients had an increased rate of higher charges (RR 1.86, 95% CI 1.12-3.10; p = 0.02). Patients whose age was less than 40 years had a higher risk of developing diabetes insipidus (RR 1.39, 95% CI 1.0-1.93; p = 0.05). When compared with those in northeast hospitals, patients in western hospitals were more likely to experience nonendocrine complications (RR 1.85, 95% CI 0.99-3.46; p = 0.05) and endocrine complications (RR 1.98, 95% CI 1.28-3.07; p &lt; 0.01). Patients treated in teaching hospitals were at significantly lower risk of incurring higher hospital charges (RR 0.49, 95% CI 0.28-0.85; p = 0.01). Patients with emergency admissions had a risk of higher hospital charges (RR 3.06, 95% CI 1.26-7.46; p = 0.01) and nonendocrine complications (RR 3.18, 95% CI 1.22-8.28; p = 0.02).CONCLUSIONS This review of NIS data in more than 5500 patients treated surgically for CD pointed to major outcome disparities predicted primarily by payer status, admission type, and hospital region. Identification and targeting of such barriers to quality health care in patients with CD may help optimize patient outcomes on a national level and present an opportunity to improve access of high-risk patient subgroups to specialty centers of excellence.</Abstract>
+    <DOI>10.3171/2014.11.FOCUS14694</DOI>
+    <URL>https://doi.org/10.3171/2014.11.FOCUS14694</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

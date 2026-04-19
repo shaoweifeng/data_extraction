@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>What is the most effective antibiotic monotherapy for severe Pseudomonas aeruginosa infection? A systematic review and meta-analysis of randomized controlled trials</Title>
+    <Authors>
+      <Author>Tekes-Manuva, D</Author>
+      <Author>Babich, T</Author>
+      <Author>Kozlovski, D</Author>
+      <Author>Elbaz, M</Author>
+      <Author>Yahav, D</Author>
+      <Author>Halperin, E</Author>
+      <Author>Leibovici, L</Author>
+      <Author>Avni, T</Author>
+    </Authors>
+    <Journal>CLINICAL MICROBIOLOGY AND INFECTION</Journal>
+    <Year>2025</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>31</Volume>
+    <Issue>5</Issue>
+    <Page>740-752</Page>
+    <Date>MAY 2025</Date>
+    <Address>[Tekes-Manuva, Dorit; Avni, Tomer] Maayenei Hayeshua Med Ctr, Internal Med Dept, Bnei Braq, Israel; [Tekes-Manuva, Dorit; Babich, Tanya; Kozlovski, Dror; Elbaz, Michal; Yahav, Dafna; Halperin, Erez; Leibovici, Leonard; Avni, Tomer] Tel Aviv Univ, Fac Med, Tel Aviv, Israel; [Babich, Tanya; Leibovici, Leonard] Beilinson Med Ctr, Rabin Med Ctr, Res Author, Derech Zeev Jabotinsky St 39, IL-4941492 Petah Tiqwa, Israel; [Kozlovski, Dror; Halperin, Erez] Beilinson Hosp Petah Tikva, Rabin Med Ctr, Internal Med Dept A, Petah Tiqwa, Israel; [Elbaz, Michal] Beilinson Hosp Petah Tikva, Rabin Med Ctr, Unit Infect Dis, Petah Tiqwa, Israel; [Yahav, Dafna] Sheba Med Ctr, Unit Infect Dis, Ramat Gan, Israel</Address>
+    <Abstract>Background and objectives: Severe infections caused by Pseudomonas aeruginosa are associated with significant morbidity and mortality, particularly in hospitalized and immunocompromised patients. Determining the optimal definitive monotherapy for these infections is critical. The main objective was to compile the evidence of subgroups of patients with Pseudomonas aeruginosa infection from randomized control trials (RCTs) evaluating different definite antipseudomonal monotherapies for severe P. aeruginosa infection. Methods: Systematic review and meta-analysis of RCTs that assessed monotherapy with an antipseudomonal drug versus another antipseudomonal for definite treatment, and reported on the subgroup of patients with P. aeruginosa infection. We searched the Cochrane Central Register of Controlled Trials (CENTRAL), MEDLINE, LILACS and the reference lists of included trials. Eligibility criteria included RCTs enrolling hospitalized adults (&gt;= 18 years) with microbiologically confirmed severe P. aeruginosa infections. Studies were excluded if they included &gt;20% of patients receiving combination therapy or if patients had resistant P. aeruginosa strains at recruitment. Antipseudomonal drugs evaluated included cephalosporins, carbapenems, penicillins, quinolones and aztreonam. The primary outcome was 30-day mortality. Risk of bias was assessed using the Cochrane tool. Results were pooled using fixed-effects and random-effects models as appropriate. Relative risk (RR) and 95% CIs were calculated. Sensitivity analyses and subgroup analyses were performed when data were available. Results: A total of 76 RCTs and 1681 patients with pseudomonal infection were included. Due to the low number of studies which reported our outcomes of interest, all subgroup analyses were underpowered. No difference in all-cause mortality was found for any direct antibiotic comparison. Higher clinical failure rates of carbapenems versus piperacillin-tazobactam were observed for pneumonia in two RCTs (RR, 2.55; 95% CI, 1.29-5.03; I-2 = 0%, n = 2), and higher microbiological failure rates with carbapenems versus other comparators (RR, 1.24; 95% CI, 1.02-1.51; I-2 = 0%, n = 23). Patients treated with imipenem were more likely to develop resistance to the study drug versus comparators (RR, 2.33; 95% CI, 1.61-3.38; I-2 = 0%, n = 7). Conclusions: In this systematic review and meta-analysis of definite antipseudomonal monotherapy for P. aeruginosa infection, we found no evidence of clinical benefit differences among direct antibiotic comparisons, but all subgroup analyses were underpowered to detect significant differences. (c) 2025 European Society of Clinical Microbiology and Infectious Diseases. Published by Elsevier Ltd. All rights are reserved, including those for text and data mining, AI training, and similar technologies.</Abstract>
+    <DOI>10.1016/j.cmi.2024.12.036</DOI>
+    <URL>https://doi.org/10.1016/j.cmi.2024.12.036</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

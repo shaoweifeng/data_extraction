@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Effect of pneumonia on the outcomes of acute exacerbation of chronic obstructive pulmonary disease: a systematic review and meta-analysis</Title>
+    <Authors>
+      <Author>Zheng, FB</Author>
+      <Author>Wang, XQ</Author>
+    </Authors>
+    <Journal>BMC PULMONARY MEDICINE</Journal>
+    <Year>2024</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>24</Volume>
+    <Issue>1</Issue>
+    <Date>OCT 9 2024</Date>
+    <Address>[Zheng, Fangbin] Huzhou Univ, Huzhou Cent Hosp, Affiliated Cent Hosp, Dept Neurol Intens Care Unit, Huzhou, Zhejiang, Peoples R China; [Wang, Xuqin] Huzhou Univ, Dept Crit Care Med, Huzhou Municipal Hosp 3, Affiliated Hosp, 2088 Tiaoxi East Rd, Huzhou, Zhejiang, Peoples R China</Address>
+    <Abstract>BackgroundTo assess the effect of pneumonia on the risk of mortality and other clinical outcomes in patients with acute exacerbation of chronic obstructive pulmonary disease (AECOPD).MethodsPubMed, EMBASE and Scopus were screened for observational cohort and case-control studies that reported outcomes in AECOPD patients with and without pneumonia. Pooled effect sizes were reported as relative risks (RR) or hazard ratio (HR) for categorical outcomes and as weighted mean difference (WMD) for continuous outcomes. The primary outcome was mortality. Secondary outcomes were risk of admission to intensive care unit (ICU), need for assisted ventilation and readmission as well as duration of stay at the hospital. The certainty of the evidence was assessed using the GRADE approach.ResultsThirteen studies were included. AECOPD patients with pneumonia had significantly higher risk of in-hospital mortality (RR 2.29, 95% CI: 1.40, 3.73), mortality at 1 month (RR 1.84, 95% CI: 1.09, 3.13), and 1 year or more of follow-up (HR 2.30, 95% CI: 1.15, 4.61) compared to AECOPD patients without pneumonia. Pneumonia was associated with significantly higher risk of admission to ICU (RR 2.79, 95% CI: 1.47, 5.28), need for assisted ventilation (RR 2.02, 95% CI: 1.52, 2.67), and longer hospital stay (in days) (WMD 3.31, 95% CI: 2.33, 4.29). The risk of readmission was comparable in the two groups of patients (RR 1.07, 95% CI: 0.97, 1.19). The overall quality of evidence for the outcomes was judged to be &quot;Low&quot;.ConclusionPneumonia during acute exacerbation of COPD may lead to increases in both short-term and long-term mortality as well as increased hospital stay, need for ventilatory support and admission to ICU. Our findings suggest the need for close monitoring, early intervention, and long-term follow-up, to improve the outcomes in AECOPD patients with concurrent pneumonia.</Abstract>
+    <DOI>10.1186/s12890-024-03305-1</DOI>
+    <URL>https://doi.org/10.1186/s12890-024-03305-1</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>

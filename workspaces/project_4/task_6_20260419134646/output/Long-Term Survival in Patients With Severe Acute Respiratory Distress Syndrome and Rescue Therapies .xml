@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<References>
+  <Reference>
+    <Title>Long-Term Survival in Patients With Severe Acute Respiratory Distress Syndrome and Rescue Therapies for Refractory Hypoxemia</Title>
+    <Authors>
+      <Author>Khandelwal, N</Author>
+      <Author>Hough, CL</Author>
+      <Author>Bansal, A</Author>
+      <Author>Veenstra, DL</Author>
+      <Author>Treggiari, MM</Author>
+    </Authors>
+    <Journal>CRITICAL CARE MEDICINE</Journal>
+    <Year>2014</Year>
+    <ReferenceType>J</ReferenceType>
+    <Volume>42</Volume>
+    <Issue>7</Issue>
+    <Page>1610-1618</Page>
+    <Date>JUL 2014</Date>
+    <Address>[Khandelwal, Nita; Treggiari, Miriam M.] Univ Washington, Harborview Med Ctr, Dept Anesthesiol &amp; Pain Med, Seattle, WA 98104 USA; [Hough, Catherine L.] Univ Washington, Harborview Med Ctr, Div Pulm &amp; Crit Care Med, Seattle, WA 98104 USA; [Bansal, Aasthaa] Univ Washington, Dept Biostat, Seattle, WA 98195 USA; [Veenstra, David L.] Univ Washington, Dept Pharm, Seattle, WA 98195 USA; [Treggiari, Miriam M.] Univ Washington, Dept Epidemiol, Seattle, WA 98195 USA</Address>
+    <Abstract>Objectives: To describe long-term survival in patients with severe acute respiratory distress syndrome and assess differences in patient characteristics and outcomes among those who receive rescue therapies (prone position ventilation, inhaled nitric oxide, or inhaled epoprostenol) versus conventional treatment.Design: Cohort study of patients with severe hypoxemia.Setting: University-affiliated level 1 trauma center.Patients: Patients diagnosed with severe acute respiratory distress syndrome within 72 hours of ICU admission between January 1, 2008, and December 31, 2011.Interventions: None.Measurements and Main Results: Data were abstracted from the medical record and included demographic and clinical variables, hospital and ICU length of stay, discharge disposition, and hospital costs. Patient-level data were linked to the Washington State Death Registry. Kaplan-Meier methods and Cox's proportional hazards models were used to estimate survival and hazard ratios. Four hundred twenty-eight patients meeting study inclusion criteria were identified; 62 (14%) were initiated on a rescue therapy. Pao(2)/Fio(2) ratios were comparable at admission between patients treated with a rescue therapy and those treated conventionally but were substantially lower by 72 hours in those who received rescue therapies (54 17 vs 69 +/- 17 mm Hg; p &lt; 0.01). For the entire cohort, estimated survival probability at 3 years was 55% (95% CI, 51-61%). Among 280 hospital survivors (65%), 3-year survival was 85% (95% CI, 80-89%). The relative hazard of in-hospital mortality was 68% higher among patients who received rescue therapy compared with patients treated conventionally (95% CI, 8-162%; p = 0.02). For long-term survival, the hazard ratio of death following ICU admission was 1.56 (95% CI, 1.02-2.37; p = 0.04), comparing rescue versus conventional treatment.Conclusions: Despite high hospital mortality, severe acute respiratory distress syndrome patients surviving to hospital discharge have relatively good long-term survival. Worsening hypoxemia was associated with initiation of rescue therapy. Patients on rescue therapy had higher in-hospital mortality; however, survivors to hospital discharge had long-term survival that was comparable to other acute respiratory distress syndrome survivors.</Abstract>
+    <DOI>10.1097/CCM.0000000000000322</DOI>
+    <URL>https://doi.org/10.1097/CCM.0000000000000322</URL>
+    <SourceFile>savedrecs-6.ciw</SourceFile>
+    <Type>CIW</Type>
+  </Reference>
+</References>
