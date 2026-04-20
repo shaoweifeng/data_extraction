@@ -563,24 +563,12 @@
                 const fileListTab = ref('pending');
 
                 const screeningProgress = computed(() => {
-                    if (!latestTask.value || !latestTask.value.logs) return { processed: 0, total: 0, percent: 0 };
+                    // 【修复】基于已处理文件数量 vs 拆分后的 XML 总数计算进度
+                    const processed = processedEntries.value.length;
+                    const total = splitXmlFiles.value.length;
+                    const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
                     
-                    const logs = latestTask.value.logs;
-                    // 匹配最后一次出现的 [PROGRESS] X/Y
-                    const regex = /\[PROGRESS\] (\d+)\/(\d+)/g;
-                    let match;
-                    let lastMatch = null;
-                    while ((match = regex.exec(logs)) !== null) {
-                        lastMatch = match;
-                    }
-                    
-                    if (lastMatch) {
-                        const processed = parseInt(lastMatch[1]);
-                        const total = parseInt(lastMatch[2]);
-                        const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
-                        return { processed, total, percent };
-                    }
-                    return { processed: 0, total: 0, percent: 0 };
+                    return { processed, total, percent };
                 });
 
                 const isProcessing = computed(() => {

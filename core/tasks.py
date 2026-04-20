@@ -19,10 +19,9 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
     project = Project.objects.get(id=project_id)
     base_dir = settings.BASE_DIR
     workspace_root = os.path.join(base_dir, "workspaces", f"project_{project_id}")
-    workspace_dir = os.path.join(
-        workspace_root,
-        f"task_{task_obj.id}_{timezone.now().strftime('%Y%m%d%H%M%S')}",
-    )
+    
+    # 【修复】不再为每个任务创建独立目录，而是复用同一个 workspace 实现断点续传
+    workspace_dir = workspace_root
     os.makedirs(workspace_dir, exist_ok=True)
     
     logs = []
@@ -33,18 +32,26 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
 
     add_log(f"工作区: {workspace_dir}")
     try:
-        shutil.copytree(
-            os.path.join(base_dir, "structural_screening", "02_screening_ai"),
-            os.path.join(workspace_dir, "screening_ai"),
-            ignore=shutil.ignore_patterns("__pycache__", "datasets", "results", "*.pyc"),
-            dirs_exist_ok=True,
-        )
-        shutil.copytree(
-            os.path.join(base_dir, "structural_screening", "03_result_aggregation"),
-            os.path.join(workspace_dir, "result_aggregation"),
-            ignore=shutil.ignore_patterns("__pycache__", "results", "*.pyc"),
-            dirs_exist_ok=True,
-        )
+        # 确保脚本文件存在（首次或者脚本更新时）
+        screening_ai_target = os.path.join(workspace_dir, "screening_ai")
+        if not os.path.exists(screening_ai_target) or force_reprocess:
+            shutil.copytree(
+                os.path.join(base_dir, "structural_screening", "02_screening_ai"),
+                screening_ai_target,
+                ignore=shutil.ignore_patterns("__pycache__", "datasets", "results", "*.pyc"),
+                dirs_exist_ok=True,
+            )
+        
+        result_aggregation_target = os.path.join(workspace_dir, "result_aggregation")
+        if not os.path.exists(result_aggregation_target) or force_reprocess:
+            shutil.copytree(
+                os.path.join(base_dir, "structural_screening", "03_result_aggregation"),
+                result_aggregation_target,
+                ignore=shutil.ignore_patterns("__pycache__", "results", "*.pyc"),
+                dirs_exist_ok=True,
+            )
+        
+        # 确保必要的目录存在
         os.makedirs(os.path.join(workspace_dir, "screening_ai", "datasets"), exist_ok=True)
         os.makedirs(os.path.join(workspace_dir, "screening_ai", "results"), exist_ok=True)
         os.makedirs(os.path.join(workspace_dir, "result_aggregation", "results"), exist_ok=True)

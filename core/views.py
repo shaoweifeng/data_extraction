@@ -128,29 +128,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
         candidate_tasks = ExtractionTask.objects.filter(
             project=project,
             status__in=['PROCESSING', 'STOPPED', 'COMPLETED']
-        ).order_by('-created_at')[:20]
+        ).order_by('-created_at')[:1]
 
-        project_workspace_root = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
-        if not os.path.exists(project_workspace_root):
+        # 【修复】workspace 路径简化为 workspaces/project_{id}/
+        workspace_dir = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
+        target_results_dir = os.path.join(workspace_dir, "screening_ai", "results")
+        
+        if not os.path.exists(target_results_dir):
             return Response({"task_id": None, "processed": []})
 
-        workspace_dirs = os.listdir(project_workspace_root)
-        target_results_dir = None
-        selected_task_id = None
-
-        for t in candidate_tasks:
-            for d in workspace_dirs:
-                if d.startswith(f"task_{t.id}_"):
-                    potential_dir = os.path.join(project_workspace_root, d, "screening_ai", "results")
-                    if os.path.exists(potential_dir):
-                        target_results_dir = potential_dir
-                        selected_task_id = t.id
-                        break
-            if target_results_dir:
-                break
-
-        if not target_results_dir:
-            return Response({"task_id": None, "processed": []})
+        selected_task_id = candidate_tasks[0].id if candidate_tasks else None
 
         processed_map = {}
         for root_dir, _, files in os.walk(target_results_dir):
@@ -209,18 +196,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
             t.logs = (current_logs + suffix) if suffix.strip() not in current_logs else current_logs
             t.save()
 
-            workspace_root = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
-            if os.path.exists(workspace_root):
-                for d in os.listdir(workspace_root):
-                    if d.startswith(f"task_{t.id}_"):
-                        stop_path = os.path.join(workspace_root, d, "screening_ai", "STOP")
-                        try:
-                            os.makedirs(os.path.dirname(stop_path), exist_ok=True)
-                            with open(stop_path, "w", encoding="utf-8") as f:
-                                f.write("STOP")
-                        except Exception:
-                            pass
-                        break
+            # 【修复】workspace 路径简化为 workspaces/project_{id}/
+            workspace_dir = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
+            stop_path = os.path.join(workspace_dir, "screening_ai", "STOP")
+            try:
+                os.makedirs(os.path.dirname(stop_path), exist_ok=True)
+                with open(stop_path, "w", encoding="utf-8") as f:
+                    f.write("STOP")
+            except Exception:
+                pass
+            
             try:
                 current_app.control.revoke(t.celery_task_id, terminate=True, signal='SIGTERM')
             except Exception:
@@ -247,66 +232,30 @@ class ProjectViewSet(viewsets.ModelViewSet):
         except Stage.DoesNotExist:
             return Response({"error": "Stage SCREEN_1 not found"}, status=status.HTTP_404_NOT_FOUND)
             
-        # 启动生成任务（复用 run_extraction_pipeline 还是新建？新建比较好，或者使用 subprocess）
-        # 这里直接调用 aggregator.py 生成
+        # 【修复】workspace 路径简化为 workspaces/project_{id}/
+        workspace_dir = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
+        target_results_dir = os.path.join(workspace_dir, "screening_ai", "results")
         
-        workspace_dir = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}", f"report_{timezone.now().strftime('%Y%m%d%H%M%S')}")
-        os.makedirs(workspace_dir, exist_ok=True)
+        if not os.path.exists(target_results_dir):
+            return Response({"error": "No screening results found. Please run AI screening first."}, status=status.HTTP_404_NOT_FOUND)
         
-        # 准备数据源：需要从 screening_ai/results 拿数据
-        # 但 screening_ai 的目录在之前的 task 中
-        # 我们需要找到最新的 task 或直接从 StageData 中恢复（但 StageData 只有拆分的 XML，没有 JSON 结果）
-        # 实际上，JSON 结果应该也保存下来？目前没有保存 JSON 结果到 StageData，只保存了最终 Excel
-        # 这是一个问题。AI 初筛生成的 JSON 结果留在了 workspace/screening_ai/results 中。
-        # 简单的做法：找到该项目最近一次成功的 task，复用其 results 目录
+        # 检查是否有 JSON 结果
+        has_json = False
+        for root_dir, _, files in os.walk(target_results_dir):
+            if any(f.lower().endswith('.json') for f in files):
+                has_json = True
+                break
         
-        candidate_tasks = ExtractionTask.objects.filter(
-            project=project,
-            status__in=['PROCESSING', 'STOPPED', 'COMPLETED']
-        ).order_by('-created_at')[:20]
-        if not candidate_tasks:
-            return Response({"error": "No screening task found"}, status=status.HTTP_400_BAD_REQUEST)
-            
-        # 假设 workspace 结构：workspaces/project_X/task_Y/screening_ai/results
-        # 我们需要定位到那个目录
-        # Task 模型没有直接存储 workspace_path，但可以通过 id 和 created_at 推断，或者我们在 Task 中存储？
-        # 实际上 tasks.py 中生成的 workspace_dir 是 `workspaces/project_{project.id}/task_{task_obj.id}_{timestamp}`
-        # 我们无法精确重建 timestamp。
-        # 临时方案：在 Task 模型中增加 workspace_path 字段？或者在 metadata 中记录。
-        # 现有的方案：遍历 workspaces/project_X 找到包含 task_ID 的目录
-        
-        project_workspace_root = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
-        target_results_dir = None
-        selected_task_id = None
-
-        if os.path.exists(project_workspace_root):
-            workspace_dirs = os.listdir(project_workspace_root)
-            for t in candidate_tasks:
-                for d in workspace_dirs:
-                    if d.startswith(f"task_{t.id}_"):
-                        potential_dir = os.path.join(project_workspace_root, d, "screening_ai", "results")
-                        if os.path.exists(potential_dir):
-                            has_json = False
-                            for root_dir, _, files in os.walk(potential_dir):
-                                if any(f.lower().endswith('.json') for f in files):
-                                    has_json = True
-                                    break
-                            if has_json:
-                                target_results_dir = potential_dir
-                                selected_task_id = t.id
-                                break
-                if target_results_dir:
-                    break
-        
-        if not target_results_dir:
-             return Response({"error": "Could not locate results directory with JSON outputs for any recent task"}, status=status.HTTP_404_NOT_FOUND)
+        if not has_json:
+            return Response({"error": "No JSON results found in screening results directory"}, status=status.HTTP_404_NOT_FOUND)
 
         # 清理旧的 OUTPUT 文件 (Excel/RIS)
         StageData.objects.filter(stage=screen1_stage, data_type='OUTPUT', description__in=['AI初筛结果 (Excel)', 'AI初筛结果 (EndNote/RIS)']).delete()
         
         # 调用 aggregator.py
         aggregator_script = os.path.join(settings.BASE_DIR, "structural_screening", "03_result_aggregation", "aggregator.py")
-        output_dir = workspace_dir # 生成到新的 report 工作区
+        output_dir = os.path.join(workspace_dir, "report_output")  # 生成到 workspace 下的子目录
+        os.makedirs(output_dir, exist_ok=True)
         
         try:
             r = subprocess.run(
