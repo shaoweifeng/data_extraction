@@ -108,6 +108,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project = self.get_object()
         force = request.data.get('force', False)
         
+        # 【修复】启动前清理可能残留的 STOP 文件，防止任务立即停止
+        workspace_dir = os.path.join(settings.BASE_DIR, "workspaces", f"project_{project.id}")
+        stop_file = os.path.join(workspace_dir, "screening_ai", "STOP")
+        if os.path.exists(stop_file):
+            os.remove(stop_file)
+            print(f"[DEBUG] 已清理残留的 STOP 文件: {stop_file}")
+        
         # 获取筛选标准 (从 SCREEN_1 阶段的 metadata 中获取，如果前端没传，就去数据库查)
         screening_criteria = request.data.get('screening_criteria')
         if not screening_criteria:

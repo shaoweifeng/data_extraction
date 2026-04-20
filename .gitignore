@@ -5,3 +5,4 @@ __pycache__/
 workspaces/
 media/projects/project_*/
 myenv/
+venv/

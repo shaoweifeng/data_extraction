@@ -31,6 +31,14 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
         task_obj.save()
 
     add_log(f"工作区: {workspace_dir}")
+    
+    # 【修复】当 force_reprocess=True 时，清空旧结果目录，确保真正重新筛选
+    if force_reprocess:
+        results_dir = os.path.join(workspace_dir, "screening_ai", "results")
+        if os.path.exists(results_dir):
+            shutil.rmtree(results_dir)
+            add_log("已清空旧的筛选结果，准备重新筛选")
+    
     try:
         # 确保脚本文件存在（首次或者脚本更新时）
         screening_ai_target = os.path.join(workspace_dir, "screening_ai")
@@ -177,6 +185,10 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
             if not task_obj.completed_at:
                 task_obj.completed_at = timezone.now()
             add_log("AI 初筛任务已停止。")
+            # 【修复】清理 STOP 文件，防止下次启动立即停止
+            stop_file = os.path.join(pipeline1_dir, "STOP")
+            if os.path.exists(stop_file):
+                os.remove(stop_file)
             os.chdir(original_cwd)
             task_obj.save()
             return False
@@ -184,6 +196,10 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
         if success_count == 0 and len(failed_files) > 0:
              task_obj.status = 'FAILED'
              add_log("Step 1 失败: 所有文件处理失败")
+             # 【修复】清理 STOP 文件
+             stop_file = os.path.join(pipeline1_dir, "STOP")
+             if os.path.exists(stop_file):
+                 os.remove(stop_file)
              os.chdir(original_cwd) # 恢复 CWD
              task_obj.save()
              return False
@@ -198,6 +214,10 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
         add_log(f"Step 1 异常: {str(e)}")
         import traceback
         add_log(traceback.format_exc())
+        # 【修复】清理 STOP 文件
+        stop_file = os.path.join(pipeline1_dir, "STOP")
+        if os.path.exists(stop_file):
+            os.remove(stop_file)
         os.chdir(original_cwd) # 恢复 CWD
         task_obj.save()
         return False
@@ -212,9 +232,17 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
         if not task_obj.completed_at:
             task_obj.completed_at = timezone.now()
         add_log("AI 初筛任务已停止。")
+        # 【修复】清理 STOP 文件
+        stop_file = os.path.join(pipeline1_dir, "STOP")
+        if os.path.exists(stop_file):
+            os.remove(stop_file)
         task_obj.save()
         return False
 
+    # 【修复】任务正常完成时清理 STOP 文件
+    stop_file = os.path.join(pipeline1_dir, "STOP")
+    if os.path.exists(stop_file):
+        os.remove(stop_file)
     task_obj.status = 'COMPLETED'
     task_obj.completed_at = timezone.now()
     add_log("AI 初筛任务完成！请在下一步生成 Excel 报表。")

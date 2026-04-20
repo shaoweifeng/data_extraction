@@ -542,6 +542,47 @@
         const { createApp, ref, onMounted, computed, watch } = Vue;
         const API_BASE = '/api';
 
+        // ============================================
+        // CSRF Token 工具函数（修复 POST 请求错误）
+        // ============================================
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // 增强 fetch 函数，自动添加 CSRF token
+        const fetchWithCSRF = (url, options = {}) => {
+            const defaultOptions = {
+                headers: {},
+                ...options
+            };
+
+            // 对于 POST, PUT, PATCH, DELETE 请求，添加 CSRF token
+            if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase())) {
+                // 如果不是 FormData，添加 X-CSRFToken header
+                if (!(options.body instanceof FormData)) {
+                    defaultOptions.headers['X-CSRFToken'] = csrftoken;
+                } else {
+                    // FormData 也需要 CSRF token header
+                    defaultOptions.headers['X-CSRFToken'] = csrftoken;
+                }
+            }
+
+            return fetch(url, defaultOptions);
+        };
+
         createApp({
             setup() {
                 const projects = ref([]);
@@ -704,7 +745,7 @@
 
                     console.log('Sending request to API...');
                     try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/upload_stage_data/`, {
+                        const res = await fetchWithCSRF(`${API_BASE}/projects/${currentProject.value.id}/upload_stage_data/`, {
                             method: 'POST',
                             body: formData
                         });
@@ -743,7 +784,7 @@
                     console.log(`Sending deduplication request to ${url}`);
 
                     try {
-                        const res = await fetch(url, {
+                        const res = await fetchWithCSRF(url, {
                             method: 'POST'
                         });
                         
@@ -790,7 +831,7 @@
                     };
                     
                     try {
-                        const res = await fetch(`${API_BASE}/stages/${stage.id}/update_metadata/`, {
+                        const res = await fetchWithCSRF(`${API_BASE}/stages/${stage.id}/update_metadata/`, {
                             method: 'PATCH',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ metadata })
@@ -880,7 +921,7 @@
                     if (e) e.stopPropagation();
                     const ok = confirm(`确定删除项目「${project.name}」吗？该项目的所有数据都会被删除。`);
                     if (!ok) return;
-                    const res = await fetch(`${API_BASE}/projects/${project.id}/`, { method: 'DELETE' });
+                    const res = await fetchWithCSRF(`${API_BASE}/projects/${project.id}/`, { method: 'DELETE' });
                     if (res.ok) {
                         if (currentProject.value && currentProject.value.id === project.id) currentProject.value = null;
                         await fetchProjects();
@@ -891,7 +932,7 @@
                 };
 
                 const createProject = async () => {
-                    const res = await fetch(`${API_BASE}/projects/`, {
+                    const res = await fetchWithCSRF(`${API_BASE}/projects/`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ ...newProject.value, creator: 1 }) // 默认 ID 1 为超级用户
@@ -910,7 +951,7 @@
                     formData.append('stage_type', currentStage.value);
                     formData.append('data_type', 'INPUT');
 
-                    const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/upload_stage_data/`, {
+                    const res = await fetchWithCSRF(`${API_BASE}/projects/${currentProject.value.id}/upload_stage_data/`, {
                         method: 'POST',
                         body: formData
                     });
@@ -926,7 +967,7 @@
                     const formData = new FormData();
                     files.forEach(f => formData.append('files', f));
 
-                    const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/upload_documents/`, {
+                    const res = await fetchWithCSRF(`${API_BASE}/projects/${currentProject.value.id}/upload_documents/`, {
                         method: 'POST',
                         body: formData
                     });
@@ -942,7 +983,7 @@
                     console.log('Criteria to send:', criteria);
                     
                     try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/start_extraction/`, {
+                        const res = await fetchWithCSRF(`${API_BASE}/projects/${currentProject.value.id}/start_extraction/`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ 
@@ -980,7 +1021,7 @@
                     const ok = confirm('确定停止当前 AI 筛选任务？');
                     if (!ok) return;
                     try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/stop_extraction/`, {
+                        const res = await fetchWithCSRF(`${API_BASE}/projects/${currentProject.value.id}/stop_extraction/`, {
                             method: 'POST'
                         });
                         if (res.ok) {
@@ -999,7 +1040,7 @@
                 const generateReport = async () => {
                     isGeneratingReport.value = true;
                     try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/generate_report/`, {
+                        const res = await fetchWithCSRF(`${API_BASE}/projects/${currentProject.value.id}/generate_report/`, {
                             method: 'POST'
                         });
                         if (res.ok) {
@@ -1019,7 +1060,7 @@
                 const deleteReference = async (file) => {
                     const ok = confirm(`删除索引文件「${file.filename}」？`);
                     if (!ok) return;
-                    const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/stage_data/${file.id}/`, { method: 'DELETE' });
+                    const res = await fetchWithCSRF(`${API_BASE}/projects/${currentProject.value.id}/stage_data/${file.id}/`, { method: 'DELETE' });
                     if (res.ok || res.status === 204) {
                         await fetchStages(currentProject.value.id);
                     } else {
@@ -1063,7 +1104,7 @@
                 const startTask = async (force) => {
                     // 这是一个旧函数，可能不再使用，但也加上错误处理以防万一
                     try {
-                        const res = await fetch(`${API_BASE}/projects/${currentProject.value.id}/start_extraction/`, {
+                        const res = await fetchWithCSRF(`${API_BASE}/projects/${currentProject.value.id}/start_extraction/`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ force })

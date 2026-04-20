@@ -271,12 +271,28 @@ def convert_to_ris(json_dir, output_ris_path):
         return False
 
 def traverse_directory(path):
-    file_pathes = []
+    """
+    【修复】每个结果目录只读取最新的一个 JSON 文件，避免重复计算
+    """
+    from collections import defaultdict
+    
+    # 按目录分组收集 JSON 文件
+    dir_files = defaultdict(list)
     for root, dirs, files in os.walk(path):
         for file in files:
             if re.search(r'\.json$', file, re.IGNORECASE):
                 file_path = os.path.join(root, file)
-                file_pathes.append(file_path)
+                dir_files[root].append(file_path)
+    
+    # 每个目录只取最新的一个文件（按修改时间排序）
+    file_pathes = []
+    for dir_path, files in dir_files.items():
+        if files:
+            # 按修改时间降序排序，取最新的
+            files_with_mtime = [(f, os.path.getmtime(f)) for f in files]
+            files_with_mtime.sort(key=lambda x: x[1], reverse=True)
+            file_pathes.append(files_with_mtime[0][0])
+    
     return file_pathes
 
 

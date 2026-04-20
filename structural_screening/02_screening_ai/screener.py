@@ -7,6 +7,7 @@ from datetime import datetime
 from config import base_url, api_key, max_workers
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import hashlib
 
 
 class PDFProcessor:
@@ -218,8 +219,17 @@ class PDFProcessor:
                 
                 results["screening_result"] = final_record
                 
-                # 保存最终结果
-                safe_title = "".join([c for c in title if c.isalnum() or c in (' ', '-', '_')]).strip()[:50]
+                # 【修复】保存最终结果，添加源文件名hash避免目录名冲突
+                source_xml = entry.get('source_xml', '')
+                source_hash = hashlib.md5(source_xml.encode()).hexdigest()[:8] if source_xml else ''
+                
+                # 缩短标题到42字符，留空间给"_hash"后缀
+                safe_title = "".join([c for c in title if c.isalnum() or c in (' ', '-', '_')]).strip()[:42]
+                
+                # 添加hash后缀确保唯一性
+                if source_hash:
+                    safe_title = f"{safe_title}_{source_hash}"
+                
                 if self.should_stop():
                     return False
                 self.save_result(final_record, f"screening_result_{timestamp}.json", safe_title)
