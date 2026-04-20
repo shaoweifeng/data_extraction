@@ -792,63 +792,31 @@
 
                 // 去重处理（参考 xxc/develop 分支的同步逻辑）
                 const handleDeduplication = async () => {
-                    console.log('=== 开始去重 ===');
-                    console.log('stagesData:', stagesData.value);
-                    
-                    // 找到 SCREEN_1 阶段
-                    const screen1Stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
-                    console.log('screen1Stage:', screen1Stage);
-                    
-                    if (!screen1Stage) {
-                        alert('未找到文献初筛阶段，请刷新页面');
-                        return;
-                    }
-                    
                     if (referenceFiles.value.length === 0) {
                         alert('请先上传文献文件');
                         return;
                     }
 
                     isDeduplicating.value = true;
-                    console.log('调用 process_references API...');
                     
                     try {
-                        const url = `${API_BASE}/stages/${screen1Stage.id}/process_references/`;
-                        console.log('API URL:', url);
-                        
-                        const res = await fetch(url, {
+                        const res = await apiRequest(`${API_BASE}/tasks/`, {
                             method: 'POST',
-                            credentials: 'include',
-                            headers: {
-                                'X-CSRFToken': getCSRFToken() || ''
-                            }
+                            body: JSON.stringify({
+                                project: currentProject.value.id,
+                                task_type: 'deduplication',
+                                config: {}
+                            })
                         });
-
-                        console.log('去重响应:', res.status);
                         
                         if (res.ok) {
-                            const data = await res.json();
-                            console.log('去重结果:', data);
-                            
-                            // 保存去重报告
-                            if (data.dedup_report) {
-                                dedupCompleted.value = true;
-                                alert(`去重完成！总条目 ${data.dedup_report.total_entries_found}，去重后保留 ${data.total_entries} 篇文献。`);
-                                // 刷新阶段数据
-                                await fetchStages(currentProject.value.id);
-                            }
+                            latestTask.value = await res.json();
+                            pollTaskStatus(latestTask.value.id);
                         } else {
-                            const errorText = await res.text();
-                            console.error('去重失败:', res.status, errorText);
-                            try {
-                                const errorJson = JSON.parse(errorText);
-                                alert(`去重失败: ${errorJson.error || JSON.stringify(errorJson)}`);
-                            } catch {
-                                alert(`去重失败: ${res.status} - ${errorText}`);
-                            }
+                            const data = await res.json();
+                            alert(`去重启动失败: ${data.error || '未知错误'}`);
                         }
                     } catch (err) {
-                        console.error('去重异常:', err);
                         alert(`去重失败: ${err.message}`);
                     } finally {
                         isDeduplicating.value = false;
@@ -861,10 +829,11 @@
                             const res = await apiRequest(`${API_BASE}/tasks/${taskId}/`);
                             if (res.ok) {
                                 latestTask.value = await res.json();
-                                if (latestTask.value.status === 'running') {
+                                if (latestTask.value.status === 'running' || latestTask.value.status === 'pending') {
                                     setTimeout(poll, 2000);
                                 } else if (latestTask.value.status === 'completed') {
                                     dedupCompleted.value = true;
+                                    await fetchStages(currentProject.value.id);
                                 }
                             }
                         } catch (err) {

@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -206,7 +207,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             ).exists()
             
             if not has_perm:
-                raise PermissionError(f"缺少权限：{permission_code}")
+                raise PermissionDenied(f"缺少权限：{permission_code}")
         
         # 检查配额
         if not user.is_superuser and hasattr(user, 'profile'):
@@ -214,7 +215,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             if quota >= 0:  # -1 表示无限
                 current_count = Project.objects.filter(owner=user).count()
                 if current_count >= quota:
-                    raise PermissionError(f"已达项目配额上限({quota}个)")
+                    raise PermissionDenied(f"已达项目配额上限({quota}个)")
         
         # 创建项目
         project = serializer.save(owner=user)
@@ -248,7 +249,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         
         # 检查权限
         user = self.request.user
-        permission_code = 'project.delete'
+        permission_code = 'project.delete_own'
         
         if not user.is_superuser:
             has_perm = UserPermission.objects.filter(
@@ -259,11 +260,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
             ).exists()
             
             if not has_perm:
-                raise PermissionError(f"缺少权限：{permission_code}")
+                raise PermissionDenied(f"缺少权限：{permission_code}")
         
         # 检查是否是项目所有者
         if instance.owner != user and not user.is_superuser:
-            raise PermissionError("无权删除该项目")
+            raise PermissionDenied("无权删除该项目")
         
         # 获取项目文件夹路径
         project_dir = os.path.join(settings.MEDIA_ROOT, 'projects', f'project_{instance.id}')
@@ -517,8 +518,28 @@ class DataFileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
-            return DataFile.objects.all()
-        return DataFile.objects.filter(project__owner=user)
+            qs = DataFile.objects.all()
+        else:
+            qs = DataFile.objects.filter(project__owner=user)
+        
+        qp = self.request.query_params
+        project_id = qp.get('project')
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        
+        stage_id = qp.get('stage')
+        if stage_id:
+            qs = qs.filter(stage_id=stage_id)
+        
+        step_id = qp.get('step')
+        if step_id:
+            qs = qs.filter(step_id=step_id)
+        
+        data_category = qp.get('data_category')
+        if data_category:
+            qs = qs.filter(data_category=data_category)
+        
+        return qs
     
     def perform_create(self, serializer):
         """创建文件时自动关联当前用户"""
@@ -535,7 +556,7 @@ class DataFileViewSet(viewsets.ModelViewSet):
             ).exists()
             
             if not has_perm:
-                raise PermissionError(f"缺少权限：{permission_code}")
+                raise PermissionDenied(f"缺少权限：{permission_code}")
         
         # 自动提取文件名
         uploaded_file = self.request.FILES.get('file')
@@ -600,6 +621,18 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """创建任务时自动调度 Celery 任务"""
+        user = self.request.user
+        permission_code = 'task.start'
+        if not user.is_superuser:
+            has_perm = UserPermission.objects.filter(
+                user=user,
+                permission__code=permission_code
+            ).filter(
+                Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
+            ).exists()
+            if not has_perm:
+                raise PermissionDenied(f"缺少权限：{permission_code}")
+        
         task_obj = serializer.save()
         
         # 根据任务类型调度对应的 Celery 任务
@@ -618,18 +651,20 @@ class TaskViewSet(viewsets.ModelViewSet):
         
         if task_type == 'reference_parsing':
             file_ids = config.get('file_ids')
-            celery_task = run_reference_parsing_pipeline.delay(project_id, file_ids)
+            celery_task = run_reference_parsing_pipeline.delay(task_obj.id, project_id, file_ids)
         elif task_type == 'deduplication':
-            celery_task = run_deduplication_pipeline.delay(project_id)
+            celery_task = run_deduplication_pipeline.delay(task_obj.id, project_id)
         elif task_type == 'ai_screening':
             criteria = config.get('criteria')
-            celery_task = run_ai_screening_pipeline.delay(project_id, criteria)
+            celery_task = run_ai_screening_pipeline.delay(task_obj.id, project_id, criteria)
         elif task_type == 'result_aggregation':
-            celery_task = run_result_aggregation.delay(project_id)
+            celery_task = run_result_aggregation.delay(task_obj.id, project_id)
         
         # 更新任务的 celery_task_id
         if celery_task:
             task_obj.celery_task_id = celery_task.id
+            task_obj.status = 'running'
+            task_obj.started_at = timezone.now()
             task_obj.save()
     
     @action(detail=True, methods=['post'])

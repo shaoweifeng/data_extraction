@@ -10,16 +10,16 @@ from .models import Task, Project, ProjectStage, StageStep, DataFile
 
 
 @shared_task(bind=True)
-def run_reference_parsing_pipeline(self, project_id, file_ids=None):
+def run_reference_parsing_pipeline(self, task_id, project_id, file_ids=None):
     """步骤 1: 文献解析任务 - 将 .ris/.bib/.nbib 等格式解析成 XML"""
-    # 创建任务记录
-    task_obj = Task.objects.create(
-        project_id=project_id,
-        task_type='reference_parsing',
-        celery_task_id=self.request.id,
-        status='running',
-        config={'file_ids': file_ids} if file_ids else {}
-    )
+    task_obj = Task.objects.get(id=task_id)
+    task_obj.project_id = project_id
+    task_obj.task_type = 'reference_parsing'
+    task_obj.celery_task_id = self.request.id
+    task_obj.status = 'running'
+    task_obj.started_at = timezone.now()
+    task_obj.config = {'file_ids': file_ids} if file_ids else (task_obj.config or {})
+    task_obj.save()
     
     project = Project.objects.get(id=project_id)
     
@@ -31,6 +31,7 @@ def run_reference_parsing_pipeline(self, project_id, file_ids=None):
     
     add_log(f"[启动] 开始文献解析任务 (项目: {project.name})")
     
+    parse_step = None
     try:
         # 获取 SCREEN_1 阶段的 parse 步骤
         screen1_stage = ProjectStage.objects.get(project=project, stage_key='SCREEN_1')
@@ -148,8 +149,9 @@ def run_reference_parsing_pipeline(self, project_id, file_ids=None):
         add_log("[完成] 文献解析任务成功")
         
     except Exception as e:
-        parse_step.status = 'failed'
-        parse_step.save()
+        if parse_step is not None:
+            parse_step.status = 'failed'
+            parse_step.save()
         
         task_obj.status = 'failed'
         task_obj.error_message = str(e)
@@ -162,15 +164,15 @@ def run_reference_parsing_pipeline(self, project_id, file_ids=None):
 
 
 @shared_task(bind=True)
-def run_deduplication_pipeline(self, project_id):
+def run_deduplication_pipeline(self, task_id, project_id):
     """步骤 2: 自动去重任务 - 基于标题去重"""
-    # 创建任务记录
-    task_obj = Task.objects.create(
-        project_id=project_id,
-        task_type='deduplication',
-        celery_task_id=self.request.id,
-        status='running'
-    )
+    task_obj = Task.objects.get(id=task_id)
+    task_obj.project_id = project_id
+    task_obj.task_type = 'deduplication'
+    task_obj.celery_task_id = self.request.id
+    task_obj.status = 'running'
+    task_obj.started_at = timezone.now()
+    task_obj.save()
     
     project = Project.objects.get(id=project_id)
     
@@ -182,6 +184,7 @@ def run_deduplication_pipeline(self, project_id):
     
     add_log(f"[启动] 开始去重任务 (项目: {project.name})")
     
+    dedup_step = None
     try:
         # 获取 SCREEN_1 阶段
         screen1_stage = ProjectStage.objects.get(project=project, stage_key='SCREEN_1')
@@ -310,8 +313,9 @@ def run_deduplication_pipeline(self, project_id):
         add_log("[完成] 去重任务成功")
         
     except Exception as e:
-        dedup_step.status = 'failed'
-        dedup_step.save()
+        if dedup_step is not None:
+            dedup_step.status = 'failed'
+            dedup_step.save()
         
         task_obj.status = 'failed'
         task_obj.error_message = str(e)
@@ -324,16 +328,16 @@ def run_deduplication_pipeline(self, project_id):
 
 
 @shared_task(bind=True)
-def run_ai_screening_pipeline(self, project_id, screening_criteria=None):
+def run_ai_screening_pipeline(self, task_id, project_id, screening_criteria=None):
     """步骤 4: AI 初筛任务"""
-    # 创建任务记录
-    task_obj = Task.objects.create(
-        project_id=project_id,
-        task_type='ai_screening',
-        celery_task_id=self.request.id,
-        status='running',
-        config={'criteria': screening_criteria} if screening_criteria else {}
-    )
+    task_obj = Task.objects.get(id=task_id)
+    task_obj.project_id = project_id
+    task_obj.task_type = 'ai_screening'
+    task_obj.celery_task_id = self.request.id
+    task_obj.status = 'running'
+    task_obj.started_at = timezone.now()
+    task_obj.config = {'criteria': screening_criteria} if screening_criteria else (task_obj.config or {})
+    task_obj.save()
     
     project = Project.objects.get(id=project_id)
     
@@ -356,6 +360,7 @@ def run_ai_screening_pipeline(self, project_id, screening_criteria=None):
     
     add_log(f"[工作区] {workspace_dir}")
     
+    ai_step = None
     try:
         # 复制 screening_ai 代码
         shutil.copytree(
@@ -500,8 +505,9 @@ def run_ai_screening_pipeline(self, project_id, screening_criteria=None):
             
         except Exception as e:
             sys.stdout = sys.__stdout__
-            ai_step.status = 'failed'
-            ai_step.save()
+            if ai_step is not None:
+                ai_step.status = 'failed'
+                ai_step.save()
             
             task_obj.status = 'failed'
             task_obj.error_message = str(e)
@@ -523,14 +529,15 @@ def run_ai_screening_pipeline(self, project_id, screening_criteria=None):
 
 
 @shared_task(bind=True)
-def run_result_aggregation(self, project_id):
+def run_result_aggregation(self, task_id, project_id):
     """步骤 5: 结果归纳（生成 Excel/RIS）"""
-    task_obj = Task.objects.create(
-        project_id=project_id,
-        task_type='result_aggregation',
-        celery_task_id=self.request.id,
-        status='running'
-    )
+    task_obj = Task.objects.get(id=task_id)
+    task_obj.project_id = project_id
+    task_obj.task_type = 'result_aggregation'
+    task_obj.celery_task_id = self.request.id
+    task_obj.status = 'running'
+    task_obj.started_at = timezone.now()
+    task_obj.save()
     
     project = Project.objects.get(id=project_id)
     screen1_stage = ProjectStage.objects.get(project=project, stage_key='SCREEN_1')
@@ -543,6 +550,7 @@ def run_result_aggregation(self, project_id):
     
     add_log(f"[启动] 开始生成结果报表")
     
+    export_step = None
     try:
         # 更新 export 步骤状态
         export_step, _ = StageStep.objects.get_or_create(
@@ -633,8 +641,9 @@ def run_result_aggregation(self, project_id):
         add_log("[完成] 结果报表生成成功")
         
     except Exception as e:
-        export_step.status = 'failed'
-        export_step.save()
+        if export_step is not None:
+            export_step.status = 'failed'
+            export_step.save()
         
         task_obj.status = 'failed'
         task_obj.error_message = str(e)
