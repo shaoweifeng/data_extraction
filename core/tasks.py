@@ -99,44 +99,38 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
     original_cwd = os.getcwd()
     os.chdir(pipeline1_dir)
     
-    # 为了实时捕获日志，我们使用自定义的 Logger（批量缓冲优化）
+    # 为了避免 MySQL OOM，使用文件化日志（方案二）
     class TaskLogger:
-        def __init__(self, task_obj):
+        def __init__(self, task_obj, workspace_dir):
             self.task_obj = task_obj
-            self.buffer = []  # 改为列表存储日志行
-            self.last_flush_time = time.time()
-            self.flush_interval = 5  # 每 5 秒 flush 一次
-            self.buffer_size = 50     # 或每 50 行 flush 一次
+            self.log_path = os.path.join(workspace_dir, f"task_{task_obj.id}.log")
+            
+            # 确保日志目录存在
+            os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
+            
+            # 打开日志文件
+            self.log_file = open(self.log_path, 'a', encoding='utf-8', buffering=1)  # 行缓冲
+            
+            # 只在创建时写一次 DB，保存日志文件路径
+            task_obj.log_file = self.log_path
+            task_obj.save(update_fields=['log_file'])
         
         def write(self, message):
-            if not message or not message.strip():
-                return
-            self.buffer.append(message.strip())
-            
-            # 条件触发 flush：达到行数阈值或时间间隔
-            now = time.time()
-            if (len(self.buffer) >= self.buffer_size or 
-                now - self.last_flush_time >= self.flush_interval):
-                self.flush()
+            if message and message.strip():
+                self.log_file.write(message)
+                if not message.endswith('\n'):
+                    self.log_file.write('\n')
+                self.log_file.flush()  # 实时写文件，不写 DB
         
         def flush(self):
-            if not self.buffer:
-                return
-            # 一次性写入所有缓冲日志
-            try:
-                self.task_obj.refresh_from_db()
-                current_logs = self.task_obj.logs or ""
-                new_logs = "\n".join(self.buffer)
-                if current_logs:
-                    self.task_obj.logs = current_logs + "\n" + new_logs
-                else:
-                    self.task_obj.logs = new_logs
-                self.task_obj.save(update_fields=['logs'])
-                self.buffer = []
-                self.last_flush_time = time.time()
-            except Exception as e:
-                # 避免日志写入失败影响主任务
-                print(f"日志写入失败: {e}", file=sys.__stdout__)
+            """确保所有内容写入磁盘"""
+            if hasattr(self, 'log_file') and self.log_file:
+                self.log_file.flush()
+        
+        def close(self):
+            """关闭日志文件"""
+            if hasattr(self, 'log_file') and self.log_file:
+                self.log_file.close()
 
     try:
         # 动态导入 screening_ai/screener.py 中的 Processor 类
@@ -154,7 +148,7 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
         # 所以我们需要替换 sys.stdout
         
         original_stdout = sys.stdout
-        logger = TaskLogger(task_obj)
+        logger = TaskLogger(task_obj, workspace_dir)
         sys.stdout = logger
         
         # 调用处理函数
@@ -163,8 +157,9 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
             screening_criteria=screening_criteria
         )
         
-        # 确保最后的日志被写入
+        # 确保日志写入磁盘并关闭文件
         logger.flush()
+        logger.close()
         
         # 恢复 stdout
         sys.stdout = original_stdout
@@ -187,9 +182,10 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
              return False
 
     except Exception as e:
-        # 确保最后的日志被写入
+        # 确保日志文件被正确关闭
         if 'logger' in locals():
             logger.flush()
+            logger.close()
         sys.stdout = sys.__stdout__ # 确保恢复 stdout
         task_obj.status = 'FAILED'
         add_log(f"Step 1 异常: {str(e)}")

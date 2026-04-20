@@ -457,6 +457,48 @@ class ExtractionTaskViewSet(viewsets.ReadOnlyModelViewSet):
         if not task:
             return Response({"message": "No tasks found"}, status=status.HTTP_404_NOT_FOUND)
         return Response(ExtractionTaskSerializer(task).data)
+    
+    @action(detail=True, methods=['get'])
+    def logs(self, request, pk=None):
+        """读取任务的日志文件（方案二：日志文件化）"""
+        task = self.get_object()
+        
+        # 优先使用 log_file（新方案）
+        if task.log_file and os.path.exists(task.log_file):
+            try:
+                with open(task.log_file, 'r', encoding='utf-8') as f:
+                    log_content = f.read()
+                return Response({"logs": log_content})
+            except Exception as e:
+                return Response({"error": f"Failed to read log file: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Fallback：使用旧的 logs 字段（向后兼容）
+        if task.logs:
+            return Response({"logs": task.logs})
+        
+        return Response({"logs": "暂无日志"})
+    
+    @action(detail=True, methods=['get'])
+    def logs_stream(self, request, pk=None):
+        """流式读取日志文件的最后 N 行（用于实时监控）"""
+        from django.http import StreamingHttpResponse
+        
+        task = self.get_object()
+        lines = int(request.query_params.get('lines', 100))  # 默认返回最后 100 行
+        
+        if not task.log_file or not os.path.exists(task.log_file):
+            return Response({"logs": task.logs or "暂无日志"})
+        
+        try:
+            # 读取文件的最后 N 行
+            with open(task.log_file, 'r', encoding='utf-8') as f:
+                all_lines = f.readlines()
+                tail_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
+                log_content = ''.join(tail_lines)
+            
+            return Response({"logs": log_content})
+        except Exception as e:
+            return Response({"error": f"Failed to read log file: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class StageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Stage.objects.all()

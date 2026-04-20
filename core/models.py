@@ -94,7 +94,8 @@ class ExtractionTask(models.Model):
     celery_task_id = models.CharField(max_length=255, blank=True, null=True, verbose_name="Celery任务ID")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', verbose_name="任务状态")
     result_excel = models.FileField(upload_to="results/%Y/%m/%d/", blank=True, null=True, verbose_name="结果Excel")
-    logs = models.TextField(blank=True, null=True, verbose_name="运行日志")
+    logs = models.TextField(blank=True, null=True, verbose_name="运行日志（已废弃，使用log_file）")
+    log_file = models.CharField(max_length=500, blank=True, null=True, verbose_name="日志文件路径")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     completed_at = models.DateTimeField(blank=True, null=True, verbose_name="完成时间")
 
