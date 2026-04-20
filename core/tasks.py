@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import shutil
+import time
 from celery import shared_task
 from django.utils import timezone
 from .models import ExtractionTask, Project, Document
@@ -98,26 +99,44 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
     original_cwd = os.getcwd()
     os.chdir(pipeline1_dir)
     
-    # 为了实时捕获日志，我们使用自定义的 Logger
+    # 为了实时捕获日志，我们使用自定义的 Logger（批量缓冲优化）
     class TaskLogger:
         def __init__(self, task_obj):
             self.task_obj = task_obj
-            self.buffer = ""
+            self.buffer = []  # 改为列表存储日志行
+            self.last_flush_time = time.time()
+            self.flush_interval = 5  # 每 5 秒 flush 一次
+            self.buffer_size = 50     # 或每 50 行 flush 一次
         
         def write(self, message):
-            if not message: return
-            self.buffer += message
-            # 实时更新到数据库
-            # 注意：频繁保存可能会有性能问题，可以考虑缓冲一下
-            # 但为了“实时”效果，这里不做缓冲
-            if message.strip():
-                # self.task_obj.refresh_from_db() # 避免覆盖其他更新
-                # self.task_obj.logs += message
-                # self.task_obj.save(update_fields=['logs'])
-                add_log(message.strip()) # 使用 add_log 辅助函数
-
+            if not message or not message.strip():
+                return
+            self.buffer.append(message.strip())
+            
+            # 条件触发 flush：达到行数阈值或时间间隔
+            now = time.time()
+            if (len(self.buffer) >= self.buffer_size or 
+                now - self.last_flush_time >= self.flush_interval):
+                self.flush()
+        
         def flush(self):
-            pass
+            if not self.buffer:
+                return
+            # 一次性写入所有缓冲日志
+            try:
+                self.task_obj.refresh_from_db()
+                current_logs = self.task_obj.logs or ""
+                new_logs = "\n".join(self.buffer)
+                if current_logs:
+                    self.task_obj.logs = current_logs + "\n" + new_logs
+                else:
+                    self.task_obj.logs = new_logs
+                self.task_obj.save(update_fields=['logs'])
+                self.buffer = []
+                self.last_flush_time = time.time()
+            except Exception as e:
+                # 避免日志写入失败影响主任务
+                print(f"日志写入失败: {e}", file=sys.__stdout__)
 
     try:
         # 动态导入 screening_ai/screener.py 中的 Processor 类
@@ -135,13 +154,17 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
         # 所以我们需要替换 sys.stdout
         
         original_stdout = sys.stdout
-        sys.stdout = TaskLogger(task_obj)
+        logger = TaskLogger(task_obj)
+        sys.stdout = logger
         
         # 调用处理函数
         success_count, failed_files = processor.process_all_pdfs_in_datasets(
             force_reprocess=force_reprocess,
             screening_criteria=screening_criteria
         )
+        
+        # 确保最后的日志被写入
+        logger.flush()
         
         # 恢复 stdout
         sys.stdout = original_stdout
@@ -164,6 +187,9 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
              return False
 
     except Exception as e:
+        # 确保最后的日志被写入
+        if 'logger' in locals():
+            logger.flush()
         sys.stdout = sys.__stdout__ # 确保恢复 stdout
         task_obj.status = 'FAILED'
         add_log(f"Step 1 异常: {str(e)}")
