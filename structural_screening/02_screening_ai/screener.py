@@ -326,19 +326,39 @@ class PDFProcessor:
 
         print(f"从 XML 中加载了 {len(entries)} 条文献")
         
-        # 2. 过滤已处理条目 (简单基于 Title 去重/检查状态)
+        # 2. 【修复】过滤已处理条目 - 基于 source_xml 匹配（因为目录名加了hash后缀）
         entries_to_process = []
         results_dir = "results"
         
+        # 先扫描 results 目录，找出所有已处理的 source_xml
+        processed_sources = set()
+        if not force_reprocess and os.path.exists(results_dir):
+            for result_dir in os.listdir(results_dir):
+                result_path = os.path.join(results_dir, result_dir)
+                if not os.path.isdir(result_path):
+                    continue
+                # 检查是否有 screening_result JSON 文件
+                has_result = any(f.startswith('screening_result_') and f.lower().endswith('.json') 
+                                 for f in os.listdir(result_path))
+                if has_result:
+                    # 尝试读取 JSON 文件获取 source_xml
+                    for json_file in os.listdir(result_path):
+                        if json_file.startswith('screening_result_') and json_file.lower().endswith('.json'):
+                            try:
+                                with open(os.path.join(result_path, json_file), 'r', encoding='utf-8') as f:
+                                    data = json.load(f)
+                                    source_xml = data.get('source_xml')
+                                    if source_xml:
+                                        processed_sources.add(source_xml)
+                                    break  # 只读一个文件即可
+                            except Exception:
+                                pass
+        
+        # 过滤未处理的条目
         for entry in entries:
-            title = entry.get('title', '')
-            safe_title = "".join([c for c in title if c.isalnum() or c in (' ', '-', '_')]).strip()[:50]
-            
-            # 检查 results/safe_title 目录是否存在且已有 screening_result（表示已处理）
-            entry_dir = os.path.join(results_dir, safe_title)
-            if not force_reprocess and os.path.exists(entry_dir) and any(f.startswith('screening_result_') and f.lower().endswith('.json') for f in os.listdir(entry_dir)):
+            source_xml = entry.get('source_xml', '')
+            if source_xml and source_xml in processed_sources:
                 continue
-            
             entries_to_process.append(entry)
 
         if not entries_to_process:

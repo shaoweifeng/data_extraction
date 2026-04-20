@@ -374,7 +374,7 @@
                                 <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-green-400 font-mono text-xs shadow-inner h-96 flex flex-col">
                                     <div class="flex-1 overflow-y-auto min-h-0">
                                         <div v-if="!latestTask">等待任务启动...</div>
-                                        <div v-else class="whitespace-pre-wrap">{{ latestTask.logs || '正在初始化...' }}</div>
+                                        <div v-else class="whitespace-pre-wrap">{{ taskLogs }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -602,6 +602,7 @@
                 const dedupStatusText = ref('正在解析并去重，请稍候…');
                 const processedEntries = ref([]);
                 const fileListTab = ref('pending');
+                const taskLogs = ref('正在初始化...');
 
                 const screeningProgress = computed(() => {
                     // 【修复】基于已处理文件数量 vs 拆分后的 XML 总数计算进度
@@ -998,6 +999,7 @@
                             alert('AI 筛选任务已启动！');
                             processedEntries.value = [];
                             fileListTab.value = 'pending';
+                            taskLogs.value = '任务启动中...';
                             startPolling();
                             // nextStep(); // Removed auto-jump
                         } else {
@@ -1143,6 +1145,19 @@
                     }
                 };
 
+                // 【新增】获取任务的文件日志
+                const fetchTaskLogs = async (taskId) => {
+                    try {
+                        const res = await fetch(`${API_BASE}/tasks/${taskId}/logs/`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            taskLogs.value = data.logs || '暂无日志';
+                        }
+                    } catch (e) {
+                        console.error('获取日志失败:', e);
+                    }
+                };
+
                 const startPolling = () => {
                     if (pollingInterval.value) clearInterval(pollingInterval.value);
                     let tick = 0;
@@ -1154,11 +1169,19 @@
                             if (currentStep.value === 4 && tick % 2 === 0) {
                                 await fetchProcessedEntries(currentProject.value.id);
                             }
+                            // 【修复】每次轮询时同时获取日志文件内容
+                            if (currentStep.value === 4 && latestTask.value && latestTask.value.status === 'PROCESSING') {
+                                fetchTaskLogs(latestTask.value.id);
+                            }
                             if (latestTask.value.status !== 'PROCESSING') {
                                 clearInterval(pollingInterval.value);
                                 fetchProjects(); // 更新状态
                                 if (currentStep.value === 4) {
                                     await fetchProcessedEntries(currentProject.value.id);
+                                    // 任务结束时最后一次获取日志
+                                    if (latestTask.value.log_file) {
+                                        fetchTaskLogs(latestTask.value.id);
+                                    }
                                 }
                             }
                         }
@@ -1203,7 +1226,7 @@
                     uploadingFiles, latestTask, isProcessing, currentStageFiles, currentStep,
                     criteriaList, newCriteria, refInput,
                     selectProject, deleteProject, createProject, handleFileUpload, handleStageFileUpload, startTask,
-                    startScreeningTask, restartScreeningTask, stopScreeningTask, addCriteria, removeCriteria, nextStep, prevStep,
+                    startScreeningTask, restartScreeningTask, stopScreeningTask, addCriteria, removeCriteria, nextStep, prevStep, taskLogs, fetchTaskLogs,
                     getStatusClass, getStageClass, getStageName, formatDate, triggerFileInput, handleReferenceUpload,
                     handleDeduplication, referenceFiles, deleteReference, stepStatus,
                     screeningProgress, dedupReport, isDeduplicating, dedupStatusText,

@@ -3,6 +3,7 @@ import sys
 import subprocess
 import shutil
 import time
+import glob
 from celery import shared_task
 from django.utils import timezone
 from .models import ExtractionTask, Project, Document
@@ -40,24 +41,34 @@ def run_extraction_pipeline(self, project_id, force_reprocess=False, screening_c
             add_log("已清空旧的筛选结果，准备重新筛选")
     
     try:
-        # 确保脚本文件存在（首次或者脚本更新时）
+        # 【修复】强制覆盖核心 Python 文件，确保使用最新代码
         screening_ai_target = os.path.join(workspace_dir, "screening_ai")
-        if not os.path.exists(screening_ai_target) or force_reprocess:
-            shutil.copytree(
-                os.path.join(base_dir, "structural_screening", "02_screening_ai"),
-                screening_ai_target,
-                ignore=shutil.ignore_patterns("__pycache__", "datasets", "results", "*.pyc"),
-                dirs_exist_ok=True,
-            )
+        
+        # 如果目录已存在，先删除所有 .py 文件（保留 datasets 和 results）
+        if os.path.exists(screening_ai_target):
+            for py_file in glob.glob(os.path.join(screening_ai_target, "*.py")):
+                os.remove(py_file)
+        
+        shutil.copytree(
+            os.path.join(base_dir, "structural_screening", "02_screening_ai"),
+            screening_ai_target,
+            ignore=shutil.ignore_patterns("__pycache__", "datasets", "results", "*.pyc"),
+            dirs_exist_ok=True,  # 现在安全了，因为旧的 .py 文件已删除
+        )
         
         result_aggregation_target = os.path.join(workspace_dir, "result_aggregation")
-        if not os.path.exists(result_aggregation_target) or force_reprocess:
-            shutil.copytree(
-                os.path.join(base_dir, "structural_screening", "03_result_aggregation"),
-                result_aggregation_target,
-                ignore=shutil.ignore_patterns("__pycache__", "results", "*.pyc"),
-                dirs_exist_ok=True,
-            )
+        
+        # 同样处理 result_aggregation 目录
+        if os.path.exists(result_aggregation_target):
+            for py_file in glob.glob(os.path.join(result_aggregation_target, "*.py")):
+                os.remove(py_file)
+        
+        shutil.copytree(
+            os.path.join(base_dir, "structural_screening", "03_result_aggregation"),
+            result_aggregation_target,
+            ignore=shutil.ignore_patterns("__pycache__", "results", "*.pyc"),
+            dirs_exist_ok=True,
+        )
         
         # 确保必要的目录存在
         os.makedirs(os.path.join(workspace_dir, "screening_ai", "datasets"), exist_ok=True)
