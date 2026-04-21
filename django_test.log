@@ -1,9 +1,0 @@
-Watching for file changes with StatReloader
-/Users/gclx/data_extraction/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
-  warnings.warn(
-[18/Apr/2026 18:03:29] "GET / HTTP/1.1" 200 48826
-[18/Apr/2026 18:03:29] "GET /api/auth/me/ HTTP/1.1" 200 341
-[18/Apr/2026 18:03:29] "GET /api/projects/ HTTP/1.1" 200 52
-[18/Apr/2026 18:04:05] "GET / HTTP/1.1" 200 48826
-[18/Apr/2026 18:04:05] "GET /api/auth/me/ HTTP/1.1" 200 341
-[18/Apr/2026 18:04:05] "GET /api/projects/ HTTP/1.1" 200 52

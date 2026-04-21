@@ -1,4 +1,13 @@
-from rest_framework import viewsets, status
+"""
+数据提取平台 - API视图
+
+核心变更：
+- 使用 TaskScheduler 统一调度任务
+- 使用 step_config.py 管理配置
+- 保留认证API和权限装饰器
+"""
+
+from rest_framework import viewsets, status, serializers as drf_serializers
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -8,6 +17,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Q
 from functools import wraps
+import json
 
 from .models import (
     UserProfile, Permission, UserPermission, RoleTemplate,
@@ -137,53 +147,6 @@ def current_user(request):
 # 项目管理 ViewSet
 # ============================================================================
 
-# 系统预定义阶段
-STAGE_DEFINITIONS = [
-    {
-        "stage_key": "SEARCH",
-        "name": "文献检索",
-        "order": 10,
-        "steps": []
-    },
-    {
-        "stage_key": "SCREEN_1",
-        "name": "文献初筛",
-        "order": 20,
-        "steps": [
-            {"step_key": "parse", "name": "文献解析", "order": 10, "can_skip": False},
-            {"step_key": "dedup", "name": "自动去重", "order": 20, "can_skip": True},
-            {"step_key": "criteria", "name": "纳排标准", "order": 30, "can_skip": False},
-            {"step_key": "ai_screen", "name": "AI初筛", "order": 40, "can_skip": False},
-            {"step_key": "export", "name": "结果归纳", "order": 50, "can_skip": False}
-        ]
-    },
-    {
-        "stage_key": "SCREEN_2",
-        "name": "文献复筛",
-        "order": 30,
-        "steps": []
-    },
-    {
-        "stage_key": "QUALITY",
-        "name": "文献质量评价",
-        "order": 40,
-        "steps": []
-    },
-    {
-        "stage_key": "EXTRACT",
-        "name": "数据提取",
-        "order": 50,
-        "steps": []
-    },
-    {
-        "stage_key": "META",
-        "name": "Meta分析",
-        "order": 60,
-        "steps": []
-    }
-]
-
-
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -194,7 +157,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """创建项目时自动初始化阶段和步骤"""
-        # 手动检查权限（不使用装饰器，因为 perform_create 的参数不同）
+        from .step_config import get_stage_definition
+        
         user = self.request.user
         permission_code = 'project.create'
         
@@ -220,13 +184,17 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # 创建项目
         project = serializer.save(owner=user)
         
-        # 自动创建 6 个阶段
-        for stage_def in STAGE_DEFINITIONS:
+        # 自动创建 6 个阶段（使用 step_config 配置）
+        stage_keys = ['SEARCH', 'SCREEN_1', 'SCREEN_2', 'QUALITY', 'EXTRACT', 'META']
+        
+        for stage_key in stage_keys:
+            stage_def = get_stage_definition(stage_key)
+            
             stage = ProjectStage.objects.create(
                 project=project,
-                stage_key=stage_def["stage_key"],
-                name=stage_def["name"],
-                order=stage_def["order"],
+                stage_key=stage_key,
+                name=stage_def.get("name", stage_key),
+                order=stage_def.get("order", 100),
                 status="pending"
             )
             
@@ -235,9 +203,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 StageStep.objects.create(
                     stage=stage,
                     step_key=step_def["step_key"],
-                    name=step_def["name"],
-                    order=step_def["order"],
-                    can_skip=step_def["can_skip"],
+                    name=step_def.get("name", step_def["step_key"]),
+                    order=step_def.get("order", 100),
+                    can_skip=step_def.get("can_skip", True),
                     status="pending"
                 )
     
@@ -247,7 +215,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         import os
         from django.conf import settings
         
-        # 检查权限
         user = self.request.user
         permission_code = 'project.delete_own'
         
@@ -269,10 +236,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # 获取项目文件夹路径
         project_dir = os.path.join(settings.MEDIA_ROOT, 'projects', f'project_{instance.id}')
         
-        # 删除所有关联的文件记录（级联删除会自动处理）
-        # 但我们需要手动删除物理文件
-        
-        # 方式1：遍历所有 DataFile，删除物理文件
+        # 删除所有关联的文件记录
         try:
             for data_file in instance.files.all():
                 if data_file.file and os.path.exists(data_file.file.path):
@@ -283,7 +247,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(f"清理文件时出错: {e}")
         
-        # 方式2：删除整个项目文件夹（更彻底）
+        # 删除整个项目文件夹
         try:
             if os.path.exists(project_dir):
                 shutil.rmtree(project_dir)
@@ -291,7 +255,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(f"删除项目文件夹失败: {project_dir}, 错误: {e}")
         
-        # 最后删除数据库记录（级联删除会自动处理所有关联记录）
+        # 最后删除数据库记录
         instance.delete()
     
     @action(detail=True, methods=['get'])
@@ -300,6 +264,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project = self.get_object()
         stages = project.stages.all().prefetch_related('steps')
         return Response(ProjectStageSerializer(stages, many=True).data)
+    
+    @action(detail=True, methods=['get'])
+    def progress(self, request, pk=None):
+        """获取项目整体进度"""
+        from .monitoring import ProgressMonitor
+        
+        project = self.get_object()
+        monitor = ProgressMonitor(project.id)
+        return Response(monitor.get_project_progress())
 
 
 # ============================================================================
@@ -317,16 +290,16 @@ class ProjectStageViewSet(viewsets.ModelViewSet):
         return ProjectStage.objects.filter(project__owner=user)
     
     @action(detail=True, methods=['post'])
-    def process_references(self, request, pk=None):
+    @require_permission('stage.start')
+    def start(self, request, pk=None):
         """
-        解析并去重文献索引文件（同步执行，参考 xxc/develop 分支）
+        启动阶段（使用 TaskScheduler）
         
-        步骤：
-        1. 获取该阶段的所有输入文件（.ris, .bib, .nbib, .xml, .ciw）
-        2. 调用 parser.process_directory 解析并去重
-        3. 保存合并后的 references.xml 和去重报告
-        4. 返回去重报告给前端
+        Request Body:
+            - config: 阶段配置（可选）
         """
+        from .scheduler import TaskScheduler
+        
         stage = self.get_object()
         project = stage.project
         
@@ -334,120 +307,88 @@ class ProjectStageViewSet(viewsets.ModelViewSet):
         if project.owner != request.user and not request.user.is_superuser:
             return Response({"error": "无权操作该项目"}, status=status.HTTP_403_FORBIDDEN)
         
-        # 创建工作区
-        import tempfile
-        import shutil
-        import os
+        # 获取配置
+        config = request.data.get('config', {})
         
-        work_dir = tempfile.mkdtemp(prefix=f'project_{project.id}_dedup_')
-        input_dir = os.path.join(work_dir, 'input')
-        output_dir = os.path.join(work_dir, 'output')
-        os.makedirs(input_dir, exist_ok=True)
-        os.makedirs(output_dir, exist_ok=True)
+        # 调用调度器
+        scheduler = TaskScheduler(project.id)
         
         try:
-            # 1. 复制所有输入文件到工作区
-            input_files = DataFile.objects.filter(
-                project=project,
-                data_category='input'
-            )
-            
-            file_count = 0
-            for data_file in input_files:
-                if data_file.file and os.path.exists(data_file.file.path):
-                    # 复制文件到输入目录
-                    dest_path = os.path.join(input_dir, data_file.filename)
-                    shutil.copy2(data_file.file.path, dest_path)
-                    file_count += 1
-            
-            if file_count == 0:
-                return Response({"error": "未找到任何输入文件，请先上传文献索引"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # 2. 调用 parser.process_directory
-            from structural_screening.reference_parsing.parser import process_directory
-            
-            merged_xml_path = os.path.join(output_dir, 'references.xml')
-            result = process_directory(input_dir, merged_xml_path, return_report=True)
-            
-            # 解析返回值：return_report=True 时返回 (final_entries, report)
-            if isinstance(result, tuple):
-                final_entries, report = result
-            else:
-                final_entries = result
-                report = {'total_entries_found': len(final_entries), 'duplicates_removed': 0}
-            
-            # 3. 保存结果文件
-            # 保存合并后的 references.xml
-            if os.path.exists(merged_xml_path):
-                with open(merged_xml_path, 'rb') as f:
-                    from django.core.files import File
-                    data_file = DataFile.objects.create(
-                        project=project,
-                        stage=stage,
-                        filename='references.xml',
-                        file=File(f, name='references.xml'),
-                        data_category='output',
-                        description='合并后的文献 XML',
-                        metadata={'source': 'dedup', 'entries': len(final_entries)}
-                    )
-            
-            # 保存去重报告
-            import json
-            report_path = os.path.join(output_dir, 'dedup_report.json')
-            with open(report_path, 'w', encoding='utf-8') as f:
-                json.dump(report, f, ensure_ascii=False, indent=2)
-            
-            with open(report_path, 'rb') as f:
-                from django.core.files import File
-                report_file = DataFile.objects.create(
-                    project=project,
-                    stage=stage,
-                    filename='dedup_report.json',
-                    file=File(f, name='dedup_report.json'),
-                    data_category='output',
-                    description='去重报告',
-                    metadata={'source': 'dedup'}
-                )
-            
-            # 更新阶段状态
-            stage.status = 'completed'
-            stage.completed_at = timezone.now()
-            stage.metadata.update({
-                'total_entries_found': report.get('total_entries_found', 0),
-                'duplicates_removed': report.get('duplicates_removed', 0),
-                'final_unique_entries': report.get('final_unique_entries', len(final_entries))
-            })
-            stage.save()
-            
+            task = scheduler.start_stage(stage.stage_key, request.user.id, **config)
             return Response({
-                'message': '去重完成',
-                'total_entries': len(final_entries),
-                'dedup_report': report
+                "message": f"阶段 {stage.name} 已启动",
+                "task": TaskSerializer(task).data
             })
-            
         except Exception as e:
-            import traceback
-            traceback.print_exc()
             return Response({
-                'error': f'处理失败: {str(e)}',
-                'traceback': traceback.format_exc()
+                "error": f"启动失败: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['post'])
+    def stop(self, request, pk=None):
+        """停止阶段"""
+        from .scheduler import TaskScheduler
         
-        finally:
-            # 清理临时目录
-            try:
-                shutil.rmtree(work_dir)
-            except:
-                pass
+        stage = self.get_object()
+        project = stage.project
+        
+        # 检查权限
+        if project.owner != request.user and not request.user.is_superuser:
+            return Response({"error": "无权操作该项目"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # 获取正在运行的任务
+        running_task = Task.objects.filter(
+            project=project,
+            task_type=stage.stage_key,
+            status='running'
+        ).first()
+        
+        if not running_task:
+            return Response({"error": "没有正在运行的任务"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 调用调度器停止
+        scheduler = TaskScheduler(project.id)
+        success = scheduler.stop_task(running_task.id)
+        
+        if success:
+            stage.status = 'stopped'
+            stage.save()
+            return Response({"message": "阶段已停止"})
+        else:
+            return Response({"error": "停止失败"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['post'])
     def skip(self, request, pk=None):
         """跳过整个阶段"""
         stage = self.get_object()
+        
+        # 检查是否允许跳过
+        from .step_config import get_step_config
+        config = get_step_config(stage.stage_key)
+        
+        if not config.get("can_skip", False):
+            return Response(
+                {"error": "该阶段不允许跳过"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         stage.status = 'skipped'
         stage.completed_at = timezone.now()
         stage.save()
+        
+        # 同时跳过所有子步骤
+        stage.steps.update(status='skipped', completed_at=timezone.now())
+        
         return Response(ProjectStageSerializer(stage).data)
+    
+    @action(detail=True, methods=['get'])
+    def progress(self, request, pk=None):
+        """获取阶段进度"""
+        from .monitoring import ProgressMonitor
+        
+        stage = self.get_object()
+        monitor = ProgressMonitor(stage.project.id)
+        return Response(monitor.get_stage_progress(stage.stage_key))
 
 
 # ============================================================================
@@ -465,32 +406,125 @@ class StageStepViewSet(viewsets.ModelViewSet):
         return StageStep.objects.filter(stage__project__owner=user)
     
     @action(detail=True, methods=['post'])
-    @require_permission('stage.skip')
+    @require_permission('step.start')
+    def start(self, request, pk=None):
+        """
+        启动步骤（使用 TaskScheduler）
+        
+        Request Body:
+            - config: 步骤配置（可选，如纳排标准）
+        """
+        from .scheduler import TaskScheduler
+        
+        step = self.get_object()
+        stage = step.stage
+        project = stage.project
+        
+        # 检查权限
+        if project.owner != request.user and not request.user.is_superuser:
+            return Response({"error": "无权操作该项目"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # 检查步骤状态
+        if step.status == 'in_progress':
+            return Response({"error": "步骤正在运行中"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if step.status == 'completed':
+            return Response({"error": "步骤已完成，请勿重复执行"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 获取配置
+        config = request.data.get('config', {})
+        
+        # 保存纳排标准（如果是 criteria 步骤）
+        if step.step_key == 'criteria' and 'criteria' in config:
+            step.metadata = step.metadata or {}
+            step.metadata['criteria'] = config['criteria']
+            step.save()
+        
+        # 调用调度器
+        scheduler = TaskScheduler(project.id)
+        
+        try:
+            task = scheduler.start_step(step.step_key, request.user.id, **config)
+            
+            # 更新步骤状态
+            step.status = 'in_progress'
+            step.started_at = timezone.now()
+            step.save()
+            
+            return Response({
+                "message": f"步骤 {step.name} 已启动",
+                "task": TaskSerializer(task).data
+            })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "error": f"启动失败: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['post'])
+    def stop(self, request, pk=None):
+        """停止步骤"""
+        from .scheduler import TaskScheduler
+        
+        step = self.get_object()
+        stage = step.stage
+        project = stage.project
+        
+        # 检查权限
+        if project.owner != request.user and not request.user.is_superuser:
+            return Response({"error": "无权操作该项目"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # 检查步骤状态
+        if step.status != 'in_progress':
+            return Response({"error": "步骤未在运行"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 获取正在运行的任务
+        running_task = Task.objects.filter(
+            project=project,
+            task_type=step.step_key,
+            status='running'
+        ).first()
+        
+        if not running_task:
+            # 可能是同步任务已执行完
+            step.status = 'stopped'
+            step.save()
+            return Response({"message": "步骤已停止"})
+        
+        # 调用调度器停止
+        scheduler = TaskScheduler(project.id)
+        success = scheduler.stop_task(running_task.id)
+        
+        if success:
+            step.status = 'stopped'
+            step.completed_at = timezone.now()
+            step.save()
+            return Response({"message": "步骤已停止"})
+        else:
+            return Response({"error": "停止失败"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['post'])
+    @require_permission('step.skip')
     def skip(self, request, pk=None):
         """跳过步骤"""
         step = self.get_object()
+        
         if not step.can_skip:
             return Response(
                 {"error": "该步骤不允许跳过"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
         step.status = 'skipped'
         step.completed_at = timezone.now()
         step.save()
-        return Response(StageStepSerializer(step).data)
-    
-    @action(detail=True, methods=['post'])
-    def start(self, request, pk=None):
-        """开始步骤"""
-        step = self.get_object()
-        step.status = 'in_progress'
-        step.started_at = timezone.now()
-        step.save()
+        
         return Response(StageStepSerializer(step).data)
     
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
-        """完成步骤"""
+        """手动完成步骤"""
         step = self.get_object()
         step.status = 'completed'
         step.completed_at = timezone.now()
@@ -502,9 +536,45 @@ class StageStepViewSet(viewsets.ModelViewSet):
         """更新步骤元数据（如保存纳排标准）"""
         step = self.get_object()
         metadata = request.data.get('metadata', {})
+        step.metadata = step.metadata or {}
         step.metadata.update(metadata)
         step.save()
         return Response(StageStepSerializer(step).data)
+    
+    @action(detail=True, methods=['get'])
+    def progress(self, request, pk=None):
+        """获取步骤进度"""
+        from .monitoring import ProgressMonitor
+        
+        step = self.get_object()
+        stage = step.stage
+        monitor = ProgressMonitor(stage.project.id)
+        return Response(monitor.get_step_progress(step.step_key))
+    
+    @action(detail=True, methods=['get'])
+    def logs(self, request, pk=None):
+        """获取步骤日志"""
+        from .monitoring import LogReader
+        
+        step = self.get_object()
+        stage = step.stage
+        project = stage.project
+        
+        # 获取最新的任务
+        latest_task = Task.objects.filter(
+            project=project,
+            task_type=step.step_key
+        ).order_by('-created_at').first()
+        
+        if not latest_task:
+            return Response({"lines": [], "total": 0})
+        
+        # 读取日志
+        reader = LogReader(latest_task.id)
+        from_line = int(request.query_params.get('from_line', 0))
+        max_lines = int(request.query_params.get('max_lines', 100))
+        
+        return Response(reader.read_logs(from_line, max_lines))
 
 
 # ============================================================================
@@ -543,7 +613,6 @@ class DataFileViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """创建文件时自动关联当前用户"""
-        # 手动检查权限（不使用装饰器，因为 perform_create 的参数不同）
         user = self.request.user
         permission_code = 'file.upload'
         
@@ -598,16 +667,76 @@ class DataFileViewSet(viewsets.ModelViewSet):
         serializer.save(created_by=user)
     
     @action(detail=True, methods=['get'])
-    def versions(self, request, pk=None):
-        """获取文件的所有版本"""
-        data_file = self.get_object()
-        versions = data_file.versions.all()
-        return Response(DataFileVersionSerializer(versions, many=True).data)
+    def logs(self, request, pk=None):
+        """
+        获取任务的实际日志内容
+        
+        返回日志文件的最后N行内容，用于调试失败原因
+        """
+        import os
+        from pathlib import Path
+        from django.conf import settings
+        from django.http import JsonResponse
+        
+        task = self.get_object()
+        
+        # 解析日志元信息
+        if not task.logs:
+            return JsonResponse({
+                'log_content': '',
+                'error': '没有日志记录'
+            })
+        
+        try:
+            log_meta = json.loads(task.logs)
+        except (json.JSONDecodeError, TypeError):
+            return JsonResponse({
+                'log_content': task.logs,  # 如果不是JSON，直接返回原始内容
+                'error': '日志格式异常'
+            })
+        
+        # 获取日志文件路径
+        log_file_path = log_meta.get('log_file')
+        if not log_file_path:
+            return JsonResponse({
+                'log_content': '',
+                'error': '日志文件路径不存在'
+            })
+        
+        # 构建完整路径
+        if log_file_path.startswith('/'):
+            full_path = Path(log_file_path)
+        else:
+            full_path = Path(settings.MEDIA_ROOT) / log_file_path
+        
+        # 读取日志内容（最后100行）
+        try:
+            if not full_path.exists():
+                return JsonResponse({
+                    'log_content': '',
+                    'error': f'日志文件不存在: {log_file_path}',
+                    'log_file': log_file_path
+                })
+            
+            with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = f.readlines()
+                # 返回最后100行
+                last_lines = lines[-100:] if len(lines) > 100 else lines
+                log_content = ''.join(last_lines)
+            
+            return JsonResponse({
+                'log_content': log_content,
+                'log_file': log_file_path,
+                'total_lines': len(lines),
+                'returned_lines': len(last_lines)
+            })
+        except Exception as e:
+            return JsonResponse({
+                'log_content': '',
+                'error': f'读取日志失败: {str(e)}',
+                'log_file': log_file_path
+            })
 
-
-# ============================================================================
-# 任务管理 ViewSet
-# ============================================================================
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
@@ -620,64 +749,148 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Task.objects.filter(project__owner=user)
     
     def perform_create(self, serializer):
-        """创建任务时自动调度 Celery 任务"""
+        """
+        兼容前端 POST /api/tasks/ 调用
+        
+        前端调用示例：
+        - task_type: 'reference_parsing' → 触发 parse 步骤
+        - task_type: 'deduplication' → 触发 dedup 步骤
+        - task_type: 'ai_screening' → 触发 ai_screen 步骤
+        - task_type: 'result_aggregation' → 触发 export 步骤
+        """
+        from .scheduler import TaskScheduler
+        from .step_config import get_step_config
+        
         user = self.request.user
-        permission_code = 'task.start'
-        if not user.is_superuser:
+        
+        # 超级用户和管理员跳过权限检查
+        if not user.is_superuser and not user.is_staff:
+            # 检查用户是否有 task.start 权限
+            permission_code = 'task.start'
+            from django.db.models import Q
             has_perm = UserPermission.objects.filter(
                 user=user,
                 permission__code=permission_code
             ).filter(
                 Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
             ).exists()
+            
             if not has_perm:
-                raise PermissionDenied(f"缺少权限：{permission_code}")
+                # 返回 400 而不是 403，避免前端触发登录框
+                raise serializers.ValidationError(f"缺少权限：{permission_code}，请联系管理员")
         
-        task_obj = serializer.save()
+        # 映射前端 task_type 到 step_key
+        task_type_map = {
+            'reference_parsing': 'parse',
+            'deduplication': 'dedup',
+            'ai_screening': 'ai_screen',
+            'result_aggregation': 'export'
+        }
         
-        # 根据任务类型调度对应的 Celery 任务
-        from .tasks import (
-            run_reference_parsing_pipeline,
-            run_deduplication_pipeline,
-            run_ai_screening_pipeline,
-            run_result_aggregation
-        )
+        task_type = serializer.validated_data.get('task_type', '')
+        step_key = task_type_map.get(task_type, task_type)
+        config = serializer.validated_data.get('config', {})
         
-        task_type = task_obj.task_type
-        project_id = task_obj.project.id
-        config = task_obj.config or {}
+        # 获取项目ID
+        project_id = serializer.validated_data.get('project').id if 'project' in serializer.validated_data else None
         
-        celery_task = None
+        if not project_id:
+            raise serializers.ValidationError("缺少项目ID")
         
-        if task_type == 'reference_parsing':
-            file_ids = config.get('file_ids')
-            celery_task = run_reference_parsing_pipeline.delay(task_obj.id, project_id, file_ids)
-        elif task_type == 'deduplication':
-            celery_task = run_deduplication_pipeline.delay(task_obj.id, project_id)
-        elif task_type == 'ai_screening':
-            criteria = config.get('criteria')
-            celery_task = run_ai_screening_pipeline.delay(task_obj.id, project_id, criteria)
-        elif task_type == 'result_aggregation':
-            celery_task = run_result_aggregation.delay(task_obj.id, project_id)
+        # 使用调度器启动任务
+        scheduler = TaskScheduler(project_id)
         
-        # 更新任务的 celery_task_id
-        if celery_task:
-            task_obj.celery_task_id = celery_task.id
-            task_obj.status = 'running'
-            task_obj.started_at = timezone.now()
-            task_obj.save()
+        try:
+            task = scheduler.start_step(step_key, user.id, **config)
+            # 更新serializer实例以返回正确的数据
+            serializer.instance = task
+        except ValueError as e:
+            raise drf_serializers.ValidationError(str(e))
+        except Exception as e:
+            raise drf_serializers.ValidationError(f"启动失败: {str(e)}")
     
     @action(detail=True, methods=['post'])
     def stop(self, request, pk=None):
         """停止任务"""
+        from .scheduler import TaskScheduler
+        
         task = self.get_object()
-        if task.status == 'running' and task.celery_task_id:
-            from celery import current_app
-            current_app.control.revoke(task.celery_task_id, terminate=True)
-            task.status = 'stopped'
-            task.completed_at = timezone.now()
-            task.save()
-        return Response(TaskSerializer(task).data)
+        
+        if task.status not in ['running', 'pending']:
+            return Response(
+                {"error": "任务未在运行"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        scheduler = TaskScheduler(task.project.id)
+        success = scheduler.stop_task(task.id)
+        
+        if success:
+            return Response({"message": "任务已停止"})
+        else:
+            return Response(
+                {"error": "停止失败"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['post'])
+    def resume(self, request, pk=None):
+        """恢复任务（断点续传）"""
+        from .scheduler import TaskScheduler
+        
+        task = self.get_object()
+        
+        if task.status != 'stopped':
+            return Response(
+                {"error": "只能恢复已停止的任务"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        scheduler = TaskScheduler(task.project.id)
+        
+        try:
+            new_task = scheduler.resume_task(task.id)
+            return Response({
+                "message": "任务已恢复",
+                "task": TaskSerializer(new_task).data
+            })
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['get'])
+    def progress(self, request, pk=None):
+        """获取任务进度"""
+        from .monitoring import get_task_progress
+        
+        task = self.get_object()
+        return Response(get_task_progress(task.id))
+    
+    @action(detail=True, methods=['get'])
+    def logs(self, request, pk=None):
+        """获取任务日志"""
+        from .monitoring import LogReader
+        
+        task = self.get_object()
+        reader = LogReader(task.id)
+        
+        from_line = int(request.query_params.get('from_line', 0))
+        max_lines = int(request.query_params.get('max_lines', 100))
+        
+        return Response(reader.read_logs(from_line, max_lines))
+    
+    @action(detail=True, methods=['get'])
+    def tail(self, request, pk=None):
+        """实时获取日志（最后N行）"""
+        from .monitoring import LogReader
+        
+        task = self.get_object()
+        reader = LogReader(task.id)
+        
+        last_n = int(request.query_params.get('n', 50))
+        return Response({"lines": reader.tail_logs(last_n)})
 
 
 # ============================================================================

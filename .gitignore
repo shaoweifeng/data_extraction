@@ -33,6 +33,9 @@ db.sqlite3-journal
 /static/
 /media/
 
+# Task workspaces
+/workspaces/
+
 # Celery
 celerybeat-schedule
 celerybeat.pid

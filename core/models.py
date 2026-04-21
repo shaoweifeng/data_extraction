@@ -34,6 +34,7 @@ class UserProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     
     class Meta:
+        db_table = 'plat_userprofile'
         verbose_name = "用户配置"
         verbose_name_plural = "用户配置"
     
@@ -60,6 +61,7 @@ class Permission(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     
     class Meta:
+        db_table = 'plat_permission'
         verbose_name = "权限"
         verbose_name_plural = "权限"
         ordering = ['category', 'code']
@@ -78,6 +80,7 @@ class UserPermission(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True, verbose_name="过期时间")
     
     class Meta:
+        db_table = 'plat_userpermission'
         verbose_name = "用户权限"
         verbose_name_plural = "用户权限"
         unique_together = ('user', 'permission')
@@ -95,6 +98,7 @@ class RoleTemplate(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     
     class Meta:
+        db_table = 'plat_roletemplate'
         verbose_name = "角色模板"
         verbose_name_plural = "角色模板"
     
@@ -109,6 +113,7 @@ class RoleTemplatePermission(models.Model):
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE, verbose_name="权限")
     
     class Meta:
+        db_table = 'plat_roletemplatepermission'
         verbose_name = "角色模板权限"
         verbose_name_plural = "角色模板权限"
         unique_together = ('role_template', 'permission')
@@ -155,6 +160,7 @@ class Project(models.Model):
     objects = ProjectQuerySet.as_manager()
     
     class Meta:
+        db_table = 'plat_project'
         verbose_name = "项目"
         verbose_name_plural = "项目"
         ordering = ['-created_at']
@@ -204,6 +210,7 @@ class ProjectStage(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     
     class Meta:
+        db_table = 'plat_projectstage'
         verbose_name = "项目阶段"
         verbose_name_plural = "项目阶段"
         unique_together = ('project', 'stage_key')
@@ -236,6 +243,7 @@ class StageStep(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     
     class Meta:
+        db_table = 'plat_stagestep'
         verbose_name = "阶段步骤"
         verbose_name_plural = "阶段步骤"
         unique_together = ('stage', 'step_key')
@@ -296,6 +304,7 @@ class DataFile(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     
     class Meta:
+        db_table = 'plat_datafile'
         verbose_name = "数据文件"
         verbose_name_plural = "数据文件"
         ordering = ['-created_at']
@@ -327,6 +336,7 @@ class DataFileVersion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     
     class Meta:
+        db_table = 'plat_datafileversion'
         verbose_name = "文件版本"
         verbose_name_plural = "文件版本"
         unique_together = ('data_file', 'version')
@@ -371,6 +381,7 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     
     class Meta:
+        db_table = 'plat_task'
         verbose_name = "任务"
         verbose_name_plural = "任务"
         ordering = ['-created_at']
