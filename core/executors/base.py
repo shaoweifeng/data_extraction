@@ -39,6 +39,7 @@ class TaskLogger:
     - 进度信息独立 JSON 文件
     - 自动统计行数和文件大小
     - 支持定期 checkpoint
+    - 【新增】进度和日志实时同步到DB，供前端轮询
     """
     
     def __init__(self, task_id: int, workspace: str):
@@ -52,7 +53,12 @@ class TaskLogger:
         # 日志文件路径
         self.log_file = self.log_dir / f"task_{task_id}.log"
         self.progress_file = self.log_dir / f"progress_{task_id}.json"
-        self.checkpoint_file = self.log_dir / f"checkpoint_{task_id}.json"
+        # checkpoint路径使用固定位置（不依赖task_id，支持断点续传）
+        # 从workspace路径提取project_id和step_key
+        # workspace格式：workspaces/project_{id}/{step_key}_{timestamp}
+        parts = self.workspace.parts
+        self.project_workspace = Path(*parts[:-1]) if len(parts) > 2 else self.workspace
+        self.checkpoint_file = self.project_workspace / "logs" / "checkpoint.json"
         
         # 文件句柄和统计信息
         self.file_handler = None
@@ -69,6 +75,16 @@ class TaskLogger:
             "last_update": None,
             "checkpoints": []
         }
+        
+        # 【新增】日志缓冲区和同步控制
+        self.log_buffer = []
+        self.max_buffer_size = 50       # 最多保留50行
+        self.last_db_sync = datetime.now()
+        self.db_sync_interval = 2      # 每2秒同步一次DB
+        
+        # 【新增】进度同步控制
+        self._last_progress_sync = 0
+        self._progress_sync_interval = 5  # 每5篇文献同步一次
         
         # 初始化
         self._init_logger()
@@ -99,21 +115,25 @@ class TaskLogger:
     def info(self, msg: str):
         """写入 INFO 日志"""
         logger.info(msg)
+        self._add_to_buffer(f"[INFO] {msg}")
         self._update_stats()
     
     def error(self, msg: str):
         """写入 ERROR 日志"""
         logger.error(msg)
+        self._add_to_buffer(f"[ERROR] {msg}")
         self._update_stats()
     
     def warning(self, msg: str):
         """写入 WARNING 日志"""
         logger.warning(msg)
+        self._add_to_buffer(f"[WARN] {msg}")
         self._update_stats()
     
     def debug(self, msg: str):
         """写入 DEBUG 日志"""
         logger.debug(msg)
+        self._add_to_buffer(f"[DEBUG] {msg}")
         self._update_stats()
     
     def _update_stats(self):
@@ -133,10 +153,20 @@ class TaskLogger:
         self.progress_data["unit"] = unit
         self.progress_data["last_update"] = datetime.now().isoformat()
         
+        # 写入文件
         self._save_progress()
         
         # 同时写入日志（用于追溯）
         self.info(f"[进度] {current}/{total} {unit} ({self.progress_data['percentage']}%)")
+        
+        # 【新增】批量同步到DB（每N篇或每5秒）
+        should_sync = (
+            current - self._last_progress_sync >= self._progress_sync_interval or
+            (datetime.now() - self.last_db_sync).total_seconds() >= 5
+        )
+        if should_sync:
+            self._sync_progress_to_db(current, total)
+            self._last_progress_sync = current
     
     def add_checkpoint(self, name: str, data: Dict = None):
         """添加检查点（用于断点续传）"""
@@ -221,9 +251,49 @@ class TaskLogger:
             "last_update": self.progress_data.get("last_update")
         }
     
+    def _add_to_buffer(self, line: str):
+        """添加日志到缓冲区，并定期同步到DB"""
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        formatted_line = f"[{timestamp}] {line}"
+        self.log_buffer.append(formatted_line)
+        
+        # 控制缓冲区大小
+        if len(self.log_buffer) > self.max_buffer_size:
+            self.log_buffer.pop(0)
+        
+        # 定期同步到DB
+        now = datetime.now()
+        if (now - self.last_db_sync).total_seconds() >= self.db_sync_interval:
+            self._sync_logs_to_db()
+            self.last_db_sync = now
+    
+    def _sync_progress_to_db(self, current: int, total: int):
+        """将进度同步到数据库"""
+        try:
+            from core.models import Task
+            Task.objects.filter(id=self.task_id).update(
+                progress=round(current / total, 4) if total > 0 else 0
+            )
+        except Exception as e:
+            logger.warning(f"同步进度到DB失败: {e}")
+    
+    def _sync_logs_to_db(self):
+        """将缓冲区日志同步到Task.logs字段"""
+        try:
+            from core.models import Task
+            log_content = '\n'.join(self.log_buffer)
+            Task.objects.filter(id=self.task_id).update(
+                logs=log_content
+            )
+        except Exception as e:
+            logger.warning(f"同步日志到DB失败: {e}")
+    
     def close(self):
         """关闭日志器"""
         self.info(f"[结束] 任务 {self.task_id} 日志系统关闭")
+        
+        # 【新增】最终同步日志到DB
+        self._sync_logs_to_db()
         
         if self.file_handler:
             logging.root.removeHandler(self.file_handler)

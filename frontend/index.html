@@ -177,14 +177,21 @@
                         <!-- SCREEN_1 详细功能 -->
                         <div v-if="currentStage === 'SCREEN_1'" class="w-full px-6">
                             <!-- 步骤指示器 -->
-                            <div class="flex items-center justify-between mb-6">
+                            <div class="relative flex items-center justify-between mb-6">
+                                <!-- 连接线背景 -->
+                                <div class="absolute top-5 left-0 right-0 h-0.5 bg-gray-200"></div>
+                                <!-- 已完成进度线 -->
+                                <div class="absolute top-5 left-0 h-0.5 bg-blue-600 transition-all"
+                                     :style="{ width: `${Math.max(0, ((currentStep - 1) / (screen1Steps.length - 1)) * 100)}%` }"></div>
+                                
                                 <div v-for="(step, idx) in screen1Steps" :key="step.step_key"
-                                     class="flex flex-col items-center cursor-pointer"
-                                     @click="currentStep = idx + 1">
+                                     class="relative flex flex-col items-center cursor-pointer z-10"
+                                     @click="currentStep = idx + 1; if (idx + 1 === 4) loadAiScreenFiles()">
                                     <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative"
-                                         :class="getStepClass(step.status)">
+                                         :class="getStepClass(step, idx + 1)">
                                         <span>{{ idx + 1 }}</span>
-                                        <i v-if="step.status === 'completed'" class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-xs"></i>
+                                        <i v-if="step.status === 'completed' || step.status === 'in_progress'" 
+                                           class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-xs"></i>
                                     </div>
                                     <span class="text-xs font-medium text-gray-600">{{ step.name }}</span>
                                     <button v-if="step.can_skip && step.status === 'pending'" 
@@ -428,40 +435,134 @@
                                             <p class="text-gray-500 mt-2">DeepSeek 模型将阅读全文并根据纳排标准进行筛选</p>
                                         </div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                                            <div class="bg-gray-50 p-6 rounded-xl border h-96 flex flex-col">
-                                                <div class="flex items-center justify-between mb-4">
-                                                    <h4 class="font-bold text-gray-700">文献列表</h4>
-                                                    <span class="text-sm text-gray-500">{{ pendingFiles.length }} 篇待筛选</span>
+                                            <div class="bg-gray-50 p-4 rounded-xl border h-96 flex flex-col">
+                                                <!-- Tab 切换 -->
+                                                <div class="flex items-center gap-4 mb-3 border-b pb-2 flex-shrink-0">
+                                                    <button @click="screeningTab = 'pending'; pendingPage = 0" 
+                                                            :class="screeningTab === 'pending' ? 'text-blue-600 border-b-2 border-blue-600 font-semibold' : 'text-gray-500'"
+                                                            class="pb-1 text-sm">
+                                                        待筛选 ({{ pendingFiles.length }})
+                                                    </button>
+                                                    <button @click="screeningTab = 'screened'; screenedPage = 0; loadScreenedFiles()" 
+                                                            :class="screeningTab === 'screened' ? 'text-green-600 border-b-2 border-green-600 font-semibold' : 'text-gray-500'"
+                                                            class="pb-1 text-sm">
+                                                        已筛选 ({{ screenedFiles.length }})
+                                                    </button>
                                                 </div>
-                                                <div class="flex-1 bg-white rounded border overflow-y-auto p-2 space-y-1">
-                                                    <div v-if="pendingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400">
-                                                        <p>暂无待筛选文献</p>
-                                                    </div>
-                                                    <div v-else>
-                                                        <div v-for="file in pendingFiles.slice(0, 20)" :key="file.id" 
-                                                             class="flex items-center justify-between p-2 hover:bg-gray-50 border-b text-sm">
-                                                            <div class="flex items-center overflow-hidden">
-                                                                <i class="fas fa-file-code text-blue-500 mr-2"></i>
-                                                                <span class="truncate">{{ file.filename }}</span>
-                                                            </div>
-                                                            <span class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500 flex-shrink-0">待筛选</span>
+                                                <!-- 待筛选列表 -->
+                                                <div v-show="screeningTab === 'pending'" class="flex-1 flex flex-col min-h-0">
+                                                    <div class="flex-1 bg-white rounded border overflow-y-auto p-2">
+                                                        <div v-if="pendingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs">
+                                                            <p>暂无待筛选文献</p>
                                                         </div>
+                                                        <div v-else class="space-y-1">
+                                                            <div v-for="file in pendingFiles.slice(pendingPage*50, pendingPage*50+50)" :key="file.id" 
+                                                                 class="flex items-center justify-between px-2 py-1 hover:bg-gray-50 border-b text-xs">
+                                                                <div class="flex items-center overflow-hidden">
+                                                                    <i class="fas fa-file-code text-blue-500 mr-2 flex-shrink-0"></i>
+                                                                    <span class="truncate" :title="file.filename">{{ file.filename }}</span>
+                                                                </div>
+                                                                <span class="text-xs px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 flex-shrink-0 ml-2">待筛选</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- 待筛选分页 -->
+                                                    <div v-if="pendingFiles.length > 50" class="flex items-center justify-center gap-2 mt-1 text-xs flex-shrink-0">
+                                                        <button @click="pendingPage = Math.max(0, pendingPage - 1)" :disabled="pendingPage === 0"
+                                                                class="px-2 py-0.5 border rounded disabled:opacity-50">上一页</button>
+                                                        <span>{{ pendingPage + 1 }}/{{ Math.ceil(pendingFiles.length / 50) }}</span>
+                                                        <button @click="pendingPage = Math.min(Math.ceil(pendingFiles.length / 50) - 1, pendingPage + 1)" 
+                                                                :disabled="pendingPage >= Math.ceil(pendingFiles.length / 50) - 1"
+                                                                class="px-2 py-0.5 border rounded disabled:opacity-50">下一页</button>
+                                                    </div>
+                                                </div>
+                                                <!-- 已筛选列表 -->
+                                                <div v-show="screeningTab === 'screened'" class="flex-1 flex flex-col min-h-0">
+                                                    <div class="flex-1 bg-white rounded border overflow-y-auto p-2">
+                                                        <div v-if="screenedFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs">
+                                                            <p>暂无已筛选文献</p>
+                                                        </div>
+                                                        <div v-else class="space-y-1">
+                                                            <div v-for="file in screenedFiles.slice(screenedPage*50, screenedPage*50+50)" :key="file.id" 
+                                                                 class="flex items-center justify-between px-2 py-1 hover:bg-gray-50 border-b text-xs">
+                                                                <div class="flex items-center overflow-hidden">
+                                                                    <i class="fas fa-file-code mr-2 flex-shrink-0" 
+                                                                       :class="file.metadata?.decision === 'included' ? 'text-green-500' : 'text-red-500'"></i>
+                                                                    <span class="truncate" :title="file.filename">{{ file.filename }}</span>
+                                                                </div>
+                                                                <span class="text-xs px-1.5 py-0.5 rounded flex-shrink-0 ml-2" 
+                                                                      :class="file.metadata?.decision === 'included' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'">
+                                                                    {{ file.metadata?.decision === 'included' ? '已纳入' : '已排除' }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- 已筛选分页 -->
+                                                    <div v-if="screenedFiles.length > 50" class="flex items-center justify-center gap-2 mt-1 text-xs flex-shrink-0">
+                                                        <button @click="screenedPage = Math.max(0, screenedPage - 1)" :disabled="screenedPage === 0"
+                                                                class="px-2 py-0.5 border rounded disabled:opacity-50">上一页</button>
+                                                        <span>{{ screenedPage + 1 }}/{{ Math.ceil(screenedFiles.length / 50) }}</span>
+                                                        <button @click="screenedPage = Math.min(Math.ceil(screenedFiles.length / 50) - 1, screenedPage + 1)" 
+                                                                :disabled="screenedPage >= Math.ceil(screenedFiles.length / 50) - 1"
+                                                                class="px-2 py-0.5 border rounded disabled:opacity-50">下一页</button>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-green-400 font-mono text-xs shadow-inner h-96 flex flex-col">
                                                 <div class="flex-1 overflow-y-auto">
-                                                    <div v-if="!latestTask">等待任务启动...</div>
-                                                    <div v-else class="whitespace-pre-wrap">{{ latestTask.logs || '正在初始化...' }}</div>
+                                                    <div v-if="!latestTask && !aiScreenLogContent">等待任务启动...</div>
+                                                    <div v-else class="whitespace-pre-wrap">{{ aiScreenLogContent || '正在初始化...' }}</div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="text-center">
-                                            <button @click="startScreening" :disabled="isProcessing"
-                                                    class="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 transition">
-                                                <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
-                                                <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
-                                            </button>
+                                        <!-- 进度条 -->
+                                        <div v-if="isProcessing || (latestTask && latestTask.status === 'completed')" class="mb-4 w-full max-w-2xl mx-auto">
+                                            <div class="flex justify-between text-sm mb-1 text-gray-600">
+                                                <span>筛选进度</span>
+                                                <span class="font-bold">{{ screeningProgress.processed }} / {{ screeningProgress.total }} ({{ screeningProgress.percent }}%)</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                                                <div class="bg-indigo-600 h-4 rounded-full transition-all duration-500 ease-out" :style="{ width: screeningProgress.percent + '%' }"></div>
+                                            </div>
+                                            <div v-if="latestTask && latestTask.status === 'completed'" class="mt-2 text-green-600 font-bold animate-bounce">
+                                                <i class="fas fa-check-circle"></i> 筛选完成！结果已生成
+                                            </div>
+                                        </div>
+                                        <!-- 按钮区域 -->
+                                        <div class="text-center space-y-4">
+                                            <!-- 无未完成任务时：显示启动按钮 -->
+                                            <template v-if="!latestTask || ['completed', 'failed'].includes(latestTask.status)">
+                                                <button @click="startScreening" :disabled="isProcessing"
+                                                        class="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+                                                    <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
+                                                    <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
+                                                </button>
+                                            </template>
+                                            <!-- 任务运行中：显示暂停按钮 -->
+                                            <template v-else-if="latestTask.status === 'running'">
+                                                <button @click="stopScreeningTask" class="bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-red-700 transition">
+                                                    <i class="fas fa-stop mr-2"></i>
+                                                    <span>暂停筛选</span>
+                                                </button>
+                                            </template>
+                                            <!-- 任务正在停止中 -->
+                                            <template v-else-if="latestTask.status === 'stopping'">
+                                                <button disabled class="bg-yellow-500 text-white px-8 py-3 rounded-xl font-bold text-base shadow cursor-wait">
+                                                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                                                    <span>正在停止...</span>
+                                                </button>
+                                            </template>
+                                            <!-- 任务已暂停：显示继续和放弃按钮 -->
+                                            <template v-else-if="latestTask.status === 'stopped'">
+                                                <button @click="resumeScreeningTask" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-green-700 transition mr-4">
+                                                    <i class="fas fa-play mr-2"></i>
+                                                    <span>继续筛选</span>
+                                                </button>
+                                                <button @click="abandonScreeningTask" class="bg-gray-400 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-gray-500 transition">
+                                                    <i class="fas fa-trash mr-2"></i>
+                                                    <span>放弃任务</span>
+                                                </button>
+                                            </template>
                                         </div>
                                     </div>
 
@@ -497,76 +598,110 @@
                                 </div>
 
                                 <!-- 右侧任务状态侧边栏 -->
-                                <div class="w-80 flex-shrink-0">
-                                    <div class="bg-gray-50 rounded-xl border p-4 sticky top-4">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h4 class="font-semibold text-gray-700">
-                                                <i class="fas fa-history mr-2"></i>最近任务
+                                <div class="w-80 flex-shrink-0 space-y-3">
+                                    <!-- 最近任务板块 -->
+                                    <div class="bg-gray-50 rounded-xl border p-3 sticky top-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h4 class="font-semibold text-gray-700 text-sm">
+                                                <i class="fas fa-history mr-1"></i>最近任务
                                             </h4>
-                                            <button @click="fetchRecentTasks" class="text-sm text-blue-600 hover:underline" :disabled="isLoadingTasks">
+                                            <button @click="fetchRecentTasks" class="text-xs text-blue-600 hover:underline" :disabled="isLoadingTasks">
                                                 <i :class="isLoadingTasks ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'"></i> 刷新
                                             </button>
                                         </div>
-                                        <div class="max-h-[420px] overflow-y-auto text-left space-y-2">
-                                            <div v-if="recentTasks.length === 0" class="text-sm text-gray-400 text-center py-4">
+                                        <!-- 每页5条，固定高度 -->
+                                        <div class="space-y-1">
+                                            <div v-if="recentTasks.length === 0" class="text-xs text-gray-400 text-center py-3">
                                                 暂无任务记录
                                             </div>
-                                            <div v-else>
-                                                <div v-for="task in recentTasks" :key="task.id" class="p-3 bg-white rounded border text-sm">
-                                                    <!-- 任务标题行 -->
-                                                    <div class="flex items-center justify-between mb-1">
-                                                        <span class="font-medium text-gray-700">{{ getTaskTypeName(task.task_type) }}</span>
-                                                        <span class="px-2 py-0.5 rounded-full text-xs" :class="getTaskStatusClass(task.status)">
+                                            <template v-else>
+                                                <div v-for="task in recentTasks.slice(taskPage*5, taskPage*5+5)" :key="task.id"
+                                                     class="px-2 py-1.5 bg-white rounded border text-xs">
+                                                    <div class="flex items-center justify-between">
+                                                        <span class="font-medium text-gray-700 truncate mr-1">{{ getTaskTypeName(task.task_type) }}</span>
+                                                        <span class="px-1.5 py-0.5 rounded-full text-xs flex-shrink-0" :class="getTaskStatusClass(task.status)">
                                                             {{ getTaskStatusName(task.status) }}
                                                         </span>
                                                     </div>
-                                                    
-                                                    <!-- 时间行 -->
-                                                    <div class="text-xs text-gray-400 mb-2">
+                                                    <div class="text-gray-400 mt-0.5">
                                                         {{ task.created_at ? new Date(task.created_at).toLocaleString() : '' }}
+                                                        <span v-if="task.duration" class="ml-1">· {{ formatDuration(task.duration) }}</span>
                                                     </div>
-                                                    
-                                                    <!-- 运行时长和进度 -->
-                                                    <div v-if="task.status === 'running' || task.status === 'failed' || task.status === 'completed'" class="flex items-center gap-4 text-xs text-gray-500 mb-2">
-                                                        <span v-if="task.progress_percentage !== undefined">
-                                                            <i class="fas fa-tasks mr-1"></i>进度: {{ task.progress_percentage }}%
-                                                        </span>
-                                                        <span v-if="task.duration">
-                                                            <i class="fas fa-clock mr-1"></i>时长: {{ formatDuration(task.duration) }}
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    <!-- 错误信息（可展开） -->
-                                                    <div v-if="task.status === 'failed'" class="mt-2">
-                                                        <div class="bg-red-50 border border-red-200 rounded p-2">
-                                                            <div class="flex items-start gap-2">
-                                                                <i class="fas fa-exclamation-circle text-red-500 mt-0.5 flex-shrink-0"></i>
-                                                                <div class="flex-1 min-w-0">
-                                                                    <!-- 简短错误 -->
-                                                                    <div class="text-red-600 text-xs font-medium">
-                                                                        {{ task.error_message ? getShortError(task.error_message) : '任务执行失败，点击查看详情' }}
-                                                                    </div>
-                                                                    <!-- 展开按钮 - 始终显示 -->
-                                                                    <button @click="toggleTaskDetail(task.id)" 
-                                                                            class="text-xs text-red-500 hover:text-red-700 underline mt-1">
-                                                                        {{ expandedTaskId === task.id ? '收起详情' : '查看详情' }}
-                                                                    </button>
-                                                                </div>
+                                                    <!-- 失败展开 -->
+                                                    <div v-if="task.status === 'failed'" class="mt-1">
+                                                        <div class="bg-red-50 border border-red-200 rounded px-2 py-1">
+                                                            <div class="text-red-600 text-xs">
+                                                                {{ task.error_message ? getShortError(task.error_message) : '任务执行失败' }}
                                                             </div>
-                                                            
-                                                            <!-- 详细错误信息 -->
-                                                            <div v-if="expandedTaskId === task.id" class="mt-2 pt-2 border-t border-red-200">
-                                                                <div v-if="task.error_message" class="text-xs text-red-700 bg-white p-2 rounded max-h-40 overflow-y-auto whitespace-pre-wrap break-words">
-                                                                    {{ task.error_message }}
-                                                                </div>
-                                                                <div v-else class="text-xs text-red-600 bg-white p-2 rounded">
-                                                                    未记录具体错误信息
-                                                                </div>
+                                                            <button @click="toggleTaskDetail(task.id)"
+                                                                    class="text-xs text-red-500 hover:text-red-700 underline">
+                                                                {{ expandedTaskId === task.id ? '收起' : '查看详情' }}
+                                                            </button>
+                                                            <div v-if="expandedTaskId === task.id" class="mt-1 text-xs text-red-700 bg-white p-1 rounded max-h-24 overflow-y-auto whitespace-pre-wrap break-words">
+                                                                {{ task.error_message || '未记录具体错误信息' }}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <!-- 分页 -->
+                                                <div v-if="recentTasks.length > 5" class="flex items-center justify-between pt-1">
+                                                    <button @click="taskPage = Math.max(0, taskPage-1)" :disabled="taskPage===0"
+                                                            class="text-xs text-gray-500 disabled:opacity-30 hover:text-gray-700">
+                                                        <i class="fas fa-chevron-left"></i>
+                                                    </button>
+                                                    <span class="text-xs text-gray-400">{{ taskPage+1 }} / {{ Math.ceil(recentTasks.length/5) }}</span>
+                                                    <button @click="taskPage = Math.min(Math.ceil(recentTasks.length/5)-1, taskPage+1)"
+                                                            :disabled="taskPage >= Math.ceil(recentTasks.length/5)-1"
+                                                            class="text-xs text-gray-500 disabled:opacity-30 hover:text-gray-700">
+                                                        <i class="fas fa-chevron-right"></i>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- 操作日志板块 -->
+                                    <div class="bg-gray-50 rounded-xl border p-3">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h4 class="font-semibold text-gray-700 text-sm">
+                                                <i class="fas fa-clipboard-list mr-1"></i>操作日志
+                                            </h4>
+                                            <button @click="fetchActivityLogs" class="text-xs text-blue-600 hover:underline" :disabled="isLoadingLogs">
+                                                <i :class="isLoadingLogs ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'"></i> 刷新
+                                            </button>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <div v-if="activityLogs.length === 0" class="text-xs text-gray-400 text-center py-3">
+                                                暂无操作记录
                                             </div>
+                                            <template v-else>
+                                                <div v-for="log in activityLogs.slice(logPage*5, logPage*5+5)" :key="log.id"
+                                                     class="px-2 py-1.5 bg-white rounded border text-xs">
+                                                    <div class="flex items-center gap-1">
+                                                        <span :class="getLogTypeClass(log.operation_type)" class="w-1.5 h-1.5 rounded-full flex-shrink-0"></span>
+                                                        <span class="font-medium text-gray-700">{{ log.operation_type_display }}</span>
+                                                    </div>
+                                                    <div class="text-gray-500 mt-0.5 truncate">
+                                                        {{ getLogDetail(log) }}
+                                                    </div>
+                                                    <div class="text-gray-400 mt-0.5">
+                                                        {{ log.created_at ? new Date(log.created_at).toLocaleString() : '' }}
+                                                    </div>
+                                                </div>
+                                                <!-- 分页 -->
+                                                <div v-if="activityLogs.length > 5" class="flex items-center justify-between pt-1">
+                                                    <button @click="logPage = Math.max(0, logPage-1)" :disabled="logPage===0"
+                                                            class="text-xs text-gray-500 disabled:opacity-30 hover:text-gray-700">
+                                                        <i class="fas fa-chevron-left"></i>
+                                                    </button>
+                                                    <span class="text-xs text-gray-400">{{ logPage+1 }} / {{ Math.ceil(activityLogs.length/5) }}</span>
+                                                    <button @click="logPage = Math.min(Math.ceil(activityLogs.length/5)-1, logPage+1)"
+                                                            :disabled="logPage >= Math.ceil(activityLogs.length/5)-1"
+                                                            class="text-xs text-gray-500 disabled:opacity-30 hover:text-gray-700">
+                                                        <i class="fas fa-chevron-right"></i>
+                                                    </button>
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>
@@ -674,14 +809,34 @@
                 const criteriaList = ref([]);
 
                 // AI初筛
+                const screeningTab = ref('pending');  // 'pending' | 'screened'
                 const pendingFiles = ref([]);
+                const screenedFiles = ref([]);
+                const pendingPage = ref(0);
+                const screenedPage = ref(0);
                 const latestTask = ref(null);
                 const isProcessing = ref(false);
                 const screeningResults = ref(null);
+                const aiScreenLogContent = ref('');  // 控制台实际日志内容
+                const processedCount = ref(0);  // 已处理文献计数
+
+                // 进度计算
+                const screeningProgress = computed(() => {
+                    const processed = screenedFiles.value.length + processedCount.value;
+                    const total = pendingFiles.value.length + screenedFiles.value.length;
+                    const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+                    return { processed, total, percent };
+                });
                 
                 // 最近任务列表（状态展示）
                 const recentTasks = ref([]);
                 const isLoadingTasks = ref(false);
+                const taskPage = ref(0);
+
+                // 操作日志
+                const activityLogs = ref([]);
+                const isLoadingLogs = ref(false);
+                const logPage = ref(0);
 
                 // 工具函数
                 const getCSRFToken = () => {
@@ -799,6 +954,42 @@
                     } catch (err) {
                         alert(`注销出错: ${err.message}`);
                     }
+                };
+
+                // 获取操作日志
+                const fetchActivityLogs = async () => {
+                    if (!currentProject.value) return;
+                    isLoadingLogs.value = true;
+                    try {
+                        const res = await apiRequest(`${API_BASE}/activity-logs/?project=${currentProject.value.id}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            activityLogs.value = extractListData(data).slice(0, 50);
+                        }
+                    } catch (err) {
+                        console.error('获取操作日志失败', err);
+                    } finally {
+                        isLoadingLogs.value = false;
+                    }
+                };
+
+                // 操作日志颜色
+                const getLogTypeClass = (opType) => {
+                    const map = {
+                        'file_add': 'bg-blue-500',
+                        'file_delete': 'bg-red-500',
+                        'criteria_add': 'bg-green-500',
+                        'criteria_delete': 'bg-orange-500',
+                    };
+                    return map[opType] || 'bg-gray-400';
+                };
+
+                // 操作日志详情文本
+                const getLogDetail = (log) => {
+                    const d = log.operation_detail || {};
+                    if (d.filename) return d.filename;
+                    if (d.criteria) return d.criteria;
+                    return '';
                 };
 
                 // 获取最近任务列表
@@ -953,10 +1144,10 @@
 
                 const selectProject = async (project) => {
                     currentProject.value = project;
+                    taskPage.value = 0;
+                    logPage.value = 0;
                     await fetchStages(project.id);
-                    await fetchRecentTasks();
-                    
-                    // 加载去重统计信息
+                    await Promise.all([fetchRecentTasks(), fetchActivityLogs()]);
                     loadDedupStats();
                 };
 
@@ -1078,9 +1269,13 @@
                         }
                     }
                     
+                    // 清空 input value，确保再次选择同一文件时仍能触发 change 事件
+                    event.target.value = '';
+
                     // 所有文件上传完成后，刷新一次文件列表
                     if (uploadedFileIds.length > 0) {
                         await loadScreen1Files();
+                        await fetchActivityLogs();
                         // 不再自动触发解析任务，用户需要手动点击"开始去重"按钮
                     }
                 };
@@ -1231,15 +1426,15 @@
                     if (newCriteria.value.trim()) {
                         criteriaList.value.push(newCriteria.value.trim());
                         newCriteria.value = '';
-                        // 自动保存到后端
                         await saveCriteria();
+                        await fetchActivityLogs();
                     }
                 };
 
                 const removeCriteria = async (index) => {
                     criteriaList.value.splice(index, 1);
-                    // 自动保存到后端
                     await saveCriteria();
+                    await fetchActivityLogs();
                 };
                 
                 const saveCriteria = async () => {
@@ -1275,6 +1470,208 @@
                     }
                 };
 
+                // 加载待筛选文献列表（dedup输出 → fallback 到 parse输出）
+                const loadAiScreenFiles = async () => {
+                    if (!currentProject.value) return;
+                    const stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                    if (!stage) return;
+
+                    for (const key of ['dedup', 'parse']) {
+                        const step = stage.steps.find(s => s.step_key === key);
+                        if (!step) continue;
+                        try {
+                            const res = await apiRequest(
+                                `${API_BASE}/files/?project=${currentProject.value.id}&step=${step.id}&data_category=intermediate&limit=1000`
+                            );
+                            if (res.ok) {
+                                const data = await res.json();
+                                const files = extractListData(data);
+                                if (files.length > 0) {
+                                    pendingFiles.value = files;
+                                    pendingPage.value = 0;
+                                    return;
+                                }
+                            }
+                        } catch (err) {
+                            console.error('加载待筛选文献失败', err);
+                        }
+                    }
+                    pendingFiles.value = [];
+                };
+
+                // 加载已筛选文献列表（ai_screen输出）
+                const loadScreenedFiles = async () => {
+                    if (!currentProject.value) return;
+                    const stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                    if (!stage) return;
+
+                    const aiStep = stage.steps.find(s => s.step_key === 'ai_screen');
+                    if (!aiStep) return;
+                    
+                    try {
+                        const res = await apiRequest(
+                            `${API_BASE}/files/?project=${currentProject.value.id}&step=${aiStep.id}&data_category=output&limit=1000`
+                        );
+                        if (res.ok) {
+                            const data = await res.json();
+                            screenedFiles.value = extractListData(data);
+                            screenedPage.value = 0;
+                        }
+                    } catch (err) {
+                        console.error('加载已筛选文献失败', err);
+                        screenedFiles.value = [];
+                    }
+                };
+
+                // 专用轮询：AI初筛任务状态 + 日志
+                const pollAiScreeningStatus = async (taskId) => {
+                    let lastProgressTime = Date.now();  // 记录上次进度更新时间
+                    
+                    const poll = async () => {
+                        try {
+                            const res = await apiRequest(`${API_BASE}/tasks/${taskId}/`);
+                            if (!res.ok) { isProcessing.value = false; return; }
+                            latestTask.value = await res.json();
+                            const status = latestTask.value.status;
+
+                            // 同步拉日志
+                            try {
+                                const logRes = await apiRequest(`${API_BASE}/tasks/${taskId}/logs/`);
+                                if (logRes.ok) {
+                                    const logData = await logRes.json();
+                                    let logContent = logData.log_content || logData.lines?.join('\n') || '';
+                                    
+                                    // 【新增】日志为空时的友好提示
+                                    if (!logContent || logContent.trim() === '') {
+                                        if (status === 'pending') {
+                                            logContent = '正在启动任务，请稍候...\n如果长时间无响应，请检查 Celery worker 是否运行（celery -A platform_backend worker -l info）';
+                                        } else if (status === 'running') {
+                                            logContent = '任务正在运行中，正在等待日志输出...';
+                                        }
+                                    }
+                                    
+                                    // 【新增】检测是否卡住（超过15秒无进度更新）
+                                    if (latestTask.value.metadata?.last_update) {
+                                        const lastUpdate = new Date(latestTask.value.metadata.last_update).getTime();
+                                        if (Date.now() - lastUpdate > 15000 && status === 'running') {
+                                            logContent += '\n\n[系统提示] 任务可能已卡住，超过15秒无进度更新。\n请检查后端日志或尝试暂停后重新运行。';
+                                        }
+                                    }
+                                    
+                                    aiScreenLogContent.value = logContent;
+                                }
+                            } catch (e) { /* ignore */ }
+
+                            // 更新已处理计数（从metadata获取）
+                            if (latestTask.value.metadata) {
+                                const newProcessed = latestTask.value.metadata.processed_refs || 0;
+                                if (newProcessed > processedCount.value) {
+                                    lastProgressTime = Date.now();  // 有进度更新，重置计时
+                                }
+                                processedCount.value = newProcessed;
+                            }
+
+                            if (status === 'running' || status === 'pending' || status === 'stopping') {
+                                setTimeout(poll, 2000);
+                            } else {
+                                isProcessing.value = false;
+                                await fetchRecentTasks();
+                                await fetchStages(currentProject.value.id);
+                                if (status === 'completed') {
+                                    await Promise.all([loadAiScreenFiles(), loadScreenedFiles()]);
+                                    const aiStep = stagesData.value
+                                        .find(s => s.stage_key === 'SCREEN_1')
+                                        ?.steps.find(s => s.step_key === 'ai_screen');
+                                    if (aiStep?.metadata) {
+                                        screeningResults.value = {
+                                            included: aiStep.metadata.included_refs || 0,
+                                            excluded: aiStep.metadata.excluded_refs || 0,
+                                            total: aiStep.metadata.total_refs || 0
+                                        };
+                                    }
+                                    alert('AI初筛完成！');
+                                } else if (status === 'stopped') {
+                                    // 任务被暂停
+                                    await loadScreenedFiles();
+                                    alert('任务已暂停，可随时继续运行');
+                                } else {
+                                    alert(`AI初筛失败: ${latestTask.value.error_message || '任务执行失败'}`);
+                                }
+                            }
+                        } catch (err) {
+                            console.error('轮询AI初筛状态失败', err);
+                            isProcessing.value = false;
+                        }
+                    };
+                    await poll();
+                };
+
+                // 暂停任务
+                const stopScreeningTask = async () => {
+                    if (!latestTask.value) return;
+                    const ok = confirm('确定暂停当前筛选任务？');
+                    if (!ok) return;
+                    try {
+                        const res = await apiRequest(`${API_BASE}/tasks/${latestTask.value.id}/stop/`, {
+                            method: 'POST'
+                        });
+                        if (res.ok) {
+                            isProcessing.value = false;
+                            await fetchRecentTasks();
+                            alert('任务已暂停');
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            alert(`暂停失败: ${data.error || data.detail || '未知错误'}`);
+                        }
+                    } catch (err) {
+                        alert(`暂停失败: ${err.message}`);
+                    }
+                };
+
+                // 继续任务
+                const resumeScreeningTask = async () => {
+                    if (!latestTask.value) return;
+                    try {
+                        const res = await apiRequest(`${API_BASE}/tasks/${latestTask.value.id}/resume/`, {
+                            method: 'POST'
+                        });
+                        if (res.ok) {
+                            const newTask = await res.json();
+                            latestTask.value = newTask;
+                            isProcessing.value = true;
+                            pollAiScreeningStatus(newTask.id);
+                            await fetchRecentTasks();
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            alert(`继续失败: ${data.error || data.detail || '未知错误'}`);
+                        }
+                    } catch (err) {
+                        alert(`继续失败: ${err.message}`);
+                    }
+                };
+
+                // 放弃任务
+                const abandonScreeningTask = async () => {
+                    if (!latestTask.value) return;
+                    const ok = confirm('确定放弃此任务？已筛选结果将保留。');
+                    if (!ok) return;
+                    try {
+                        const res = await apiRequest(`${API_BASE}/tasks/${latestTask.value.id}/`, {
+                            method: 'DELETE'
+                        });
+                        if (res.ok) {
+                            latestTask.value = null;
+                            await fetchRecentTasks();
+                            alert('任务已放弃');
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            alert(`放弃失败: ${data.error || data.detail || '未知错误'}`);
+                        }
+                    } catch (err) {
+                        alert(`放弃失败: ${err.message}`);
+                    }
+                };
+
                 // AI初筛
                 const startScreening = async () => {
                     if (criteriaList.value.length === 0) {
@@ -1283,7 +1680,8 @@
                     }
 
                     isProcessing.value = true;
-                    
+                    aiScreenLogContent.value = '正在启动任务...';
+
                     try {
                         const res = await apiRequest(`${API_BASE}/tasks/`, {
                             method: 'POST',
@@ -1296,13 +1694,16 @@
 
                         if (res.ok) {
                             latestTask.value = await res.json();
-                            pollTaskStatus(latestTask.value.id);
+                            await fetchRecentTasks();
+                            pollAiScreeningStatus(latestTask.value.id);
+                            // isProcessing 由 pollAiScreeningStatus 在任务结束时置 false
                         } else {
-                            alert('启动AI筛选失败');
+                            const errData = await res.json().catch(() => ({}));
+                            alert(`启动AI筛选失败: ${errData.error || errData.detail || '未知错误'}`);
+                            isProcessing.value = false;
                         }
                     } catch (err) {
                         alert(`启动失败: ${err.message}`);
-                    } finally {
                         isProcessing.value = false;
                     }
                 };
@@ -1382,15 +1783,29 @@
                     return names[stageKey] || stageKey;
                 };
 
-                const getStepClass = (status) => {
-                    const classes = {
-                        'completed': 'bg-blue-600 text-white',
-                        'skipped': 'bg-yellow-500 text-white',
-                        'in_progress': 'bg-green-600 text-white',
-                        'pending': 'bg-gray-200 text-gray-500',
-                        'failed': 'bg-red-600 text-white'
-                    };
-                    return classes[status] || 'bg-gray-200 text-gray-500';
+                const getStepClass = (step, idx) => {
+                    // 当前用户点击的步骤高亮（优先级最高）
+                    if (currentStep.value === idx) {
+                        return 'bg-blue-600 text-white ring-4 ring-blue-200';
+                    }
+                    // 已完成
+                    if (step.status === 'completed') {
+                        return 'bg-blue-600 text-white';
+                    }
+                    // 执行中
+                    if (step.status === 'in_progress') {
+                        return 'bg-green-600 text-white animate-pulse';
+                    }
+                    // 已跳过
+                    if (step.status === 'skipped') {
+                        return 'bg-yellow-500 text-white';
+                    }
+                    // 失败
+                    if (step.status === 'failed') {
+                        return 'bg-red-600 text-white';
+                    }
+                    // 默认待执行
+                    return 'bg-gray-200 text-gray-500';
                 };
 
                 const nextStep = () => {
@@ -1411,6 +1826,7 @@
                         
                         if (res.ok) {
                             await loadScreen1Files();
+                            await fetchActivityLogs();
                         }
                     } catch (err) {
                         alert(`删除失败: ${err.message}`);
@@ -1442,15 +1858,18 @@
                     referenceFiles, handleReferenceUpload, deleteFile,
                     isDeduplicating, dedupCompleted, handleDeduplication, dedupStats, showDuplicateDetails,
                     newCriteria, criteriaList, addCriteria, removeCriteria,
-                    pendingFiles, latestTask, isProcessing, screeningResults,
-                    startScreening, exportResults,
+                    pendingFiles, screenedFiles, latestTask, isProcessing, screeningResults, aiScreenLogContent,
+                    screeningTab, pendingPage, screenedPage, processedCount, screeningProgress,
+                    loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, exportResults,
                     getStageClass, getStageName, nextStep, prevStep,
                     uploadingFiles,
                     // 任务状态展示
-                    recentTasks, isLoadingTasks, fetchRecentTasks,
+                    recentTasks, isLoadingTasks, fetchRecentTasks, taskPage,
                     getTaskTypeName, getTaskStatusClass, getTaskStatusName,
-                    // 新增的任务详情相关
-                    expandedTaskId, getShortError, toggleTaskDetail, formatDuration, taskLogs, getLogDisplay
+                    expandedTaskId, getShortError, toggleTaskDetail, formatDuration, taskLogs, getLogDisplay,
+                    // 操作日志
+                    activityLogs, isLoadingLogs, fetchActivityLogs, logPage,
+                    getLogTypeClass, getLogDetail
                 };
             }
         }).mount('#app');

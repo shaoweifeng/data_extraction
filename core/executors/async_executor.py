@@ -53,6 +53,21 @@ class AsyncExecutor(BaseExecutor):
     # AI初筛
     # ========================================================================
     
+    def _send_heartbeat(self, current: int, total: int):
+        """发送心跳，更新任务的 last_update 时间"""
+        try:
+            from core.models import Task
+            Task.objects.filter(id=self.task_id).update(
+                metadata={
+                    'heartbeat': datetime.now().isoformat(),
+                    'processed_refs': current,
+                    'total_refs': total,
+                    'status_message': f'正在处理第 {current}/{total} 篇文献'
+                }
+            )
+        except Exception:
+            pass
+    
     def _execute_ai_screen(self) -> bool:
         """
         AI初筛步骤
@@ -131,6 +146,7 @@ class AsyncExecutor(BaseExecutor):
         
         # 批处理循环
         batch_results = []
+        batch_index = 0
         
         for i in range(0, len(entries_to_process), batch_size):
             # 检查停止信号
@@ -146,6 +162,10 @@ class AsyncExecutor(BaseExecutor):
                     }
                 })
                 return False
+            
+            # 【新增】每5个批次发送心跳，让前端知道任务还活着
+            if batch_index % 5 == 0:
+                self._send_heartbeat(processed_count, total_refs)
             
             # 获取当前批次
             batch = entries_to_process[i:i+batch_size]
@@ -177,6 +197,8 @@ class AsyncExecutor(BaseExecutor):
                         }
                     })
                     self.logger.add_checkpoint(f"auto_checkpoint_{processed_count}")
+            
+            batch_index += 1
         
         # 8. 保存所有结果到DB
         self.logger.info("[保存] 将结果保存到数据库...")

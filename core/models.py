@@ -372,6 +372,7 @@ class Task(models.Model):
     progress = models.FloatField(default=0.0, verbose_name="进度(0-1)")
     result = models.JSONField(null=True, blank=True, verbose_name="任务结果")
     logs = models.TextField(blank=True, verbose_name="运行日志")
+    log_file = models.CharField(max_length=500, blank=True, verbose_name="日志文件路径")
     error_message = models.TextField(blank=True, verbose_name="错误信息")
     config = models.JSONField(default=dict, blank=True, verbose_name="任务配置")
     started_at = models.DateTimeField(null=True, blank=True, verbose_name="开始时间")
@@ -388,6 +389,35 @@ class Task(models.Model):
     
     def __str__(self):
         return f"{self.task_type} - {self.get_status_display()}"
+
+
+# ============================================================================
+# 操作日志
+# ============================================================================
+
+class ActivityLog(models.Model):
+    """用户操作日志（文件上传/删除、纳排标准增删等）"""
+    OPERATION_TYPES = [
+        ('file_add', '添加文献索引'),
+        ('file_delete', '删除文献索引'),
+        ('criteria_add', '添加纳排标准'),
+        ('criteria_delete', '删除纳排标准'),
+    ]
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='activity_logs', verbose_name="所属项目")
+    operation_type = models.CharField(max_length=50, choices=OPERATION_TYPES, verbose_name="操作类型")
+    operation_detail = models.JSONField(default=dict, blank=True, verbose_name="操作详情")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="操作者")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="操作时间")
+
+    class Meta:
+        db_table = 'plat_activity_log'
+        verbose_name = "操作日志"
+        verbose_name_plural = "操作日志"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.get_operation_type_display()} - {self.created_at}"
 
 
 # ============================================================================

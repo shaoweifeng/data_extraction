@@ -28,6 +28,7 @@
 import os
 import json
 import shutil
+import logging
 from pathlib import Path
 from typing import Dict, Optional, List
 from datetime import datetime
@@ -35,6 +36,8 @@ from datetime import datetime
 from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
+
+logger = logging.getLogger(__name__)
 
 from core.models import Task, Project, ProjectStage, StageStep, DataFile
 from core.step_config import (
@@ -260,20 +263,34 @@ class TaskScheduler:
         step_key = task.task_type
         stop_file = self._create_stop_signal(step_key)
         
-        # 如果是Celery任务，尝试撤销
-        if task.celery_task_id:
-            from celery import Celery
-            app = Celery('platform_backend')
-            app.control.revoke(task.celery_task_id, terminate=True)
-        
-        # 更新任务状态
-        task.status = 'stopped'
-        task.completed_at = timezone.now()
+        # 【修复】先更新任务状态为 'stopping'，让前端知道正在停止中
+        task.status = 'stopping'
         task.save()
         
-        # 清理停止信号
-        if stop_file and os.path.exists(stop_file):
-            os.remove(stop_file)
+        # 【修复】给执行器1秒时间检测STOP文件
+        import time
+        time.sleep(1)
+        
+        # 如果是Celery任务，尝试撤销
+        if task.celery_task_id:
+            try:
+                from celery import Celery
+                app = Celery('platform_backend')
+                app.control.revoke(task.celery_task_id, terminate=True, wait=True, timeout=3)
+            except Exception as e:
+                # Celery broker 不可用，但任务状态仍需更新
+                # STOP 文件会通知 worker 停止
+                logger.warning(f"[Scheduler] 无法连接 Celery broker: {e}，将通过 STOP 文件停止任务")
+        
+        # 【修复】不在这里删除STOP文件，让执行器在finalize时清理
+        # 这样确保执行器能检测到停止信号
+        
+        # 更新任务状态为 stopped
+        task.refresh_from_db()
+        if task.status == 'stopping':
+            task.status = 'stopped'
+            task.completed_at = timezone.now()
+            task.save()
         
         return True
     

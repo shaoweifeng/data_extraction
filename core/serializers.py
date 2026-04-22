@@ -17,7 +17,7 @@ from datetime import datetime
 
 from .models import (
     UserProfile, Permission, UserPermission, RoleTemplate,
-    Project, ProjectStage, StageStep, DataFile, DataFileVersion, Task
+    Project, ProjectStage, StageStep, DataFile, DataFileVersion, Task, ActivityLog
 )
 
 
@@ -413,6 +413,42 @@ class ProjectBriefSerializer(serializers.ModelSerializer):
     
     def get_stages_count(self, obj):
         return obj.stages.count()
+
+
+# ============================================================================
+# 操作日志 Serializers
+# ============================================================================
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+    operation_type_display = serializers.CharField(source='get_operation_type_display', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActivityLog
+        fields = ['id', 'project', 'operation_type', 'operation_type_display',
+                  'operation_detail', 'created_by_name', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def get_created_by_name(self, obj):
+        return obj.created_by.username if obj.created_by else ''
+
+
+# ============================================================================
+# 操作日志 Serializers
+# ============================================================================
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+    operation_type_display = serializers.CharField(source='get_operation_type_display', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActivityLog
+        fields = ['id', 'project', 'operation_type', 'operation_type_display',
+                  'operation_detail', 'created_by_name', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def get_created_by_name(self, obj):
+        return obj.created_by.username if obj.created_by else ''
 
 
 # ============================================================================

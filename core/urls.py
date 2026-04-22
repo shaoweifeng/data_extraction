@@ -10,6 +10,7 @@ router.register(r'steps', views.StageStepViewSet, basename='step')
 router.register(r'files', views.DataFileViewSet, basename='file')
 router.register(r'tasks', views.TaskViewSet, basename='task')
 router.register(r'users', views.UserViewSet, basename='user')
+router.register(r'activity-logs', views.ActivityLogViewSet, basename='activity-log')
 
 urlpatterns = [
     # 认证 API

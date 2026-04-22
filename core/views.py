@@ -21,12 +21,12 @@ import json
 
 from .models import (
     UserProfile, Permission, UserPermission, RoleTemplate,
-    Project, ProjectStage, StageStep, DataFile, DataFileVersion, Task
+    Project, ProjectStage, StageStep, DataFile, DataFileVersion, Task, ActivityLog
 )
 from .serializers import (
     UserSerializer, UserProfileSerializer, PermissionSerializer,
     ProjectSerializer, ProjectStageSerializer, StageStepSerializer,
-    DataFileSerializer, DataFileVersionSerializer, TaskSerializer
+    DataFileSerializer, DataFileVersionSerializer, TaskSerializer, ActivityLogSerializer
 )
 
 
@@ -210,14 +210,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 )
     
     def perform_destroy(self, instance):
-        """删除项目时清理所有相关文件和数据"""
+        """删除项目时：归档到历史表 + 清理所有文件 + 删除数据库记录"""
         import shutil
         import os
         from django.conf import settings
-        
+        from django.db import connection
+
         user = self.request.user
         permission_code = 'project.delete_own'
-        
+
         if not user.is_superuser:
             has_perm = UserPermission.objects.filter(
                 user=user,
@@ -225,37 +226,72 @@ class ProjectViewSet(viewsets.ModelViewSet):
             ).filter(
                 Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
             ).exists()
-            
+
             if not has_perm:
                 raise PermissionDenied(f"缺少权限：{permission_code}")
-        
+
         # 检查是否是项目所有者
         if instance.owner != user and not user.is_superuser:
             raise PermissionDenied("无权删除该项目")
-        
-        # 获取项目文件夹路径
-        project_dir = os.path.join(settings.MEDIA_ROOT, 'projects', f'project_{instance.id}')
-        
-        # 删除所有关联的文件记录
+
+        # 1. 归档 plat_project 记录到 plat_project_history
+        try:
+            import json
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO plat_project_history
+                        (id, name, slug, description, owner_id, status, metadata, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE
+                        name=VALUES(name), slug=VALUES(slug), description=VALUES(description),
+                        status=VALUES(status), metadata=VALUES(metadata), updated_at=VALUES(updated_at)
+                    """,
+                    [
+                        instance.id,
+                        instance.name,
+                        instance.slug,
+                        instance.description,
+                        instance.owner_id,
+                        'deleted',
+                        json.dumps(instance.metadata) if instance.metadata else '{}',
+                        instance.created_at,
+                        instance.updated_at,
+                    ]
+                )
+        except Exception as e:
+            print(f"归档项目到历史表失败: {e}")
+
+        # 2. 清理 MEDIA_ROOT 下的项目文件（逐个删除，防止 signal 重复触发）
         try:
             for data_file in instance.files.all():
-                if data_file.file and os.path.exists(data_file.file.path):
+                if data_file.file:
                     try:
-                        os.remove(data_file.file.path)
+                        path = data_file.file.path
+                        if os.path.exists(path):
+                            os.remove(path)
                     except Exception as e:
-                        print(f"删除文件失败: {data_file.file.path}, 错误: {e}")
+                        print(f"删除文件失败: {e}")
         except Exception as e:
             print(f"清理文件时出错: {e}")
-        
-        # 删除整个项目文件夹
+
+        # 删除整个 MEDIA_ROOT/projects/project_{id}/ 目录（兜底）
+        media_project_dir = os.path.join(settings.MEDIA_ROOT, 'projects', f'project_{instance.id}')
         try:
-            if os.path.exists(project_dir):
-                shutil.rmtree(project_dir)
-                print(f"已删除项目文件夹: {project_dir}")
+            if os.path.exists(media_project_dir):
+                shutil.rmtree(media_project_dir)
         except Exception as e:
-            print(f"删除项目文件夹失败: {project_dir}, 错误: {e}")
-        
-        # 最后删除数据库记录
+            print(f"删除 media 目录失败: {e}")
+
+        # 3. 清理 workspaces/project_{id}/ 目录（任务运行目录）
+        workspace_dir = os.path.join(settings.BASE_DIR, 'workspaces', f'project_{instance.id}')
+        try:
+            if os.path.exists(workspace_dir):
+                shutil.rmtree(workspace_dir)
+        except Exception as e:
+            print(f"删除 workspace 目录失败: {e}")
+
+        # 4. 删除数据库记录（级联删除 Task/StageStep/DataFile/ActivityLog 等）
         instance.delete()
     
     @action(detail=True, methods=['get'])
@@ -536,6 +572,27 @@ class StageStepViewSet(viewsets.ModelViewSet):
         """更新步骤元数据（如保存纳排标准）"""
         step = self.get_object()
         metadata = request.data.get('metadata', {})
+
+        # 纳排标准变更时，记录操作日志
+        if step.step_key == 'criteria' and 'criteria' in metadata:
+            old_criteria = set((step.metadata or {}).get('criteria', []))
+            new_criteria = set(metadata['criteria'])
+            project = step.stage.project
+            for c in (new_criteria - old_criteria):
+                ActivityLog.objects.create(
+                    project=project,
+                    operation_type='criteria_add',
+                    operation_detail={'criteria': c},
+                    created_by=request.user
+                )
+            for c in (old_criteria - new_criteria):
+                ActivityLog.objects.create(
+                    project=project,
+                    operation_type='criteria_delete',
+                    operation_detail={'criteria': c},
+                    created_by=request.user
+                )
+
         step.metadata = step.metadata or {}
         step.metadata.update(metadata)
         step.save()
@@ -578,12 +635,35 @@ class StageStepViewSet(viewsets.ModelViewSet):
 
 
 # ============================================================================
+# 操作日志 ViewSet
+# ============================================================================
+
+class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """操作日志（只读）"""
+    serializer_class = ActivityLogSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            qs = ActivityLog.objects.all()
+        else:
+            qs = ActivityLog.objects.filter(project__owner=user)
+
+        project_id = self.request.query_params.get('project')
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        return qs
+
+
+# ============================================================================
 # 文件管理 ViewSet
 # ============================================================================
 
 class DataFileViewSet(viewsets.ModelViewSet):
     serializer_class = DataFileSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None  # 默认禁用分页，由前端控制
     
     def get_queryset(self):
         user = self.request.user
@@ -664,8 +744,32 @@ class DataFileViewSet(viewsets.ModelViewSet):
             if file_type:
                 serializer.validated_data['file_type'] = file_type
         
+        # 在 save 之前记录 filename 和 project（save 后 validated_data 可能被清空）
+        _filename = (uploaded_file.name if uploaded_file
+                     else serializer.validated_data.get('filename', ''))
+        _project = serializer.validated_data.get('project')
+
         serializer.save(created_by=user)
-    
+
+        # 记录操作日志
+        if _project:
+            ActivityLog.objects.create(
+                project=_project,
+                operation_type='file_add',
+                operation_detail={'filename': _filename},
+                created_by=user
+            )
+
+    def perform_destroy(self, instance):
+        """删除文件时记录操作日志"""
+        ActivityLog.objects.create(
+            project=instance.project,
+            operation_type='file_delete',
+            operation_detail={'filename': instance.filename},
+            created_by=self.request.user
+        )
+        instance.delete()
+
     @action(detail=True, methods=['get'])
     def logs(self, request, pk=None):
         """
@@ -889,7 +993,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         from_line = int(request.query_params.get('from_line', 0))
         max_lines = int(request.query_params.get('max_lines', 100))
         
-        return Response(reader.read_logs(from_line, max_lines))
+        result = reader.read_logs(from_line, max_lines)
+        
+        # 兼容前端：将lines数组合并为log_content字符串
+        if 'lines' in result:
+            result['log_content'] = '\n'.join(result['lines'])
+        elif 'error' in result:
+            # 任务刚创建时，返回提示信息而非错误
+            result['log_content'] = '任务正在初始化，日志即将生成...'
+        
+        return Response(result)
     
     @action(detail=True, methods=['get'])
     def tail(self, request, pk=None):
@@ -900,7 +1013,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         reader = LogReader(task.id)
         
         last_n = int(request.query_params.get('n', 50))
-        return Response({"lines": reader.tail_logs(last_n)})
+        lines = reader.tail_logs(last_n)
+        
+        # 兼容前端：返回合并后的日志字符串
+        return Response({
+            "lines": lines,
+            "log_content": '\n'.join(lines) if lines else '暂无日志'
+        })
 
 
 # ============================================================================
