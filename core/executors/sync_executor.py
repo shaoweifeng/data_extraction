@@ -160,15 +160,69 @@ class SyncExecutor(BaseExecutor):
             self.logger.error(traceback.format_exc())
             return False
         
-        # 5. 拆分为单篇XML
-        self.logger.info("[拆分] 开始拆分为单篇文献...")
+        # 5. 为每个entry生成单篇XML（参考 xxc/develop 分支实现）
+        self.logger.info("[拆分] 开始生成单篇XML...")
         
-        merged_xml = output_dir / "references.xml"
-        if merged_xml.exists():
-            split_count = self._split_xml(merged_xml, split_dir)
-            self.logger.info(f"[拆分] 生成 {split_count} 个单篇XML")
+        # 解析所有entry
+        all_entries = []
+        if hasattr(parser, 'parse_file'):
+            for df in input_files:
+                src_path = Path(df.file.path)
+                if not src_path.exists():
+                    continue
+                
+                try:
+                    entries = parser.parse_file(str(src_path))
+                    if entries:
+                        for entry in entries:
+                            # 添加来源信息
+                            if 'source_file' not in entry:
+                                entry['source_file'] = df.filename
+                            if 'source_position' not in entry:
+                                entry['source_position'] = entry.get('record_number') or entries.index(entry) + 1
+                        all_entries.extend(entries)
+                except Exception as e:
+                    self.logger.warning(f"[警告] 解析 {df.filename} 失败: {e}")
         else:
-            self.logger.warning("[警告] 未找到合并的XML文件")
+            # 使用简化解析
+            all_entries = self._simple_parse(input_dir)
+        
+        # 为每个entry生成XML
+        split_count = 0
+        for i, entry in enumerate(all_entries, 1):
+            title = entry.get('title', f'unknown_{i}')
+            safe_name = safe_title(title, 50)
+            xml_file = split_dir / f"{safe_name}.xml"
+            
+            # 创建单篇XML
+            root = ET.Element('reference')
+            
+            # 添加基本字段
+            for key in ['title', 'authors', 'year', 'journal', 'abstract', 'doi', 'url']:
+                value = entry.get(key)
+                if value:
+                    elem = ET.SubElement(root, key.capitalize())
+                    if isinstance(value, list):
+                        elem.text = '; '.join(str(v) for v in value)
+                    else:
+                        elem.text = str(value)
+            
+            # ✅ 关键：添加来源信息
+            source_file = entry.get('source_file', df.filename if 'df' in locals() else 'unknown')
+            source_position = entry.get('source_position', i)
+            
+            elem = ET.SubElement(root, 'SourceFile')
+            elem.text = str(source_file)
+            
+            elem = ET.SubElement(root, 'SourcePosition')
+            elem.text = str(source_position)
+            
+            # 写入文件
+            tree = ET.ElementTree(root)
+            tree.write(xml_file, encoding='utf-8', xml_declaration=True)
+            split_count += 1
+        
+        self.logger.info(f"[拆分] 生成 {split_count} 个单篇XML")
         
         # 6. 保存输出文件
         self.logger.info("[保存] 保存输出文件到数据库...")
@@ -357,13 +411,13 @@ class SyncExecutor(BaseExecutor):
                 if src_path.exists():
                     shutil.copy(src_path, input_dir / df.filename)
         
-        # 5. 去重逻辑（基于标题）
-        seen_titles = set()
-        seen_dois = set()
-        duplicates = []
-        kept_files = []
+        # 5. 去重逻辑（参考 xxc/develop 分支实现）
+        # 只根据标题去重，不判断DOI
+        groups = {}  # 标题 → 文献列表
+        ordered_keys = []  # 保持原始顺序
+        kept_files = []  # 保留的文件列表
         
-        self.logger.info("[去重] 开始基于标题/DOI去重...")
+        self.logger.info("[去重] 开始基于标题去重...")
         
         for i, filename in enumerate(input_dir.iterdir(), 1):
             if not filename.is_file() or not filename.suffix == '.xml':
@@ -380,37 +434,79 @@ class SyncExecutor(BaseExecutor):
                 for xpath in ['.//Title', './/title', './/TI']:
                     title_elem = root.find(xpath)
                     if title_elem is not None and title_elem.text:
-                        title = title_elem.text.strip().lower()
+                        title = title_elem.text.strip()
                         break
                 
-                # 提取DOI（尝试多种格式）
+                # 提取其他元数据（用于报告）
+                year = ""
+                for xpath in ['.//Year', './/year', './/YR']:
+                    year_elem = root.find(xpath)
+                    if year_elem is not None and year_elem.text:
+                        year = year_elem.text.strip()
+                        break
+                
+                journal = ""
+                for xpath in ['.//Journal', './/journal', './/SO']:
+                    journal_elem = root.find(xpath)
+                    if journal_elem is not None and journal_elem.text:
+                        journal = journal_elem.text.strip()
+                        break
+                
+                # 提取来源文件和位置信息（如果有）
+                source_file = ""
+                source_position = ""
+                for xpath in ['.//Source_file', './/source_file', './/SourceFile']:
+                    source_elem = root.find(xpath)
+                    if source_elem is not None and source_elem.text:
+                        source_file = source_elem.text.strip()
+                        break
+                
+                for xpath in ['.//Source_position', './/source_position', './/SourcePosition']:
+                    pos_elem = root.find(xpath)
+                    if pos_elem is not None and pos_elem.text:
+                        source_position = pos_elem.text.strip()
+                        break
+                
+                # 提取DOI（用于报告）
                 doi = ""
-                for xpath in ['.//DOI', './/doi', './/DI']:
+                for xpath in ['.//Doi', './/DOI', './/doi', './/DI']:
                     doi_elem = root.find(xpath)
                     if doi_elem is not None and doi_elem.text:
-                        doi = doi_elem.text.strip().lower()
+                        doi = doi_elem.text.strip()
                         break
                 
-                # 判断重复
-                is_duplicate = False
+                # 提取URL（用于报告）
+                url = ""
+                for xpath in ['.//Url', './/URL', './/url', './/UR']:
+                    url_elem = root.find(xpath)
+                    if url_elem is not None and url_elem.text:
+                        url = url_elem.text.strip()
+                        break
                 
-                if doi and doi in seen_dois:
-                    is_duplicate = True
-                    self.logger.info(f"[重复DOI] {filename.name}")
-                elif title and title in seen_titles:
-                    is_duplicate = True
-                    self.logger.info(f"[重复标题] {filename.name}")
-                else:
-                    if title:
-                        seen_titles.add(title)
-                    if doi:
-                        seen_dois.add(doi)
+                # 标题标准化：只保留字母和数字，转小写
+                norm_title = "".join(c.lower() for c in title if c.isalnum())
+                
+                if not norm_title:
+                    self.logger.warning(f"[警告] {filename.name} 缺少标题，直接保留")
                     kept_files.append(filename.name)
-                    # 复制到输出目录
                     shutil.copy(filepath, output_dir / filename.name)
+                    continue
                 
-                if is_duplicate:
-                    duplicates.append(filename.name)
+                # 分组存储
+                if norm_title not in groups:
+                    groups[norm_title] = []
+                    ordered_keys.append(norm_title)
+                
+                groups[norm_title].append({
+                    "filename": filename.name,
+                    "title": title,
+                    "year": year,
+                    "journal": journal,
+                    "source_file": source_file,
+                    "source_position": source_position,
+                    "doi": doi,
+                    "url": url,
+                })
                 
             except Exception as e:
                 self.logger.warning(f"[警告] 解析 {filename.name} 失败: {e}")
@@ -424,26 +520,76 @@ class SyncExecutor(BaseExecutor):
             if self.check_stop_signal():
                 return False
         
-        # 6. 统计信息
-        duplicate_rate = len(duplicates) / total_files * 100 if total_files > 0 else 0
+        # 6. 生成重复报告（参考 xxc/develop 分支实现）
+        duplicates = []
+        for k in ordered_keys:
+            items = groups.get(k) or []
+            if len(items) <= 1:
+                # 没有重复，直接保留
+                kept_files.append(items[0].get("filename"))
+                shutil.copy(input_dir / items[0].get("filename"), 
+                           output_dir / items[0].get("filename"))
+                continue
+            
+            # 有重复，保留第一个，其余标记为重复
+            kept = items[0]
+            removed = items[1:]
+            
+            # 保留第一篇
+            kept_files.append(kept.get("filename"))
+            shutil.copy(input_dir / kept.get("filename"), 
+                       output_dir / kept.get("filename"))
+            
+            # 生成重复报告
+            duplicates.append({
+                "norm_title": k,
+                "title": kept.get("title", ""),
+                "kept": {
+                    "filename": kept.get("filename"),
+                    "source_file": kept.get("source_file"),
+                    "source_position": kept.get("source_position"),
+                    "year": kept.get("year"),
+                    "journal": kept.get("journal"),
+                    "doi": kept.get("doi"),
+                    "url": kept.get("url"),
+                },
+                "duplicates": [
+                    {
+                        "filename": d.get("filename"),
+                        "source_file": d.get("source_file"),
+                        "source_position": d.get("source_position"),
+                        "year": d.get("year"),
+                        "journal": d.get("journal"),
+                        "doi": d.get("doi"),
+                        "url": d.get("url"),
+                    }
+                    for d in removed
+                ]
+            })
+        
+        # 7. 统计信息
+        duplicate_count = sum(len(d.get("duplicates", [])) for d in duplicates)
+        duplicate_rate = duplicate_count / total_files * 100 if total_files > 0 else 0
         
         self.logger.info(f"[统计] 原始文献: {total_files} 篇")
         self.logger.info(f"[统计] 去重后保留: {len(kept_files)} 篇")
-        self.logger.info(f"[统计] 重复文献: {len(duplicates)} 篇 ({duplicate_rate:.1f}%)")
+        self.logger.info(f"[统计] 重复文献: {duplicate_count} 篇 ({duplicate_rate:.1f}%)")
+        self.logger.info(f"[统计] 重复组数: {len(duplicates)} 组")
         
-        # 7. 保存去重后的文件
+        # 8. 保存去重后的文件
         for filename in kept_files:
             filepath = output_dir / filename
             if filepath.exists():
                 self.save_output_file(filepath, filename, "去重后的文献XML", "intermediate")
         
-        # 8. 生成去重报告
+        # 9. 生成去重报告
         report = {
             "total_files": total_files,
             "kept_files": len(kept_files),
-            "duplicates": len(duplicates),
+            "duplicates": duplicate_count,
             "duplicate_rate": f"{duplicate_rate:.2f}%",
-            "duplicate_files": duplicates[:100],  # 只存前100个
+            "duplicate_groups": len(duplicates),
+            "duplicate_details": duplicates[:100],  # 只存前100组
             "completion_time": datetime.now().isoformat()
         }
         

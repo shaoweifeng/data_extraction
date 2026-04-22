@@ -744,9 +744,19 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
+        
+        # 基础查询集：用户只能看到自己有权限的任务
         if user.is_superuser:
-            return Task.objects.all()
-        return Task.objects.filter(project__owner=user)
+            queryset = Task.objects.all()
+        else:
+            queryset = Task.objects.filter(project__owner=user)
+        
+        # ✅ 根据请求参数过滤项目
+        project_id = self.request.query_params.get('project')
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+        
+        return queryset
     
     def perform_create(self, serializer):
         """

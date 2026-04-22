@@ -290,6 +290,96 @@
                                                 <i class="fas fa-clock mr-1"></i>
                                                 完成时间: {{ new Date(dedupStats.completion_time).toLocaleString() }}
                                             </div>
+                                            
+                                            <!-- 重复文献详细列表 -->
+                                            <div v-if="dedupStats.duplicate_details && dedupStats.duplicate_details.length > 0" class="mt-6">
+                                                <div class="flex items-center justify-between mb-3">
+                                                    <h5 class="font-bold text-purple-700">
+                                                        <i class="fas fa-list-alt mr-2"></i>
+                                                        重复文献列表 (共{{ dedupStats.duplicate_groups || 0 }}组)
+                                                    </h5>
+                                                    <button @click="showDuplicateDetails = !showDuplicateDetails"
+                                                            class="text-sm text-purple-600 hover:text-purple-800 underline">
+                                                        {{ showDuplicateDetails ? '收起详情' : '展开详情' }}
+                                                    </button>
+                                                </div>
+                                                
+                                                <div v-show="showDuplicateDetails" class="bg-white rounded-lg border max-h-96 overflow-y-auto">
+                                                    <div v-for="(dup, idx) in dedupStats.duplicate_details" :key="idx" 
+                                                         class="border-b last:border-b-0 p-4 hover:bg-gray-50">
+                                                        <div class="font-medium text-gray-800 mb-2">
+                                                            {{ idx + 1 }}. {{ dup.title || '(无标题)' }}
+                                                        </div>
+                                                        
+                                                        <!-- 保留的文章 -->
+                                                        <div class="text-sm text-gray-600 mb-2">
+                                                            <div class="flex items-start">
+                                                                <span class="text-green-600 font-medium mr-2 whitespace-nowrap">✓ 保留:</span>
+                                                                <span class="flex-1">
+                                                                    <span class="font-medium">{{ dup.kept.source_file || dup.kept.filename }}</span>
+                                                                    <span v-if="dup.kept.source_position" class="text-blue-600 ml-1">
+                                                                        #{{ dup.kept.source_position }}
+                                                                    </span>
+                                                                    <span v-if="dup.kept.year" class="text-gray-400 ml-2">
+                                                                        ({{ dup.kept.year }})
+                                                                    </span>
+                                                                </span>
+                                                            </div>
+                                                            <div v-if="dup.kept.journal" class="ml-8 text-gray-500">
+                                                                期刊: {{ dup.kept.journal }}
+                                                            </div>
+                                                            <div v-if="dup.kept.doi" class="ml-8">
+                                                                DOI: <a :href="'https://doi.org/' + dup.kept.doi" 
+                                                                       target="_blank" 
+                                                                       class="text-blue-600 hover:underline">
+                                                                    {{ dup.kept.doi }}
+                                                                </a>
+                                                            </div>
+                                                            <div v-if="dup.kept.url" class="ml-8">
+                                                                URL: <a :href="dup.kept.url" 
+                                                                       target="_blank" 
+                                                                       class="text-blue-600 hover:underline break-all">
+                                                                    {{ dup.kept.url }}
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- 重复的文章 -->
+                                                        <div v-for="(dup_item, dup_idx) in dup.duplicates" :key="dup_idx" 
+                                                             class="text-sm text-gray-600 mt-2 pl-4 border-l-2 border-red-200">
+                                                            <div class="flex items-start">
+                                                                <span class="text-red-500 font-medium mr-2 whitespace-nowrap">✗ 重复:</span>
+                                                                <span class="flex-1">
+                                                                    <span class="font-medium">{{ dup_item.source_file || dup_item.filename }}</span>
+                                                                    <span v-if="dup_item.source_position" class="text-blue-600 ml-1">
+                                                                        #{{ dup_item.source_position }}
+                                                                    </span>
+                                                                    <span v-if="dup_item.year" class="text-gray-400 ml-2">
+                                                                        ({{ dup_item.year }})
+                                                                    </span>
+                                                                </span>
+                                                            </div>
+                                                            <div v-if="dup_item.journal" class="ml-8 text-gray-500">
+                                                                期刊: {{ dup_item.journal }}
+                                                            </div>
+                                                            <div v-if="dup_item.doi" class="ml-8">
+                                                                DOI: <a :href="'https://doi.org/' + dup_item.doi" 
+                                                                       target="_blank" 
+                                                                       class="text-blue-600 hover:underline">
+                                                                    {{ dup_item.doi }}
+                                                                </a>
+                                                            </div>
+                                                            <div v-if="dup_item.url" class="ml-8">
+                                                                URL: <a :href="dup_item.url" 
+                                                                       target="_blank" 
+                                                                       class="text-blue-600 hover:underline break-all">
+                                                                    {{ dup_item.url }}
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -573,6 +663,7 @@
 
                 // 去重统计信息
                 const dedupStats = ref(null);
+                const showDuplicateDetails = ref(false);
                 
                 // 去重处理（参考 xxc/develop 分支的同步逻辑）
                 const isDeduplicating = ref(false);
@@ -1349,7 +1440,7 @@
                     createProject, selectProject, deleteProject, skipStep,
                     currentStep, screen1Steps, getStepClass,
                     referenceFiles, handleReferenceUpload, deleteFile,
-                    isDeduplicating, dedupCompleted, handleDeduplication, dedupStats,
+                    isDeduplicating, dedupCompleted, handleDeduplication, dedupStats, showDuplicateDetails,
                     newCriteria, criteriaList, addCriteria, removeCriteria,
                     pendingFiles, latestTask, isProcessing, screeningResults,
                     startScreening, exportResults,
