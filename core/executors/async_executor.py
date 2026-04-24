@@ -256,31 +256,69 @@ class AsyncExecutor(BaseExecutor):
         
         return results
     
+    def _get_prompt_template(self) -> str:
+        """读取 prompt1.txt 模板"""
+        from django.conf import settings
+        from pathlib import Path
+        prompt_path = Path(settings.BASE_DIR) / "structural_screening/02_screening_ai/prompts/prompt1.txt"
+        if prompt_path.exists():
+            return prompt_path.read_text(encoding="utf-8")
+        self.logger.warning(f"[警告] prompt1.txt 不存在: {prompt_path}，使用内置默认模板")
+        return (
+            "你是文献筛选助手，请根据以下排除标准判断文献是否纳入，返回JSON格式："
+            "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]\n"
+            "<exclusion_criteria>\n{screening_criteria}\n</exclusion_criteria>"
+        )
+
     def _call_ai_api(self, batch: List[Dict], criteria: List[str]) -> List[Dict]:
         """
-        调用AI API进行筛选
+        调用 AI Provider 进行批量筛选
         
-        这里是接口，实际实现需要根据具体的AI服务调整
+        架构说明：
+        - 通过 ai_providers.get_provider() 工厂函数获取 provider 实例
+        - 当前默认使用 DeepSeekProvider（环境变量 AI_PROVIDER=deepseek）
+        - 将来扩展多模型时，可在此并发调用多个 provider，对结果有分歧的文献单独标记
+        - 每个 provider 实现 screen_single()，框架层控制并发和批处理
         """
-        # 检查配置文件中是否有API配置
-        api_config = self.config.get("api_config", {})
-        
-        if not api_config:
-            # 使用模拟结果
+        from .ai_providers import get_provider
+
+        # 检查是否配置了真实 API key，否则 fallback 到 mock
+        import os
+        if not os.environ.get("AI_API_KEY"):
+            self.logger.warning("[AI] 未配置 AI_API_KEY，使用 mock 模拟结果")
             return self._mock_api_call(batch, criteria)
-        
-        # 实际API调用逻辑
-        # TODO: 根据具体AI服务实现
-        # 示例：
-        # import requests
-        # response = requests.post(api_config['url'], json={
-        #     "entries": batch,
-        #     "criteria": criteria
-        # }, headers={"Authorization": f"Bearer {api_config['key']}"})
-        # 
-        # return response.json()['results']
-        
-        return self._mock_api_call(batch, criteria)
+
+        provider = get_provider()
+        prompt_template = self._get_prompt_template()
+        self.logger.info(f"[AI] 使用 Provider: {provider.name}，批次: {len(batch)} 篇")
+
+        screening_results = provider.screen_batch(batch, criteria, prompt_template)
+
+        # 将 ScreeningResult 转换为兼容原有格式的 dict
+        results = []
+        for entry, sr in zip(batch, screening_results):
+            result = {
+                "title": entry.get("title", ""),
+                "authors": entry.get("authors", ""),
+                "year": entry.get("year", ""),
+                "journal": entry.get("journal", ""),
+                "doi": entry.get("doi", ""),
+                "url": entry.get("url", ""),
+                "source_xml": entry.get("source_xml", ""),
+                "decision": sr.decision,
+                "include_or_not": "yes" if sr.is_included else "no",
+                "exclusion_reason": sr.exclusion_reason,
+                "number_exclusion_reason": sr.exclusion_criterion_no,
+                "model": sr.model,
+                "raw_ai_response": sr.raw_response,
+                "error": sr.error,
+                "timestamp": datetime.now().isoformat(),
+            }
+            if sr.is_error:
+                self.logger.warning(f"[AI] 筛选失败: {entry.get('title', '')[:40]} - {sr.error}")
+            results.append(result)
+
+        return results
     
     def _mock_api_call(self, batch: List[Dict], criteria: List[str]) -> List[Dict]:
         """模拟API调用（用于测试和演示）"""
