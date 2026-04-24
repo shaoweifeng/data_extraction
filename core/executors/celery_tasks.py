@@ -77,7 +77,12 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
             logger.info(f"[Celery] 任务成功完成: task_id={task_id}")
             return True
         else:
-            # 任务执行失败，触发重试
+            # 检查是否是用户主动暂停（不是执行失败）
+            task_obj = Task.objects.get(id=task_id)
+            if task_obj.status in ('stopping', 'stopped'):
+                logger.info(f"[Celery] 任务被用户暂停: task_id={task_id}")
+                return False  # 正常结束，不触发重试和失败弹窗
+            # 真正的执行失败，触发重试
             raise Exception("任务执行返回失败状态")
     
     except Exception as e:

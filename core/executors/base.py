@@ -53,12 +53,8 @@ class TaskLogger:
         # 日志文件路径
         self.log_file = self.log_dir / f"task_{task_id}.log"
         self.progress_file = self.log_dir / f"progress_{task_id}.json"
-        # checkpoint路径使用固定位置（不依赖task_id，支持断点续传）
-        # 从workspace路径提取project_id和step_key
-        # workspace格式：workspaces/project_{id}/{step_key}_{timestamp}
-        parts = self.workspace.parts
-        self.project_workspace = Path(*parts[:-1]) if len(parts) > 2 else self.workspace
-        self.checkpoint_file = self.project_workspace / "logs" / "checkpoint.json"
+        # checkpoint路径放在 task 的 logs 目录下，logs 目录由上面 mkdir 已创建
+        self.checkpoint_file = self.log_dir / "checkpoint.json"
         
         # 文件句柄和统计信息
         self.file_handler = None
@@ -270,6 +266,8 @@ class TaskLogger:
     def _sync_progress_to_db(self, current: int, total: int):
         """将进度同步到数据库"""
         try:
+            from django.db import close_old_connections
+            close_old_connections()
             from core.models import Task
             Task.objects.filter(id=self.task_id).update(
                 progress=round(current / total, 4) if total > 0 else 0
@@ -280,6 +278,8 @@ class TaskLogger:
     def _sync_logs_to_db(self):
         """将缓冲区日志同步到Task.logs字段"""
         try:
+            from django.db import close_old_connections
+            close_old_connections()
             from core.models import Task
             log_content = '\n'.join(self.log_buffer)
             Task.objects.filter(id=self.task_id).update(
@@ -378,11 +378,12 @@ class BaseExecutor(ABC):
             }
         )
         
-        # 更新任务状态
+        # 更新任务状态（同时写入 log_file 路径，供前端运行期间查询日志）
         self.task_obj.status = 'running'
         self.task_obj.started_at = timezone.now()
         self.task_obj.stage = self.stage_obj
         self.task_obj.step = self.step_obj
+        self.task_obj.log_file = str(self.logger.log_file)
         self.task_obj.save()
         
         # 更新步骤状态
@@ -416,21 +417,32 @@ class BaseExecutor(ABC):
                 self.step_obj.save()
             
             if self.task_obj:
-                self.task_obj.status = 'completed' if success else 'failed'
-                self.task_obj.completed_at = timezone.now()
-                self.task_obj.progress = 1.0 if success else self.task_obj.progress
-                
-                log_meta = self.logger.get_metadata()
-                self.task_obj.logs = json.dumps(log_meta, ensure_ascii=False)
-                self.task_obj.log_file = log_meta.get("log_file", "")
-                
-                if error_msg:
-                    self.task_obj.error_message = error_msg
-                    self.logger.error(f"[失败] {error_msg}")
+                # 【修复】如果任务已被用户暂停（stopping/stopped），不覆盖为 failed
+                self.task_obj.refresh_from_db()
+                if self.task_obj.status in ('stopping', 'stopped'):
+                    # 只更新日志路径，不改状态
+                    log_meta = self.logger.get_metadata()
+                    self.task_obj.logs = json.dumps(log_meta, ensure_ascii=False)
+                    self.task_obj.log_file = log_meta.get("log_file", "")
+                    self.task_obj.status = 'stopped'
+                    self.task_obj.completed_at = timezone.now()
+                    self.task_obj.save()
                 else:
-                    self.logger.info(f"[完成] {self.config.get('name', self.step_key)}")
-                
-                self.task_obj.save()
+                    self.task_obj.status = 'completed' if success else 'failed'
+                    self.task_obj.completed_at = timezone.now()
+                    self.task_obj.progress = 1.0 if success else self.task_obj.progress
+                    
+                    log_meta = self.logger.get_metadata()
+                    self.task_obj.logs = json.dumps(log_meta, ensure_ascii=False)
+                    self.task_obj.log_file = log_meta.get("log_file", "")
+                    
+                    if error_msg:
+                        self.task_obj.error_message = error_msg
+                        self.logger.error(f"[失败] {error_msg}")
+                    else:
+                        self.logger.info(f"[完成] {self.config.get('name', self.step_key)}")
+                    
+                    self.task_obj.save()
         
         finally:
             self.logger.close()

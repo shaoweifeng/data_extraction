@@ -689,7 +689,7 @@ class DataFileViewSet(viewsets.ModelViewSet):
         if data_category:
             qs = qs.filter(data_category=data_category)
         
-        return qs
+        return qs.select_related('stage', 'step', 'created_by').prefetch_related('versions')
     
     def perform_create(self, serializer):
         """创建文件时自动关联当前用户"""
@@ -775,71 +775,51 @@ class DataFileViewSet(viewsets.ModelViewSet):
         """
         获取任务的实际日志内容
         
-        返回日志文件的最后N行内容，用于调试失败原因
+        优先从 log_file 字段读取日志文件，fallback 到 logs 字段
         """
-        import os
         from pathlib import Path
-        from django.conf import settings
         from django.http import JsonResponse
         
         task = self.get_object()
         
-        # 解析日志元信息
-        if not task.logs:
-            return JsonResponse({
-                'log_content': '',
-                'error': '没有日志记录'
-            })
+        # 优先使用 log_file 字段（绝对路径）
+        log_file_path = task.log_file if task.log_file else None
         
-        try:
-            log_meta = json.loads(task.logs)
-        except (json.JSONDecodeError, TypeError):
-            return JsonResponse({
-                'log_content': task.logs,  # 如果不是JSON，直接返回原始内容
-                'error': '日志格式异常'
-            })
+        # fallback：尝试从 logs 字段解析出 log_file 路径（兼容旧格式）
+        if not log_file_path and task.logs:
+            try:
+                log_meta = json.loads(task.logs)
+                log_file_path = log_meta.get('log_file')
+            except (json.JSONDecodeError, TypeError):
+                # logs 是纯文本，直接返回
+                return JsonResponse({'log_content': task.logs})
         
-        # 获取日志文件路径
-        log_file_path = log_meta.get('log_file')
-        if not log_file_path:
-            return JsonResponse({
-                'log_content': '',
-                'error': '日志文件路径不存在'
-            })
-        
-        # 构建完整路径
-        if log_file_path.startswith('/'):
+        # 有日志文件路径，读取文件内容
+        if log_file_path:
             full_path = Path(log_file_path)
-        else:
-            full_path = Path(settings.MEDIA_ROOT) / log_file_path
-        
-        # 读取日志内容（最后100行）
-        try:
-            if not full_path.exists():
+            try:
+                if not full_path.exists():
+                    return JsonResponse({
+                        'log_content': task.logs or '',
+                        'error': f'日志文件不存在: {log_file_path}'
+                    })
+                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    lines = f.readlines()
+                last_lines = lines[-200:] if len(lines) > 200 else lines
                 return JsonResponse({
-                    'log_content': '',
-                    'error': f'日志文件不存在: {log_file_path}',
-                    'log_file': log_file_path
+                    'log_content': ''.join(last_lines),
+                    'log_file': log_file_path,
+                    'total_lines': len(lines),
+                    'returned_lines': len(last_lines)
                 })
-            
-            with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
-                lines = f.readlines()
-                # 返回最后100行
-                last_lines = lines[-100:] if len(lines) > 100 else lines
-                log_content = ''.join(last_lines)
-            
-            return JsonResponse({
-                'log_content': log_content,
-                'log_file': log_file_path,
-                'total_lines': len(lines),
-                'returned_lines': len(last_lines)
-            })
-        except Exception as e:
-            return JsonResponse({
-                'log_content': '',
-                'error': f'读取日志失败: {str(e)}',
-                'log_file': log_file_path
-            })
+            except Exception as e:
+                return JsonResponse({
+                    'log_content': task.logs or '',
+                    'error': f'读取日志失败: {str(e)}'
+                })
+        
+        # 兜底：直接返回 logs 字段
+        return JsonResponse({'log_content': task.logs or ''})
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -984,25 +964,27 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def logs(self, request, pk=None):
-        """获取任务日志"""
-        from .monitoring import LogReader
+        """获取任务日志 - 直接读 log_file 字段指向的文件"""
+        from pathlib import Path
         
         task = self.get_object()
-        reader = LogReader(task.id)
+        log_file_path = task.log_file
         
-        from_line = int(request.query_params.get('from_line', 0))
-        max_lines = int(request.query_params.get('max_lines', 100))
+        if log_file_path and Path(log_file_path).exists():
+            try:
+                with open(log_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    lines = f.readlines()
+                last_lines = lines[-200:] if len(lines) > 200 else lines
+                return Response({
+                    'log_content': ''.join(last_lines),
+                    'total_lines': len(lines),
+                    'returned_lines': len(last_lines)
+                })
+            except Exception as e:
+                return Response({'log_content': f'读取日志失败: {e}'})
         
-        result = reader.read_logs(from_line, max_lines)
-        
-        # 兼容前端：将lines数组合并为log_content字符串
-        if 'lines' in result:
-            result['log_content'] = '\n'.join(result['lines'])
-        elif 'error' in result:
-            # 任务刚创建时，返回提示信息而非错误
-            result['log_content'] = '任务正在初始化，日志即将生成...'
-        
-        return Response(result)
+        # fallback: 返回 logs 字段（纯文本）
+        return Response({'log_content': task.logs or '任务正在初始化，日志即将生成...'})
     
     @action(detail=True, methods=['get'])
     def tail(self, request, pk=None):

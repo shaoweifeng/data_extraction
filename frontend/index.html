@@ -1526,13 +1526,17 @@
                 // 专用轮询：AI初筛任务状态 + 日志
                 const pollAiScreeningStatus = async (taskId) => {
                     let lastProgressTime = Date.now();  // 记录上次进度更新时间
+                    let pollCount = 0;  // 轮询计数器，用于定期刷新左侧文件列表
                     
                     const poll = async () => {
+                        pollCount++;
                         try {
                             const res = await apiRequest(`${API_BASE}/tasks/${taskId}/`);
                             if (!res.ok) { isProcessing.value = false; return; }
                             latestTask.value = await res.json();
                             const status = latestTask.value.status;
+                            // 【修复】进度条赋值
+                            screeningProgress.value = latestTask.value.progress_percentage || 0;
 
                             // 同步拉日志
                             try {
@@ -1572,6 +1576,11 @@
                             }
 
                             if (status === 'running' || status === 'pending' || status === 'stopping') {
+                                // 每10次轮询（约20秒）刷新一次左侧文件列表
+                                if (pollCount % 5 === 0) {
+                                    loadAiScreenFiles();
+                                    loadScreenedFiles();
+                                }
                                 setTimeout(poll, 2000);
                             } else {
                                 isProcessing.value = false;
@@ -1591,9 +1600,8 @@
                                     }
                                     alert('AI初筛完成！');
                                 } else if (status === 'stopped') {
-                                    // 任务被暂停
+                                    // 任务被暂停（通知已由 stopScreeningTask 发出，这里只刷新数据）
                                     await loadScreenedFiles();
-                                    alert('任务已暂停，可随时继续运行');
                                 } else {
                                     alert(`AI初筛失败: ${latestTask.value.error_message || '任务执行失败'}`);
                                 }

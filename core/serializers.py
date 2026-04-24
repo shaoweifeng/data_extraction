@@ -307,7 +307,7 @@ class DataFileSerializer(serializers.ModelSerializer):
         read_only_fields = ['file_size', 'file_type', 'created_at', 'updated_at']
     
     def get_versions_count(self, obj):
-        return obj.versions.count()
+        return len(obj.versions.all())
     
     def get_file_url(self, obj):
         if obj.file:

@@ -24,7 +24,6 @@ from datetime import datetime
 from collections import defaultdict
 
 from django.conf import settings
-from django.core.files import File
 
 from .base import BaseExecutor, safe_title
 from core.models import DataFile, StageStep
@@ -178,7 +177,7 @@ class AsyncExecutor(BaseExecutor):
             
             # 更新进度
             for entry, result in zip(batch, results):
-                # 保存结果
+                # 保存结果到文件
                 self._save_result(entry, result, results_dir)
                 processed_sources.add(entry["source_xml"])
                 processed_count += 1
@@ -197,6 +196,9 @@ class AsyncExecutor(BaseExecutor):
                         }
                     })
                     self.logger.add_checkpoint(f"auto_checkpoint_{processed_count}")
+            
+            # 【新增】每批处理完后，将本批结果写入DB，供前端实时查看已筛选文献
+            self._save_batch_results_to_db(batch, results)
             
             batch_index += 1
         
@@ -327,34 +329,80 @@ class AsyncExecutor(BaseExecutor):
         with open(result_file, 'w', encoding='utf-8') as f:
             json.dump(result, f, ensure_ascii=False, indent=2)
     
+    def _save_batch_results_to_db(self, batch: List[Dict], results: List[Dict]):
+        """每批处理完后，将本批结果写入DB（供前端实时查看已筛选文献）"""
+        from django.db import close_old_connections
+        from django.core.files.base import ContentFile
+        close_old_connections()
+        
+        for entry, result in zip(batch, results):
+            filename = f"screening_result_{entry['source_xml'].replace('.xml', '.json')}"
+            
+            # 避免重复写入（断点续传时可能已有）
+            if DataFile.objects.filter(
+                project=self.project_obj,
+                step=self.step_obj,
+                filename=filename
+            ).exists():
+                continue
+            
+            # 从 workspace 结果目录读取文件内容
+            safe_dir_name = safe_title(entry.get("title", "unknown"), 50)
+            result_file_path = Path(self.workspace) / "screening_ai" / "results" / safe_dir_name / filename
+            
+            if result_file_path.exists():
+                with open(result_file_path, 'rb') as f:
+                    content = f.read()
+                # 用 ContentFile 传入内容+短文件名，避免绝对路径拼进 storage
+                django_file = ContentFile(content, name=filename)
+                DataFile.objects.create(
+                    project=self.project_obj,
+                    stage=self.stage_obj,
+                    step=self.step_obj,
+                    filename=filename,
+                    file=django_file,
+                    data_category='output',
+                    source='tool_generated',
+                    description='AI筛选结果',
+                    created_by=self.task_obj.created_by
+                )
+
     def _save_all_results(self, results_dir: Path):
         """
-        将所有结果文件保存到DB
-        
-        Args:
-            results_dir: 结果目录
+        将所有结果文件保存到DB（兜底，已存在的会跳过）
         """
-        # 遍历所有结果文件
+        from django.core.files.base import ContentFile
+        
         for result_dir in results_dir.iterdir():
             if not result_dir.is_dir():
                 continue
             
             for result_file in result_dir.glob("screening_result_*.json"):
-                # 保存到DataFile
+                filename = result_file.name
+                
+                # 跳过已存在的（批次写入时已保存）
+                if DataFile.objects.filter(
+                    project=self.project_obj,
+                    step=self.step_obj,
+                    filename=filename
+                ).exists():
+                    continue
+                
                 with open(result_file, 'rb') as f:
-                    django_file = File(f)
-                    
-                    DataFile.objects.create(
-                        project=self.project_obj,
-                        stage=self.stage_obj,
-                        step=self.step_obj,
-                        filename=result_file.name,
-                        file=django_file,
-                        data_category='output',
-                        source='tool_generated',
-                        description='AI筛选结果',
-                        created_by=self.task_obj.created_by
-                    )
+                    content = f.read()
+                django_file = ContentFile(content, name=filename)
+                
+                DataFile.objects.create(
+                    project=self.project_obj,
+                    stage=self.stage_obj,
+                    step=self.step_obj,
+                    filename=filename,
+                    file=django_file,
+                    data_category='output',
+                    source='tool_generated',
+                    description='AI筛选结果',
+                    created_by=self.task_obj.created_by
+                )
     
     def _get_input_files(self) -> List[DataFile]:
         """
@@ -403,24 +451,31 @@ class AsyncExecutor(BaseExecutor):
         Returns:
             标准文本列表
         """
-        # 尝试从criteria步骤获取
+        # 1. 优先从 task.config 里读（前端 startScreening 传入的 criteria）
+        if self.task_obj and self.task_obj.config:
+            criteria = self.task_obj.config.get('criteria', [])
+            if criteria:
+                self.logger.info(f"[标准] 从任务配置读取纳排标准: {len(criteria)} 条")
+                return criteria
+        
+        # 2. 从 criteria 步骤的 metadata 读
         criteria_step = self.get_previous_step("criteria")
-        
         if criteria_step and criteria_step.metadata:
-            return criteria_step.metadata.get("criteria", [])
+            criteria = criteria_step.metadata.get("criteria", [])
+            if criteria:
+                return criteria
         
-        # 尝试从文件获取
-        criteria_file = Path(settings.MEDIA_ROOT) / f"projects/project_{self.project_id}/screening_criteria.json"
+        # 3. 从阶段 metadata 里读 screening_criteria（前端保存标准时写入的位置）
+        if self.stage_obj and self.stage_obj.metadata:
+            raw = self.stage_obj.metadata.get('screening_criteria', '')
+            if raw:
+                lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                if lines:
+                    self.logger.info(f"[标准] 从阶段 metadata 读取纳排标准: {len(lines)} 条")
+                    return lines
         
-        if criteria_file.exists():
-            try:
-                with open(criteria_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    return data.get("criteria", [])
-            except Exception as e:
-                self.logger.warning(f"[警告] 读取纳排标准失败: {e}")
-        
-        # 返回默认标准
+        # 4. 返回默认标准（兜底）
+        self.logger.warning("[标准] 未找到纳排标准，使用默认值")
         return [
             "排除非英文文献",
             "排除综述和Meta分析",

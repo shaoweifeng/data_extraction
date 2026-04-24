@@ -21,7 +21,6 @@ from typing import List, Dict, Optional
 from datetime import datetime
 
 from django.conf import settings
-from django.core.files import File
 
 from .base import BaseExecutor, safe_title
 from core.models import DataFile, StageStep
