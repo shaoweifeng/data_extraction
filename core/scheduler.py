@@ -263,27 +263,14 @@ class TaskScheduler:
         step_key = task.task_type
         stop_file = self._create_stop_signal(step_key)
         
-        # 【修复】先更新任务状态为 'stopping'，让前端知道正在停止中
+        # 更新任务状态为 'stopping'，让前端知道正在停止中
         task.status = 'stopping'
         task.save()
         
-        # 【修复】给执行器1秒时间检测STOP文件
-        import time
-        time.sleep(1)
-        
-        # 如果是Celery任务，尝试撤销
-        if task.celery_task_id:
-            try:
-                from celery import Celery
-                app = Celery('platform_backend')
-                app.control.revoke(task.celery_task_id, terminate=True, wait=True, timeout=3)
-            except Exception as e:
-                # Celery broker 不可用，但任务状态仍需更新
-                # STOP 文件会通知 worker 停止
-                logger.warning(f"[Scheduler] 无法连接 Celery broker: {e}，将通过 STOP 文件停止任务")
-        
-        # 【修复】不在这里删除STOP文件，让执行器在finalize时清理
-        # 这样确保执行器能检测到停止信号
+        # 不再调用 revoke(terminate=True)：
+        # 1. STOP 文件已经足够让执行器优雅停止
+        # 2. revoke 会暴力 kill worker 子进程，导致 "signal is aborted without reason" 报错
+        # 3. 执行器在下一个检查点检测到 STOP 文件后自行退出并 finalize
         
         # 更新任务状态为 stopped
         task.refresh_from_db()
@@ -298,16 +285,26 @@ class TaskScheduler:
         """
         恢复任务（断点续传）
         
-        Args:
-            task_id: 旧任务ID
-        
-        Returns:
-            新任务对象
+        关键：将旧任务的 checkpoint 路径传给新任务，
+        让新任务的执行器能找到上次的断点文件。
         """
         old_task = Task.objects.get(id=task_id, project=self.project)
         
         if old_task.status != 'stopped':
             raise ValueError("只能恢复已停止的任务")
+        
+        # 将旧任务的 log_file 路径（即旧 workspace）记录到 config，
+        # 让新执行器能找到旧 checkpoint 文件
+        config = dict(old_task.config or {})
+        if old_task.log_file:
+            from pathlib import Path
+            old_log = Path(old_task.log_file)
+            # checkpoint 在 log_file 同级目录：logs/checkpoint.json
+            old_checkpoint = old_log.parent / "checkpoint.json"
+            if old_checkpoint.exists():
+                config["resume_checkpoint_path"] = str(old_checkpoint)
+            # 记录旧进度，让新任务初始化时能直接写入正确 progress
+            config["resume_progress"] = old_task.progress
         
         # 创建新任务
         new_task = Task.objects.create(
@@ -315,13 +312,12 @@ class TaskScheduler:
             task_type=old_task.task_type,
             status='pending',
             created_by=old_task.created_by,
-            config=old_task.config
+            config=config
         )
         
-        # 重新执行（执行器会加载checkpoint）
         step_key = old_task.task_type
-        config = get_step_config(step_key)
-        mode = config.get("execution_mode", "sync")
+        step_config = get_step_config(step_key)
+        mode = step_config.get("execution_mode", "sync")
         
         if mode == "async":
             return self._execute_async(new_task, step_key)

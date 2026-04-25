@@ -177,28 +177,29 @@
                         <!-- SCREEN_1 详细功能 -->
                         <div v-if="currentStage === 'SCREEN_1'" class="w-full px-6">
                             <!-- 步骤指示器 -->
-                            <div class="relative flex items-center justify-between mb-6">
-                                <!-- 连接线背景 -->
-                                <div class="absolute top-5 left-0 right-0 h-0.5 bg-gray-200"></div>
-                                <!-- 已完成进度线 -->
-                                <div class="absolute top-5 left-0 h-0.5 bg-blue-600 transition-all"
-                                     :style="{ width: `${Math.max(0, ((currentStep - 1) / (screen1Steps.length - 1)) * 100)}%` }"></div>
+                            <div class="relative mb-8">
+                                <!-- 连接线：两端各缩进20px（半圆宽度），对齐圆圈中心 -->
+                                <div class="absolute" style="left: 20px; right: 20px; top: 20px; height: 2px;">
+                                    <div class="h-full bg-gray-200"></div>
+                                    <div class="absolute top-0 left-0 h-full bg-blue-600 transition-all duration-300"
+                                         :style="{ width: `${Math.max(0, ((currentStep - 1) / Math.max(1, screen1Steps.length - 1)) * 100)}%` }"></div>
+                                </div>
                                 
-                                <div v-for="(step, idx) in screen1Steps" :key="step.step_key"
-                                     class="relative flex flex-col items-center cursor-pointer z-10"
-                                     @click="currentStep = idx + 1; if (idx + 1 === 4) loadAiScreenFiles()">
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition relative"
-                                         :class="getStepClass(step, idx + 1)">
-                                        <span>{{ idx + 1 }}</span>
-                                        <i v-if="step.status === 'completed' || step.status === 'in_progress'" 
-                                           class="fas fa-check absolute -right-2 -top-2 text-green-500 bg-white rounded-full p-1 text-xs"></i>
+                                <!-- 圆圈行（保证所有圆心在同一水平线） -->
+                                <div class="flex justify-between items-center">
+                                    <div v-for="(step, idx) in screen1Steps" :key="step.step_key"
+                                         class="relative flex flex-col items-center cursor-pointer z-10 w-1/5"
+                                         @click="currentStep = idx + 1; if (idx + 1 === 4) loadAiScreenFiles()">
+                                        <!-- 圆圈：固定40px高度，所有圆心在top:20px -->
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition relative shrink-0"
+                                             :class="getStepClass(step, idx + 1)">
+                                            <span>{{ idx + 1 }}</span>
+                                            <i v-if="step.status === 'completed' || step.status === 'in_progress'" 
+                                               class="fas fa-check absolute -right-1.5 -top-1.5 text-green-500 bg-white rounded-full text-xs w-4 h-4 flex items-center justify-center"></i>
+                                        </div>
+                                        <!-- 标签 -->
+                                        <span class="text-xs font-medium text-gray-600 whitespace-nowrap mt-1">{{ step.name }}</span>
                                     </div>
-                                    <span class="text-xs font-medium text-gray-600">{{ step.name }}</span>
-                                    <button v-if="step.can_skip && step.status === 'pending'" 
-                                            @click.stop="skipStep(step.id)"
-                                            class="mt-1 text-xs text-gray-400 hover:text-red-600">
-                                        跳过
-                                    </button>
                                 </div>
                             </div>
 
@@ -510,13 +511,20 @@
                                             </div>
                                             <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-green-400 font-mono text-xs shadow-inner h-96 flex flex-col">
                                                 <div class="flex-1 overflow-y-auto">
-                                                    <div v-if="!latestTask && !aiScreenLogContent">等待任务启动...</div>
+                                                    <!-- 任务已暂停且无日志：显示续传提示 -->
+                                                    <div v-if="latestAiScreenTask && latestAiScreenTask.status === 'stopped' && !aiScreenLogContent"
+                                                         class="text-yellow-700 whitespace-pre-wrap">任务已暂停。
+已处理: {{ screeningProgress.processed }} / {{ screeningProgress.total }} 篇 ({{ screeningProgress.percent }}%)
+点击「继续筛选」从断点处继续，已筛选结果已保留。</div>
+                                                    <!-- 无任务且无日志 -->
+                                                    <div v-else-if="!latestAiScreenTask && !aiScreenLogContent" class="text-gray-400">等待任务启动...</div>
+                                                    <!-- 正常日志显示 -->
                                                     <div v-else class="whitespace-pre-wrap">{{ aiScreenLogContent || '正在初始化...' }}</div>
                                                 </div>
                                             </div>
                                         </div>
                                         <!-- 进度条 -->
-                                        <div v-if="isProcessing || (latestTask && latestTask.status === 'completed')" class="mb-4 w-full max-w-2xl mx-auto">
+                                        <div v-if="isProcessing || (latestAiScreenTask && ['completed', 'stopped'].includes(latestAiScreenTask.status))" class="mb-4 w-full max-w-2xl mx-auto">
                                             <div class="flex justify-between text-sm mb-1 text-gray-600">
                                                 <span>筛选进度</span>
                                                 <span class="font-bold">{{ screeningProgress.processed }} / {{ screeningProgress.total }} ({{ screeningProgress.percent }}%)</span>
@@ -524,36 +532,43 @@
                                             <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                                                 <div class="bg-indigo-600 h-4 rounded-full transition-all duration-500 ease-out" :style="{ width: screeningProgress.percent + '%' }"></div>
                                             </div>
-                                            <div v-if="latestTask && latestTask.status === 'completed'" class="mt-2 text-green-600 font-bold animate-bounce">
+                                            <div v-if="latestAiScreenTask && latestAiScreenTask.status === 'completed'" class="mt-2 text-green-600 font-bold animate-bounce">
                                                 <i class="fas fa-check-circle"></i> 筛选完成！结果已生成
                                             </div>
                                         </div>
                                         <!-- 按钮区域 -->
                                         <div class="text-center space-y-4">
-                                            <!-- 无未完成任务时：显示启动按钮 -->
-                                            <template v-if="!latestTask || ['completed', 'failed'].includes(latestTask.status)">
+                                            <!-- 无 ai_screen 任务、或已完成/失败：显示启动按钮 -->
+                                            <template v-if="!latestAiScreenTask || ['completed', 'failed'].includes(latestAiScreenTask.status)">
                                                 <button @click="startScreening" :disabled="isProcessing"
                                                         class="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 transition">
                                                     <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
                                                     <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
                                                 </button>
                                             </template>
+                                            <!-- 任务等待中 -->
+                                            <template v-else-if="latestAiScreenTask.status === 'pending'">
+                                                <button disabled class="bg-gray-400 text-white px-8 py-3 rounded-xl font-bold text-base shadow cursor-wait">
+                                                    <i class="fas fa-hourglass-half fa-spin mr-2"></i>
+                                                    <span>等待队列中，即将启动...</span>
+                                                </button>
+                                            </template>
                                             <!-- 任务运行中：显示暂停按钮 -->
-                                            <template v-else-if="latestTask.status === 'running'">
+                                            <template v-else-if="latestAiScreenTask.status === 'running'">
                                                 <button @click="stopScreeningTask" class="bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-red-700 transition">
                                                     <i class="fas fa-stop mr-2"></i>
                                                     <span>暂停筛选</span>
                                                 </button>
                                             </template>
                                             <!-- 任务正在停止中 -->
-                                            <template v-else-if="latestTask.status === 'stopping'">
+                                            <template v-else-if="latestAiScreenTask.status === 'stopping'">
                                                 <button disabled class="bg-yellow-500 text-white px-8 py-3 rounded-xl font-bold text-base shadow cursor-wait">
                                                     <i class="fas fa-spinner fa-spin mr-2"></i>
                                                     <span>正在停止...</span>
                                                 </button>
                                             </template>
                                             <!-- 任务已暂停：显示继续和放弃按钮 -->
-                                            <template v-else-if="latestTask.status === 'stopped'">
+                                            <template v-else-if="latestAiScreenTask.status === 'stopped'">
                                                 <button @click="resumeScreeningTask" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-green-700 transition mr-4">
                                                     <i class="fas fa-play mr-2"></i>
                                                     <span>继续筛选</span>
@@ -815,16 +830,21 @@
                 const pendingPage = ref(0);
                 const screenedPage = ref(0);
                 const latestTask = ref(null);
+                const latestAiScreenTask = ref(null);  // 专门追踪最新的 ai_screen 任务
                 const isProcessing = ref(false);
                 const screeningResults = ref(null);
                 const aiScreenLogContent = ref('');  // 控制台实际日志内容
                 const processedCount = ref(0);  // 已处理文献计数
+                const screeningProgressValue = ref(0);  // 后端 progress_percentage（0-100）
+                const totalRefs = ref(0);  // 总文献数（从 task metadata 获取）
 
-                // 进度计算
+                // 进度计算：基于后端返回的 progress_percentage，不再前端自己算
                 const screeningProgress = computed(() => {
-                    const processed = screenedFiles.value.length + processedCount.value;
-                    const total = pendingFiles.value.length + screenedFiles.value.length;
-                    const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+                    // 进度百分比直接用后端 Task.progress_percentage（0-100）
+                    const percent = Math.round(screeningProgressValue.value);
+                    // 总数和已处理数从 task metadata 或 dedup 统计获取
+                    const total = totalRefs.value || pendingFiles.value.length;
+                    const processed = Math.round(total * percent / 100);
                     return { processed, total, percent };
                 });
                 
@@ -1004,6 +1024,17 @@
                             // 只取最近10条，按创建时间倒序
                             const tasks = extractListData(data);
                             recentTasks.value = tasks.slice(0, 10);
+                            // 同步更新最新的 ai_screen 任务
+                            const aiTask = tasks.find(t => t.task_type === 'ai_screen');
+                            if (aiTask) {
+                                latestAiScreenTask.value = aiTask;
+                                // 断点续传场景：从 stopped 任务的 metadata 恢复进度数据
+                                if (aiTask.status === 'stopped' && aiTask.metadata) {
+                                    totalRefs.value = aiTask.metadata.total_refs || totalRefs.value;
+                                    processedCount.value = aiTask.metadata.processed_refs || 0;
+                                    screeningProgressValue.value = aiTask.progress_percentage || 0;
+                                }
+                            }
                         }
                     } catch (err) {
                         console.error('获取任务列表失败', err);
@@ -1015,10 +1046,19 @@
                 // 任务类型显示名称
                 const getTaskTypeName = (taskType) => {
                     const names = {
+                        // 前端 task_type（POST 时传入）
                         'reference_parsing': '文献解析',
-                        'deduplication': '自动去重',
+                        'deduplication': '文献去重',
                         'ai_screening': 'AI初筛',
-                        'result_aggregation': '结果归纳'
+                        'result_aggregation': '结果归纳',
+                        // 后端 step_key（实际存入 DB 的值）
+                        'parse': '文献解析',
+                        'dedup': '文献去重',
+                        'ai_screen': 'AI初筛',
+                        'export': '结果归纳',
+                        'criteria': '纳排标准',
+                        'SCREEN_1': '初筛阶段',
+                        'SEARCH': '文献检索',
                     };
                     return names[taskType] || taskType;
                 };
@@ -1144,11 +1184,24 @@
 
                 const selectProject = async (project) => {
                     currentProject.value = project;
+                    currentStep.value = 1;  // 每次切换项目都从第一步开始
                     taskPage.value = 0;
                     logPage.value = 0;
+                    // 切换项目时重置所有项目相关状态，避免上个项目的数据残留
+                    criteriaList.value = [];
+                    pendingFiles.value = [];
+                    screenedFiles.value = [];
+                    latestTask.value = null;
+                    latestAiScreenTask.value = null;
+                    isProcessing.value = false;
+                    screeningProgressValue.value = 0;
+                    aiScreenLogContent.value = '';
+                    screeningResults.value = null;
+                    processedCount.value = 0;
                     await fetchStages(project.id);
                     await Promise.all([fetchRecentTasks(), fetchActivityLogs()]);
                     loadDedupStats();
+                    await loadCriteria();
                 };
 
                 const deleteProject = async (projectId) => {
@@ -1534,9 +1587,14 @@
                             const res = await apiRequest(`${API_BASE}/tasks/${taskId}/`);
                             if (!res.ok) { isProcessing.value = false; return; }
                             latestTask.value = await res.json();
+                            latestAiScreenTask.value = latestTask.value;  // 轮询期间同步更新
                             const status = latestTask.value.status;
-                            // 【修复】进度条赋值
-                            screeningProgress.value = latestTask.value.progress_percentage || 0;
+                            screeningProgressValue.value = latestTask.value.progress_percentage || 0;
+                            // 从 task metadata 更新总文献数
+                            if (latestTask.value.metadata) {
+                                totalRefs.value = latestTask.value.metadata.total_refs || totalRefs.value;
+                                processedCount.value = latestTask.value.metadata.processed_refs || 0;
+                            }
 
                             // 同步拉日志
                             try {
@@ -1616,17 +1674,21 @@
 
                 // 暂停任务
                 const stopScreeningTask = async () => {
-                    if (!latestTask.value) return;
+                    if (!latestAiScreenTask.value) return;
+                    latestTask.value = latestAiScreenTask.value;
                     const ok = confirm('确定暂停当前筛选任务？');
                     if (!ok) return;
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/${latestTask.value.id}/stop/`, {
+                        const res = await apiRequest(`${API_BASE}/tasks/${latestAiScreenTask.value.id}/stop/`, {
                             method: 'POST'
                         });
                         if (res.ok) {
+                            alert('任务已暂停');
+                            // 暂停后不再轮询，手动刷新数据
                             isProcessing.value = false;
                             await fetchRecentTasks();
-                            alert('任务已暂停');
+                            await fetchStages(currentProject.value.id);
+                            await loadScreenedFiles();
                         } else {
                             const data = await res.json().catch(() => ({}));
                             alert(`暂停失败: ${data.error || data.detail || '未知错误'}`);
@@ -1638,15 +1700,21 @@
 
                 // 继续任务
                 const resumeScreeningTask = async () => {
-                    if (!latestTask.value) return;
+                    if (!latestAiScreenTask.value) return;
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/${latestTask.value.id}/resume/`, {
+                        const res = await apiRequest(`${API_BASE}/tasks/${latestAiScreenTask.value.id}/resume/`, {
                             method: 'POST'
                         });
                         if (res.ok) {
-                            const newTask = await res.json();
+                            // 后端返回 { message, task }，需要解包 task
+                            const data = await res.json();
+                            const newTask = data.task || data;
                             latestTask.value = newTask;
+                            latestAiScreenTask.value = newTask;  // 同步更新 latestAiScreenTask
+                            screeningProgressValue.value = newTask.progress_percentage || 0;
+                            totalRefs.value = newTask.metadata?.total_refs || totalRefs.value || pendingFiles.value.length;
                             isProcessing.value = true;
+                            aiScreenLogContent.value = '正在恢复任务，即将继续从上次断点处理...';
                             pollAiScreeningStatus(newTask.id);
                             await fetchRecentTasks();
                         } else {
@@ -1658,19 +1726,36 @@
                     }
                 };
 
+                // 清除当前项目 ai_screen 步骤的筛选结果
+                const clearAiScreenResults = async () => {
+                    if (!currentProject.value) return;
+                    try {
+                        await apiRequest(`${API_BASE}/projects/${currentProject.value.id}/clear_ai_screen_results/`, {
+                            method: 'POST'
+                        });
+                    } catch (err) {
+                        console.warn('清除筛选结果失败（可忽略）:', err.message);
+                    }
+                };
+
                 // 放弃任务
                 const abandonScreeningTask = async () => {
-                    if (!latestTask.value) return;
-                    const ok = confirm('确定放弃此任务？已筛选结果将保留。');
+                    if (!latestAiScreenTask.value) return;
+                    const ok = confirm('确定放弃此任务？已筛选结果将被清除。');
                     if (!ok) return;
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/${latestTask.value.id}/`, {
+                        // 先清除筛选结果
+                        await clearAiScreenResults();
+                        const res = await apiRequest(`${API_BASE}/tasks/${latestAiScreenTask.value.id}/`, {
                             method: 'DELETE'
                         });
                         if (res.ok) {
                             latestTask.value = null;
+                            latestAiScreenTask.value = null;
+                            screenedFiles.value = [];
+                            screeningResults.value = null;
                             await fetchRecentTasks();
-                            alert('任务已放弃');
+                            alert('任务已放弃，筛选结果已清除');
                         } else {
                             const data = await res.json().catch(() => ({}));
                             alert(`放弃失败: ${data.error || data.detail || '未知错误'}`);
@@ -1691,6 +1776,11 @@
                     aiScreenLogContent.value = '正在启动任务...';
 
                     try {
+                        // 启动前先清除旧的筛选结果
+                        await clearAiScreenResults();
+                        screenedFiles.value = [];
+                        screeningResults.value = null;
+
                         const res = await apiRequest(`${API_BASE}/tasks/`, {
                             method: 'POST',
                             body: JSON.stringify({
@@ -1702,6 +1792,7 @@
 
                         if (res.ok) {
                             latestTask.value = await res.json();
+                            latestAiScreenTask.value = latestTask.value;
                             await fetchRecentTasks();
                             pollAiScreeningStatus(latestTask.value.id);
                             // isProcessing 由 pollAiScreeningStatus 在任务结束时置 false
@@ -1866,9 +1957,9 @@
                     referenceFiles, handleReferenceUpload, deleteFile,
                     isDeduplicating, dedupCompleted, handleDeduplication, dedupStats, showDuplicateDetails,
                     newCriteria, criteriaList, addCriteria, removeCriteria,
-                    pendingFiles, screenedFiles, latestTask, isProcessing, screeningResults, aiScreenLogContent,
+                    pendingFiles, screenedFiles, latestTask, latestAiScreenTask, isProcessing, screeningResults, aiScreenLogContent,
                     screeningTab, pendingPage, screenedPage, processedCount, screeningProgress,
-                    loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, exportResults,
+                    loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults, exportResults,
                     getStageClass, getStageName, nextStep, prevStep,
                     uploadingFiles,
                     // 任务状态展示

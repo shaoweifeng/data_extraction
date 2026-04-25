@@ -300,6 +300,28 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project = self.get_object()
         stages = project.stages.all().prefetch_related('steps')
         return Response(ProjectStageSerializer(stages, many=True).data)
+
+    @action(detail=True, methods=['post'])
+    def clear_ai_screen_results(self, request, pk=None):
+        """清除项目 ai_screen 步骤的所有 output 文件记录（启动/放弃任务时调用）"""
+        from core.models import StageStep, ProjectStage, DataFile
+        project = self.get_object()
+
+        # 找到 ai_screen 步骤
+        ai_step = StageStep.objects.filter(
+            stage__project=project,
+            step_key='ai_screen'
+        ).first()
+
+        if ai_step:
+            deleted_count, _ = DataFile.objects.filter(
+                project=project,
+                step=ai_step,
+                data_category='output'
+            ).delete()
+            return Response({'message': f'已清除 {deleted_count} 条筛选结果记录'})
+
+        return Response({'message': '未找到 ai_screen 步骤，无需清除'})
     
     @action(detail=True, methods=['get'])
     def progress(self, request, pk=None):

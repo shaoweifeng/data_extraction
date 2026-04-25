@@ -226,6 +226,20 @@ class SyncExecutor(BaseExecutor):
         # 6. 保存输出文件
         self.logger.info("[保存] 保存输出文件到数据库...")
         
+        # 先清除本步骤旧的 intermediate 文件记录，避免重复运行时累加
+        old_count = DataFile.objects.filter(
+            project=self.project_obj,
+            step=self.step_obj,
+            data_category='intermediate'
+        ).count()
+        if old_count > 0:
+            DataFile.objects.filter(
+                project=self.project_obj,
+                step=self.step_obj,
+                data_category='intermediate'
+            ).delete()
+            self.logger.info(f"[清理] 已清除 {old_count} 条旧的 intermediate 记录")
+        
         # 保存合并的XML
         if merged_xml.exists():
             self.save_output_file(merged_xml, "references.xml", "合并后的文献XML", "intermediate")
@@ -370,25 +384,11 @@ class SyncExecutor(BaseExecutor):
             ))
             self.logger.info(f"[输入] 从parse步骤获取 {len(input_files)} 个文件")
         
-        # 3. 如果没有parse输出，直接处理用户上传的原始文件
+        # 3. 如果没有parse输出，报错提示用户先执行解析步骤
         if not input_files:
-            self.logger.info("[提示] 未找到parse步骤输出，直接处理用户上传的原始文件")
-            input_files = self._get_upload_files()
-            
-            if not input_files:
-                self.logger.error("[错误] 没有找到任何待去重的文献文件")
-                return False
-            
-            self.logger.info(f"[输入] 找到 {len(input_files)} 个用户上传的文件")
-            
-            # 先解析原始文件为XML
-            parse_success = self._quick_parse_files(input_files, input_dir)
-            if not parse_success:
-                self.logger.error("[错误] 解析原始文件失败")
-                return False
-            
-            # 重新扫描解析后的文件
-            input_files = [DataFile(filename=f.name, file=str(f)) for f in input_dir.glob("*.xml")]
+            self.logger.error("[错误] 未找到文献解析步骤的输出文件")
+            self.logger.error("[提示] 请先执行「步骤1: 文献解析（导入文献索引 → 开始去重）」，再运行去重步骤")
+            return False
         
         total_files = len(input_files)
         self.logger.info(f"[输入] 共 {total_files} 个待去重文件")
@@ -576,6 +576,20 @@ class SyncExecutor(BaseExecutor):
         self.logger.info(f"[统计] 重复组数: {len(duplicates)} 组")
         
         # 8. 保存去重后的文件
+        # 先清除本步骤旧的 intermediate 文件记录，避免重复运行时累加
+        old_count = DataFile.objects.filter(
+            project=self.project_obj,
+            step=self.step_obj,
+            data_category='intermediate'
+        ).count()
+        if old_count > 0:
+            DataFile.objects.filter(
+                project=self.project_obj,
+                step=self.step_obj,
+                data_category='intermediate'
+            ).delete()
+            self.logger.info(f"[清理] 已清除 {old_count} 条旧的 intermediate 记录")
+        
         for filename in kept_files:
             filepath = output_dir / filename
             if filepath.exists():

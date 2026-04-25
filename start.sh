@@ -23,7 +23,7 @@ export AI_TIMEOUT=${AI_TIMEOUT:-120}
 
 # 1. 启动 Redis (后台)
 if command -v redis-server > /dev/null; then
-    redis-server --daemonize yes
+    redis-server --daemonize yes 2>/dev/null || true  # 已在运行时忽略错误
     echo "✅ Redis 已启动"
 else
     echo "❌ 错误: 未找到 redis-server，请先安装 Redis"
@@ -31,6 +31,14 @@ else
 fi
 
 # 2. 启动 Celery Worker (后台)
+# 先清理旧的 worker 进程，避免重启后出现双 worker 抢任务的问题
+OLD_PIDS=$(pgrep -f "celery.*platform_backend" 2>/dev/null)
+if [ -n "$OLD_PIDS" ]; then
+    echo "⚠️  发现旧 Celery Worker 进程 (PID: $OLD_PIDS)，正在终止..."
+    kill $OLD_PIDS 2>/dev/null
+    sleep 2
+    echo "✅ 旧进程已终止"
+fi
 celery -A platform_backend worker --loglevel=info > celery.log 2>&1 &
 echo "✅ Celery Worker 已在后台启动 (日志: celery.log)"
 

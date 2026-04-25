@@ -56,8 +56,14 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
     task_obj = None
     
     try:
+        # 从 Task 模型读取 config（断点续传时包含 resume_checkpoint_path）
+        task_obj = Task.objects.get(id=task_id)
+        task_config = task_obj.config or {}
+        
         # 创建执行器实例
         executor = AsyncExecutor(task_id, step_key, project_id)
+        # 将 Task 模型的 config 合并到 executor.config（纳排标准、断点续传路径等）
+        executor.config.update(task_config)
         
         # 初始化任务
         executor.initialize()

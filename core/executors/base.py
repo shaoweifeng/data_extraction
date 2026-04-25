@@ -499,7 +499,10 @@ class BaseExecutor(ABC):
     # ========================================================================
     
     def save_checkpoint(self, data: Dict):
-        """保存断点信息"""
+        """保存断点信息（同时写入 checkpoint.json 和 progress.json）"""
+        # 写入 checkpoint.json（load_checkpoint 从此文件读取）
+        self.logger._save_checkpoint(data)
+        # 同时记录到 progress.json 的 checkpoints 列表（用于追溯）
         self.logger.add_checkpoint("manual_checkpoint", data)
     
     def load_checkpoint(self) -> Optional[Dict]:

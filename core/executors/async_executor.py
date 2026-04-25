@@ -93,13 +93,38 @@ class AsyncExecutor(BaseExecutor):
             return False
         
         # 2. 检查断点
-        checkpoint = self.load_checkpoint()
+        # 优先从 task.config 里的 resume_checkpoint_path 加载（跨任务续传场景）
+        checkpoint = None
+        resume_checkpoint_path = self.config.get("resume_checkpoint_path")
+        if resume_checkpoint_path:
+            from pathlib import Path as _Path
+            _cp = _Path(resume_checkpoint_path)
+            if _cp.exists():
+                try:
+                    with open(_cp, 'r', encoding='utf-8') as f:
+                        import json as _json
+                        checkpoint = _json.load(f)
+                    self.logger.info(f"[断点] 从上次任务恢复: {resume_checkpoint_path}")
+                except Exception as e:
+                    self.logger.warning(f"[断点] 加载跨任务 checkpoint 失败: {e}")
+        
+        if checkpoint is None:
+            checkpoint = self.load_checkpoint()
+        
         processed_sources: Set[str] = set()
         
         if checkpoint:
             processed_sources = set(checkpoint.get("processed_sources", []))
             self.logger.info(f"[断点] 检测到上次断点，已处理 {len(processed_sources)} 篇")
             self.logger.info(f"[断点] 上次进度: {checkpoint.get('progress', {}).get('current', 0)}/{checkpoint.get('progress', {}).get('total', 0)}")
+            # 初始化进度写入 DB，避免进度条从0跳升
+            resume_progress = self.config.get("resume_progress", 0)
+            if resume_progress and resume_progress > 0:
+                from django.db import close_old_connections
+                close_old_connections()
+                from core.models import Task
+                Task.objects.filter(id=self.task_id).update(progress=resume_progress)
+                self.logger.info(f"[断点] 恢复进度: {round(resume_progress * 100, 1)}%")
         
         # 3. 准备工作区
         workspace_ai = Path(self.workspace) / "screening_ai"
@@ -108,6 +133,22 @@ class AsyncExecutor(BaseExecutor):
         
         datasets_dir.mkdir(parents=True, exist_ok=True)
         results_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 全新任务时清除旧的 output 文件；断点续传时保留（已处理结果不删，新结果追加）
+        is_resume = bool(self.config.get("resume_checkpoint_path"))
+        if not is_resume:
+            old_outputs = DataFile.objects.filter(
+                project=self.project_obj,
+                step=self.step_obj,
+                data_category='output',
+                description='AI筛选结果'
+            )
+            old_count = old_outputs.count()
+            if old_count > 0:
+                old_outputs.delete()
+                self.logger.info(f"[清理] 已清除 {old_count} 条历史筛选结果记录，开始新一轮筛选")
+        else:
+            self.logger.info("[断点] 断点续传模式：保留已有筛选结果，仅追加新结果")
         
         # 4. 复制筛选脚本（如果存在）
         self._copy_screening_scripts(workspace_ai)
@@ -402,6 +443,7 @@ class AsyncExecutor(BaseExecutor):
                     data_category='output',
                     source='tool_generated',
                     description='AI筛选结果',
+                    metadata={'decision': result.get('decision', 'excluded')},  # 关键：写入决策结果
                     created_by=self.task_obj.created_by
                 )
 

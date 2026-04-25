@@ -17,6 +17,7 @@ import logging
 import requests
 from typing import List, Dict
 
+from typing import List, Dict, Optional
 from .base import BaseAIProvider, ScreeningResult
 
 logger = logging.getLogger(__name__)
@@ -103,7 +104,7 @@ class DeepSeekProvider(BaseAIProvider):
         # 解析 JSON 响应
         return self._parse_response(title, raw_response)
 
-    def _call_api(self, full_prompt: str) -> str | None:
+    def _call_api(self, full_prompt: str) -> Optional[str]:
         """发送请求到 DeepSeek API"""
         if not self.api_key:
             raise ValueError("AI_API_KEY 未配置，无法调用真实 AI API")
