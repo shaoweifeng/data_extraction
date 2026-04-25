@@ -333,20 +333,11 @@ def parse_nbib(file_path: str) -> List[Dict]:
 
 def parse_xml(file_path: str) -> List[Dict]:
     """
-    解析XML格式文献（统一格式）
+    解析XML格式文献
     
-    预期格式：
-    <references>
-        <reference>
-            <Title>...</Title>
-            <Authors>...</Authors>
-            <Year>...</Year>
-            <Journal>...</Journal>
-            <Abstract>...</Abstract>
-            <DOI>...</DOI>
-            <URL>...</URL>
-        </reference>
-    </references>
+    支持两种格式：
+    1. EndNote XML（<xml><records><record>...）— 最常见的文献管理导出格式
+    2. Reference XML（<references><reference>...）— 统一内部格式
     
     Args:
         file_path: XML文件路径
@@ -354,63 +345,125 @@ def parse_xml(file_path: str) -> List[Dict]:
     Returns:
         标准化的文献字典列表
     """
+    def itext(elem):
+        if elem is None:
+            return ""
+        return "".join(elem.itertext()).strip()
+
+    def first_text(parent, paths):
+        for p in paths:
+            e = parent.find(p)
+            t = itext(e)
+            if t:
+                return t
+        return ""
+
     tree = ET.parse(file_path)
     root = tree.getroot()
-    
-    def get_text(elem):
-        """安全提取文本"""
-        if elem is not None and elem.text:
-            return elem.text.strip()
-        return None
-    
-    def get_all_text(elem):
-        """提取所有子元素文本（如作者列表）"""
-        if elem is None:
-            return []
-        texts = []
-        for child in elem:
-            text = ''.join(child.itertext()).strip()
-            if text:
-                texts.append(text)
-        return texts
-    
-    parsed_entries = []
-    
-    # 查找所有reference元素
-    refs = root.findall('.//reference') or root.findall('.//Reference')
-    
-    for i, ref in enumerate(refs, start=1):
-        # 提取作者（可能是多个Author元素）
-        authors_elem = ref.find('Authors')
-        if authors_elem is not None:
-            authors = get_all_text(authors_elem)
-        else:
-            authors_text = get_text(ref.find('Author'))
-            if authors_text:
-                authors = [a.strip() for a in authors_text.split(',') if a.strip()]
+
+    # ========== EndNote XML 格式 ==========
+    records_node = root.find("./records")
+    if root.tag == "xml" and records_node is not None:
+        parsed_entries = []
+        for i, rec in enumerate(records_node.findall("./record"), start=1):
+            title = first_text(rec, ["./titles/title"])
+            journal = first_text(rec, ["./titles/secondary-title", "./periodical/full-title"])
+            year_raw = first_text(rec, ["./dates/year", "./pub-dates/year", "./dates/pub-dates/year"])
+            year_match = re.search(r"\b(19|20)\d{2}\b", year_raw)
+            year = year_match.group(0) if year_match else (year_raw[:4] if year_raw else "")
+            reference_type = ""
+            rt = rec.find("./ref-type")
+            if rt is not None:
+                reference_type = rt.get("name") or ""
+            volume = first_text(rec, ["./volume"])
+            issue = first_text(rec, ["./number"])
+            page = first_text(rec, ["./pages"])
+            date = first_text(rec, ["./dates/pub-dates/date", "./pub-dates/date", "./dates/date"])
+            if year and date and year not in date:
+                date = f"{date} {year}"
+            address = first_text(rec, ["./auth-address"])
+            pmcid = first_text(rec, ["./custom2"])
+
+            authors = []
+            for a in rec.findall("./contributors/authors/author"):
+                t = itext(a)
+                if t:
+                    authors.append(t)
+
+            abstract = first_text(rec, ["./abstract"])
+
+            doi_raw = first_text(rec, ["./doi", "./electronic-resource-num"])
+            doi_raw = doi_raw.replace("doi:", "").replace("DOI:", "").strip()
+            doi = doi_raw.split()[0] if doi_raw else ""
+            doi = doi.strip().rstrip(".").rstrip(";").strip()
+
+            accession = first_text(rec, ["./accession-num"])
+            accession = accession.strip()
+
+            wos_id = ""
+            if accession.upper().startswith("WOS:"):
+                wos_id = accession
             else:
-                authors = []
-        
+                m = re.search(r"\bWOS:\w+\b", accession)
+                if m:
+                    wos_id = m.group(0)
+
+            url = ""
+            if accession.isdigit():
+                url = f"https://pubmed.ncbi.nlm.nih.gov/{accession}/"
+            elif doi:
+                url = f"https://doi.org/{doi}"
+            elif wos_id:
+                url = f"https://www.webofscience.com/wos/woscc/full-record/{wos_id}"
+
+            parsed_entries.append({
+                'title': title,
+                'authors': authors,
+                'journal': journal,
+                'year': year,
+                'reference_type': reference_type,
+                'volume': volume,
+                'issue': issue,
+                'page': page,
+                'date': date,
+                'pmcid': pmcid,
+                'address': address,
+                'abstract': abstract,
+                'doi': doi,
+                'url': url,
+                'source_file': os.path.basename(file_path),
+                'source_position': i,
+                'record_number': first_text(rec, ["./rec-number"]),
+                'type': 'XML'
+            })
+        return parsed_entries
+
+    # ========== Reference XML 格式（内部统一格式）==========
+    parsed_entries = []
+    for i, ref in enumerate(root.findall(".//Reference"), start=1):
+        title = first_text(ref, ["Title"])
+        authors = []
+        for a in ref.findall("./Authors/Author"):
+            t = itext(a)
+            if t:
+                authors.append(t)
+        journal = first_text(ref, ["Journal"])
+        year = first_text(ref, ["Year"])
+        abstract = first_text(ref, ["Abstract"])
+        doi = first_text(ref, ["DOI"])
+        url = first_text(ref, ["URL"])
         parsed_entries.append({
-            'title': get_text(ref.find('Title')) or get_text(ref.find('title')),
+            'title': title,
             'authors': authors,
-            'journal': get_text(ref.find('Journal')) or get_text(ref.find('journal')),
-            'year': get_text(ref.find('Year')) or get_text(ref.find('year')),
-            'volume': get_text(ref.find('Volume')) or get_text(ref.find('volume')),
-            'issue': get_text(ref.find('Issue')) or get_text(ref.find('issue')),
-            'page': get_text(ref.find('Page')) or get_text(ref.find('page')),
-            'date': get_text(ref.find('Date')) or get_text(ref.find('date')),
-            'doi': get_text(ref.find('DOI')) or get_text(ref.find('doi')),
-            'pmcid': get_text(ref.find('PMCID')) or get_text(ref.find('pmcid')),
-            'abstract': get_text(ref.find('Abstract')) or get_text(ref.find('abstract')),
-            'url': get_text(ref.find('URL')) or get_text(ref.find('url')),
-            'address': get_text(ref.find('Address')) or get_text(ref.find('address')),
-            'reference_type': get_text(ref.find('ReferenceType')) or get_text(ref.find('type')),
+            'journal': journal,
+            'year': year,
+            'abstract': abstract,
+            'doi': doi,
+            'url': url,
             'source_file': os.path.basename(file_path),
             'source_position': i,
-            'source_type': 'XML'
+            'type': 'XML'
         })
-    
     return parsed_entries
 
 
