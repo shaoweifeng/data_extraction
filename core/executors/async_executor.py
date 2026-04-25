@@ -374,24 +374,30 @@ class AsyncExecutor(BaseExecutor):
         return results
     
     def _mock_api_call(self, batch: List[Dict], criteria: List[str]) -> List[Dict]:
-        """模拟API调用（用于测试和演示）"""
+        """模拟API调用（用于测试和演示），输出字段与真实 API 一致"""
         results = []
         
         for entry in batch:
             # 模拟决策逻辑（随机）
             import random
             decision = random.choice(['included', 'excluded'])
-            confidence = round(random.uniform(0.6, 0.95), 2)
             
             result = {
                 "title": entry.get("title", ""),
                 "authors": entry.get("authors", ""),
                 "year": entry.get("year", ""),
                 "journal": entry.get("journal", ""),
+                "doi": entry.get("doi", ""),
+                "url": entry.get("url", ""),
+                "source_xml": entry.get("source_xml", ""),
                 "decision": decision,
-                "confidence": confidence,
-                "reasoning": f"根据纳排标准判断：{', '.join(criteria[:2])}...",
-                "model": "mock-model-v1.0"
+                "include_or_not": "yes" if decision == "included" else "no",
+                "exclusion_reason": f"根据排除标准判断：{', '.join(criteria[:2])}..." if decision == "excluded" else "",
+                "number_exclusion_reason": random.choice(["1", "2", "3"]) if decision == "excluded" else "",
+                "model": "mock-model-v1.0",
+                "raw_ai_response": f'[{{"exclusion_reason": "模拟排除理由", "number_exclusion_reason": "1", "include_or_not": "no"}}]',
+                "error": "",
+                "timestamp": datetime.now().isoformat(),
             }
             results.append(result)
             

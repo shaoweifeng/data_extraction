@@ -769,10 +769,22 @@ class SyncExecutor(BaseExecutor):
             
             rows = []
             for idx, result in enumerate(final_results, 1):
-                # decision → include_or_not / exclusion_reason
-                decision = result.get("decision", "")
-                include_or_not = "included" if decision == "included" else "excluded"
-                exclusion_reason = result.get("reasoning", "") if decision != "included" else ""
+                # JSON 字段：include_or_not (yes/no), exclusion_reason, number_exclusion_reason
+                # 优先使用 JSON 里的 include_or_not，fallback 到 decision 推断
+                include_or_not = result.get("include_or_not", "")
+                if not include_or_not:
+                    decision = result.get("decision", "")
+                    include_or_not = "yes" if decision == "included" else "no"
+                
+                # exclusion_reason：优先 JSON 字段，fallback 到 reasoning
+                exclusion_reason = result.get("exclusion_reason", "")
+                if not exclusion_reason and include_or_not == "no":
+                    exclusion_reason = result.get("reasoning", "")
+                
+                # exclusion_reason_id：对应 number_exclusion_reason
+                exclusion_reason_id = result.get("number_exclusion_reason", "")
+                if not exclusion_reason_id:
+                    exclusion_reason_id = result.get("exclusion_reason_id", "")
                 
                 # 读取源XML补充完整元数据
                 source_xml = result.get("source_xml", "")
@@ -781,7 +793,7 @@ class SyncExecutor(BaseExecutor):
                 row = {
                     "id": idx,
                     "include_or_not": include_or_not,
-                    "exclusion_reason_id": result.get("exclusion_reason_id", ""),
+                    "exclusion_reason_id": exclusion_reason_id,
                     "exclusion_reason": exclusion_reason,
                     "ReferenceType": xml_fields.get("ReferenceType", result.get("reference_type", "")),
                     "Title": xml_fields.get("Title", "") or result.get("title", ""),

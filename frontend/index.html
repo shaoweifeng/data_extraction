@@ -194,7 +194,7 @@
                                         <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition relative shrink-0"
                                              :class="getStepClass(step, idx + 1)">
                                             <span>{{ idx + 1 }}</span>
-                                            <i v-if="step.status === 'completed' || step.status === 'in_progress'" 
+                                            <i v-if="(step.status === 'completed' || step.status === 'in_progress') || (step.step_key === 'criteria' && criteriaList.length > 0)" 
                                                class="fas fa-check absolute -right-1.5 -top-1.5 text-green-500 bg-white rounded-full text-xs w-4 h-4 flex items-center justify-center"></i>
                                         </div>
                                         <!-- 标签 -->
@@ -274,10 +274,11 @@
                                         </div>
                                         <div class="text-center">
                                             <button @click="handleDeduplication" :disabled="isDeduplicating"
-                                                    class="bg-purple-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-purple-700 disabled:opacity-50 transition">
+                                                    :class="dedupCompleted ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'"
+                                                    class="text-white px-8 py-3 rounded-lg font-medium shadow-lg disabled:opacity-50 transition">
                                                 <i v-if="isDeduplicating" class="fas fa-spinner fa-spin mr-2"></i>
-                                                <i v-else class="fas fa-magic mr-2"></i>
-                                                <span>{{ isDeduplicating ? '正在去重…' : '开始去重' }}</span>
+                                                <i v-else :class="dedupCompleted ? 'fas fa-redo' : 'fas fa-magic'" class="mr-2"></i>
+                                                <span>{{ isDeduplicating ? '正在去重…' : (dedupCompleted ? '重新去重' : '开始去重') }}</span>
                                             </button>
                                         </div>
                                         
@@ -549,12 +550,13 @@
                                         </div>
                                         <!-- 按钮区域 -->
                                         <div class="text-center space-y-4">
-                                            <!-- 无 ai_screen 任务、或已完成/失败：显示启动按钮 -->
+                                            <!-- 无 ai_screen 任务、或已完成/失败：显示启动/重新筛选按钮 -->
                                             <template v-if="!latestAiScreenTask || ['completed', 'failed'].includes(latestAiScreenTask.status)">
                                                 <button @click="startScreening" :disabled="isProcessing"
-                                                        class="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+                                                        :class="latestAiScreenTask?.status === 'completed' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'"
+                                                        class="text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg disabled:opacity-50 transition">
                                                     <i v-if="isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
-                                                    <span>{{ isProcessing ? 'AI 正在筛选中...' : '启动 AI 筛选任务' }}</span>
+                                                    <span>{{ isProcessing ? 'AI 正在筛选中...' : (latestAiScreenTask?.status === 'completed' ? '重新筛选' : '启动 AI 筛选任务') }}</span>
                                                 </button>
                                             </template>
                                             <!-- 任务等待中 -->
@@ -652,7 +654,7 @@
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <button @click="exportResults" class="mt-3 text-sm text-gray-500 hover:text-teal-600 transition">
+                                                <button @click="exportResults" class="mt-4 bg-amber-500 text-white px-6 py-2 rounded-lg font-medium shadow hover:bg-amber-600 transition">
                                                     <i class="fas fa-redo mr-1"></i>重新生成报告
                                                 </button>
                                             </div>
@@ -1275,25 +1277,43 @@
 
                 const selectProject = async (project) => {
                     currentProject.value = project;
-                    currentStep.value = 1;  // 每次切换项目都从第一步开始
+                    currentStep.value = 1;
+                    currentStage.value = 'SCREEN_1';
                     taskPage.value = 0;
                     logPage.value = 0;
                     // 切换项目时重置所有项目相关状态，避免上个项目的数据残留
+                    referenceFiles.value = [];
+                    uploadingFiles.value = [];
+                    isDeduplicating.value = false;
+                    dedupCompleted.value = false;
+                    dedupStats.value = null;
+                    showDuplicateDetails.value = false;
+                    newCriteria.value = '';
                     criteriaList.value = [];
+                    screeningTab.value = 'pending';
                     pendingFiles.value = [];
                     screenedFiles.value = [];
+                    pendingPage.value = 0;
+                    screenedPage.value = 0;
                     latestTask.value = null;
                     latestAiScreenTask.value = null;
                     isProcessing.value = false;
                     screeningProgressValue.value = 0;
                     aiScreenLogContent.value = '';
-                    // screeningResults 是 computed，重置 screenedFiles 会自动让它返回 null
                     processedCount.value = 0;
+                    totalRefs.value = 0;
                     exportFiles.value = [];
                     exportStepId.value = null;
+                    isExporting.value = false;
+                    selectedExcelVersion.value = 0;
+                    selectedRisVersion.value = 0;
+                    isParsing.value = false;
+                    parsedCount.value = 0;
+                    expandedTaskId.value = null;
                     await fetchStages(project.id);
                     await Promise.all([fetchRecentTasks(), fetchActivityLogs()]);
-                    // screeningResults 已改为 computed，从 screenedFiles 自动计算，无需手动恢复
+                    loadDedupStats();
+                    await loadCriteria();
                     // 加载待筛选和已筛选文献列表
                     await Promise.all([loadAiScreenFiles(), loadScreenedFiles()]);
                     // 加载已有的导出文件（刷新后也能显示下载按钮）
@@ -2041,6 +2061,10 @@
                     // 当前用户点击的步骤高亮（优先级最高）
                     if (currentStep.value === idx) {
                         return 'bg-blue-600 text-white ring-4 ring-blue-200';
+                    }
+                    // 纳排标准步骤：有标准就算已完成
+                    if (step.step_key === 'criteria' && criteriaList.value.length > 0) {
+                        return 'bg-blue-600 text-white';
                     }
                     // 已完成
                     if (step.status === 'completed') {
