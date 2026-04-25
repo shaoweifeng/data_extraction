@@ -134,21 +134,13 @@ class SyncExecutor(BaseExecutor):
                 sys.modules["parser"] = parser
                 spec.loader.exec_module(parser)
                 
-                # 调用解析函数
+                # 调用解析函数（parse_directory 只接受 dir_path 一个参数）
                 merged_xml = output_dir / "references.xml"
-                entries = parser.parse_directory(str(input_dir), str(merged_xml))
+                entries = parser.parse_directory(str(input_dir))
                 
-                # 如果有合并函数，调用合并
-                if hasattr(parser, 'convert_to_xml'):
-                    all_entries = []
-                    for f in input_dir.iterdir():
-                        if f.suffix.lower() in ['.ris', '.ciw', '.bib', '.nbib', '.xml']:
-                            parse_func = getattr(parser, f'parse_{f.suffix[1:]}', None)
-                            if parse_func:
-                                all_entries.extend(parse_func(str(f)))
-                    
-                    parser.convert_to_xml(all_entries, str(merged_xml))
-                    entries = all_entries
+                # 生成合并的XML文件
+                if entries and hasattr(parser, 'convert_to_xml'):
+                    parser.convert_to_xml(entries, str(merged_xml))
             
             total_entries = len(entries) if isinstance(entries, list) else entries.get('total_entries', 0)
             self.logger.info(f"[解析] 成功解析 {total_entries} 条文献")
@@ -384,10 +376,10 @@ class SyncExecutor(BaseExecutor):
             ))
             self.logger.info(f"[输入] 从parse步骤获取 {len(input_files)} 个文件")
         
-        # 3. 如果没有parse输出，报错提示用户先执行解析步骤
+        # 3. 如果没有parse输出，说明步骤1的解析还没完成
         if not input_files:
             self.logger.error("[错误] 未找到文献解析步骤的输出文件")
-            self.logger.error("[提示] 请先执行「步骤1: 文献解析（导入文献索引 → 开始去重）」，再运行去重步骤")
+            self.logger.error("[提示] 请先在步骤1上传文献并等待自动解析完成，再运行去重")
             return False
         
         total_files = len(input_files)
@@ -724,7 +716,7 @@ class SyncExecutor(BaseExecutor):
         
         流程：
         1. 获取ai_screen步骤输出的所有JSON结果
-        2. 聚合结果（每目录只取最新的JSON）
+        2. 读取每个JSON文件的筛选数据
         3. 生成Excel和RIS文件
         """
         self.logger.info("[步骤] 开始结果归纳...")
@@ -748,32 +740,16 @@ class SyncExecutor(BaseExecutor):
         if result_files.count() == 0:
             self.logger.warning("[警告] 没有筛选结果，将生成空报告")
         
-        # 2. 聚合结果（按目录分组，取最新的）
-        from collections import defaultdict
-        
-        results_by_dir = defaultdict(list)
-        
-        for df in result_files:
-            # 从路径中提取目录名
-            parts = df.file.path.split('/')
-            results_dir = parts[-2] if len(parts) >= 2 else 'unknown'
-            results_by_dir[results_dir].append(df)
-        
-        # 每个目录只取最新的结果
+        # 2. 读取所有筛选结果（不按目录分组，直接读取每个 DataFile）
         final_results = []
         
-        for dir_name, files in results_by_dir.items():
-            # 按更新时间排序
-            files_sorted = sorted(files, key=lambda x: x.updated_at, reverse=True)
-            latest_file = files_sorted[0]
-            
+        for df in result_files:
             try:
-                with open(latest_file.file.path, 'r', encoding='utf-8') as f:
+                with open(df.file.path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     final_results.append(data)
-                    self.logger.debug(f"[聚合] {latest_file.filename}")
             except Exception as e:
-                self.logger.warning(f"[警告] 读取 {latest_file.filename} 失败: {e}")
+                self.logger.warning(f"[警告] 读取 {df.filename} 失败: {e}")
         
         self.logger.info(f"[聚合] 有效结果: {len(final_results)} 个")
         
@@ -819,7 +795,7 @@ class SyncExecutor(BaseExecutor):
             self.logger.info("[导出] 生成RIS文件...")
             ris_path = self._generate_ris(included_results)
         
-        # 5. 保存输出文件
+        # 5. 保存输出文件（保留历史版本，用户可选择下载不同版本）
         if excel_path and excel_path.exists():
             self.save_output_file(excel_path, "screening_results.xlsx", "初筛结果Excel", "output")
         

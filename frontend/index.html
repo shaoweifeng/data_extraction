@@ -214,17 +214,28 @@
                                             <h3 class="text-2xl font-bold text-gray-800">步骤 1: 导入文献索引</h3>
                                             <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib, .xml, .ciw 格式的文件</p>
                                         </div>
+                                        <!-- 解析进度提示 -->
+                                        <div v-if="isParsing" class="mb-4 bg-blue-50 rounded-xl p-4 border border-blue-200 text-center">
+                                            <i class="fas fa-spinner fa-spin text-blue-600 text-2xl mr-2"></i>
+                                            <span class="text-blue-700 font-medium">正在解析文献 {{ parsedCount > 0 ? `（已解析 ${parsedCount} 条）` : '...' }}</span>
+                                        </div>
                                         <div class="border-2 border-dashed border-blue-200 rounded-xl p-10 hover:bg-blue-50 transition cursor-pointer text-center"
-                                             @click="$refs.refInput.click()">
+                                             @click="isParsing ? null : $refs.refInput.click()">
                                             <input type="file" ref="refInput" class="hidden" multiple 
                                                    accept=".ris,.bib,.nbib,.xml,.ciw" @change="handleReferenceUpload">
-                                            <button class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 transition">
-                                                <i class="fas fa-upload mr-2"></i>上传 Reference 文件
+                                            <button :disabled="isParsing" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 disabled:opacity-50 transition">
+                                                <i v-if="isParsing" class="fas fa-spinner fa-spin mr-2"></i>
+                                                <i v-else class="fas fa-upload mr-2"></i>{{ isParsing ? '正在解析...' : '上传 Reference 文件' }}
                                             </button>
-                                            <p class="mt-4 text-sm text-gray-400">点击或拖拽文件到此处</p>
+                                            <p class="mt-4 text-sm text-gray-400">点击或拖拽文件到此处（上传后自动解析）</p>
                                         </div>
                                         <div class="mt-6 text-left">
-                                            <h4 class="font-semibold text-gray-700 mb-2">已导入的索引</h4>
+                                            <h4 class="font-semibold text-gray-700 mb-2">
+                                                已导入的索引
+                                                <span v-if="parsedCount > 0 && !isParsing" class="text-sm text-green-600 ml-2">
+                                                    · 已解析 {{ parsedCount }} 条文献
+                                                </span>
+                                            </h4>
                                             <div class="bg-gray-50 rounded-xl border p-4 max-h-64 overflow-y-auto">
                                                 <div v-if="referenceFiles.length === 0" class="text-gray-400 text-sm text-center py-4">暂无已导入的索引</div>
                                                 <div v-else class="space-y-2">
@@ -442,22 +453,22 @@
                                                     <button @click="screeningTab = 'pending'; pendingPage = 0" 
                                                             :class="screeningTab === 'pending' ? 'text-blue-600 border-b-2 border-blue-600 font-semibold' : 'text-gray-500'"
                                                             class="pb-1 text-sm">
-                                                        待筛选 ({{ pendingFiles.length }})
+                                                        待筛选 ({{ remainingFiles.length }})
                                                     </button>
                                                     <button @click="screeningTab = 'screened'; screenedPage = 0; loadScreenedFiles()" 
                                                             :class="screeningTab === 'screened' ? 'text-green-600 border-b-2 border-green-600 font-semibold' : 'text-gray-500'"
                                                             class="pb-1 text-sm">
-                                                        已筛选 ({{ screenedFiles.length }})
+                                                        已筛选 ({{ screenedFiles.length || processedCount }})
                                                     </button>
                                                 </div>
                                                 <!-- 待筛选列表 -->
                                                 <div v-show="screeningTab === 'pending'" class="flex-1 flex flex-col min-h-0">
                                                     <div class="flex-1 bg-white rounded border overflow-y-auto p-2">
-                                                        <div v-if="pendingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs">
+                                                        <div v-if="remainingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs">
                                                             <p>暂无待筛选文献</p>
                                                         </div>
                                                         <div v-else class="space-y-1">
-                                                            <div v-for="file in pendingFiles.slice(pendingPage*50, pendingPage*50+50)" :key="file.id" 
+                                                            <div v-for="file in remainingFiles.slice(pendingPage*50, pendingPage*50+50)" :key="file.id" 
                                                                  class="flex items-center justify-between px-2 py-1 hover:bg-gray-50 border-b text-xs">
                                                                 <div class="flex items-center overflow-hidden">
                                                                     <i class="fas fa-file-code text-blue-500 mr-2 flex-shrink-0"></i>
@@ -468,12 +479,12 @@
                                                         </div>
                                                     </div>
                                                     <!-- 待筛选分页 -->
-                                                    <div v-if="pendingFiles.length > 50" class="flex items-center justify-center gap-2 mt-1 text-xs flex-shrink-0">
+                                                    <div v-if="remainingFiles.length > 50" class="flex items-center justify-center gap-2 mt-1 text-xs flex-shrink-0">
                                                         <button @click="pendingPage = Math.max(0, pendingPage - 1)" :disabled="pendingPage === 0"
                                                                 class="px-2 py-0.5 border rounded disabled:opacity-50">上一页</button>
-                                                        <span>{{ pendingPage + 1 }}/{{ Math.ceil(pendingFiles.length / 50) }}</span>
-                                                        <button @click="pendingPage = Math.min(Math.ceil(pendingFiles.length / 50) - 1, pendingPage + 1)" 
-                                                                :disabled="pendingPage >= Math.ceil(pendingFiles.length / 50) - 1"
+                                                        <span>{{ pendingPage + 1 }}/{{ Math.ceil(remainingFiles.length / 50) }}</span>
+                                                        <button @click="pendingPage = Math.min(Math.ceil(remainingFiles.length / 50) - 1, pendingPage + 1)" 
+                                                                :disabled="pendingPage >= Math.ceil(remainingFiles.length / 50) - 1"
                                                                 class="px-2 py-0.5 border rounded disabled:opacity-50">下一页</button>
                                                     </div>
                                                 </div>
@@ -604,10 +615,53 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="text-center">
-                                            <button @click="exportResults" class="bg-teal-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-teal-700 transition">
-                                                <i class="fas fa-download mr-2"></i>导出结果报告
-                                            </button>
+                                        <!-- 导出按钮区域 -->
+                                        <div class="text-center space-y-3">
+                                            <!-- 正在生成 -->
+                                            <div v-if="isExporting">
+                                                <button disabled class="bg-gray-400 text-white px-8 py-3 rounded-lg font-medium shadow cursor-wait">
+                                                    <i class="fas fa-spinner fa-spin mr-2"></i>正在生成报告...
+                                                </button>
+                                            </div>
+                                            <!-- 已生成：显示下载按钮 -->
+                                            <div v-else-if="exportFiles.length > 0">
+                                                <p class="text-sm text-gray-500 mb-3">报告已生成，点击下载或选择历史版本：</p>
+                                                <div class="flex gap-3 justify-center items-center">
+                                                    <!-- Excel 下载组 -->
+                                                    <div v-if="exportXlsxFiles.length > 0" class="flex items-center gap-2">
+                                                        <button @click="downloadExportFile(exportXlsxFiles[selectedExcelVersion]?.file, exportXlsxFiles[selectedExcelVersion]?.filename)"
+                                                                class="bg-teal-600 text-white py-2 rounded-lg font-medium shadow hover:bg-teal-700 transition w-[150px]">
+                                                            <i class="fas fa-file-download mr-1"></i>下载Excel
+                                                        </button>
+                                                        <select v-model="selectedExcelVersion" class="border rounded-lg px-2 py-2 text-sm bg-white shadow-sm focus:ring-1 focus:ring-teal-400 min-w-[120px]">
+                                                            <option v-for="(f, i) in exportXlsxFiles" :key="f.id" :value="i">
+                                                                {{ i === 0 ? '最新版本' : '版本 ' + (exportXlsxFiles.length - i) }}{{ ' (' + (f.created_at?.slice(0,16) || '') + ')' }}
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                    <!-- EndNote 下载组 -->
+                                                    <div v-if="exportRisFiles.length > 0" class="flex items-center gap-2">
+                                                        <button @click="downloadExportFile(exportRisFiles[selectedRisVersion]?.file, exportRisFiles[selectedRisVersion]?.filename)"
+                                                                class="bg-green-600 text-white py-2 rounded-lg font-medium shadow hover:bg-green-700 transition w-[150px]">
+                                                            <i class="fas fa-file-download mr-1"></i>下载EndNote
+                                                        </button>
+                                                        <select v-model="selectedRisVersion" class="border rounded-lg px-2 py-2 text-sm bg-white shadow-sm focus:ring-1 focus:ring-green-400 min-w-[120px]">
+                                                            <option v-for="(f, i) in exportRisFiles" :key="f.id" :value="i">
+                                                                {{ i === 0 ? '最新版本' : '版本 ' + (exportRisFiles.length - i) }}{{ ' (' + (f.created_at?.slice(0,16) || '') + ')' }}
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <button @click="exportResults" class="mt-3 text-sm text-gray-500 hover:text-teal-600 transition">
+                                                    <i class="fas fa-redo mr-1"></i>重新生成报告
+                                                </button>
+                                            </div>
+                                            <!-- 未生成：显示导出按钮 -->
+                                            <div v-else>
+                                                <button @click="exportResults" class="bg-teal-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-teal-700 transition">
+                                                    <i class="fas fa-file-export mr-2"></i>导出结果报告
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -832,11 +886,27 @@
                 const latestTask = ref(null);
                 const latestAiScreenTask = ref(null);  // 专门追踪最新的 ai_screen 任务
                 const isProcessing = ref(false);
-                const screeningResults = ref(null);
+                // 筛选统计：从 screenedFiles（全局 DB 数据）实时计算，不依赖 step metadata
+                const screeningResults = computed(() => {
+                    if (screenedFiles.value.length === 0 && !latestAiScreenTask.value) return null;
+                    const included = screenedFiles.value.filter(f => f.metadata?.decision === 'included').length;
+                    const excluded = screenedFiles.value.filter(f => f.metadata?.decision === 'excluded').length;
+                    const total = totalRefs.value || pendingFiles.value.length || 0;
+                    return { included, excluded, total };
+                });
                 const aiScreenLogContent = ref('');  // 控制台实际日志内容
                 const processedCount = ref(0);  // 已处理文献计数
                 const screeningProgressValue = ref(0);  // 后端 progress_percentage（0-100）
                 const totalRefs = ref(0);  // 总文献数（从 task metadata 获取）
+                // 导出结果相关
+                const exportFiles = ref([]);  // 导出步骤的文件列表
+                const exportStepId = ref(null);  // 导出步骤ID
+                const isExporting = ref(false);  // 是否正在导出
+                const selectedExcelVersion = ref(0);  // 当前选中的 Excel 版本索引
+                const selectedRisVersion = ref(0);  // 当前选中的 RIS 版本索引
+                // 按类型分组的导出文件（最新的在前）
+                const exportXlsxFiles = computed(() => exportFiles.value.filter(f => f.filename.endsWith('.xlsx')));
+                const exportRisFiles = computed(() => exportFiles.value.filter(f => f.filename.endsWith('.ris')));
 
                 // 进度计算：基于后端返回的 progress_percentage，不再前端自己算
                 const screeningProgress = computed(() => {
@@ -846,6 +916,16 @@
                     const total = totalRefs.value || pendingFiles.value.length;
                     const processed = Math.round(total * percent / 100);
                     return { processed, total, percent };
+                });
+
+                // 待筛选文件：过滤掉已筛选的原始文件（通过 screenedFiles.metadata.source_xml 匹配）
+                const remainingFiles = computed(() => {
+                    const screenedSources = new Set(
+                        screenedFiles.value
+                            .map(f => (f.metadata && f.metadata.source_xml) || '')
+                            .filter(s => s)
+                    );
+                    return pendingFiles.value.filter(f => !screenedSources.has(f.filename));
                 });
                 
                 // 最近任务列表（状态展示）
@@ -1000,6 +1080,13 @@
                         'file_delete': 'bg-red-500',
                         'criteria_add': 'bg-green-500',
                         'criteria_delete': 'bg-orange-500',
+                        'task_start_parse': 'bg-indigo-500',
+                        'task_start_dedup': 'bg-purple-500',
+                        'task_start_ai_screen': 'bg-violet-500',
+                        'task_start_export': 'bg-teal-500',
+                        'task_stop': 'bg-yellow-500',
+                        'task_resume': 'bg-green-500',
+                        'task_abandon': 'bg-gray-500',
                     };
                     return map[opType] || 'bg-gray-400';
                 };
@@ -1009,6 +1096,7 @@
                     const d = log.operation_detail || {};
                     if (d.filename) return d.filename;
                     if (d.criteria) return d.criteria;
+                    if (d.task_type) return d.task_type;
                     return '';
                 };
 
@@ -1021,19 +1109,22 @@
                         const res = await apiRequest(`${API_BASE}/tasks/?project=${currentProject.value.id}`);
                         if (res.ok) {
                             const data = await res.json();
-                            // 只取最近10条，按创建时间倒序
-                            const tasks = extractListData(data);
+                            // 过滤掉 superseded（被续传替代的旧任务），只取最近10条
+                            const tasks = extractListData(data).filter(t => t.status !== 'superseded');
                             recentTasks.value = tasks.slice(0, 10);
-                            // 同步更新最新的 ai_screen 任务
+                            // 同步更新最新的 ai_screen 任务（排除 superseded）
                             const aiTask = tasks.find(t => t.task_type === 'ai_screen');
                             if (aiTask) {
                                 latestAiScreenTask.value = aiTask;
-                                // 断点续传场景：从 stopped 任务的 metadata 恢复进度数据
-                                if (aiTask.status === 'stopped' && aiTask.metadata) {
-                                    totalRefs.value = aiTask.metadata.total_refs || totalRefs.value;
-                                    processedCount.value = aiTask.metadata.processed_refs || 0;
-                                    screeningProgressValue.value = aiTask.progress_percentage || 0;
-                                }
+                            }
+                            // 断点续传场景：从 stagesData 中 ai_screen step 的 metadata 恢复进度数据
+                            // （Task 模型没有 metadata 字段，进度信息存于 step.metadata）
+                            const stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                            const aiStep = stage?.steps.find(s => s.step_key === 'ai_screen');
+                            if (aiStep?.metadata && aiTask?.status === 'stopped') {
+                                totalRefs.value = aiStep.metadata.total_refs || totalRefs.value;
+                                processedCount.value = aiStep.metadata.processed_refs || 0;
+                                screeningProgressValue.value = aiTask.progress_percentage || 0;
                             }
                         }
                     } catch (err) {
@@ -1196,10 +1287,28 @@
                     isProcessing.value = false;
                     screeningProgressValue.value = 0;
                     aiScreenLogContent.value = '';
-                    screeningResults.value = null;
+                    // screeningResults 是 computed，重置 screenedFiles 会自动让它返回 null
                     processedCount.value = 0;
+                    exportFiles.value = [];
+                    exportStepId.value = null;
                     await fetchStages(project.id);
                     await Promise.all([fetchRecentTasks(), fetchActivityLogs()]);
+                    // screeningResults 已改为 computed，从 screenedFiles 自动计算，无需手动恢复
+                    // 加载待筛选和已筛选文献列表
+                    await Promise.all([loadAiScreenFiles(), loadScreenedFiles()]);
+                    // 加载已有的导出文件（刷新后也能显示下载按钮）
+                    const expStage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                    const expStep = expStage?.steps.find(s => s.step_key === 'export');
+                    if (expStep) {
+                        exportStepId.value = expStep.id;
+                        try {
+                            const expRes = await apiRequest(`${API_BASE}/files/?project=${project.id}&step=${expStep.id}&data_category=output&limit=100`);
+                            if (expRes.ok) {
+                                const expData = await expRes.json();
+                                exportFiles.value = extractListData(expData);
+                            }
+                        } catch (e) { /* ignore */ }
+                    }
                     loadDedupStats();
                     await loadCriteria();
                 };
@@ -1325,16 +1434,22 @@
                     // 清空 input value，确保再次选择同一文件时仍能触发 change 事件
                     event.target.value = '';
 
-                    // 所有文件上传完成后，刷新一次文件列表
+                    // 所有文件上传完成后，刷新文件列表并自动触发解析
                     if (uploadedFileIds.length > 0) {
                         await loadScreen1Files();
                         await fetchActivityLogs();
-                        // 不再自动触发解析任务，用户需要手动点击"开始去重"按钮
+                        // 自动触发文献解析任务
+                        await triggerParsingTask(uploadedFileIds);
                     }
                 };
 
                 // 触发文献解析任务
+                const isParsing = ref(false);
+                const parsedCount = ref(0);
+                
                 const triggerParsingTask = async (fileIds) => {
+                    isParsing.value = true;
+                    parsedCount.value = 0;
                     try {
                         const res = await apiRequest(`${API_BASE}/tasks/`, {
                             method: 'POST',
@@ -1348,17 +1463,54 @@
                         if (res.ok) {
                             const task = await res.json();
                             latestTask.value = task;
-                            alert('文献解析任务已启动，请稍候...');
-                            // 开始轮询任务状态
-                            pollTaskStatus(task.id);
+                            // 开始轮询解析任务状态
+                            pollParsingStatus(task.id);
                         } else {
                             const data = await res.json();
                             alert(`启动解析任务失败: ${data.error || '未知错误'}`);
+                            isParsing.value = false;
                         }
                     } catch (err) {
                         console.error('启动解析任务失败', err);
                         alert(`启动解析任务失败: ${err.message}`);
+                        isParsing.value = false;
                     }
+                };
+
+                // 专用轮询：解析任务状态
+                const pollParsingStatus = async (taskId) => {
+                    const poll = async () => {
+                        try {
+                            const res = await apiRequest(`${API_BASE}/tasks/${taskId}/`);
+                            if (!res.ok) { isParsing.value = false; return; }
+                            const task = await res.json();
+                            latestTask.value = task;
+                            const status = task.status;
+                            
+                            // 从 metadata 获取解析进度
+                            if (task.metadata) {
+                                parsedCount.value = task.metadata.total_entries || task.metadata.split_files || 0;
+                            }
+
+                            if (status === 'running' || status === 'pending') {
+                                setTimeout(poll, 2000);
+                            } else {
+                                isParsing.value = false;
+                                await fetchStages(currentProject.value.id);
+                                await fetchRecentTasks();
+                                await fetchActivityLogs();
+                                if (status === 'completed') {
+                                    parsedCount.value = task.metadata?.split_files || task.metadata?.total_entries || 0;
+                                } else {
+                                    alert(`文献解析失败: ${task.error_message || '任务执行失败'}`);
+                                }
+                            }
+                        } catch (err) {
+                            console.error('轮询解析状态失败', err);
+                            isParsing.value = false;
+                        }
+                    };
+                    await poll();
                 };
 
                 // 去重处理（参考 xxc/develop 分支的同步逻辑）
@@ -1650,11 +1802,9 @@
                                         .find(s => s.stage_key === 'SCREEN_1')
                                         ?.steps.find(s => s.step_key === 'ai_screen');
                                     if (aiStep?.metadata) {
-                                        screeningResults.value = {
-                                            included: aiStep.metadata.included_refs || 0,
-                                            excluded: aiStep.metadata.excluded_refs || 0,
-                                            total: aiStep.metadata.total_refs || 0
-                                        };
+                                        // screeningResults 已改为 computed，从 screenedFiles 自动计算
+                                        // 只需确保 screenedFiles 已加载
+                                        await loadScreenedFiles();
                                     }
                                     alert('AI初筛完成！');
                                 } else if (status === 'stopped') {
@@ -1752,8 +1902,7 @@
                         if (res.ok) {
                             latestTask.value = null;
                             latestAiScreenTask.value = null;
-                            screenedFiles.value = [];
-                            screeningResults.value = null;
+                            screenedFiles.value = [];  // computed screeningResults 自动重置
                             await fetchRecentTasks();
                             alert('任务已放弃，筛选结果已清除');
                         } else {
@@ -1778,8 +1927,7 @@
                     try {
                         // 启动前先清除旧的筛选结果
                         await clearAiScreenResults();
-                        screenedFiles.value = [];
-                        screeningResults.value = null;
+                        screenedFiles.value = [];  // computed screeningResults 自动重置
 
                         const res = await apiRequest(`${API_BASE}/tasks/`, {
                             method: 'POST',
@@ -1809,7 +1957,8 @@
 
                 // 导出结果
                 const exportResults = async () => {
-                    isProcessing.value = true;
+                    isExporting.value = true;
+                    exportFiles.value = [];
                     
                     try {
                         const res = await apiRequest(`${API_BASE}/tasks/`, {
@@ -1822,47 +1971,53 @@
                         });
 
                         if (res.ok) {
-                            latestTask.value = await res.json();
-                            alert('结果归纳任务已启动，请稍候...');
-                            pollTaskStatus(latestTask.value.id);
-                            
-                            // 轮询完成后，获取导出的文件
-                            const pollForFiles = async () => {
-                                if (latestTask.value.status === 'completed') {
-                                    // 获取导出步骤的文件
-                                    const screen1Stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
-                                    if (screen1Stage) {
-                                        const exportStep = screen1Stage.steps.find(s => s.step_key === 'export');
-                                        if (exportStep) {
-                                            const filesRes = await apiRequest(`${API_BASE}/files/?project=${currentProject.value.id}&step=${exportStep.id}`);
-                                            if (filesRes.ok) {
-                                                const data = await filesRes.json();
-                                                const files = extractListData(data);
-                                                
-                                                if (files.length > 0) {
-                                                    // 自动下载第一个文件（通常是Excel）
-                                                    const firstFile = files.find(f => f.filename.endsWith('.xlsx'));
-                                                    if (firstFile) {
-                                                        window.open(firstFile.file, '_blank');
-                                                        alert(`结果已生成！共 ${files.length} 个文件`);
-                                                    }
+                            const task = await res.json();
+                            // 轮询任务状态，完成后加载导出文件
+                            const pollInterval = setInterval(async () => {
+                                try {
+                                    const statusRes = await apiRequest(`${API_BASE}/tasks/${task.id}/`);
+                                    if (statusRes.ok) {
+                                        const statusData = await statusRes.json();
+                                        if (statusData.status === 'completed') {
+                                            clearInterval(pollInterval);
+                                            isExporting.value = false;
+                                            // 刷新 stages 获取最新步骤状态
+                                            await fetchStages(currentProject.value.id);
+                                            // 加载导出步骤的文件
+                                            const stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                                            const expStep = stage?.steps.find(s => s.step_key === 'export');
+                                            if (expStep) {
+                                                exportStepId.value = expStep.id;
+                                                const filesRes = await apiRequest(`${API_BASE}/files/?project=${currentProject.value.id}&step=${expStep.id}&data_category=output&limit=100`);
+                                                if (filesRes.ok) {
+                                                    const data = await filesRes.json();
+                                                    exportFiles.value = extractListData(data);
                                                 }
                                             }
+                                        } else if (statusData.status === 'failed') {
+                                            clearInterval(pollInterval);
+                                            isExporting.value = false;
+                                            alert('导出失败，请查看日志');
                                         }
                                     }
-                                }
-                            };
-                            
-                            // 延迟检查文件
-                            setTimeout(pollForFiles, 3000);
+                                } catch (e) { /* ignore */ }
+                            }, 1500);
                         } else {
                             alert('启动结果归纳任务失败');
+                            isExporting.value = false;
                         }
                     } catch (err) {
                         alert(`启动失败: ${err.message}`);
-                    } finally {
-                        isProcessing.value = false;
+                        isExporting.value = false;
                     }
+                };
+
+                // 下载导出文件
+                const downloadExportFile = (fileUrl, filename) => {
+                    const a = document.createElement('a');
+                    a.href = fileUrl;
+                    a.download = filename;
+                    a.click();
                 };
 
                 // 辅助函数
@@ -1925,6 +2080,7 @@
                         
                         if (res.ok) {
                             await loadScreen1Files();
+                            await fetchStages(currentProject.value.id);  // 刷新步骤状态（parse/dedup 可能被重置为 pending）
                             await fetchActivityLogs();
                         }
                     } catch (err) {
@@ -1958,8 +2114,10 @@
                     isDeduplicating, dedupCompleted, handleDeduplication, dedupStats, showDuplicateDetails,
                     newCriteria, criteriaList, addCriteria, removeCriteria,
                     pendingFiles, screenedFiles, latestTask, latestAiScreenTask, isProcessing, screeningResults, aiScreenLogContent,
-                    screeningTab, pendingPage, screenedPage, processedCount, screeningProgress,
-                    loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults, exportResults,
+                    screeningTab, pendingPage, screenedPage, processedCount, screeningProgress, remainingFiles,
+                    isParsing, parsedCount,
+                    loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults, 
+                    exportResults, exportFiles, exportXlsxFiles, exportRisFiles, isExporting, downloadExportFile, selectedExcelVersion, selectedRisVersion,
                     getStageClass, getStageName, nextStep, prevStep,
                     uploadingFiles,
                     // 任务状态展示

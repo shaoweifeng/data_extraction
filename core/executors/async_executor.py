@@ -114,7 +114,11 @@ class AsyncExecutor(BaseExecutor):
         processed_sources: Set[str] = set()
         
         if checkpoint:
-            processed_sources = set(checkpoint.get("processed_sources", []))
+            # processed_sources 可能位于顶层或嵌套在 "data" 中（add_checkpoint 的包裹格式）
+            raw_sources = checkpoint.get("processed_sources", [])
+            if not raw_sources and "data" in checkpoint:
+                raw_sources = checkpoint["data"].get("processed_sources", [])
+            processed_sources = set(raw_sources)
             self.logger.info(f"[断点] 检测到上次断点，已处理 {len(processed_sources)} 篇")
             self.logger.info(f"[断点] 上次进度: {checkpoint.get('progress', {}).get('current', 0)}/{checkpoint.get('progress', {}).get('total', 0)}")
             # 初始化进度写入 DB，避免进度条从0跳升
@@ -250,16 +254,24 @@ class AsyncExecutor(BaseExecutor):
         # 9. 清除断点（任务完成）
         self.clear_checkpoint()
         
-        # 10. 更新步骤元数据
-        included_count = len([r for r in batch_results if r.get('decision') == 'included'])
-        excluded_count = len([r for r in batch_results if r.get('decision') == 'excluded'])
+        # 10. 更新步骤元数据（从 DB DataFile 累计查询，包含所有任务的结果）
+        from django.db import close_old_connections
+        close_old_connections()
+        all_outputs = DataFile.objects.filter(
+            project=self.project_obj,
+            step=self.step_obj,
+            data_category='output'
+        )
+        included_count = all_outputs.filter(metadata__decision='included').count()
+        excluded_count = all_outputs.filter(metadata__decision='excluded').count()
+        total_output_count = all_outputs.count()
         
         self.step_obj.metadata = {
             "total_refs": total_refs,
             "processed_refs": processed_count,
             "included_refs": included_count,
             "excluded_refs": excluded_count,
-            "error_refs": len(batch_results) - included_count - excluded_count,
+            "error_refs": total_output_count - included_count - excluded_count,
             "start_time": self.task_obj.started_at.isoformat() if self.task_obj.started_at else None,
             "end_time": datetime.now().isoformat(),
             "criteria_count": len(criteria)
@@ -443,7 +455,7 @@ class AsyncExecutor(BaseExecutor):
                     data_category='output',
                     source='tool_generated',
                     description='AI筛选结果',
-                    metadata={'decision': result.get('decision', 'excluded')},  # 关键：写入决策结果
+                    metadata={'decision': result.get('decision', 'excluded'), 'source_xml': entry.get("source_xml", "")},  # 关键：写入决策结果+原始文件名
                     created_by=self.task_obj.created_by
                 )
 

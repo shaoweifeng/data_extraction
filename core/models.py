@@ -358,6 +358,7 @@ class Task(models.Model):
         ('completed', '已完成'),
         ('failed', '失败'),
         ('stopped', '已停止'),
+        ('superseded', '已被续传替代'),
     ]
     
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', verbose_name="所属项目")
@@ -402,6 +403,13 @@ class ActivityLog(models.Model):
         ('file_delete', '删除文献索引'),
         ('criteria_add', '添加纳排标准'),
         ('criteria_delete', '删除纳排标准'),
+        ('task_start_parse', '启动文献解析'),
+        ('task_start_dedup', '启动文献去重'),
+        ('task_start_ai_screen', '启动AI初筛'),
+        ('task_start_export', '启动结果归纳'),
+        ('task_stop', '暂停任务'),
+        ('task_resume', '继续任务'),
+        ('task_abandon', '放弃任务'),
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='activity_logs', verbose_name="所属项目")

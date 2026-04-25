@@ -315,6 +315,10 @@ class TaskScheduler:
             config=config
         )
         
+        # 将旧 stopped 任务标记为 superseded（已被续传替代），避免最近任务列表显示两条
+        old_task.status = 'superseded'
+        old_task.save()
+        
         step_key = old_task.task_type
         step_config = get_step_config(step_key)
         mode = step_config.get("execution_mode", "sync")

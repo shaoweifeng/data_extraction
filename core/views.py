@@ -319,6 +319,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 step=ai_step,
                 data_category='output'
             ).delete()
+            # 记录操作日志
+            ActivityLog.objects.create(
+                project=project,
+                operation_type='task_abandon',
+                operation_detail={'task_type': 'AI初筛', 'action': 'clear_results', 'deleted_count': deleted_count},
+                created_by=request.user
+            )
             return Response({'message': f'已清除 {deleted_count} 条筛选结果记录'})
 
         return Response({'message': '未找到 ai_screen 步骤，无需清除'})
@@ -783,7 +790,47 @@ class DataFileViewSet(viewsets.ModelViewSet):
             )
 
     def perform_destroy(self, instance):
-        """删除文件时记录操作日志"""
+        """删除文件时记录操作日志，并级联清理失效的中间数据"""
+        from core.models import StageStep, ProjectStage
+
+        # 级联清理：删除 input 文件时，parse/dedup 步骤的 intermediate 数据也失效了
+        if instance.data_category == 'input' and instance.project:
+            project = instance.project
+            # 清理 parse 步骤的 intermediate（解析结果依赖原始输入）
+            parse_step = StageStep.objects.filter(
+                stage__project=project, step_key='parse'
+            ).first()
+            if parse_step:
+                old_intermediate = DataFile.objects.filter(
+                    project=project, step=parse_step, data_category='intermediate'
+                )
+                count = old_intermediate.count()
+                if count > 0:
+                    old_intermediate.delete()
+
+            # 清理 dedup 步骤的 intermediate（去重结果依赖解析结果）
+            dedup_step = StageStep.objects.filter(
+                stage__project=project, step_key='dedup'
+            ).first()
+            if dedup_step:
+                old_intermediate = DataFile.objects.filter(
+                    project=project, step=dedup_step, data_category='intermediate'
+                )
+                count = old_intermediate.count()
+                if count > 0:
+                    old_intermediate.delete()
+
+            # 重置 parse 和 dedup 步骤状态（从 completed → pending）
+            for step_key in ['parse', 'dedup']:
+                step = StageStep.objects.filter(
+                    stage__project=project, step_key=step_key
+                ).first()
+                if step and step.status in ('completed', 'in_progress', 'failed'):
+                    step.status = 'pending'
+                    step.metadata = {}
+                    step.save()
+
+        # 记录操作日志
         ActivityLog.objects.create(
             project=instance.project,
             operation_type='file_delete',
@@ -920,6 +967,19 @@ class TaskViewSet(viewsets.ModelViewSet):
             task = scheduler.start_step(step_key, user.id, **config)
             # 更新serializer实例以返回正确的数据
             serializer.instance = task
+            
+            # 记录操作日志（使用细化的任务类型）
+            op_type = f'task_start_{step_key}'
+            task_type_display = {
+                'parse': '文献解析', 'dedup': '文献去重',
+                'ai_screen': 'AI初筛', 'export': '结果归纳'
+            }.get(step_key, step_key)
+            ActivityLog.objects.create(
+                project_id=project_id,
+                operation_type=op_type,
+                operation_detail={'task_type': task_type_display, 'task_id': task.id},
+                created_by=user
+            )
         except ValueError as e:
             raise drf_serializers.ValidationError(str(e))
         except Exception as e:
@@ -942,6 +1002,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         success = scheduler.stop_task(task.id)
         
         if success:
+            task_type_display = {
+                'parse': '文献解析', 'dedup': '文献去重',
+                'ai_screen': 'AI初筛', 'export': '结果归纳'
+            }.get(task.task_type, task.task_type)
+            ActivityLog.objects.create(
+                project=task.project,
+                operation_type='task_stop',
+                operation_detail={'task_type': task_type_display, 'task_id': task.id},
+                created_by=request.user
+            )
             return Response({"message": "任务已停止"})
         else:
             return Response(
@@ -966,6 +1036,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         
         try:
             new_task = scheduler.resume_task(task.id)
+            task_type_display = {
+                'parse': '文献解析', 'dedup': '文献去重',
+                'ai_screen': 'AI初筛', 'export': '结果归纳'
+            }.get(task.task_type, task.task_type)
+            ActivityLog.objects.create(
+                project=task.project,
+                operation_type='task_resume',
+                operation_detail={'task_type': task_type_display, 'task_id': new_task.id},
+                created_by=request.user
+            )
             return Response({
                 "message": "任务已恢复",
                 "task": TaskSerializer(new_task).data
