@@ -759,21 +759,54 @@ class SyncExecutor(BaseExecutor):
         try:
             import pandas as pd
             
+            # 对齐 xxc/develop 分支的列结构
+            headers = [
+                "id", "include_or_not", "exclusion_reason_id", "exclusion_reason",
+                "ReferenceType", "Title", "Author", "Year", "Journal",
+                "Volume", "Issue", "Page", "Date", "Doi", "PMCID", "Abstract", "URL", "Address",
+                "source_xml"
+            ]
+            
             rows = []
-            for result in final_results:
-                rows.append({
-                    "标题": result.get("title", ""),
-                    "作者": result.get("authors", ""),
-                    "年份": result.get("year", ""),
-                    "期刊": result.get("journal", ""),
-                    "筛选结果": result.get("decision", ""),
-                    "置信度": result.get("confidence", ""),
-                    "理由": result.get("reasoning", ""),
-                    "源文件": result.get("source_xml", ""),
-                    "处理时间": result.get("timestamp", "")
-                })
+            for idx, result in enumerate(final_results, 1):
+                # decision → include_or_not / exclusion_reason
+                decision = result.get("decision", "")
+                include_or_not = "included" if decision == "included" else "excluded"
+                exclusion_reason = result.get("reasoning", "") if decision != "included" else ""
+                
+                # 读取源XML补充完整元数据
+                source_xml = result.get("source_xml", "")
+                xml_fields = self._load_xml_fields(source_xml) if source_xml else {}
+                
+                row = {
+                    "id": idx,
+                    "include_or_not": include_or_not,
+                    "exclusion_reason_id": result.get("exclusion_reason_id", ""),
+                    "exclusion_reason": exclusion_reason,
+                    "ReferenceType": xml_fields.get("ReferenceType", result.get("reference_type", "")),
+                    "Title": xml_fields.get("Title", "") or result.get("title", ""),
+                    "Author": xml_fields.get("Author", "") or result.get("authors", ""),
+                    "Year": xml_fields.get("Year", "") or result.get("year", ""),
+                    "Journal": xml_fields.get("Journal", "") or result.get("journal", ""),
+                    "Volume": xml_fields.get("Volume", result.get("volume", "")),
+                    "Issue": xml_fields.get("Issue", result.get("issue", "")),
+                    "Page": xml_fields.get("Page", result.get("page", "")),
+                    "Date": xml_fields.get("Date", result.get("date", "")),
+                    "Doi": xml_fields.get("Doi", "") or result.get("doi", ""),
+                    "PMCID": xml_fields.get("PMCID", result.get("pmcid", "")),
+                    "Abstract": xml_fields.get("Abstract", "") or result.get("abstract", ""),
+                    "URL": xml_fields.get("URL", "") or result.get("url", ""),
+                    "Address": xml_fields.get("Address", result.get("address", "")),
+                    "source_xml": source_xml,
+                }
+                rows.append(row)
             
             df = pd.DataFrame(rows)
+            # 确保所有列都存在并按顺序排列
+            for h in headers:
+                if h not in df.columns:
+                    df[h] = None
+            df = df.reindex(columns=headers)
             
             excel_path = Path(self.workspace) / "screening_results.xlsx"
             df.to_excel(excel_path, index=False, engine='openpyxl')
@@ -836,3 +869,107 @@ class SyncExecutor(BaseExecutor):
         except Exception as e:
             self.logger.error(f"[错误] 生成RIS失败: {e}")
             return None
+    
+    def _itext(self, elem):
+        """提取XML元素的所有文本内容"""
+        if elem is None:
+            return ""
+        return "".join(elem.itertext()).strip()
+    
+    def _load_xml_fields(self, xml_path):
+        """从源XML文件中提取完整文献元数据字段
+        
+        XML文件位于 dedup_*/dedup_xmls/ 目录下，source_xml 可能带 hash 后缀。
+        JSON中也有部分字段（doi/url/abstract），XML和JSON互补。
+        """
+        if not xml_path:
+            return {}
+        try:
+            import xml.etree.ElementTree as ET
+            from pathlib import Path
+            
+            # 1. 尝试直接路径
+            actual_path = None
+            p = Path(xml_path)
+            if p.exists():
+                actual_path = p
+            
+            # 2. 在 dedup 目录的 dedup_xmls 下查找（source_xml 可能带 hash 后缀）
+            if actual_path is None:
+                project_ws = Path(self.workspace).parent  # workspace 是 export_*/之类, parent 是 project_*
+                # 用 source_xml 的前缀（去掉最后的 _hash.xml 部分）做模糊匹配
+                xml_name = p.name
+                # 去掉 hash 后缀：例如 Resminostat__xxx_76ae11f3.xml → Resminostat__xxx
+                name_prefix = xml_name.rsplit('_', 1)[0] if '_' in xml_name else xml_name
+                
+                for dedup_dir in project_ws.glob('dedup_*'):
+                    dedup_xmls = dedup_dir / 'dedup_xmls'
+                    if not dedup_xmls.exists():
+                        continue
+                    # 先精确匹配
+                    exact = dedup_xmls / xml_name
+                    if exact.exists():
+                        actual_path = exact
+                        break
+                    # 再前缀模糊匹配
+                    for f in dedup_xmls.glob(f'*{name_prefix}*'):
+                        actual_path = f
+                        break
+                    if actual_path:
+                        break
+            
+            # 3. 在 parse 目录下查找（有些项目可能没有 dedup，只有 parse）
+            if actual_path is None:
+                project_ws = Path(self.workspace).parent
+                name_prefix = p.name.rsplit('_', 1)[0] if '_' in p.name else p.name
+                for parse_dir in project_ws.glob('parse_*'):
+                    for sub in ['split_xmls', 'parsed_xmls', 'output']:
+                        xml_sub = parse_dir / sub
+                        if not xml_sub.exists():
+                            continue
+                        exact = xml_sub / p.name
+                        if exact.exists():
+                            actual_path = exact
+                            break
+                        for f in xml_sub.glob(f'*{name_prefix}*'):
+                            actual_path = f
+                            break
+                        if actual_path:
+                            break
+                    if actual_path:
+                        break
+            
+            if actual_path is None:
+                self.logger.debug(f"[XML] 未找到文件: {xml_path}")
+                return {}
+            
+            # 解析 XML
+            root = ET.parse(actual_path).getroot()
+            ref = root
+            if root.tag not in ("Reference", "reference"):
+                ref = root.find(".//Reference") or root.find(".//reference")
+            if ref is None:
+                ref = root  # fallback
+            
+            # XML 实际标签: Title, Authors(整体字符串), Year, Journal, Abstract, Doi, Url, SourceFile, SourcePosition
+            # 注意大小写: Url 而非 URL, Doi 而非 DOI, Authors 而非 Author
+            fields = {
+                "ReferenceType": self._itext(ref.find("ReferenceType")),
+                "Title": self._itext(ref.find("Title")),
+                "Author": self._itext(ref.find("Authors")) or self._itext(ref.find("Author")),
+                "Year": self._itext(ref.find("Year")),
+                "Journal": self._itext(ref.find("Journal")),
+                "Volume": self._itext(ref.find("Volume")),
+                "Issue": self._itext(ref.find("Issue")),
+                "Page": self._itext(ref.find("Page")),
+                "Date": self._itext(ref.find("Date")),
+                "Doi": self._itext(ref.find("Doi")) or self._itext(ref.find("DOI")),
+                "PMCID": self._itext(ref.find("PMCID")),
+                "Abstract": self._itext(ref.find("Abstract")),
+                "URL": self._itext(ref.find("Url")) or self._itext(ref.find("URL")),
+                "Address": self._itext(ref.find("Address")),
+            }
+            return fields
+        except Exception as e:
+            self.logger.warning(f"[警告] 加载XML字段失败 {xml_path}: {e}")
+            return {}
