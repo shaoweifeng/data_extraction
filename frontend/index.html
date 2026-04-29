@@ -984,6 +984,23 @@
                     }
                 };
 
+                // 不带超时的请求，用于任务启动/停止/续传等长时间操作
+                const apiRequestNoTimeout = async (url, options = {}) => {
+                    const defaultOptions = {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken() || ''
+                        },
+                        credentials: 'include'
+                    };
+                    const response = await fetch(url, { ...defaultOptions, ...options });
+                    if (!response.ok && (response.status === 401 || response.status === 403)) {
+                        showLoginModal.value = true;
+                        throw new Error('未登录');
+                    }
+                    return response;
+                };
+
                 const apiRequest = async (url, options = {}) => {
                     const defaultOptions = {
                         headers: {
@@ -1487,7 +1504,7 @@
                     isParsing.value = true;
                     parsedCount.value = 0;
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                        const res = await apiRequestNoTimeout(`${API_BASE}/tasks/`, {
                             method: 'POST',
                             body: JSON.stringify({
                                 project: currentProject.value.id,
@@ -1559,7 +1576,7 @@
                     isDeduplicating.value = true;
                     
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                        const res = await apiRequestNoTimeout(`${API_BASE}/tasks/`, {
                             method: 'POST',
                             body: JSON.stringify({
                                 project: currentProject.value.id,
@@ -1865,7 +1882,7 @@
                     const ok = confirm('确定暂停当前筛选任务？');
                     if (!ok) return;
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/${latestAiScreenTask.value.id}/stop/`, {
+                        const res = await apiRequestNoTimeout(`${API_BASE}/tasks/${latestAiScreenTask.value.id}/stop/`, {
                             method: 'POST'
                         });
                         if (res.ok) {
@@ -1888,7 +1905,7 @@
                 const resumeScreeningTask = async () => {
                     if (!latestAiScreenTask.value) return;
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/${latestAiScreenTask.value.id}/resume/`, {
+                        const res = await apiRequestNoTimeout(`${API_BASE}/tasks/${latestAiScreenTask.value.id}/resume/`, {
                             method: 'POST'
                         });
                         if (res.ok) {
@@ -1916,7 +1933,7 @@
                 const clearAiScreenResults = async () => {
                     if (!currentProject.value) return;
                     try {
-                        await apiRequest(`${API_BASE}/projects/${currentProject.value.id}/clear_ai_screen_results/`, {
+                        await apiRequestNoTimeout(`${API_BASE}/projects/${currentProject.value.id}/clear_ai_screen_results/`, {
                             method: 'POST'
                         });
                     } catch (err) {
@@ -1965,7 +1982,7 @@
                         await clearAiScreenResults();
                         screenedFiles.value = [];  // computed screeningResults 自动重置
 
-                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                        const res = await apiRequestNoTimeout(`${API_BASE}/tasks/`, {
                             method: 'POST',
                             body: JSON.stringify({
                                 project: currentProject.value.id,
@@ -1997,7 +2014,7 @@
                     exportFiles.value = [];
                     
                     try {
-                        const res = await apiRequest(`${API_BASE}/tasks/`, {
+                        const res = await apiRequestNoTimeout(`${API_BASE}/tasks/`, {
                             method: 'POST',
                             body: JSON.stringify({
                                 project: currentProject.value.id,
