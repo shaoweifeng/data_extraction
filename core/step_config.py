@@ -67,7 +67,7 @@ STEP_CONFIGURATIONS = {
     # 子步骤: 文献解析（同步）
     # ------------------------------------------------------------------------
     "parse": {
-        "name": "文献解析",
+        "name": "导入文献索引",
         "stage_key": "SCREEN_1",
         "execution_mode": "sync",
         "description": "解析RIS/BIB/NBIB/XML格式文献",
@@ -349,7 +349,7 @@ STAGE_DEFINITIONS = [
         "name": "文献初筛",
         "order": 20,
         "steps": [
-            {"step_key": "parse", "name": "文献解析", "order": 10, "can_skip": False},
+            {"step_key": "parse", "name": "导入文献索引", "order": 10, "can_skip": False},
             {"step_key": "dedup", "name": "自动去重", "order": 20, "can_skip": True},
             {"step_key": "criteria", "name": "纳排标准", "order": 30, "can_skip": False},
             {"step_key": "ai_screen", "name": "AI初筛", "order": 40, "can_skip": False},
