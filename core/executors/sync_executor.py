@@ -178,12 +178,12 @@ class SyncExecutor(BaseExecutor):
             # 使用简化解析
             all_entries = self._simple_parse(input_dir)
         
-        # 为每个entry生成XML
+        # 为每个entry生成XML（用序号保证文件名唯一，避免同标题文献被覆盖）
         split_count = 0
         for i, entry in enumerate(all_entries, 1):
             title = entry.get('title', f'unknown_{i}')
-            safe_name = safe_title(title, 50)
-            xml_file = split_dir / f"{safe_name}.xml"
+            safe_name = safe_title(title, 40)
+            xml_file = split_dir / f"{i:05d}_{safe_name}.xml"
             
             # 创建单篇XML
             root = ET.Element('reference')
