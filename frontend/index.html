@@ -408,12 +408,29 @@
                                         <div class="text-center mb-6">
                                             <i class="fas fa-list-check text-6xl text-green-100 mb-4"></i>
                                             <h3 class="text-2xl font-bold text-gray-800">步骤 3: 设定纳排标准</h3>
-                                            <p class="text-gray-500 mt-2">定义 AI 筛选文献的纳入与排除规则</p>
+                                            <p class="text-gray-500 mt-2">初筛需要根据排除标准进行排除，故需要设定排除理由</p>
                                         </div>
                                         <div class="mb-6">
+                                            <!-- 常用排除标准快捷勾选 -->
+                                            <div class="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                                <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">
+                                                    <i class="fas fa-bolt mr-1"></i>常用排除标准（勾选后自动添加）
+                                                </p>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                    <label v-for="preset in presetCriteria" :key="preset"
+                                                           class="flex items-start gap-2 cursor-pointer group">
+                                                        <input type="checkbox"
+                                                               :checked="criteriaList.includes(preset)"
+                                                               @change="togglePreset(preset)"
+                                                               class="mt-0.5 w-4 h-4 rounded accent-green-600 cursor-pointer flex-shrink-0">
+                                                        <span class="text-sm text-gray-700 group-hover:text-gray-900 leading-snug">{{ preset }}</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <!-- 自定义输入 -->
                                             <div class="flex space-x-2 mb-4">
                                                 <input v-model="newCriteria" @keyup.enter="addCriteria" type="text" 
-                                                       placeholder="输入一条标准（例如：排除非英文文献）并回车" 
+                                                       placeholder="自定义：输入一条标准并回车" 
                                                        class="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500">
                                                 <button @click="addCriteria" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
                                                     <i class="fas fa-plus"></i> 添加
@@ -894,6 +911,14 @@
                 // 纳排标准
                 const newCriteria = ref('');
                 const criteriaList = ref([]);
+
+                const presetCriteria = [
+                    '无法获取摘要的文献',
+                    '非中、英文发表的文献',
+                    '会议摘要、评论、社论、报道及学位论文',
+                    '研究类型为非原始研究（如综述研究等）',
+                    '未以人类为研究对象',
+                ];
 
                 // AI初筛
                 const screeningTab = ref('pending');  // 'pending' | 'screened'
@@ -1694,6 +1719,17 @@
                     await saveCriteria();
                     await fetchActivityLogs();
                 };
+
+                const togglePreset = async (preset) => {
+                    const idx = criteriaList.value.indexOf(preset);
+                    if (idx === -1) {
+                        criteriaList.value.push(preset);
+                    } else {
+                        criteriaList.value.splice(idx, 1);
+                    }
+                    await saveCriteria();
+                    await fetchActivityLogs();
+                };
                 
                 const saveCriteria = async () => {
                     try {
@@ -2181,7 +2217,7 @@
                     currentStep, screen1Steps, getStepClass,
                     referenceFiles, handleReferenceUpload, deleteFile,
                     isDeduplicating, dedupCompleted, handleDeduplication, dedupStats, showDuplicateDetails,
-                    newCriteria, criteriaList, addCriteria, removeCriteria,
+                    newCriteria, criteriaList, addCriteria, removeCriteria, presetCriteria, togglePreset,
                     pendingFiles, screenedFiles, latestTask, latestAiScreenTask, isProcessing, screeningResults, aiScreenLogContent,
                     screeningTab, pendingPage, screenedPage, processedCount, screeningProgress, remainingFiles,
                     isParsing, parsedCount,
