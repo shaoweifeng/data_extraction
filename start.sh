@@ -10,16 +10,29 @@ export DB_HOST=${DB_HOST:-127.0.0.1}
 export DB_PORT=${DB_PORT:-3306}
 
 # AI 筛选配置
-# AI_PROVIDER: 使用的 AI 引擎，默认 deepseek（当前支持: deepseek）
-# AI_API_KEY : API 密钥（必填，留空则使用 mock 模拟数据）
-# AI_API_URL : 接口地址，默认 https://api.deepseek.com/v1（兼容 OpenAI 格式的服务可直接替换）
-# AI_MODEL   : 模型名称，默认 deepseek-chat
+# AI_PROVIDER: 使用的 AI 引擎，默认 deepseek（当前支持: deepseek / doubao / qwen）
 # AI_TIMEOUT : 单次请求超时秒数，默认 120
-export AI_PROVIDER=${AI_PROVIDER:-deepseek}
-export AI_API_KEY=${AI_API_KEY:-sk-f9652b9622494e9cbcd9c43a7d25eff7}
-export AI_API_URL=${AI_API_URL:-https://api.deepseek.com/v1}
-export AI_MODEL=${AI_MODEL:-deepseek-chat}
 export AI_TIMEOUT=${AI_TIMEOUT:-120}
+
+# DeepSeek 配置
+export DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-sk-f9652b9622494e9cbcd9c43a7d25eff7}
+export DEEPSEEK_API_URL=${DEEPSEEK_API_URL:-https://api.deepseek.com/v1}
+export DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+
+# 豆包（字节跳动 Doubao / Ark）配置
+export DOUBAO_API_KEY=${DOUBAO_API_KEY:-8dfb9fb8-77c9-4db3-be22-0aff21ecaf89}
+export DOUBAO_API_URL=${DOUBAO_API_URL:-https://ark.cn-beijing.volces.com/api/v3}
+export DOUBAO_MODEL=${DOUBAO_MODEL:-Doubao-Seed-1.8}
+
+# 千问（阿里云 DashScope）配置
+export QWEN_API_KEY=${QWEN_API_KEY:-sk-022f866434dc4165a448503ebb766f38}
+export QWEN_API_URL=${QWEN_API_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+export QWEN_MODEL=${QWEN_MODEL:-qwen-plus}
+
+# 兼容旧环境变量（保留，优先级低于上方）
+export AI_API_KEY=${AI_API_KEY:-$DEEPSEEK_API_KEY}
+export AI_API_URL=${AI_API_URL:-$DEEPSEEK_API_URL}
+export AI_MODEL=${AI_MODEL:-$DEEPSEEK_MODEL}
 
 # 1. 启动 Redis (后台)
 if command -v redis-server > /dev/null; then

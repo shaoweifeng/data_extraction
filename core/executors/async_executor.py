@@ -335,13 +335,19 @@ class AsyncExecutor(BaseExecutor):
         """
         from .ai_providers import get_provider
 
-        # 检查是否配置了真实 API key，否则 fallback 到 mock
+        # 从 task config 读取选定模型，fallback 到环境变量
         import os
-        if not os.environ.get("AI_API_KEY"):
-            self.logger.warning("[AI] 未配置 AI_API_KEY，使用 mock 模拟结果")
+        model_id = self.config.get("ai_model") or os.environ.get("AI_PROVIDER", "deepseek")
+
+        # 检查是否配置了真实 API key
+        from platform_backend.ai_models_config import get_model_config
+        model_cfg = get_model_config(model_id)
+        has_key = bool(model_cfg and model_cfg.get("api_key")) or bool(os.environ.get("AI_API_KEY"))
+        if not has_key:
+            self.logger.warning(f"[AI] 模型 {model_id} 未配置 API Key，使用 mock 模拟结果")
             return self._mock_api_call(batch, criteria)
 
-        provider = get_provider()
+        provider = get_provider(model_id)
         prompt_template = self._get_prompt_template()
         self.logger.info(f"[AI] 使用 Provider: {provider.name}，批次: {len(batch)} 篇")
 

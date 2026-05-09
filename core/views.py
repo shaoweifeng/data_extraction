@@ -143,6 +143,14 @@ def current_user(request):
     return Response(UserSerializer(request.user).data)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def ai_models_list(request):
+    """返回可用的 AI 模型列表（不含 api_key）"""
+    from platform_backend.ai_models_config import get_models_for_frontend
+    return Response(get_models_for_frontend())
+
+
 # ============================================================================
 # 项目管理 ViewSet
 # ============================================================================

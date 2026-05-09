@@ -18,6 +18,7 @@ urlpatterns = [
     path('auth/login/', views.login_view, name='login'),
     path('auth/logout/', views.logout_view, name='logout'),
     path('auth/me/', views.current_user, name='current_user'),
+    path('ai-models/', views.ai_models_list, name='ai_models_list'),
     
     # RESTful API
     path('', include(router.urls)),

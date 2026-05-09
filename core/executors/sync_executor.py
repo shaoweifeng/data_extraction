@@ -755,6 +755,7 @@ class SyncExecutor(BaseExecutor):
         
         # 3. 生成Excel
         self.logger.info("[导出] 生成Excel文件...")
+        model_suffix = self._get_model_suffix()
         
         try:
             import pandas as pd
@@ -820,7 +821,7 @@ class SyncExecutor(BaseExecutor):
                     df[h] = None
             df = df.reindex(columns=headers)
             
-            excel_path = Path(self.workspace) / "screening_results.xlsx"
+            excel_path = Path(self.workspace) / f"screening_results_{model_suffix}.xlsx"
             df.to_excel(excel_path, index=False, engine='openpyxl')
             
             self.logger.info(f"[导出] 生成Excel: {len(rows)} 行")
@@ -842,10 +843,10 @@ class SyncExecutor(BaseExecutor):
         
         # 5. 保存输出文件（保留历史版本，用户可选择下载不同版本）
         if excel_path and excel_path.exists():
-            self.save_output_file(excel_path, "screening_results.xlsx", "初筛结果Excel", "output")
+            self.save_output_file(excel_path, f"screening_results_{model_suffix}.xlsx", "初筛结果Excel", "output")
         
         if ris_path and ris_path.exists():
-            self.save_output_file(ris_path, "screening_results.ris", "初筛结果RIS", "output")
+            self.save_output_file(ris_path, f"screening_results_{model_suffix}.ris", "初筛结果RIS", "output")
         
         # 6. 更新步骤元数据
         included_count = len([r for r in final_results if r.get('decision') == 'included'])
@@ -860,9 +861,25 @@ class SyncExecutor(BaseExecutor):
         
         return True
     
+    def _get_model_suffix(self) -> str:
+        """从 task config 读取 ai_model 并返回文件名后缀"""
+        model_id = self.config.get("ai_model", "")
+        if not model_id:
+            return "default"
+        try:
+            from platform_backend.ai_models_config import get_models_for_frontend
+            models = get_models_for_frontend()
+            for m in models:
+                if m["id"] == model_id:
+                    return m["name"]
+        except Exception:
+            pass
+        return model_id
+
     def _generate_ris(self, results: List[Dict]) -> Optional[Path]:
         """生成RIS格式文件"""
-        ris_path = Path(self.workspace) / "screening_results.ris"
+        model_suffix = self._get_model_suffix()
+        ris_path = Path(self.workspace) / f"screening_results_{model_suffix}.ris"
         
         try:
             with open(ris_path, 'w', encoding='utf-8') as f:

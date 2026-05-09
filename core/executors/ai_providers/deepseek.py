@@ -70,10 +70,10 @@ class DeepSeekProvider(BaseAIProvider):
         """
         title = entry.get("title", "Unknown")
 
-        # 构建文献内容（Title + Abstract，截断到 500 字以节省 token）
+        # 构建文献内容（Title + Abstract，截断到合理长度以控制 token）
         abstract = entry.get("abstract", "")
-        if len(abstract) > 500:
-            abstract = abstract[:500] + "..."
+        if len(abstract) > 8000:
+            abstract = abstract[:8000] + "\n[摘要过长，已截断]"
         
         content = f"Title: {title}\n"
         if abstract:

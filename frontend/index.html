@@ -471,10 +471,51 @@
 
                                     <!-- 步骤 4: AI初筛 -->
                                     <div v-if="currentStep === 4" class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
-                                        <div class="text-center mb-8">
+                                        <div class="text-center mb-6">
                                             <i class="fas fa-robot text-6xl text-indigo-100 mb-4"></i>
                                             <h3 class="text-2xl font-bold text-gray-800">步骤 4: AI 智能初筛</h3>
-                                            <p class="text-gray-500 mt-2">DeepSeek 模型将阅读全文并根据纳排标准进行筛选</p>
+                                            <p class="text-gray-500 mt-2">选择 AI 模型，根据纳排标准对文献进行自动初筛</p>
+                                        </div>
+
+                                        <!-- 模型选择 -->
+                                        <div class="mb-6">
+                                            <div v-if="aiModelsLoading" class="text-center py-4 text-gray-400 text-sm">
+                                                <i class="fas fa-spinner fa-spin mr-1"></i>加载模型列表...
+                                            </div>
+                                            <div v-else class="grid grid-cols-3 gap-3">
+                                                <div v-for="m in aiModelsList" :key="m.id"
+                                                     @click="!isProcessing && (selectedAiModel = m.id)"
+                                                     :class="[
+                                                         'relative border-2 rounded-xl p-4 cursor-pointer transition select-none',
+                                                         selectedAiModel === m.id
+                                                             ? 'border-indigo-500 bg-indigo-50'
+                                                             : m.configured ? 'border-gray-200 hover:border-indigo-300 bg-white' : 'border-dashed border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed',
+                                                         isProcessing ? 'pointer-events-none' : ''
+                                                     ]">
+                                                    <!-- 选中标记 -->
+                                                    <span v-if="selectedAiModel === m.id"
+                                                          class="absolute top-2 right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                                                        <i class="fas fa-check text-white text-[10px]"></i>
+                                                    </span>
+                                                    <!-- 模型图标 -->
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="text-2xl">
+                                                            <span v-if="m.logo === 'deepseek'">🤖</span>
+                                                            <span v-else-if="m.logo === 'doubao'">🫘</span>
+                                                            <span v-else-if="m.logo === 'qwen'">🌙</span>
+                                                        </span>
+                                                        <div>
+                                                            <p class="text-sm font-bold text-gray-800">{{ m.name }}</p>
+                                                            <p class="text-[10px] text-gray-400 font-mono">{{ m.model }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <p class="text-xs text-gray-500">{{ m.description }}</p>
+                                                    <div class="mt-2">
+                                                        <span v-if="m.configured" class="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-600 rounded">已配置</span>
+                                                        <span v-else class="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded">未配置 API Key</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                                             <div class="bg-gray-50 p-4 rounded-xl border h-96 flex flex-col">
@@ -1087,7 +1128,29 @@
                     '未以人类为研究对象',
                 ];
 
-                // AI初筛
+                // AI初筛 - 模型选择
+                const aiModelsList = ref([]);
+                const aiModelsLoading = ref(false);
+                const selectedAiModel = ref('deepseek');
+
+                const loadAiModels = async () => {
+                    aiModelsLoading.value = true;
+                    try {
+                        const res = await apiRequest(`${API_BASE}/ai-models/`);
+                        if (res.ok) {
+                            aiModelsList.value = await res.json();
+                            // 默认选中 is_default 或第一个已配置的
+                            const def = aiModelsList.value.find(m => m.is_default && m.configured)
+                                     || aiModelsList.value.find(m => m.configured);
+                            if (def) selectedAiModel.value = def.id;
+                        }
+                    } catch (e) {
+                        console.error('加载模型列表失败', e);
+                    } finally {
+                        aiModelsLoading.value = false;
+                    }
+                };
+
                 const screeningTab = ref('pending');  // 'pending' | 'screened'
                 const pendingFiles = ref([]);
                 const screenedFiles = ref([]);
@@ -1539,6 +1602,7 @@
                     await Promise.all([fetchRecentTasks(), fetchActivityLogs()]);
                     loadDedupStats();
                     await loadCriteria();
+                    await loadAiModels();
                     // 加载待筛选和已筛选文献列表
                     await Promise.all([loadAiScreenFiles(), loadScreenedFiles()]);
                     // 加载已有的导出文件（刷新后也能显示下载按钮）
@@ -1773,7 +1837,7 @@
                             body: JSON.stringify({
                                 project: currentProject.value.id,
                                 task_type: 'deduplication',
-                                config: {}
+                                config: { ai_model: selectedAiModel.value }
                             })
                         });
                         
@@ -2190,7 +2254,10 @@
                             body: JSON.stringify({
                                 project: currentProject.value.id,
                                 task_type: 'ai_screening',
-                                config: { criteria: criteriaList.value }
+                                config: {
+                                    criteria: criteriaList.value,
+                                    ai_model: selectedAiModel.value,
+                                }
                             })
                         });
 
@@ -2222,7 +2289,7 @@
                             body: JSON.stringify({
                                 project: currentProject.value.id,
                                 task_type: 'result_aggregation',
-                                config: {}
+                                config: { ai_model: selectedAiModel.value }
                             })
                         });
 
@@ -2388,7 +2455,8 @@
                     pendingFiles, screenedFiles, latestTask, latestAiScreenTask, isProcessing, screeningResults, aiScreenLogContent,
                     screeningTab, pendingPage, screenedPage, processedCount, screeningProgress, remainingFiles,
                     isParsing, parsedCount,
-                    loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults, 
+                    loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults,
+                    aiModelsList, aiModelsLoading, selectedAiModel, loadAiModels,
                     exportResults, exportFiles, exportXlsxFiles, exportRisFiles, isExporting, downloadExportFile, selectedExcelVersion, selectedRisVersion,
                     getStageClass, getStageName, nextStep, prevStep,
                     uploadingFiles,
