@@ -22,7 +22,7 @@ export DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
 # 豆包（字节跳动 Doubao / Ark）配置
 export DOUBAO_API_KEY=${DOUBAO_API_KEY:-8dfb9fb8-77c9-4db3-be22-0aff21ecaf89}
 export DOUBAO_API_URL=${DOUBAO_API_URL:-https://ark.cn-beijing.volces.com/api/v3}
-export DOUBAO_MODEL=${DOUBAO_MODEL:-Doubao-Seed-1.8}
+export DOUBAO_MODEL=${DOUBAO_MODEL:-ep-20260509162819-bvjfj}
 
 # 千问（阿里云 DashScope）配置
 export QWEN_API_KEY=${QWEN_API_KEY:-sk-022f866434dc4165a448503ebb766f38}
