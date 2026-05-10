@@ -753,6 +753,13 @@ class SyncExecutor(BaseExecutor):
         
         self.logger.info(f"[聚合] 有效结果: {len(final_results)} 个")
         
+        # 清空旧的导出输出文件，避免 Django FileField 文件名冲突产生随机后缀
+        DataFile.objects.filter(
+            project=self.project_obj,
+            step=self.step_obj,
+            data_category='output'
+        ).delete()
+        
         # 3. 生成Excel
         self.logger.info("[导出] 生成Excel文件...")
         model_suffix = self._get_model_suffix()
@@ -862,8 +869,17 @@ class SyncExecutor(BaseExecutor):
         return True
     
     def _get_model_suffix(self) -> str:
-        """从 task config 读取 ai_model 并返回文件名后缀"""
+        """从 task config 读取 ai_model 并返回文件名后缀；兜底：查 AI 初筛任务"""
         model_id = self.config.get("ai_model", "")
+        if not model_id:
+            # 兜底：从最近一次 ai_screen 任务的 config 里取
+            from core.models import Task
+            ai_task = Task.objects.filter(
+                project=self.project_obj,
+                task_type='ai_screening'
+            ).order_by('-created_at').first()
+            if ai_task and ai_task.config:
+                model_id = ai_task.config.get("ai_model", "")
         if not model_id:
             return "default"
         try:
