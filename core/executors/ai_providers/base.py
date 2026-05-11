@@ -26,6 +26,7 @@ class ScreeningResult:
     exclusion_criterion_no: str = "" # 违反的标准编号（如 "3"）
     model: str = ""                  # 使用的模型名称
     raw_response: str = ""           # 原始 AI 响应
+    extracted_fields: Dict = field(default_factory=dict)  # AI 提取的自定义字段
     confidence: Optional[float] = None  # 置信度（当前模型不输出，预留）
     error: str = ""                  # 出错时的错误信息
 
@@ -44,6 +45,7 @@ class ScreeningResult:
             "number_exclusion_reason": self.exclusion_criterion_no,
             "include_or_not": "yes" if self.is_included else "no",
             "model": self.model,
+            "extracted_fields": self.extracted_fields,
             "confidence": self.confidence,
             "raw_ai_response": self.raw_response,
             "error": self.error,

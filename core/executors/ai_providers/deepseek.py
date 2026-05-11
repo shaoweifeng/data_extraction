@@ -163,6 +163,9 @@ class DeepSeekProvider(BaseAIProvider):
 
             include_or_not = ai.get("include_or_not", "no").strip().lower()
             decision = "included" if include_or_not == "yes" else "excluded"
+            extracted_fields = ai.get("extracted_fields", {})
+            if not isinstance(extracted_fields, dict):
+                extracted_fields = {}
 
             return ScreeningResult(
                 title=title,
@@ -171,6 +174,7 @@ class DeepSeekProvider(BaseAIProvider):
                 exclusion_criterion_no=str(ai.get("number_exclusion_reason", "")),
                 model=self.name,
                 raw_response=raw,
+                extracted_fields=extracted_fields,
             )
 
         except (json.JSONDecodeError, ValueError) as e:

@@ -195,17 +195,21 @@
                                 <!-- 圆圈行（保证所有圆心在同一水平线） -->
                                 <div class="flex justify-between items-center">
                                     <div v-for="(step, idx) in screen1Steps" :key="step.step_key"
-                                         class="relative flex flex-col items-center cursor-pointer z-10 w-1/5"
-                                         @click="currentStep = idx + 1; if (idx + 1 === 4) loadAiScreenFiles()">
+                                         class="relative flex flex-col items-center cursor-pointer z-10 w-1/6"
+                                         @click="currentStep = idx + 1; if (idx + 1 === 5) loadAiScreenFiles()">
                                         <!-- 圆圈：固定40px高度，所有圆心在top:20px -->
                                         <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition relative shrink-0"
                                              :class="getStepClass(step, idx + 1)">
                                             <span>{{ idx + 1 }}</span>
-                                            <i v-if="(step.status === 'completed' || step.status === 'in_progress') || (step.step_key === 'criteria' && criteriaList.length > 0)" 
+                                            <i v-if="(step.status === 'completed' || step.status === 'in_progress') || (step.step_key === 'criteria' && criteriaList.length > 0) || (step.step_key === 'field_extraction' && extractionFields.length > 0)" 
                                                class="fas fa-check absolute -right-1.5 -top-1.5 text-green-500 bg-white rounded-full text-xs w-4 h-4 flex items-center justify-center"></i>
                                         </div>
                                         <!-- 标签 -->
-                                        <span class="text-xs font-medium text-gray-600 whitespace-nowrap mt-1">{{ step.step_key === 'parse' ? '导入文献索引' : step.name }}</span>
+                                        <span class="text-xs font-medium text-gray-600 whitespace-nowrap mt-1">{{
+                                        step.step_key === 'parse' ? '导入文献索引' :
+                                        step.step_key === 'field_extraction' ? '提取字段' :
+                                        step.name
+                                    }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -726,11 +730,11 @@
                                         </div>
                                     </div>
 
-                                    <!-- 步骤 5: 结果归纳 -->
-                                    <div v-if="currentStep === 5" class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
+                                    <!-- 步骤 6: 结果归纳 -->
+                                    <div v-if="currentStep === 6" class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
                                         <div class="text-center mb-6">
                                             <i class="fas fa-chart-pie text-6xl text-teal-100 mb-4"></i>
-                                            <h3 class="text-2xl font-bold text-gray-800">步骤 5: 结果归纳</h3>
+                                            <h3 class="text-2xl font-bold text-gray-800">步骤 6: 结果归纳</h3>
                                             <p class="text-gray-500 mt-2">查看 AI 初筛结果并导出报告</p>
                                         </div>
                                         <div v-if="screeningResults" class="bg-gray-50 rounded-xl p-6 mb-6 max-w-md mx-auto">
@@ -916,7 +920,7 @@
                                         class="text-gray-500 hover:text-gray-700 disabled:opacity-30">
                                     <i class="fas fa-arrow-left mr-1"></i> 上一步
                                 </button>
-                                <button @click="nextStep" :disabled="currentStep === 5"
+                                <button @click="nextStep" :disabled="currentStep === 6"
                                         class="text-blue-600 hover:text-blue-800 font-medium disabled:opacity-30">
                                     下一步 <i class="fas fa-arrow-right ml-1"></i>
                                 </button>
@@ -1179,6 +1183,11 @@
                 // 纳排标准
                 const newCriteria = ref('');
                 const criteriaList = ref([]);
+
+                // 自定义提取字段
+                const newExtractionFieldName = ref('');
+                const newExtractionFieldDef = ref('');
+                const extractionFields = ref([]);
 
                 const showCriteriaGuide = ref(false);
 
@@ -1524,6 +1533,8 @@
                         'prompt_set': 'bg-purple-500',
                         'prompt_reset': 'bg-gray-400',
                         'model_select': 'bg-blue-400',
+                        'field_extraction_add': 'bg-orange-400',
+                        'field_extraction_delete': 'bg-red-400',
                     };
                     return map[opType] || 'bg-gray-400';
                 };
@@ -1536,6 +1547,8 @@
                     }
                     if (log.operation_type === 'prompt_reset') return '已重置为默认 Prompt';
                     if (log.operation_type === 'model_select') return `切换为 ${d.model_name || d.model_id}`;
+                    if (log.operation_type === 'field_extraction_add') return `添加字段: ${d.field_name || ''}`;
+                    if (log.operation_type === 'field_extraction_delete') return `删除字段: ${d.field_name || ''}`;
                     if (d.filename) return d.filename;
                     if (d.criteria) return d.criteria;
                     if (d.task_type) return d.task_type;
@@ -1777,6 +1790,7 @@
                     }
                     loadDedupStats();
                     await loadCriteria();
+                    await loadExtractionFields();
                 };
 
                 const deleteProject = async (projectId) => {
@@ -2149,6 +2163,54 @@
                         }
                     } catch (err) {
                         console.error('加载纳排标准失败', err);
+                    }
+                };
+
+                // ── 提取字段相关函数 ──
+                const addExtractionField = async () => {
+                    const name = newExtractionFieldName.value.trim();
+                    const def = newExtractionFieldDef.value.trim();
+                    if (!name || !def) return;
+                    extractionFields.value.push({ name, definition: def });
+                    newExtractionFieldName.value = '';
+                    newExtractionFieldDef.value = '';
+                    await saveExtractionFields();
+                    await fetchActivityLogs();
+                };
+
+                const removeExtractionField = async (index) => {
+                    extractionFields.value.splice(index, 1);
+                    await saveExtractionFields();
+                    await fetchActivityLogs();
+                };
+
+                const saveExtractionFields = async () => {
+                    try {
+                        const screen1Stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                        if (!screen1Stage) return;
+                        const feStep = screen1Stage.steps.find(s => s.step_key === 'field_extraction');
+                        if (!feStep) return;
+                        await apiRequest(`${API_BASE}/steps/${feStep.id}/update_metadata/`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({
+                                metadata: { fields: extractionFields.value }
+                            })
+                        });
+                    } catch (err) {
+                        console.error('保存提取字段失败', err);
+                    }
+                };
+
+                const loadExtractionFields = async () => {
+                    try {
+                        const screen1Stage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
+                        if (!screen1Stage) return;
+                        const feStep = screen1Stage.steps.find(s => s.step_key === 'field_extraction');
+                        if (feStep && feStep.metadata && feStep.metadata.fields) {
+                            extractionFields.value = feStep.metadata.fields;
+                        }
+                    } catch (err) {
+                        console.error('加载提取字段失败', err);
                     }
                 };
 
@@ -2526,6 +2588,10 @@
                     if (step.step_key === 'criteria' && criteriaList.value.length > 0) {
                         return 'bg-blue-600 text-white';
                     }
+                    // 提取字段步骤：有字段就算已完成
+                    if (step.step_key === 'field_extraction' && extractionFields.value.length > 0) {
+                        return 'bg-blue-600 text-white';
+                    }
                     // 已完成
                     if (step.status === 'completed') {
                         return 'bg-blue-600 text-white';
@@ -2553,7 +2619,7 @@
                         showSkipDedupModal.value = true;
                         return;
                     }
-                    if (currentStep.value < 5) currentStep.value++;
+                    if (currentStep.value < 6) currentStep.value++;
                 };
 
                 const confirmSkipDedup = () => {
@@ -2609,6 +2675,7 @@
                     referenceFiles, handleReferenceUpload, deleteFile,
                     isDeduplicating, dedupCompleted, handleDeduplication, dedupStats, showDuplicateDetails,
                     newCriteria, criteriaList, addCriteria, removeCriteria, presetCriteria, togglePreset,
+                    newExtractionFieldName, newExtractionFieldDef, extractionFields, addExtractionField, removeExtractionField, loadExtractionFields,
                     pendingFiles, screenedFiles, latestTask, latestAiScreenTask, isProcessing, screeningResults, aiScreenLogContent,
                     screeningTab, pendingPage, screenedPage, processedCount, screeningProgress, remainingFiles,
                     isParsing, parsedCount,

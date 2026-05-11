@@ -49,15 +49,16 @@ STEP_CONFIGURATIONS = {
         "description": "文献自动解析、去重、AI筛选、结果归纳",
         "auto_trigger": True,
         "dependencies": ["SEARCH"],
-        "sub_steps": ["parse", "dedup", "criteria", "ai_screen", "export"],
+        "sub_steps": ["parse", "dedup", "criteria", "field_extraction", "ai_screen", "export"],
         "monitoring": {
             "progress_type": "aggregate",
             "weight_distribution": {
                 "parse": 0.1,
                 "dedup": 0.1,
-                "criteria": 0.15,
+                "criteria": 0.1,
+                "field_extraction": 0.1,
                 "ai_screen": 0.5,
-                "export": 0.15
+                "export": 0.1
             }
         },
         "metadata_template": {}
@@ -150,6 +151,30 @@ STEP_CONFIGURATIONS = {
         },
         "metadata_template": {
             "criteria_count": 0,
+            "confirmed": False,
+            "confirmed_at": None
+        }
+    },
+    
+    # ------------------------------------------------------------------------
+    # 子步骤: 提取字段（手动，定义字段后在 AI 初筛时一并提取）
+    # ------------------------------------------------------------------------
+    "field_extraction": {
+        "name": "提取字段",
+        "stage_key": "SCREEN_1",
+        "execution_mode": "manual",
+        "description": "用户定义需要 AI 从纳入文献中提取的自定义字段",
+        "timeout": None,
+        "auto_trigger": False,
+        "inputs": [],
+        "outputs": ["extraction_fields.json"],
+        "ui_actions": ["add_field", "edit_field", "delete_field"],
+        "monitoring": {
+            "progress_type": "boolean",
+            "requires_user_action": True
+        },
+        "metadata_template": {
+            "fields": [],
             "confirmed": False,
             "confirmed_at": None
         }
@@ -352,6 +377,7 @@ STAGE_DEFINITIONS = [
             {"step_key": "parse", "name": "导入文献索引", "order": 10, "can_skip": False},
             {"step_key": "dedup", "name": "自动去重", "order": 20, "can_skip": True},
             {"step_key": "criteria", "name": "纳排标准", "order": 30, "can_skip": False},
+            {"step_key": "field_extraction", "name": "提取字段", "order": 35, "can_skip": True},
             {"step_key": "ai_screen", "name": "AI初筛", "order": 40, "can_skip": False},
             {"step_key": "export", "name": "结果归纳", "order": 50, "can_skip": False}
         ]

@@ -309,6 +309,40 @@ class AsyncExecutor(BaseExecutor):
         
         return results
     
+    def _mock_extracted_fields(self) -> Dict:
+        """mock 模式下生成模拟的提取字段结果"""
+        fields_def = self._get_extraction_fields()
+        result = {}
+        for f in fields_def:
+            result[f["name"]] = f"(模拟) {f['definition'][:30]}..."
+        return result
+
+    def _get_extraction_fields(self) -> List[Dict]:
+        """从 field_extraction 步骤的 metadata 读取提取字段定义"""
+        try:
+            fe_step = self.get_previous_step("field_extraction")
+            if fe_step and fe_step.metadata:
+                fields = fe_step.metadata.get("fields", [])
+                if fields:
+                    self.logger.info(f"[字段] 读取到 {len(fields)} 个提取字段: {[f['name'] for f in fields]}")
+                    return fields
+        except Exception as e:
+            self.logger.warning(f"[字段] 读取提取字段失败: {e}")
+        return []
+
+    def _parse_extracted_fields_from_raw(self, raw_response: str) -> Dict:
+        """从 AI 原始响应中解析 extracted_fields"""
+        import json
+        try:
+            parsed = json.loads(raw_response)
+            if isinstance(parsed, list) and len(parsed) > 0:
+                return parsed[0].get("extracted_fields", {})
+            elif isinstance(parsed, dict):
+                return parsed.get("extracted_fields", {})
+        except (json.JSONDecodeError, Exception):
+            pass
+        return {}
+
     def _get_prompt_template(self) -> str:
         """读取 prompt 模板，优先使用项目自定义 prompt，否则读 prompt1.txt"""
         from django.conf import settings
@@ -330,13 +364,34 @@ class AsyncExecutor(BaseExecutor):
         # 2. 回退：prompt1.txt 文件
         prompt_path = Path(settings.BASE_DIR) / "structural_screening/02_screening_ai/prompts/prompt1.txt"
         if prompt_path.exists():
-            return prompt_path.read_text(encoding="utf-8")
-        self.logger.warning(f"[警告] prompt1.txt 不存在: {prompt_path}，使用内置默认模板")
-        return (
-            "你是文献筛选助手，请根据以下排除标准判断文献是否纳入，返回JSON格式："
-            "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]\n"
-            "<exclusion_criteria>\n{screening_criteria}\n</exclusion_criteria>"
-        )
+            base_prompt = prompt_path.read_text(encoding="utf-8")
+        else:
+            self.logger.warning(f"[警告] prompt1.txt 不存在: {prompt_path}，使用内置默认模板")
+            base_prompt = (
+                "你是文献筛选助手，请根据以下排除标准判断文献是否纳入，返回JSON格式："
+                "[{\"exclusion_reason\": \"\", \"number_exclusion_reason\": \"\", \"include_or_not\": \"yes\"}]\n"
+                "<exclusion_criteria>\n{screening_criteria}\n</exclusion_criteria>"
+            )
+
+        # 3. 追加提取字段指令（如果有定义）
+        extraction_fields = self._get_extraction_fields()
+        if extraction_fields:
+            field_descriptions = "\n".join(
+                f'  - "{f["name"]}": {f["definition"]}'
+                for f in extraction_fields
+            )
+            field_names = ", ".join(f'"{f["name"]}"' for f in extraction_fields)
+            extraction_block = (
+                "\n\n=======字段提取任务=======\n"
+                "对于纳入的文献，请同时从全文内容中提取以下字段信息：\n"
+                f"{field_descriptions}\n\n"
+                "输出JSON中的 extracted_fields 字段包含提取结果，格式：\n"
+                f'{{"extracted_fields": {{{field_names}: "提取值"}}, ...}}\n\n'
+            )
+            self.logger.info(f"[字段] 追加提取指令到 prompt，字段数: {len(extraction_fields)}")
+            return base_prompt + extraction_block
+
+        return base_prompt
 
     def _call_ai_api(self, batch: List[Dict], criteria: List[str]) -> List[Dict]:
         """
@@ -387,6 +442,7 @@ class AsyncExecutor(BaseExecutor):
                 "raw_ai_response": sr.raw_response,
                 "error": sr.error,
                 "timestamp": datetime.now().isoformat(),
+                "extracted_fields": sr.extracted_fields or {},
             }
             if sr.is_error:
                 self.logger.warning(f"[AI] 筛选失败: {entry.get('title', '')[:40]} - {sr.error}")
@@ -418,6 +474,7 @@ class AsyncExecutor(BaseExecutor):
                 "model": "mock-model-v1.0",
                 "raw_ai_response": f'[{{"exclusion_reason": "模拟排除理由", "number_exclusion_reason": "1", "include_or_not": "no"}}]',
                 "error": "",
+                "extracted_fields": self._mock_extracted_fields() if decision == "included" else {},
                 "timestamp": datetime.now().isoformat(),
             }
             results.append(result)

@@ -381,6 +381,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
         return Response({'ok': True})
 
+    @action(detail=True, methods=['get'])
+    def extraction_fields(self, request, pk=None):
+        """获取已定义的提取字段列表"""
+        from core.models import StageStep, ProjectStage
+        project = self.get_object()
+        try:
+            stage = ProjectStage.objects.get(project=project, stage_key='SCREEN_1')
+            step = StageStep.objects.get(stage=stage, step_key='field_extraction')
+            fields = (step.metadata or {}).get('fields', [])
+            return Response({'fields': fields})
+        except (ProjectStage.DoesNotExist, StageStep.DoesNotExist):
+            return Response({'fields': []})
+
     @action(detail=True, methods=['post'])
     def save_prompt(self, request, pk=None):
         """保存自定义 Prompt，同时记录操作日志"""
@@ -713,6 +726,26 @@ class StageStepViewSet(viewsets.ModelViewSet):
                     project=project,
                     operation_type='criteria_delete',
                     operation_detail={'criteria': c},
+                    created_by=request.user
+                )
+
+        # 提取字段变更时，记录操作日志
+        if step.step_key == 'field_extraction' and 'fields' in metadata:
+            old_fields = {(f['name'], f['definition']) for f in (step.metadata or {}).get('fields', [])}
+            new_fields = {(f['name'], f['definition']) for f in metadata['fields']}
+            project = step.stage.project
+            for f in (new_fields - old_fields):
+                ActivityLog.objects.create(
+                    project=project,
+                    operation_type='field_extraction_add',
+                    operation_detail={'field_name': f[0], 'field_definition': f[1]},
+                    created_by=request.user
+                )
+            for f in (old_fields - new_fields):
+                ActivityLog.objects.create(
+                    project=project,
+                    operation_type='field_extraction_delete',
+                    operation_detail={'field_name': f[0], 'field_definition': f[1]},
                     created_by=request.user
                 )
 
@@ -1098,7 +1131,8 @@ class TaskViewSet(viewsets.ModelViewSet):
         if success:
             task_type_display = {
                 'parse': '文献解析', 'dedup': '文献去重',
-                'ai_screen': 'AI初筛', 'export': '结果归纳'
+                'ai_screen': 'AI初筛', 'export': '结果归纳',
+                'field_extraction': '提取字段'
             }.get(task.task_type, task.task_type)
             ActivityLog.objects.create(
                 project=task.project,
@@ -1132,7 +1166,8 @@ class TaskViewSet(viewsets.ModelViewSet):
             new_task = scheduler.resume_task(task.id)
             task_type_display = {
                 'parse': '文献解析', 'dedup': '文献去重',
-                'ai_screen': 'AI初筛', 'export': '结果归纳'
+                'ai_screen': 'AI初筛', 'export': '结果归纳',
+                'field_extraction': '提取字段'
             }.get(task.task_type, task.task_type)
             ActivityLog.objects.create(
                 project=task.project,

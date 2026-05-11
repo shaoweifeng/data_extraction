@@ -774,6 +774,21 @@ class SyncExecutor(BaseExecutor):
                 "Volume", "Issue", "Page", "Date", "Doi", "PMCID", "Abstract", "URL", "Address",
                 "source_xml"
             ]
+
+            # 加载自定义提取字段定义，追加到 Excel 列
+            extraction_field_names = []
+            try:
+                from core.models import StageStep
+                fe_step = StageStep.objects.filter(
+                    stage__project_id=self.project_id,
+                    stage__stage_key='SCREEN_1',
+                    step_key='field_extraction'
+                ).first()
+                if fe_step and fe_step.metadata and fe_step.metadata.get('fields'):
+                    extraction_field_names = [f['name'] for f in fe_step.metadata['fields']]
+                    headers.extend(extraction_field_names)
+            except Exception as e:
+                logger.warning(f"[导出] 加载提取字段失败: {e}")
             
             rows = []
             for idx, result in enumerate(final_results, 1):
@@ -819,6 +834,11 @@ class SyncExecutor(BaseExecutor):
                     "Address": xml_fields.get("Address", result.get("address", "")),
                     "source_xml": source_xml,
                 }
+                # 追加提取字段值
+                extracted = result.get("extracted_fields", {})
+                if isinstance(extracted, dict):
+                    for fn in extraction_field_names:
+                        row[fn] = extracted.get(fn, "")
                 rows.append(row)
             
             df = pd.DataFrame(rows)
