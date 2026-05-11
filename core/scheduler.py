@@ -148,6 +148,9 @@ class TaskScheduler:
         from .executors.sync_executor import SyncExecutor
         
         executor = SyncExecutor(task.id, step_key, self.project_id)
+        # 将 Task 的动态 config（含 ai_model 等）合并进 executor.config
+        task_config = task.config or {}
+        executor.config.update(task_config)
         
         try:
             executor.initialize()
