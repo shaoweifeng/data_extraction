@@ -310,9 +310,24 @@ class AsyncExecutor(BaseExecutor):
         return results
     
     def _get_prompt_template(self) -> str:
-        """读取 prompt1.txt 模板"""
+        """读取 prompt 模板，优先使用项目自定义 prompt，否则读 prompt1.txt"""
         from django.conf import settings
         from pathlib import Path
+
+        # 1. 优先：项目 metadata 中的自定义 prompt
+        try:
+            meta = self.project_obj.metadata or {}
+            if meta.get('use_custom_prompt') and meta.get('custom_prompt', '').strip():
+                custom = meta['custom_prompt'].strip()
+                if '{screening_criteria}' in custom:
+                    self.logger.info("[Prompt] 使用项目自定义 Prompt")
+                    return custom
+                else:
+                    self.logger.warning("[Prompt] 自定义 Prompt 缺少 {screening_criteria}，回退到默认")
+        except Exception as e:
+            self.logger.warning(f"[Prompt] 读取自定义 Prompt 失败: {e}，回退到默认")
+
+        # 2. 回退：prompt1.txt 文件
         prompt_path = Path(settings.BASE_DIR) / "structural_screening/02_screening_ai/prompts/prompt1.txt"
         if prompt_path.exists():
             return prompt_path.read_text(encoding="utf-8")

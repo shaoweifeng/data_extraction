@@ -17,7 +17,7 @@ export AI_TIMEOUT=${AI_TIMEOUT:-120}
 # DeepSeek 配置
 export DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-sk-f9652b9622494e9cbcd9c43a7d25eff7}
 export DEEPSEEK_API_URL=${DEEPSEEK_API_URL:-https://api.deepseek.com/v1}
-export DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+export DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-v4-flash}
 
 # 豆包（字节跳动 Doubao / Ark）配置
 export DOUBAO_API_KEY=${DOUBAO_API_KEY:-8dfb9fb8-77c9-4db3-be22-0aff21ecaf89}

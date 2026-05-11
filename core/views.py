@@ -347,6 +347,78 @@ class ProjectViewSet(viewsets.ModelViewSet):
         monitor = ProgressMonitor(project.id)
         return Response(monitor.get_project_progress())
 
+    @action(detail=True, methods=['get'])
+    def get_prompt(self, request, pk=None):
+        """获取项目的自定义 Prompt（返回 custom_prompt、use_custom 标志和 default_prompt）"""
+        from pathlib import Path
+        from django.conf import settings
+
+        project = self.get_object()
+        custom_prompt = (project.metadata or {}).get('custom_prompt', '')
+        use_custom = (project.metadata or {}).get('use_custom_prompt', False)
+
+        # 读取默认 prompt1.txt 内容一并返回
+        prompt_path = Path(settings.BASE_DIR) / "structural_screening/02_screening_ai/prompts/prompt1.txt"
+        default_prompt = prompt_path.read_text(encoding="utf-8") if prompt_path.exists() else ''
+
+        return Response({
+            'custom_prompt': custom_prompt,
+            'use_custom_prompt': use_custom,
+            'default_prompt': default_prompt,
+        })
+
+    @action(detail=True, methods=['post'])
+    def save_prompt(self, request, pk=None):
+        """保存自定义 Prompt，同时记录操作日志"""
+        project = self.get_object()
+        custom_prompt = request.data.get('custom_prompt', '').strip()
+        use_custom = request.data.get('use_custom_prompt', True)
+
+        # 校验：必须包含占位符
+        if use_custom and '{screening_criteria}' not in custom_prompt:
+            return Response(
+                {'error': 'Prompt 必须包含 {screening_criteria} 占位符'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 持久化到 project.metadata
+        project.metadata = project.metadata or {}
+        project.metadata['custom_prompt'] = custom_prompt
+        project.metadata['use_custom_prompt'] = use_custom
+        project.save(update_fields=['metadata'])
+
+        # 操作日志
+        ActivityLog.objects.create(
+            project=project,
+            operation_type='prompt_set',
+            operation_detail={
+                'use_custom': use_custom,
+                'prompt_length': len(custom_prompt),
+                'prompt_preview': custom_prompt[:100] if custom_prompt else '',
+            },
+            created_by=request.user
+        )
+
+        return Response({'message': '已保存', 'use_custom_prompt': use_custom})
+
+    @action(detail=True, methods=['post'])
+    def reset_prompt(self, request, pk=None):
+        """重置为默认 Prompt，并记录操作日志"""
+        project = self.get_object()
+        project.metadata = project.metadata or {}
+        project.metadata['custom_prompt'] = ''
+        project.metadata['use_custom_prompt'] = False
+        project.save(update_fields=['metadata'])
+
+        ActivityLog.objects.create(
+            project=project,
+            operation_type='prompt_reset',
+            operation_detail={},
+            created_by=request.user
+        )
+
+        return Response({'message': '已重置为默认 Prompt'})
+
 
 # ============================================================================
 # 阶段管理 ViewSet

@@ -517,6 +517,68 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- Prompt 设置（折叠面板） -->
+                                        <div class="mb-6 border rounded-xl overflow-hidden">
+                                            <!-- 折叠标题行 -->
+                                            <button @click="promptPanelOpen = !promptPanelOpen"
+                                                    class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition text-sm font-medium text-gray-700">
+                                                <span><i class="fas fa-sliders-h mr-2 text-gray-400"></i>Prompt 设置（可选）</span>
+                                                <span class="flex items-center gap-2">
+                                                    <span v-if="useCustomPrompt" class="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full">已自定义</span>
+                                                    <i :class="promptPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-gray-400 text-xs"></i>
+                                                </span>
+                                            </button>
+                                            <!-- 折叠内容 -->
+                                            <div v-show="promptPanelOpen" class="p-4 bg-white space-y-3">
+                                                <!-- Radio 切换 -->
+                                                <div class="flex gap-6 text-sm">
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" :value="false" v-model="useCustomPrompt" class="accent-indigo-600">
+                                                        <span :class="!useCustomPrompt ? 'text-indigo-700 font-semibold' : 'text-gray-600'">使用默认 Prompt</span>
+                                                    </label>
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" :value="true" v-model="useCustomPrompt" class="accent-indigo-600">
+                                                        <span :class="useCustomPrompt ? 'text-indigo-700 font-semibold' : 'text-gray-600'">自定义 Prompt</span>
+                                                    </label>
+                                                </div>
+                                                <!-- 自定义编辑区 -->
+                                                <div v-if="useCustomPrompt" class="space-y-2">
+                                                    <div class="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        <span>必须包含 <code class="bg-amber-100 px-1 rounded font-mono">{screening_criteria}</code> 占位符，纳排标准会被自动注入到此处</span>
+                                                    </div>
+                                                    <textarea v-model="customPromptText"
+                                                              rows="10"
+                                                              placeholder="在此输入自定义 Prompt，必须包含 {screening_criteria} 占位符..."
+                                                              class="w-full text-xs font-mono border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y"
+                                                              :class="customPromptText && !customPromptText.includes('{screening_criteria}') ? 'border-red-400 bg-red-50' : 'border-gray-300'">
+                                                    </textarea>
+                                                    <div v-if="customPromptText && !customPromptText.includes('{screening_criteria}')"
+                                                         class="text-xs text-red-500 flex items-center gap-1">
+                                                        <i class="fas fa-times-circle"></i> 缺少 {screening_criteria} 占位符，无法保存
+                                                    </div>
+                                                </div>
+                                                <!-- 默认只读展示 -->
+                                                <div v-else class="bg-gray-50 rounded-lg p-3 text-xs font-mono text-gray-500 max-h-32 overflow-y-auto whitespace-pre-wrap">{{ defaultPromptPreview }}</div>
+                                                <!-- 操作按钮 -->
+                                                <div class="flex gap-2 pt-1">
+                                                    <button @click="savePrompt"
+                                                            :disabled="useCustomPrompt && (!customPromptText || !customPromptText.includes('{screening_criteria}'))"
+                                                            class="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                                                        <i class="fas fa-save mr-1"></i>保存
+                                                    </button>
+                                                    <button v-if="useCustomPrompt" @click="resetPrompt"
+                                                            class="px-4 py-1.5 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition">
+                                                        <i class="fas fa-undo mr-1"></i>重置为默认
+                                                    </button>
+                                                    <span v-if="promptSaveStatus" class="text-xs self-center" :class="promptSaveStatus === 'ok' ? 'text-green-600' : 'text-red-500'">
+                                                        {{ promptSaveStatus === 'ok' ? '✓ 已保存' : '✗ 保存失败' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                                             <div class="bg-gray-50 p-4 rounded-xl border h-96 flex flex-col">
                                                 <!-- Tab 切换 -->
@@ -1151,6 +1213,75 @@
                     }
                 };
 
+                // AI初筛 - 自定义 Prompt
+                const promptPanelOpen = ref(false);
+                const useCustomPrompt = ref(false);
+                const customPromptText = ref('');
+                const promptSaveStatus = ref('');  // '' | 'ok' | 'error'
+                const defaultPromptPreview = ref('（加载中...）');
+
+                const loadPrompt = async () => {
+                    if (!currentProject.value) return;
+                    try {
+                        const res = await apiRequest(`${API_BASE}/projects/${currentProject.value.id}/get_prompt/`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            useCustomPrompt.value = data.use_custom_prompt || false;
+                            customPromptText.value = data.custom_prompt || '';
+                            if (data.default_prompt) defaultPromptPreview.value = data.default_prompt;
+                        }
+                    } catch (e) { console.error('加载 Prompt 失败', e); }
+                };
+
+                const loadDefaultPromptPreview = async () => {
+                    try {
+                        const res = await fetch('/static/prompts/prompt1.txt');
+                        if (res.ok) {
+                            defaultPromptPreview.value = await res.text();
+                        } else {
+                            defaultPromptPreview.value = '（无法加载默认 Prompt，请参考 structural_screening/02_screening_ai/prompts/prompt1.txt）';
+                        }
+                    } catch {
+                        defaultPromptPreview.value = '（无法加载默认 Prompt）';
+                    }
+                };
+
+                const savePrompt = async () => {
+                    if (!currentProject.value) return;
+                    if (useCustomPrompt.value && !customPromptText.value.includes('{screening_criteria}')) return;
+                    promptSaveStatus.value = '';
+                    try {
+                        const res = await apiRequest(`${API_BASE}/projects/${currentProject.value.id}/save_prompt/`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                custom_prompt: customPromptText.value,
+                                use_custom_prompt: useCustomPrompt.value,
+                            })
+                        });
+                        if (res.ok) {
+                            promptSaveStatus.value = 'ok';
+                            await fetchActivityLogs();
+                        } else {
+                            promptSaveStatus.value = 'error';
+                        }
+                    } catch { promptSaveStatus.value = 'error'; }
+                    setTimeout(() => { promptSaveStatus.value = ''; }, 3000);
+                };
+
+                const resetPrompt = async () => {
+                    if (!currentProject.value) return;
+                    try {
+                        const res = await apiRequest(`${API_BASE}/projects/${currentProject.value.id}/reset_prompt/`, { method: 'POST' });
+                        if (res.ok) {
+                            useCustomPrompt.value = false;
+                            customPromptText.value = '';
+                            promptSaveStatus.value = 'ok';
+                            await fetchActivityLogs();
+                            setTimeout(() => { promptSaveStatus.value = ''; }, 2000);
+                        }
+                    } catch { promptSaveStatus.value = 'error'; }
+                };
+
                 const screeningTab = ref('pending');  // 'pending' | 'screened'
                 const pendingFiles = ref([]);
                 const screenedFiles = ref([]);
@@ -1377,6 +1508,8 @@
                         'task_stop': 'bg-yellow-500',
                         'task_resume': 'bg-green-500',
                         'task_abandon': 'bg-gray-500',
+                        'prompt_set': 'bg-purple-500',
+                        'prompt_reset': 'bg-gray-400',
                     };
                     return map[opType] || 'bg-gray-400';
                 };
@@ -1384,6 +1517,10 @@
                 // 操作日志详情文本
                 const getLogDetail = (log) => {
                     const d = log.operation_detail || {};
+                    if (log.operation_type === 'prompt_set') {
+                        return d.use_custom ? `自定义 Prompt（${d.prompt_length || 0} 字符）` : '切换为默认 Prompt';
+                    }
+                    if (log.operation_type === 'prompt_reset') return '已重置为默认 Prompt';
                     if (d.filename) return d.filename;
                     if (d.criteria) return d.criteria;
                     if (d.task_type) return d.task_type;
@@ -1586,6 +1723,10 @@
                     latestTask.value = null;
                     latestAiScreenTask.value = null;
                     isProcessing.value = false;
+                    promptPanelOpen.value = false;
+                    useCustomPrompt.value = false;
+                    customPromptText.value = '';
+                    promptSaveStatus.value = '';
                     screeningProgressValue.value = 0;
                     aiScreenLogContent.value = '';
                     processedCount.value = 0;
@@ -1603,6 +1744,7 @@
                     loadDedupStats();
                     await loadCriteria();
                     await loadAiModels();
+                    await loadPrompt();
                     // 加载待筛选和已筛选文献列表
                     await Promise.all([loadAiScreenFiles(), loadScreenedFiles()]);
                     // 加载已有的导出文件（刷新后也能显示下载按钮）
@@ -2457,6 +2599,8 @@
                     isParsing, parsedCount,
                     loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults,
                     aiModelsList, aiModelsLoading, selectedAiModel, loadAiModels,
+                    promptPanelOpen, useCustomPrompt, customPromptText, promptSaveStatus, defaultPromptPreview,
+                    savePrompt, resetPrompt, loadPrompt,
                     exportResults, exportFiles, exportXlsxFiles, exportRisFiles, isExporting, downloadExportFile, selectedExcelVersion, selectedRisVersion,
                     getStageClass, getStageName, nextStep, prevStep,
                     uploadingFiles,
