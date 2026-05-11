@@ -484,7 +484,7 @@
                                             </div>
                                             <div v-else class="grid grid-cols-3 gap-3">
                                                 <div v-for="m in aiModelsList" :key="m.id"
-                                                     @click="!isProcessing && (selectedAiModel = m.id)"
+                                                     @click="!isProcessing && selectAiModel(m)"
                                                      :class="[
                                                          'relative border-2 rounded-xl p-4 cursor-pointer transition select-none',
                                                          selectedAiModel === m.id
@@ -1195,6 +1195,19 @@
                 const aiModelsLoading = ref(false);
                 const selectedAiModel = ref('deepseek');
 
+                const selectAiModel = async (m) => {
+                    if (isProcessing.value) return;
+                    selectedAiModel.value = m.id;
+                    if (!currentProject.value) return;
+                    try {
+                        await apiRequest(`${API_BASE}/projects/${currentProject.value.id}/log_model_select/`, {
+                            method: 'POST',
+                            body: JSON.stringify({ model_id: m.id, model_name: m.name })
+                        });
+                        await fetchActivityLogs();
+                    } catch (e) { /* 日志失败不影响主流程 */ }
+                };
+
                 const loadAiModels = async () => {
                     aiModelsLoading.value = true;
                     try {
@@ -1510,6 +1523,7 @@
                         'task_abandon': 'bg-gray-500',
                         'prompt_set': 'bg-purple-500',
                         'prompt_reset': 'bg-gray-400',
+                        'model_select': 'bg-blue-400',
                     };
                     return map[opType] || 'bg-gray-400';
                 };
@@ -1521,6 +1535,7 @@
                         return d.use_custom ? `自定义 Prompt（${d.prompt_length || 0} 字符）` : '切换为默认 Prompt';
                     }
                     if (log.operation_type === 'prompt_reset') return '已重置为默认 Prompt';
+                    if (log.operation_type === 'model_select') return `切换为 ${d.model_name || d.model_id}`;
                     if (d.filename) return d.filename;
                     if (d.criteria) return d.criteria;
                     if (d.task_type) return d.task_type;
@@ -2598,7 +2613,7 @@
                     screeningTab, pendingPage, screenedPage, processedCount, screeningProgress, remainingFiles,
                     isParsing, parsedCount,
                     loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults,
-                    aiModelsList, aiModelsLoading, selectedAiModel, loadAiModels,
+                    aiModelsList, aiModelsLoading, selectedAiModel, loadAiModels, selectAiModel,
                     promptPanelOpen, useCustomPrompt, customPromptText, promptSaveStatus, defaultPromptPreview,
                     savePrompt, resetPrompt, loadPrompt,
                     exportResults, exportFiles, exportXlsxFiles, exportRisFiles, isExporting, downloadExportFile, selectedExcelVersion, selectedRisVersion,

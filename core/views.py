@@ -368,6 +368,20 @@ class ProjectViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=True, methods=['post'])
+    def log_model_select(self, request, pk=None):
+        """记录用户在界面切换 AI 模型的操作日志"""
+        project = self.get_object()
+        model_id = request.data.get('model_id', '')
+        model_name = request.data.get('model_name', model_id)
+        ActivityLog.objects.create(
+            project=project,
+            operation_type='model_select',
+            operation_detail={'model_id': model_id, 'model_name': model_name},
+            created_by=request.user,
+        )
+        return Response({'ok': True})
+
+    @action(detail=True, methods=['post'])
     def save_prompt(self, request, pk=None):
         """保存自定义 Prompt，同时记录操作日志"""
         project = self.get_object()

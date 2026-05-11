@@ -412,6 +412,7 @@ class ActivityLog(models.Model):
         ('task_abandon', '放弃任务'),
         ('prompt_set', '自定义Prompt'),
         ('prompt_reset', '重置默认Prompt'),
+        ('model_select', '切换AI模型'),
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='activity_logs', verbose_name="所属项目")
