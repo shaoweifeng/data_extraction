@@ -215,7 +215,7 @@
                             </div>
 
                             <!-- 步骤内容 - 左右布局 -->
-                            <div class="flex gap-4">
+                            <div class="flex gap-2">
                                 <!-- 左侧主内容区域 -->
                                 <div class="flex-1 min-w-0">
                                     <!-- 步骤 1: 文献解析 -->
@@ -473,11 +473,54 @@
                                         </div>
                                     </div>
 
-                                    <!-- 步骤 4: AI初筛 -->
+                                    <!-- 步骤 4: 提取字段 -->
                                     <div v-if="currentStep === 4" class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
                                         <div class="text-center mb-6">
+                                            <i class="fas fa-tags text-6xl text-cyan-100 mb-4"></i>
+                                            <h3 class="text-2xl font-bold text-gray-800">步骤 4: 提取字段</h3>
+                                            <p class="text-gray-500 mt-2">自定义需要 AI 从纳入文献中提取的字段（字段名 + 定义）</p>
+                                        </div>
+                                        <div class="mb-6">
+                                            <!-- 输入区域 -->
+                                            <div class="flex gap-2 mb-4">
+                                                <input v-model="newExtractionFieldName" @keyup.enter="addExtractionField" type="text"
+                                                       placeholder="字段名称（如：年龄）"
+                                                       class="w-48 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-cyan-500">
+                                                <input v-model="newExtractionFieldDef" @keyup.enter="addExtractionField" type="text"
+                                                       placeholder="字段定义（如：研究中纳入患者的年龄情况）"
+                                                       class="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-cyan-500">
+                                                <button @click="addExtractionField" class="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">
+                                                    <i class="fas fa-plus"></i> 添加
+                                                </button>
+                                            </div>
+                                            <!-- 字段列表 -->
+                                            <div class="bg-gray-50 rounded-xl border p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+                                                <div v-if="extractionFields.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400">
+                                                    <i class="fas fa-tag text-3xl mb-2 opacity-50"></i>
+                                                    <p>暂未添加提取字段，请在上方输入</p>
+                                                </div>
+                                                <div v-else class="space-y-2">
+                                                    <div v-for="(f, idx) in extractionFields" :key="idx"
+                                                         class="flex justify-between items-center bg-white px-4 py-3 rounded-lg border shadow-sm group">
+                                                        <div>
+                                                            <span class="font-bold text-cyan-600 mr-2">{{ idx + 1 }}. {{ f.name }}</span>
+                                                            <span class="text-gray-500 text-sm">— {{ f.definition }}</span>
+                                                        </div>
+                                                        <button @click="removeExtractionField(idx)"
+                                                                class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 步骤 5: AI初筛 -->
+                                    <div v-if="currentStep === 5" class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
+                                        <div class="text-center mb-6">
                                             <i class="fas fa-robot text-6xl text-indigo-100 mb-4"></i>
-                                            <h3 class="text-2xl font-bold text-gray-800">步骤 4: AI 智能初筛</h3>
+                                            <h3 class="text-2xl font-bold text-gray-800">步骤 5: AI 智能初筛</h3>
                                             <p class="text-gray-500 mt-2">选择 AI 模型，根据纳排标准对文献进行自动初筛</p>
                                         </div>
 
