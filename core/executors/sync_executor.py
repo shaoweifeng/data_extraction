@@ -717,9 +717,14 @@ class SyncExecutor(BaseExecutor):
         流程：
         1. 获取ai_screen步骤输出的所有JSON结果
         2. 读取每个JSON文件的筛选数据
-        3. 生成Excel和RIS文件
+        3. 根据 export_type（all/included/excluded）过滤
+        4. 生成Excel和RIS文件
         """
         self.logger.info("[步骤] 开始结果归纳...")
+        
+        # 读取 export_type 配置（默认 all）
+        export_type = self.config.get("export_type", "all")  # all | included | excluded
+        self.logger.info(f"[导出] 导出类型: {export_type}")
         
         # 1. 获取ai_screen步骤的输出
         ai_step = self.get_previous_step("ai_screen")
@@ -753,16 +758,28 @@ class SyncExecutor(BaseExecutor):
         
         self.logger.info(f"[聚合] 有效结果: {len(final_results)} 个")
         
-        # 清空旧的导出输出文件，避免 Django FileField 文件名冲突产生随机后缀
-        DataFile.objects.filter(
-            project=self.project_obj,
-            step=self.step_obj,
-            data_category='output'
-        ).delete()
+        # 按 export_type 过滤
+        def _is_included(r):
+            v = r.get("include_or_not", "")
+            if v:
+                return v.lower() == "yes"
+            return r.get("decision", "") == "included"
+        
+        if export_type == "included":
+            filtered_results = [r for r in final_results if _is_included(r)]
+        elif export_type == "excluded":
+            filtered_results = [r for r in final_results if not _is_included(r)]
+        else:
+            filtered_results = final_results
+        
+        self.logger.info(f"[过滤] {export_type} → {len(filtered_results)} 条")
+        
+        # 方案A：不删历史文件，靠时间戳文件名保证唯一，新文件直接追加
         
         # 3. 生成Excel
         self.logger.info("[导出] 生成Excel文件...")
         model_suffix = self._get_model_suffix()
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         try:
             import pandas as pd
@@ -791,7 +808,7 @@ class SyncExecutor(BaseExecutor):
                 logger.warning(f"[导出] 加载提取字段失败: {e}")
             
             rows = []
-            for idx, result in enumerate(final_results, 1):
+            for idx, result in enumerate(filtered_results, 1):
                 # JSON 字段：include_or_not (yes/no), exclusion_reason, number_exclusion_reason
                 # 优先使用 JSON 里的 include_or_not，fallback 到 decision 推断
                 include_or_not = result.get("include_or_not", "")
@@ -848,21 +865,24 @@ class SyncExecutor(BaseExecutor):
                     df[h] = None
             df = df.reindex(columns=headers)
             
-            excel_path = Path(self.workspace) / f"screening_results_{model_suffix}.xlsx"
+            excel_filename = f"screening_results_{export_type}_{model_suffix}_{ts}.xlsx"
+            excel_path = Path(self.workspace) / excel_filename
             df.to_excel(excel_path, index=False, engine='openpyxl')
             
-            self.logger.info(f"[导出] 生成Excel: {len(rows)} 行")
+            self.logger.info(f"[导出] 生成Excel ({export_type}): {len(rows)} 行")
             
         except ImportError:
             self.logger.warning("[警告] pandas未安装，跳过Excel生成")
             excel_path = None
+            excel_filename = None
         except Exception as e:
             self.logger.error(f"[错误] 生成Excel失败: {e}")
             excel_path = None
+            excel_filename = None
         
-        # 4. 生成RIS（可选）
+        # 4. 生成RIS（仅 all/included 时生成）
         ris_path = None
-        included_results = [r for r in final_results if r.get('decision') == 'included']
+        included_results = [r for r in filtered_results if _is_included(r)]
         
         if included_results:
             self.logger.info("[导出] 生成RIS文件...")
@@ -870,14 +890,15 @@ class SyncExecutor(BaseExecutor):
         
         # 5. 保存输出文件（保留历史版本，用户可选择下载不同版本）
         if excel_path and excel_path.exists():
-            self.save_output_file(excel_path, f"screening_results_{model_suffix}.xlsx", "初筛结果Excel", "output")
+            self.save_output_file(excel_path, excel_filename, "初筛结果Excel", "output")
         
         if ris_path and ris_path.exists():
-            self.save_output_file(ris_path, f"screening_results_{model_suffix}.ris", "初筛结果RIS", "output")
+            ris_filename = f"screening_results_included_{model_suffix}_{ts}.ris"
+            self.save_output_file(ris_path, ris_filename, "初筛结果RIS", "output")
         
         # 6. 更新步骤元数据
-        included_count = len([r for r in final_results if r.get('decision') == 'included'])
-        excluded_count = len([r for r in final_results if r.get('decision') == 'excluded'])
+        included_count = len([r for r in final_results if _is_included(r)])
+        excluded_count = len(final_results) - included_count
         
         self.step_obj.metadata = {
             "total_results": len(final_results),
