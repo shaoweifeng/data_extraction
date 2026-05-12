@@ -468,6 +468,153 @@ def parse_xml(file_path: str) -> List[Dict]:
 
 
 # ============================================================================
+# ProCite / EndNote Tagged Format 解析（.enw / .txt）
+# 标签格式：%0 类型, %A 作者, %T 标题, %J 期刊, %D 年份 ...
+# ============================================================================
+
+# ProCite 标签 → 标准字段映射
+_PROCITE_TAG_MAP = {
+    '%0': 'reference_type',
+    '%A': 'authors',          # 可多行
+    '%+': 'affiliations',
+    '%T': 'title',
+    '%J': 'journal',
+    '%D': 'year',
+    '%V': 'volume',
+    '%N': 'issue',
+    '%P': 'page',
+    '%@': 'issn',
+    '%L': 'call_number',
+    '%U': 'url',
+    '%W': 'database',
+    '%R': 'doi',
+    '%Z': 'notes',
+    '%K': 'keywords',
+    '%X': 'abstract',
+    '%I': 'publisher',
+    '%C': 'place_published',
+    '%Y': 'editor',
+    '%9': 'thesis_type',
+    '%G': 'language',
+    '%M': 'accession_number',
+    '%F': 'label',
+    '%2': 'secondary_url',
+    '%~': 'name_of_database',
+    '%<': 'research_notes',
+    '%[': 'access_date',
+}
+
+def _parse_procite_text(text: str) -> List[Dict]:
+    """
+    解析 ProCite Tagged 格式文本，返回标准化文献字典列表。
+    记录以空行分隔，每行以 %X 标签开头（两字符标签 + 空格 + 值）。
+    多值字段（如 %A 作者）以列表存储。
+    """
+    MULTI_VALUE_TAGS = {'%A', '%+'}
+    records = []
+    current: Dict = {}
+    last_tag: Optional[str] = None
+
+    def _flush(rec):
+        if rec:
+            records.append(rec)
+
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip('\r\n')
+        # 空行 → 一条记录结束
+        if not line.strip():
+            if current:
+                _flush(current)
+                current = {}
+                last_tag = None
+            continue
+
+        # 判断是否是标签行（以 %? 开头，第2字符是字母/数字/+/~/</ [）
+        if len(line) >= 2 and line[0] == '%' and len(line) > 2 and line[2] == ' ':
+            tag = line[:2]
+            value = line[3:].strip()
+            # %0 是记录类型标签，遇到它意味着新记录开始
+            if tag == '%0' and current:
+                _flush(current)
+                current = {}
+            last_tag = tag
+            if tag in MULTI_VALUE_TAGS:
+                current.setdefault(tag, [])
+                if value:
+                    current[tag].append(value)
+            else:
+                # 部分字段可能多次出现（如 %U），拼接
+                if tag in current and tag not in MULTI_VALUE_TAGS:
+                    current[tag] = str(current[tag]) + '\n' + value
+                else:
+                    current[tag] = value
+        else:
+            # 续行：追加到上一标签
+            if last_tag and line.strip():
+                if last_tag in MULTI_VALUE_TAGS:
+                    if current.get(last_tag):
+                        current[last_tag][-1] += ' ' + line.strip()
+                else:
+                    current[last_tag] = str(current.get(last_tag, '')) + ' ' + line.strip()
+
+    # 文件末尾最后一条记录（无空行结尾）
+    _flush(current)
+
+    # 转换为标准字典
+    parsed = []
+    for i, rec in enumerate(records, 1):
+        if not rec:
+            continue
+        # 提取 DOI（%R 有时包含 "DOI:xxx"）
+        raw_doi = rec.get('%R', '')
+        doi = raw_doi.replace('DOI:', '').replace('doi:', '').strip() if raw_doi else ''
+
+        # 提取 URL（优先 %U，备用 %2）
+        url = rec.get('%U') or rec.get('%2') or ''
+        if isinstance(url, str):
+            url = url.strip()
+
+        authors = rec.get('%A', [])
+        if isinstance(authors, str):
+            authors = [authors]
+
+        parsed.append({
+            'title': rec.get('%T', '').strip(),
+            'authors': authors,
+            'journal': rec.get('%J', '').strip(),
+            'year': rec.get('%D', '').strip(),
+            'volume': rec.get('%V', '').strip(),
+            'issue': rec.get('%N', '').strip(),
+            'page': rec.get('%P', '').strip(),
+            'date': rec.get('%D', '').strip(),
+            'doi': doi,
+            'pmcid': '',
+            'abstract': rec.get('%X', '').strip(),
+            'url': url,
+            'address': rec.get('%C', '').strip(),
+            'reference_type': rec.get('%0', '').strip(),
+            'keywords': rec.get('%K', '').strip(),
+            'publisher': rec.get('%I', '').strip(),
+            'database': rec.get('%W', '').strip(),
+            'source_type': 'ENW',
+        })
+    return parsed
+
+
+def parse_enw(file_path: str) -> List[Dict]:
+    """
+    解析 ProCite Tagged 格式（.enw 或 .txt）文件。
+    """
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        text = f.read()
+    entries = _parse_procite_text(text)
+    for i, e in enumerate(entries, 1):
+        e['source_file'] = os.path.basename(file_path)
+        e['source_position'] = i
+    return entries
+
+
+# ============================================================================
 # CIW 格式解析（Web of Science）
 # ============================================================================
 
@@ -648,6 +795,7 @@ def parse_file(file_path: str) -> List[Dict]:
     - .bib, .bibtex: BibTeX 格式
     - .nbib, .medline: NBIB 格式（PubMed）
     - .xml: XML 格式
+    - .enw, .txt: ProCite/EndNote Tagged 格式（维普、CNKI .txt 导出）
     """
     ext = os.path.splitext(file_path)[1].lower()
     
@@ -661,6 +809,9 @@ def parse_file(file_path: str) -> List[Dict]:
         return parse_nbib(file_path)
     elif ext == '.xml':
         return parse_xml(file_path)
+    elif ext in ['.enw', '.txt']:
+        # ProCite/EndNote Tagged Format（维普、CNKI 等导出的 .txt 也是此格式）
+        return parse_enw(file_path)
     else:
         raise ValueError(f"不支持的文件格式: {ext}")
 

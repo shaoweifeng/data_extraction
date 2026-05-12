@@ -223,7 +223,7 @@
                                         <div class="text-center mb-6">
                                             <i class="fas fa-file-import text-6xl text-blue-100 mb-4"></i>
                                             <h3 class="text-2xl font-bold text-gray-800">步骤 1: 导入文献索引</h3>
-                                            <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib, .xml, .ciw 格式的文件</p>
+                                            <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib, .xml, .ciw, .enw, .txt 格式的文件</p>
                                         </div>
                                         <!-- 解析进度提示 -->
                                         <div v-if="isParsing" class="mb-4 bg-blue-50 rounded-xl p-4 border border-blue-200 text-center">
@@ -233,7 +233,7 @@
                                         <div class="border-2 border-dashed border-blue-200 rounded-xl p-10 hover:bg-blue-50 transition cursor-pointer text-center"
                                              @click="isParsing ? null : $refs.refInput.click()">
                                             <input type="file" ref="refInput" class="hidden" multiple 
-                                                   accept=".ris,.bib,.nbib,.xml,.ciw" @change="handleReferenceUpload">
+                                                   accept=".ris,.bib,.nbib,.xml,.ciw,.enw,.txt" @change="handleReferenceUpload">
                                             <button :disabled="isParsing" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 disabled:opacity-50 transition">
                                                 <i v-if="isParsing" class="fas fa-spinner fa-spin mr-2"></i>
                                                 <i v-else class="fas fa-upload mr-2"></i>{{ isParsing ? '正在解析...' : '上传 Reference 文件' }}
@@ -1936,7 +1936,9 @@
                                 f.filename.endsWith('.bib') || 
                                 f.filename.endsWith('.nbib') ||
                                 f.filename.endsWith('.xml') ||
-                                f.filename.endsWith('.ciw')
+                                f.filename.endsWith('.ciw') ||
+                                f.filename.endsWith('.enw') ||
+                                f.filename.endsWith('.txt')
                             );
                         }
                     } catch (err) {
