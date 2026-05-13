@@ -154,13 +154,36 @@ class SyncExecutor(BaseExecutor):
         # 5. 为每个entry生成单篇XML（参考 xxc/develop 分支实现）
         self.logger.info("[拆分] 开始生成单篇XML...")
         
-        # 解析所有entry
+        # 解析所有entry，逐文件报告进度
         all_entries = []
+        total_parse_files = len(input_files)
         if hasattr(parser, 'parse_file'):
-            for df in input_files:
+            from core.models import Task as _Task
+
+            def _update_parse_progress(phase, current, total, message):
+                """合并更新 Task.config 中的 parse_progress，不覆盖其他字段"""
+                task_row = _Task.objects.filter(id=self.task_id).values('config').first()
+                current_config = task_row['config'] if task_row and task_row['config'] else {}
+                current_config['parse_progress'] = {
+                    "phase": phase,
+                    "current": current,
+                    "total": total,
+                    "message": message
+                }
+                _Task.objects.filter(id=self.task_id).update(config=current_config)
+
+            for fi, df in enumerate(input_files, 1):
                 src_path = Path(df.file.path)
                 if not src_path.exists():
                     continue
+                
+                self.logger.info(f"[解析] 正在解析 {df.filename} ({fi}/{total_parse_files})...")
+                # 阶段1 parsing：占 0~30%
+                _update_parse_progress(
+                    "parsing",
+                    fi, total_parse_files * 10,  # 乘10让进度条只涨到10%
+                    f"[1/3] 解析文件 {fi}/{total_parse_files}：{df.filename}"
+                )
                 
                 try:
                     entries = parser.parse_file(str(src_path))
@@ -175,11 +198,18 @@ class SyncExecutor(BaseExecutor):
                 except Exception as e:
                     self.logger.warning(f"[警告] 解析 {df.filename} 失败: {e}")
         else:
-            # 使用简化解析
+            # 使用简化解析（无逐文件进度）
+            from core.models import Task as _Task
+            task_row = _Task.objects.filter(id=self.task_id).values('config').first()
+            _cfg = task_row['config'] if task_row and task_row['config'] else {}
+            _cfg['parse_progress'] = {"phase": "parsing", "current": 0, "total": 0, "message": "[1/3] 正在解析文献..."}
+            _Task.objects.filter(id=self.task_id).update(config=_cfg)
             all_entries = self._simple_parse(input_dir)
         
         # 为每个entry生成XML（用序号保证文件名唯一，避免同标题文献被覆盖）
+        total_entries_count = len(all_entries)
         split_count = 0
+        PROGRESS_INTERVAL = max(1, total_entries_count // 20)  # 每5%更新一次，最少每条更新
         for i, entry in enumerate(all_entries, 1):
             title = entry.get('title', f'unknown_{i}')
             safe_name = safe_title(title, 40)
@@ -212,6 +242,19 @@ class SyncExecutor(BaseExecutor):
             tree = ET.ElementTree(root)
             tree.write(xml_file, encoding='utf-8', xml_declaration=True)
             split_count += 1
+            
+            # 阶段2 splitting：每隔 PROGRESS_INTERVAL 更新一次进度（占 10%~70%）
+            if i % PROGRESS_INTERVAL == 0 or i == total_entries_count:
+                from core.models import Task as _Task
+                task_row = _Task.objects.filter(id=self.task_id).values('config').first()
+                _cfg = task_row['config'] if task_row and task_row['config'] else {}
+                _cfg['parse_progress'] = {
+                    "phase": "splitting",
+                    "current": 10 + int(i / total_entries_count * 60),  # 10%~70%
+                    "total": 100,
+                    "message": f"[2/3] 生成单篇索引 {i}/{total_entries_count}"
+                }
+                _Task.objects.filter(id=self.task_id).update(config=_cfg)
         
         self.logger.info(f"[拆分] 生成 {split_count} 个单篇XML")
         
@@ -232,26 +275,63 @@ class SyncExecutor(BaseExecutor):
             ).delete()
             self.logger.info(f"[清理] 已清除 {old_count} 条旧的 intermediate 记录")
         
-        # 保存合并的XML
+        # 阶段3 saving：保存合并的XML + 单篇XML，进度 70%~99%
+        from core.models import Task as _Task
+        xml_files_to_save = list(split_dir.glob("*.xml"))
+        if merged_xml.exists():
+            xml_files_to_save_total = len(xml_files_to_save) + 1
+        else:
+            xml_files_to_save_total = len(xml_files_to_save)
+        save_idx = 0
+
         if merged_xml.exists():
             self.save_output_file(merged_xml, "references.xml", "合并后的文献XML", "intermediate")
-        
-        # 保存拆分的单篇XML
+            save_idx += 1
+
         split_count = 0
-        for xml_file in split_dir.glob("*.xml"):
+        SAVE_INTERVAL = max(1, len(xml_files_to_save) // 20)
+        for j, xml_file in enumerate(xml_files_to_save, 1):
             self.save_output_file(xml_file, xml_file.name, "单篇文献XML", "intermediate")
             split_count += 1
+            save_idx += 1
+            # 每隔 SAVE_INTERVAL 更新一次保存进度
+            if j % SAVE_INTERVAL == 0 or j == len(xml_files_to_save):
+                task_row = _Task.objects.filter(id=self.task_id).values('config').first()
+                _cfg = task_row['config'] if task_row and task_row['config'] else {}
+                _cfg['parse_progress'] = {
+                    "phase": "saving",
+                    "current": 70 + int(save_idx / xml_files_to_save_total * 29),  # 70%~99%
+                    "total": 100,
+                    "message": f"[3/3] 保存到数据库 {save_idx}/{xml_files_to_save_total}"
+                }
+                _Task.objects.filter(id=self.task_id).update(config=_cfg)
         
         self.logger.info(f"[完成] 已保存 {split_count} 个文件")
-        
-        # 7. 更新步骤元数据
+
+        # 7. 把最终统计写回 Task.config（供前端 pollParsingStatus 完成后读取 parsedCount）
+        from core.models import Task as _Task
+        task_row = _Task.objects.filter(id=self.task_id).values('config').first()
+        _final_cfg = task_row['config'] if task_row and task_row['config'] else {}
+        _final_cfg.update({
+            "total_entries": total_entries,
+            "split_files": split_count,
+            "parse_progress": {
+                "phase": "done",
+                "current": 99,
+                "total": 100,
+                "message": f"解析完成，共 {split_count} 篇文献，等待收尾..."
+            }
+        })
+        _Task.objects.filter(id=self.task_id).update(config=_final_cfg)
+
+        # 8. 更新步骤元数据
         self.step_obj.metadata = {
             "total_files": total_files,
             "total_entries": total_entries,
             "split_files": split_count,
             "completion_time": datetime.now().isoformat()
         }
-        
+
         return True
     
     def _simple_parse(self, input_dir: Path) -> List[Dict]:

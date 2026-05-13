@@ -131,6 +131,13 @@ class TaskScheduler:
         
         # 根据执行模式调度
         if mode == "sync":
+            if step_key == 'parse':
+                # parse 步骤在后台线程执行，立即返回 task 让前端轮询进度
+                import threading
+                def _run():
+                    self._execute_sync(task, step_key)
+                threading.Thread(target=_run, daemon=True).start()
+                return task
             return self._execute_sync(task, step_key)
         elif mode == "async":
             return self._execute_async(task, step_key)

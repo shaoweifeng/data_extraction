@@ -225,18 +225,57 @@
                                             <h3 class="text-2xl font-bold text-gray-800">步骤 1: 导入文献索引</h3>
                                             <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib, .xml, .ciw, .enw, .txt 格式的文件</p>
                                         </div>
-                                        <!-- 解析进度提示 -->
-                                        <div v-if="isParsing" class="mb-4 bg-blue-50 rounded-xl p-4 border border-blue-200 text-center">
-                                            <i class="fas fa-spinner fa-spin text-blue-600 text-2xl mr-2"></i>
-                                            <span class="text-blue-700 font-medium">正在解析文献 {{ parsedCount > 0 ? `（已解析 ${parsedCount} 条）` : '...' }}</span>
+                                        <!-- 上传/解析进度区域 -->
+                                        <div v-if="uploadPhase !== 'idle'" class="mb-4 rounded-xl border overflow-hidden"
+                                             :class="uploadPhase === 'uploading' ? 'bg-blue-50 border-blue-200' : 'bg-indigo-50 border-indigo-200'">
+                                            <div class="px-4 pt-3 pb-1 flex items-center gap-2">
+                                                <i class="fas fa-spinner fa-spin text-lg"
+                                                   :class="uploadPhase === 'uploading' ? 'text-blue-600' : 'text-indigo-600'"></i>
+                                                <span class="font-medium text-sm"
+                                                      :class="uploadPhase === 'uploading' ? 'text-blue-700' : 'text-indigo-700'">
+                                                    <template v-if="uploadPhase === 'uploading'">
+                                                        正在上传文件 ({{ uploadFileIndex }}/{{ uploadTotalFiles }})：{{ uploadCurrentFile }}
+                                                    </template>
+                                                    <template v-else>
+                                                        {{ parseProgressMsg || '正在启动解析...' }}
+                                                    </template>
+                                                </span>
+                                            </div>
+                                            <!-- 进度条 -->
+                                            <div class="px-4 pb-3">
+                                                <div class="w-full bg-white rounded-full h-3 border overflow-hidden"
+                                                     :class="uploadPhase === 'uploading' ? 'border-blue-200' : 'border-indigo-200'">
+                                                    <!-- uploading：确定进度 -->
+                                                    <div v-if="uploadPhase === 'uploading'"
+                                                         class="h-3 rounded-full bg-blue-500 transition-all duration-300"
+                                                         :style="{ width: uploadProgress + '%' }"></div>
+                                                    <!-- parsing 且已有总数：后端 current 已是 0-99 的百分比，total=100 -->
+                                                    <div v-else-if="parseProgressTotal > 0"
+                                                         class="h-3 rounded-full bg-indigo-500 transition-all duration-300"
+                                                         :style="{ width: parseProgressCurrent + '%' }"></div>
+                                                    <!-- parsing 但还没总数：跑马灯 -->
+                                                    <div v-else
+                                                         class="h-3 rounded-full bg-indigo-400 animate-pulse"
+                                                         style="width: 40%"></div>
+                                                </div>
+                                                <div class="flex justify-between text-xs mt-1"
+                                                     :class="uploadPhase === 'uploading' ? 'text-blue-500' : 'text-indigo-500'">
+                                                    <span v-if="uploadPhase === 'uploading'">{{ uploadProgress }}%</span>
+                                                    <span v-else-if="parseProgressTotal > 0">
+                                                        {{ parseProgressCurrent }}%
+                                                    </span>
+                                                    <span v-else>解析中...</span>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="border-2 border-dashed border-blue-200 rounded-xl p-10 hover:bg-blue-50 transition cursor-pointer text-center"
-                                             @click="isParsing ? null : $refs.refInput.click()">
+                                             @click="(isParsing || uploadPhase !== 'idle') ? null : $refs.refInput.click()">
                                             <input type="file" ref="refInput" class="hidden" multiple 
                                                    accept=".ris,.bib,.nbib,.xml,.ciw,.enw,.txt" @change="handleReferenceUpload">
-                                            <button :disabled="isParsing" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 disabled:opacity-50 transition">
-                                                <i v-if="isParsing" class="fas fa-spinner fa-spin mr-2"></i>
-                                                <i v-else class="fas fa-upload mr-2"></i>{{ isParsing ? '正在解析...' : '上传 Reference 文件' }}
+                                            <button :disabled="isParsing || uploadPhase !== 'idle'" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 disabled:opacity-50 transition">
+                                                <i v-if="isParsing || uploadPhase !== 'idle'" class="fas fa-spinner fa-spin mr-2"></i>
+                                                <i v-else class="fas fa-upload mr-2"></i>
+                                                {{ uploadPhase === 'uploading' ? '上传中...' : isParsing ? '正在解析...' : '上传 Reference 文件' }}
                                             </button>
                                             <p class="mt-4 text-sm text-gray-400">点击或拖拽文件到此处（上传后自动解析）</p>
                                         </div>
@@ -1861,6 +1900,15 @@
                     selectedExcelExcludedVersion.value = 0;
                     isParsing.value = false;
                     parsedCount.value = 0;
+                    uploadPhase.value = 'idle';
+                    uploadProgress.value = 0;
+                    uploadCurrentFile.value = '';
+                    uploadFileIndex.value = 0;
+                    uploadTotalFiles.value = 0;
+                    parseProgressCurrent.value = 0;
+                    parseProgressTotal.value = 0;
+                    parseProgressMsg.value = '';
+                    pollParseCount.value = 0;
                     expandedTaskId.value = null;
                     await fetchStages(project.id);
                     await Promise.all([fetchRecentTasks(), fetchActivityLogs()]);
@@ -1969,64 +2017,98 @@
                     }
                 };
 
+                // 文件上传/解析进度状态
+                const isParsing = ref(false);
+                const parsedCount = ref(0);
+                // 进度状态：idle | uploading | parsing
+                const uploadPhase = ref('idle');       // 当前大阶段
+                const uploadProgress = ref(0);         // 上传百分比 0-100
+                const uploadCurrentFile = ref('');     // 正在上传的文件名
+                const uploadFileIndex = ref(0);        // 第几个文件
+                const uploadTotalFiles = ref(0);       // 总文件数
+                const parseProgressCurrent = ref(0);  // 解析：已处理数
+                const parseProgressTotal = ref(0);    // 解析：总数
+                const parseProgressMsg = ref('');     // 解析：描述文字
+                const pollParseCount = ref(0);          // 每次轮询+1，用于验证刷新
+
                 // 文件上传处理
                 const handleReferenceUpload = async (event) => {
-                    const files = event.target.files;
+                    const files = Array.from(event.target.files);
                     if (!files.length) return;
 
+                    uploadPhase.value = 'uploading';
+                    uploadTotalFiles.value = files.length;
                     const uploadedFileIds = [];
-                    
-                    for (const file of files) {
+
+                    // 用 XHR 逐文件上传，支持上传进度
+                    const uploadFileXHR = (file, index) => new Promise((resolve, reject) => {
                         const formData = new FormData();
                         formData.append('file', file);
                         formData.append('filename', file.name);
                         formData.append('project', currentProject.value.id);
                         formData.append('data_category', 'input');
 
-                        try {
-                            const res = await fetch(`${API_BASE}/files/`, {
-                                method: 'POST',
-                                body: formData,
-                                credentials: 'include',
-                                headers: {
-                                    'X-CSRFToken': getCSRFToken()
-                                }
-                            });
+                        uploadCurrentFile.value = file.name;
+                        uploadFileIndex.value = index;
+                        uploadProgress.value = 0;
 
-                            if (res.ok) {
-                                const uploadedFile = await res.json();
-                                uploadedFileIds.push(uploadedFile.id);
-                                // 不要在循环中调用 loadScreen1Files()
-                            } else {
-                                const data = await res.json();
-                                console.error('上传失败', data);
-                                alert(`上传失败: ${data.error || '未知错误'}`);
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', `${API_BASE}/files/`);
+                        xhr.setRequestHeader('X-CSRFToken', getCSRFToken());
+                        xhr.withCredentials = true;
+
+                        xhr.upload.onprogress = (e) => {
+                            if (e.lengthComputable) {
+                                uploadProgress.value = Math.round(e.loaded / e.total * 100);
                             }
+                        };
+                        xhr.onload = () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                try { resolve(JSON.parse(xhr.responseText)); }
+                                catch (e) { reject(new Error('响应解析失败')); }
+                            } else {
+                                try {
+                                    const d = JSON.parse(xhr.responseText);
+                                    reject(new Error(d.error || `上传失败 (${xhr.status})`));
+                                } catch { reject(new Error(`上传失败 (${xhr.status})`)); }
+                            }
+                        };
+                        xhr.onerror = () => reject(new Error('网络错误'));
+                        xhr.send(formData);
+                    });
+
+                    for (let i = 0; i < files.length; i++) {
+                        try {
+                            const uploaded = await uploadFileXHR(files[i], i + 1);
+                            uploadedFileIds.push(uploaded.id);
                         } catch (err) {
-                            console.error('上传出错', err);
-                            alert(`上传出错: ${err.message}`);
+                            alert(`上传 ${files[i].name} 失败: ${err.message}`);
                         }
                     }
-                    
+
                     // 清空 input value，确保再次选择同一文件时仍能触发 change 事件
                     event.target.value = '';
 
                     // 所有文件上传完成后，刷新文件列表并自动触发解析
                     if (uploadedFileIds.length > 0) {
+                        uploadPhase.value = 'parsing';
+                        uploadProgress.value = 100;
                         await loadScreen1Files();
                         await fetchActivityLogs();
                         // 自动触发文献解析任务
                         await triggerParsingTask(uploadedFileIds);
+                    } else {
+                        uploadPhase.value = 'idle';
                     }
                 };
 
-                // 触发文献解析任务
-                const isParsing = ref(false);
-                const parsedCount = ref(0);
-                
                 const triggerParsingTask = async (fileIds) => {
                     isParsing.value = true;
                     parsedCount.value = 0;
+                    uploadPhase.value = 'parsing';
+                    parseProgressCurrent.value = 0;
+                    parseProgressTotal.value = 0;
+                    parseProgressMsg.value = '正在启动解析任务...';
                     try {
                         const res = await apiRequestNoTimeout(`${API_BASE}/tasks/`, {
                             method: 'POST',
@@ -2040,51 +2122,73 @@
                         if (res.ok) {
                             const task = await res.json();
                             latestTask.value = task;
+                            parseProgressMsg.value = '解析任务已启动，正在处理文件...';
                             // 开始轮询解析任务状态
                             pollParsingStatus(task.id);
                         } else {
                             const data = await res.json();
                             alert(`启动解析任务失败: ${data.error || '未知错误'}`);
                             isParsing.value = false;
+                            uploadPhase.value = 'idle';
                         }
                     } catch (err) {
                         console.error('启动解析任务失败', err);
                         alert(`启动解析任务失败: ${err.message}`);
                         isParsing.value = false;
+                        uploadPhase.value = 'idle';
                     }
                 };
 
                 // 专用轮询：解析任务状态
                 const pollParsingStatus = async (taskId) => {
+                    let errorCount = 0;
+                    const MAX_ERRORS = 5;
                     const poll = async () => {
                         try {
+                            pollParseCount.value++;   // ← 每轮询一次+1
                             const res = await apiRequest(`${API_BASE}/tasks/${taskId}/`);
-                            if (!res.ok) { isParsing.value = false; return; }
+                            if (!res.ok) { isParsing.value = false; uploadPhase.value = 'idle'; return; }
                             const task = await res.json();
                             latestTask.value = task;
                             const status = task.status;
+                            errorCount = 0;  // 成功一次就重置错误计数
                             
-                            // 从 metadata 获取解析进度
-                            if (task.metadata) {
-                                parsedCount.value = task.metadata.total_entries || task.metadata.split_files || 0;
+                            // 从 config 获取解析进度
+                            if (task.config) {
+                                parsedCount.value = task.config.total_entries || task.config.split_files || 0;
+                                const pp = task.config.parse_progress;
+                                if (pp) {
+                                    parseProgressCurrent.value = pp.current || 0;
+                                    parseProgressTotal.value = pp.total || 0;
+                                    parseProgressMsg.value = pp.message || '';
+                                }
                             }
 
                             if (status === 'running' || status === 'pending') {
-                                setTimeout(poll, 2000);
+                                setTimeout(poll, 500);
                             } else {
                                 isParsing.value = false;
+                                uploadPhase.value = 'idle';
                                 await fetchStages(currentProject.value.id);
                                 await fetchRecentTasks();
                                 await fetchActivityLogs();
                                 if (status === 'completed') {
-                                    parsedCount.value = task.metadata?.split_files || task.metadata?.total_entries || 0;
+                                    parsedCount.value = task.config?.split_files || task.config?.total_entries || 0;
                                 } else {
                                     alert(`文献解析失败: ${task.error_message || '任务执行失败'}`);
                                 }
                             }
                         } catch (err) {
-                            console.error('轮询解析状态失败', err);
-                            isParsing.value = false;
+                            errorCount++;
+                            console.error(`[poll #${pollParseCount.value}] 轮询出错 (${errorCount}/${MAX_ERRORS}):`, err);
+                            parseProgressMsg.value = `轮询中... [${pollParseCount.value}] (错误${errorCount})`;
+                            if (errorCount < MAX_ERRORS) {
+                                // 网络抖动，继续轮询
+                                setTimeout(poll, 1000);
+                            } else {
+                                isParsing.value = false;
+                                uploadPhase.value = 'idle';
+                            }
                         }
                     };
                     await poll();
@@ -2796,7 +2900,7 @@
                     newExtractionFieldName, newExtractionFieldDef, extractionFields, addExtractionField, removeExtractionField, loadExtractionFields,
                     pendingFiles, screenedFiles, latestTask, latestAiScreenTask, isProcessing, screeningResults, aiScreenLogContent,
                     screeningTab, pendingPage, screenedPage, processedCount, screeningProgress, remainingFiles,
-                    isParsing, parsedCount,
+                    isParsing, parsedCount, uploadPhase, uploadProgress, uploadCurrentFile, uploadFileIndex, uploadTotalFiles, parseProgressCurrent, parseProgressTotal, parseProgressMsg,
                     loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults,
                     aiModelsList, aiModelsLoading, selectedAiModel, loadAiModels, selectAiModel,
                     promptPanelOpen, useCustomPrompt, customPromptText, promptSaveStatus, defaultPromptPreview,
