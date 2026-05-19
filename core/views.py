@@ -337,9 +337,26 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Response({'message': f'已清除 {deleted_count} 条筛选结果记录'})
 
         return Response({'message': '未找到 ai_screen 步骤，无需清除'})
-    
+
     @action(detail=True, methods=['get'])
-    def progress(self, request, pk=None):
+    def ai_screen_stats(self, request, pk=None):
+        """返回项目 ai_screen 步骤真实纳排统计数量"""
+        from core.models import StageStep, ProjectStage, DataFile
+        project = self.get_object()
+        ai_step = StageStep.objects.filter(
+            stage__project=project,
+            step_key='ai_screen'
+        ).first()
+        if not ai_step:
+            return Response({'included': 0, 'excluded': 0, 'total': 0})
+
+        qs = DataFile.objects.filter(project=project, step=ai_step, data_category='output')
+        total = qs.count()
+        included = qs.filter(metadata__decision='included').count()
+        excluded = qs.filter(metadata__decision='excluded').count()
+        return Response({'included': included, 'excluded': excluded, 'total': total})
+
+
         """获取项目整体进度"""
         from .monitoring import ProgressMonitor
         

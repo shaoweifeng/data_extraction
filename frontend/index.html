@@ -196,7 +196,7 @@
                                 <div class="flex justify-between items-center">
                                     <div v-for="(step, idx) in screen1Steps" :key="step.step_key"
                                          class="relative flex flex-col items-center cursor-pointer z-10 w-1/6"
-                                         @click="currentStep = idx + 1; if (idx + 1 === 5) loadAiScreenFiles()">
+                                         @click="currentStep = idx + 1; if (idx + 1 === 5) loadAiScreenFiles(); if (idx + 1 === 6) loadAiScreenStats()">
                                         <!-- 圆圈：固定40px高度，所有圆心在top:20px -->
                                         <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition relative shrink-0"
                                              :class="getStepClass(step, idx + 1)">
@@ -1455,12 +1455,14 @@
                 const latestTask = ref(null);
                 const latestAiScreenTask = ref(null);  // 专门追踪最新的 ai_screen 任务
                 const isProcessing = ref(false);
-                // 筛选统计：从 screenedFiles（全局 DB 数据）实时计算，不依赖 step metadata
+                // 筛选统计：从后端实时拉取真实纳排数量（不依赖分页的 screenedFiles）
+                const aiScreenStats = ref(null);  // { included, excluded, total }
                 const screeningResults = computed(() => {
+                    if (aiScreenStats.value) return aiScreenStats.value;
                     if (screenedFiles.value.length === 0 && !latestAiScreenTask.value) return null;
                     const included = screenedFiles.value.filter(f => f.metadata?.decision === 'included').length;
                     const excluded = screenedFiles.value.filter(f => f.metadata?.decision === 'excluded').length;
-                    const total = totalRefs.value || pendingFiles.value.length || 0;
+                    const total = totalRefs.value || pendingTotal.value || 0;
                     return { included, excluded, total };
                 });
                 const aiScreenLogContent = ref('');  // 控制台实际日志内容
@@ -1902,6 +1904,7 @@
                     screeningTab.value = 'pending';
                     pendingFiles.value = [];
                     screenedFiles.value = [];
+                    aiScreenStats.value = null;
                     pendingPage.value = 0;
                     screenedPage.value = 0;
                     pendingTotal.value = 0;
@@ -1945,6 +1948,7 @@
                     await loadPrompt();
                     // 加载待筛选和已筛选文献列表
                     await Promise.all([loadAiScreenFiles(), loadScreenedFiles()]);
+                    loadAiScreenStats();
                     // 加载已有的导出文件（刷新后也能显示下载按钮）
                     const expStage = stagesData.value.find(s => s.stage_key === 'SCREEN_1');
                     const expStep = expStage?.steps.find(s => s.step_key === 'export');
@@ -2502,7 +2506,17 @@
                     }
                 };
 
-                // 专用轮询：AI初筛任务状态 + 日志
+                const loadAiScreenStats = async () => {
+                    if (!currentProject.value) return;
+                    try {
+                        const res = await apiRequest(`${API_BASE}/projects/${currentProject.value.id}/ai_screen_stats/`);
+                        if (res.ok) {
+                            aiScreenStats.value = await res.json();
+                        }
+                    } catch (e) { /* 统计加载失败不影响主流程 */ }
+                };
+
+
                 const pollAiScreeningStatus = async (taskId) => {
                     let lastProgressTime = Date.now();  // 记录上次进度更新时间
                     let pollCount = 0;  // 轮询计数器，用于定期刷新左侧文件列表
@@ -2571,19 +2585,11 @@
                                 await fetchRecentTasks();
                                 await fetchStages(currentProject.value.id);
                                 if (status === 'completed') {
-                                    await Promise.all([loadAiScreenFiles(), loadScreenedFiles()]);
-                                    const aiStep = stagesData.value
-                                        .find(s => s.stage_key === 'SCREEN_1')
-                                        ?.steps.find(s => s.step_key === 'ai_screen');
-                                    if (aiStep?.metadata) {
-                                        // screeningResults 已改为 computed，从 screenedFiles 自动计算
-                                        // 只需确保 screenedFiles 已加载
-                                        await loadScreenedFiles();
-                                    }
+                                    await Promise.all([loadAiScreenFiles(), loadScreenedFiles(), loadAiScreenStats()]);
                                     alert('AI初筛完成！');
                                 } else if (status === 'stopped') {
-                                    // 任务被暂停（通知已由 stopScreeningTask 发出，这里只刷新数据）
-                                    await loadScreenedFiles();
+                                    // 任务被暂停
+                                    await Promise.all([loadScreenedFiles(), loadAiScreenStats()]);
                                 } else {
                                     alert(`AI初筛失败: ${latestTask.value.error_message || '任务执行失败'}`);
                                 }
@@ -2860,6 +2866,10 @@
                     if (step.status === 'skipped') {
                         return 'bg-yellow-500 text-white';
                     }
+                    // 已暂停
+                    if (step.status === 'stopped') {
+                        return 'bg-orange-500 text-white';
+                    }
                     // 失败
                     if (step.status === 'failed') {
                         return 'bg-red-600 text-white';
@@ -2932,7 +2942,7 @@
                     isDeduplicating, dedupCompleted, handleDeduplication, dedupStats, showDuplicateDetails,
                     newCriteria, criteriaList, addCriteria, removeCriteria, presetCriteria, togglePreset,
                     newExtractionFieldName, newExtractionFieldDef, extractionFields, addExtractionField, removeExtractionField, loadExtractionFields,
-                    pendingFiles, screenedFiles, latestTask, latestAiScreenTask, isProcessing, screeningResults, aiScreenLogContent,
+                    pendingFiles, screenedFiles, latestTask, latestAiScreenTask, isProcessing, screeningResults, aiScreenStats, aiScreenLogContent,
                     screeningTab, pendingPage, screenedPage, pendingTotal, screenedTotal, PAGE_SIZE, processedCount, screeningProgress, remainingFiles,
                     isParsing, parsedCount, uploadPhase, uploadProgress, uploadCurrentFile, uploadFileIndex, uploadTotalFiles, parseProgressCurrent, parseProgressTotal, parseProgressMsg,
                     loadAiScreenFiles, loadScreenedFiles, startScreening, stopScreeningTask, resumeScreeningTask, abandonScreeningTask, clearAiScreenResults,

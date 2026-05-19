@@ -405,7 +405,11 @@ class BaseExecutor(ABC):
         """收尾工作"""
         try:
             if self.step_obj:
-                self.step_obj.status = 'completed' if success else 'failed'
+                self.task_obj.refresh_from_db()  # 先刷新 task 状态，再决定 step 状态
+                if self.task_obj.status in ('stopping', 'stopped'):
+                    self.step_obj.status = 'stopped'
+                else:
+                    self.step_obj.status = 'completed' if success else 'failed'
                 self.step_obj.completed_at = timezone.now()
                 
                 # 保留已有的metadata（如去重统计信息），只更新基础信息
@@ -417,7 +421,7 @@ class BaseExecutor(ABC):
                 self.step_obj.save()
             
             if self.task_obj:
-                # 【修复】如果任务已被用户暂停（stopping/stopped），不覆盖为 failed
+                # 如果任务已被用户暂停（stopping/stopped），不覆盖为 failed
                 self.task_obj.refresh_from_db()
                 if self.task_obj.status in ('stopping', 'stopped'):
                     # 只更新日志路径，不改状态
