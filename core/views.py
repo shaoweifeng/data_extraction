@@ -809,7 +809,10 @@ class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
         project_id = self.request.query_params.get('project')
         if project_id:
             qs = qs.filter(project_id=project_id)
-        return qs
+        operation_type = self.request.query_params.get('operation_type')
+        if operation_type:
+            qs = qs.filter(operation_type=operation_type)
+        return qs.order_by('-created_at')
 
 
 # ============================================================================
@@ -846,6 +849,21 @@ class DataFileViewSet(viewsets.ModelViewSet):
             qs = qs.filter(data_category=data_category)
         
         return qs.select_related('stage', 'step', 'created_by').prefetch_related('versions')
+
+    def list(self, request, *args, **kwargs):
+        """支持 limit/offset 服务端分页，返回 {total, results}"""
+        qs = self.get_queryset()
+        total = qs.count()
+        qp = request.query_params
+        try:
+            limit = int(qp.get('limit', 200))
+            offset = int(qp.get('offset', 0))
+        except (TypeError, ValueError):
+            limit = 200
+            offset = 0
+        qs = qs[offset: offset + limit]
+        serializer = self.get_serializer(qs, many=True)
+        return Response({'total': total, 'results': serializer.data})
     
     def perform_create(self, serializer):
         """创建文件时自动关联当前用户"""
