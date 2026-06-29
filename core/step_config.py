@@ -189,10 +189,10 @@ STEP_CONFIGURATIONS = {
         "execution_mode": "async",
         "description": "调用AI接口进行文献筛选",
         "timeout": 7200,
-        "batch_size": 10,
-        "concurrency": 5,
+        "batch_size": 16,
+        "concurrency": 16,
         "resume_capability": True,
-        "checkpoint_interval": 50,
+        "checkpoint_interval": 16,
         "inputs": ["dedup_xmls/*.xml", "screening_criteria.json"],
         "outputs": ["results/*/*.json"],
         "retry_policy": {

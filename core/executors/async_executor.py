@@ -114,13 +114,16 @@ class AsyncExecutor(BaseExecutor):
         processed_sources: Set[str] = set()
         
         if checkpoint:
-            # processed_sources 可能位于顶层或嵌套在 "data" 中（add_checkpoint 的包裹格式）
+            # processed_sources 直接在顶层（save_checkpoint 修复后写入原始 data 格式）
+            # 兼容旧版：如果存在 "data" 包裹层（历史 checkpoint 文件），也能正确读取
             raw_sources = checkpoint.get("processed_sources", [])
             if not raw_sources and "data" in checkpoint:
                 raw_sources = checkpoint["data"].get("processed_sources", [])
             processed_sources = set(raw_sources)
+            # 进度字段同样兼容顶层和 data 包裹两种格式
+            prog = checkpoint.get("progress") or checkpoint.get("data", {}).get("progress", {}) or {}
             self.logger.info(f"[断点] 检测到上次断点，已处理 {len(processed_sources)} 篇")
-            self.logger.info(f"[断点] 上次进度: {checkpoint.get('progress', {}).get('current', 0)}/{checkpoint.get('progress', {}).get('total', 0)}")
+            self.logger.info(f"[断点] 上次进度: {prog.get('current', 0)}/{prog.get('total', 0)}")
             # 初始化进度写入 DB，避免进度条从0跳升
             resume_progress = self.config.get("resume_progress", 0)
             if resume_progress and resume_progress > 0:
@@ -179,10 +182,9 @@ class AsyncExecutor(BaseExecutor):
             self.logger.info("[完成] 所有文献已处理完成")
             return True
         
-        # 6. 批处理参数
-        batch_size = self.config.get("batch_size", 10)
-        checkpoint_interval = self.config.get("checkpoint_interval", 50)
-        concurrency = self.config.get("concurrency", 3)
+        # 6. 批处理参数（batch_size=concurrency=16，每批16篇并发处理，每批完成后即保存断点）
+        batch_size = self.config.get("batch_size", 16)
+        concurrency = self.config.get("concurrency", 16)
         
         # 7. 处理文献
         processed_count = len(processed_sources)
@@ -207,42 +209,40 @@ class AsyncExecutor(BaseExecutor):
                 })
                 return False
             
-            # 【新增】每5个批次发送心跳，让前端知道任务还活着
-            if batch_index % 5 == 0:
-                self._send_heartbeat(processed_count, total_refs)
+            # 每批次发送心跳，让前端知道任务还活着
+            self._send_heartbeat(processed_count, total_refs)
             
             # 获取当前批次
             batch = entries_to_process[i:i+batch_size]
             
             # 处理批次
-            self.logger.info(f"[批次] 处理 {i+1}-{i+len(batch)}/{len(entries_to_process)} 篇")
+            self.logger.info(f"[批次] 处理 {i+1}-{i+len(batch)}/{len(entries_to_process)} 篇（并发{concurrency}线程）")
             
             results = self._process_batch(batch, criteria, results_dir, concurrency)
             batch_results.extend(results)
             
-            # 更新进度
+            # 批次完成后统一更新进度、保存文件、写断点
             for entry, result in zip(batch, results):
                 # 保存结果到文件
                 self._save_result(entry, result, results_dir)
                 processed_sources.add(entry["source_xml"])
                 processed_count += 1
-                
-                # 更新进度文件
-                self.logger.update_progress(processed_count, total_refs, "refs")
-                
-                # 定期保存断点
-                if processed_count % checkpoint_interval == 0:
-                    self.save_checkpoint({
-                        "processed_sources": list(processed_sources),
-                        "last_batch_index": i + batch_size,
-                        "progress": {
-                            "current": processed_count,
-                            "total": total_refs
-                        }
-                    })
-                    self.logger.add_checkpoint(f"auto_checkpoint_{processed_count}")
             
-            # 【新增】每批处理完后，将本批结果写入DB，供前端实时查看已筛选文献
+            # 每批（16篇）完成后统一更新进度条（前端以此为最小刷新单位）
+            self.logger.update_progress(processed_count, total_refs, "refs")
+            
+            # 每 checkpoint_interval 篇（=batch_size=16）保存一次断点
+            # 注意：不能调用 self.logger.add_checkpoint，它会把 wrapped 格式覆盖写入 checkpoint.json
+            self.save_checkpoint({
+                "processed_sources": list(processed_sources),
+                "last_batch_index": i + batch_size,
+                "progress": {
+                    "current": processed_count,
+                    "total": total_refs
+                }
+            })
+            
+            # 将本批结果写入DB，供前端实时查看已筛选文献
             self._save_batch_results_to_db(batch, results)
             
             batch_index += 1
@@ -280,7 +280,7 @@ class AsyncExecutor(BaseExecutor):
         return True
     
     def _process_batch(self, batch: List[Dict], criteria: List[str], 
-                       results_dir: Path, concurrency: int = 3) -> List[Dict]:
+                       results_dir: Path, concurrency: int = 16) -> List[Dict]:
         """
         处理一批文献
         
@@ -288,7 +288,7 @@ class AsyncExecutor(BaseExecutor):
             batch: 待处理的文献条目列表
             criteria: 纳排标准列表
             results_dir: 结果保存目录
-            concurrency: 并发数
+            concurrency: 并发线程数（默认16）
         
         Returns:
             结果字典列表（与batch顺序对应）
@@ -297,7 +297,7 @@ class AsyncExecutor(BaseExecutor):
         
         # 尝试调用真实API
         try:
-            results = self._call_ai_api(batch, criteria)
+            results = self._call_ai_api(batch, criteria, concurrency=concurrency)
         except Exception as e:
             self.logger.warning(f"[API] 调用失败: {e}，使用模拟结果")
             results = self._mock_api_call(batch, criteria)
@@ -393,7 +393,7 @@ class AsyncExecutor(BaseExecutor):
 
         return base_prompt
 
-    def _call_ai_api(self, batch: List[Dict], criteria: List[str]) -> List[Dict]:
+    def _call_ai_api(self, batch: List[Dict], criteria: List[str], concurrency: int = 16) -> List[Dict]:
         """
         调用 AI Provider 进行批量筛选
         
@@ -419,9 +419,9 @@ class AsyncExecutor(BaseExecutor):
 
         provider = get_provider(model_id)
         prompt_template = self._get_prompt_template()
-        self.logger.info(f"[AI] 使用 Provider: {provider.name}，批次: {len(batch)} 篇")
+        self.logger.info(f"[AI] 使用 Provider: {provider.name}，批次: {len(batch)} 篇，并发: {concurrency}")
 
-        screening_results = provider.screen_batch(batch, criteria, prompt_template)
+        screening_results = provider.screen_batch(batch, criteria, prompt_template, concurrency=concurrency)
 
         # 将 ScreeningResult 转换为兼容原有格式的 dict
         results = []

@@ -93,20 +93,25 @@ class BaseAIProvider(ABC):
         """
         pass
 
-    def screen_batch(self, batch: List[Dict], criteria: List[str], prompt_template: str) -> List[ScreeningResult]:
+    def screen_batch(self, batch: List[Dict], criteria: List[str], prompt_template: str,
+                     concurrency: int = 16) -> List[ScreeningResult]:
         """
-        批量筛选（默认逐条调用 screen_single，子类可覆盖实现真正的批量 API）
+        批量筛选（默认使用线程池并发调用 screen_single，子类可覆盖实现真正的批量 API）
         
         Args:
             batch: 文献列表
             criteria: 纳排标准列表
             prompt_template: prompt 模板
+            concurrency: 并发线程数（默认16）
         
         Returns:
             ScreeningResult 列表（与 batch 顺序对应）
         """
-        results = []
-        for entry in batch:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        results: List[Optional[ScreeningResult]] = [None] * len(batch)
+
+        def _screen_one(idx: int, entry: Dict) -> tuple:
             try:
                 result = self.screen_single(entry, criteria, prompt_template)
             except Exception as e:
@@ -116,5 +121,12 @@ class BaseAIProvider(ABC):
                     model=self.name,
                     error=str(e)
                 )
-            results.append(result)
+            return idx, result
+
+        with ThreadPoolExecutor(max_workers=concurrency) as pool:
+            futures = {pool.submit(_screen_one, i, entry): i for i, entry in enumerate(batch)}
+            for future in as_completed(futures):
+                idx, result = future.result()
+                results[idx] = result
+
         return results

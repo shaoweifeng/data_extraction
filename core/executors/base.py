@@ -74,13 +74,13 @@ class TaskLogger:
         
         # 【新增】日志缓冲区和同步控制
         self.log_buffer = []
-        self.max_buffer_size = 50       # 最多保留50行
+        self.max_buffer_size = 100      # 最多保留100行
         self.last_db_sync = datetime.now()
         self.db_sync_interval = 2      # 每2秒同步一次DB
         
-        # 【新增】进度同步控制
+        # 【新增】进度同步控制（以16篇为最小单位对齐批次）
         self._last_progress_sync = 0
-        self._progress_sync_interval = 5  # 每5篇文献同步一次
+        self._progress_sync_interval = 16  # 每16篇文献同步一次（与 batch_size 对齐）
         
         # 初始化
         self._init_logger()
@@ -427,9 +427,15 @@ class BaseExecutor(ABC):
                     # 只更新日志路径，不改状态
                     log_meta = self.logger.get_metadata()
                     self.task_obj.logs = json.dumps(log_meta, ensure_ascii=False)
-                    self.task_obj.log_file = log_meta.get("log_file", "")
+                    self.task_obj.log_file = str(self.logger.log_file)  # 始终使用绝对路径
                     self.task_obj.status = 'stopped'
                     self.task_obj.completed_at = timezone.now()
+                    # 将 checkpoint 绝对路径写入 config，方便 resume_task() 直接读取
+                    cp_path = self.logger.checkpoint_file
+                    if cp_path.exists():
+                        task_config = dict(self.task_obj.config or {})
+                        task_config["checkpoint_path"] = str(cp_path)
+                        self.task_obj.config = task_config
                     self.task_obj.save()
                 else:
                     self.task_obj.status = 'completed' if success else 'failed'
@@ -438,7 +444,7 @@ class BaseExecutor(ABC):
                     
                     log_meta = self.logger.get_metadata()
                     self.task_obj.logs = json.dumps(log_meta, ensure_ascii=False)
-                    self.task_obj.log_file = log_meta.get("log_file", "")
+                    self.task_obj.log_file = str(self.logger.log_file)  # 始终使用绝对路径
                     
                     if error_msg:
                         self.task_obj.error_message = error_msg
@@ -503,11 +509,27 @@ class BaseExecutor(ABC):
     # ========================================================================
     
     def save_checkpoint(self, data: Dict):
-        """保存断点信息（同时写入 checkpoint.json 和 progress.json）"""
-        # 写入 checkpoint.json（load_checkpoint 从此文件读取）
+        """保存断点信息到 checkpoint.json，同时更新 progress.json 的追溯列表。
+
+        注意：只写入 data 本身（非 wrapped 格式），让 load_checkpoint 可以直接
+        读取 processed_sources 等字段，无需嵌套查找。
+        progress.json 中的 checkpoints 追溯列表通过直接 append 维护，
+        不再调用 add_checkpoint（后者会再次覆盖 checkpoint.json 为 wrapped 格式）。
+        """
+        # 写入 checkpoint.json（使用原始 data，供 load_checkpoint 直接读取）
         self.logger._save_checkpoint(data)
-        # 同时记录到 progress.json 的 checkpoints 列表（用于追溯）
-        self.logger.add_checkpoint("manual_checkpoint", data)
+        # 仅将摘要信息追加到 progress.json checkpoints 列表（不覆盖 checkpoint.json）
+        summary = {
+            "name": "manual_checkpoint",
+            "time": datetime.now().isoformat(),
+            "progress": {
+                "current": self.logger.progress_data.get("current", 0),
+                "total": self.logger.progress_data.get("total", 0)
+            }
+        }
+        self.logger.progress_data["checkpoints"].append(summary)
+        self.logger._save_progress()
+        self.logger.info(f"[断点] 保存检查点: processed={len(data.get('processed_sources', []))}")
     
     def load_checkpoint(self) -> Optional[Dict]:
         """加载断点信息"""

@@ -283,6 +283,8 @@ class TaskScheduler:
         # 3. 执行器在下一个检查点检测到 STOP 文件后自行退出并 finalize
         
         # 更新任务状态为 stopped
+        # 注意：此处是调度层立即设置 stopped，worker 的 finalize() 也会设置。
+        # 为避免竞争条件，resume_task() 会等待 checkpoint 文件实际出现后再续传。
         task.refresh_from_db()
         if task.status == 'stopping':
             task.status = 'stopped'
@@ -297,24 +299,64 @@ class TaskScheduler:
         
         关键：将旧任务的 checkpoint 路径传给新任务，
         让新任务的执行器能找到上次的断点文件。
+        
+        查找 checkpoint 的优先级：
+        1. task.config["checkpoint_path"]（worker finalize 时写入，最可靠）
+        2. task.log_file 同级目录的 checkpoint.json（兜底）
+        3. 等待最多 10 秒（处理竞争条件：stop 后立即 resume）
         """
+        import time as _time
         old_task = Task.objects.get(id=task_id, project=self.project)
         
         if old_task.status != 'stopped':
             raise ValueError("只能恢复已停止的任务")
         
-        # 将旧任务的 log_file 路径（即旧 workspace）记录到 config，
-        # 让新执行器能找到旧 checkpoint 文件
         config = dict(old_task.config or {})
+        
+        # 优先级1：从 task.config 中读取 worker 写入的 checkpoint_path
+        checkpoint_path_from_config = config.pop("checkpoint_path", None)
+        
+        # 优先级2：从 log_file 同级目录推断
+        checkpoint_from_log = None
         if old_task.log_file:
             from pathlib import Path
             old_log = Path(old_task.log_file)
-            # checkpoint 在 log_file 同级目录：logs/checkpoint.json
-            old_checkpoint = old_log.parent / "checkpoint.json"
-            if old_checkpoint.exists():
-                config["resume_checkpoint_path"] = str(old_checkpoint)
-            # 记录旧进度，让新任务初始化时能直接写入正确 progress
-            config["resume_progress"] = old_task.progress
+            candidate = old_log.parent / "checkpoint.json"
+            if candidate.exists():
+                checkpoint_from_log = str(candidate)
+        
+        # 决定最终的 checkpoint 路径
+        resume_cp = checkpoint_path_from_config or checkpoint_from_log
+        
+        if not resume_cp:
+            # 可能 worker 还没来得及写（竞争条件），最多等 10 秒
+            if old_task.log_file:
+                from pathlib import Path
+                wait_target = Path(old_task.log_file).parent / "checkpoint.json"
+                logger.info(f"[续传] checkpoint.json 尚不存在，等待 worker 写入（最多10s）: {wait_target}")
+                for _ in range(10):
+                    _time.sleep(1)
+                    old_task.refresh_from_db()
+                    # worker finalize 可能已更新 config
+                    fresh_cp = (old_task.config or {}).get("checkpoint_path")
+                    if fresh_cp:
+                        resume_cp = fresh_cp
+                        break
+                    if wait_target.exists():
+                        resume_cp = str(wait_target)
+                        break
+                if resume_cp:
+                    logger.info(f"[续传] 找到断点文件: {resume_cp}")
+                else:
+                    logger.warning(f"[续传] 等待超时，未找到 checkpoint.json，将从头开始")
+        
+        if resume_cp:
+            config["resume_checkpoint_path"] = resume_cp
+        
+        # 记录旧进度，让新任务初始化时能直接写入正确 progress
+        config["resume_progress"] = old_task.progress
+        # 清理 checkpoint_path（已转移到 resume_checkpoint_path）
+        config.pop("checkpoint_path", None)
         
         # 创建新任务
         new_task = Task.objects.create(
