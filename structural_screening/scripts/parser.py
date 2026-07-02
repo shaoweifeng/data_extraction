@@ -284,11 +284,19 @@ def parse_nbib(file_path: str) -> List[Dict]:
             if isinstance(v, str) and v.strip():
                 return v.strip()
         return None
+
+    def _extract_year(val):
+        """从 DP 字段値中只取年份数字，如 '2023 Jan' → '2023'"""
+        import re as _re
+        if not val:
+            return None
+        m = _re.search(r'\b(19|20)\d{2}\b', str(val))
+        return m.group(0) if m else val.split()[0] if val.split() else None
     
     parsed_entries = []
     for i, record in enumerate(records, start=1):
-        # 提取作者列表
-        authors = record.get('AU') or record.get('FAU') or []
+        # 提取作者列表：FAU（全名，如 "Smith, John A"）优先于 AU（缩写，如 "Smith JA"）
+        authors = record.get('FAU') or record.get('AU') or []
         if isinstance(authors, str):
             authors = [authors]
         
@@ -304,21 +312,30 @@ def parse_nbib(file_path: str) -> List[Dict]:
             if pmid:
                 url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid.split()[0]}"
         
+        # 处理 AD（机构地址）：可能是列表（多个机构），全部用 '; ' 拼接
+        ad_val = record.get('AD')
+        if isinstance(ad_val, list):
+            address = '; '.join(v.strip() for v in ad_val if v and v.strip())
+        elif isinstance(ad_val, str):
+            address = ad_val.strip()
+        else:
+            address = None
+
         parsed_entries.append({
             'title': get_first(record, ['TI', 'BTI']),
             'authors': authors,
             'journal': get_first(record, ['JT', 'TA']),
-            'year': get_first(record, ['YR', 'DP']),
+            'year': _extract_year(get_first(record, ['YR', 'DP'])),  # 只取年份数字，去掉 Jun/Dec 等月份
             'volume': get_first(record, ['VI']),
             'issue': get_first(record, ['IP']),
             'page': get_first(record, ['PG']),
             'date': get_first(record, ['DP', 'EDAT']),
+            'reference_type': get_first(record, ['PT']),
             'doi': doi,
-            'pmcid': get_first(record, ['PMCID']),
+            'pmcid': get_first(record, ['PMC', 'PMCID']),  # PMC 是实际标签名称
             'abstract': get_first(record, ['AB']),
             'url': url,
-            'address': get_first(record, ['AD']),
-            'reference_type': get_first(record, ['PT']),
+            'address': address,
             'source_file': os.path.basename(file_path),
             'source_position': i,
             'source_type': 'NBIB'
@@ -926,19 +943,28 @@ def convert_to_xml(entries: List[Dict], output_path: str) -> None:
         
         # DOI
         if entry.get('doi'):
-            doi_elem = ET.SubElement(ref_elem, 'DOI')
+            doi_elem = ET.SubElement(ref_elem, 'Doi')   # 与 _load_xml_fields 查找的 'Doi' 对齐
             doi_elem.text = entry['doi']
-        
+
         # URL
         if entry.get('url'):
-            url_elem = ET.SubElement(ref_elem, 'URL')
+            url_elem = ET.SubElement(ref_elem, 'Url')   # 与 _load_xml_fields 查找的 'Url' 对齐
             url_elem.text = entry['url']
-        
-        # 其他字段
-        for key in ['volume', 'issue', 'page', 'date', 'pmcid', 'address']:
-            if entry.get(key):
-                elem = ET.SubElement(ref_elem, key.capitalize())
-                elem.text = str(entry[key])
+
+        # 其他字段（注意标签名必须与 _load_xml_fields 中 find() 的名称完全一致）
+        EXTRA_FIELDS = [
+            ('volume',         'Volume'),
+            ('issue',          'Issue'),
+            ('page',           'Page'),
+            ('date',           'Date'),
+            ('reference_type', 'ReferenceType'),
+            ('pmcid',          'PMCID'),          # 必须全大写，_load_xml_fields 查找 PMCID
+            ('address',        'Address'),
+        ]
+        for field_key, xml_tag in EXTRA_FIELDS:
+            if entry.get(field_key):
+                elem = ET.SubElement(ref_elem, xml_tag)
+                elem.text = str(entry[field_key])
     
     # 格式化输出
     xml_str = ET.tostring(root, encoding='unicode')

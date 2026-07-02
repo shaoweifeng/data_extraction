@@ -152,9 +152,10 @@ def parse_nbib(file_path):
     current_key = None  # 当前正在处理的字段 key，用于续行追加
 
     def _finalize_entry(entry):
-        """入库前补全 URL"""
+        """入库前补全 URL，并删除内部标记字段"""
         if 'url' not in entry and 'pmid' in entry:
             entry['url'] = f"https://pubmed.ncbi.nlm.nih.gov/{entry['pmid']}"
+        entry.pop('_has_fau', None)  # 删除内部标记，不输出到结果
         return entry
 
     def _append_continuation(entry, key, val):
@@ -200,9 +201,18 @@ def parse_nbib(file_path):
             val = m.group(2).strip()
 
             # 将 Medline tag 映射到内部字段，同时记录 current_key 供续行使用
-            if key in ('FAU', 'AU'):               # 作者（可多行）
+            # FAU = 作者全名（如 "Smith, John A"），AU = 作者缩写（如 "Smith JA"）
+            # 同一条记录里 FAU 和 AU 是同一批人的两种写法，优先取 FAU，避免重复
+            if key == 'FAU':
                 current_entry.setdefault('authors', [])
                 current_entry['authors'].append(val)
+                current_entry['_has_fau'] = True
+                current_key = 'authors'
+            elif key == 'AU':
+                # 只有当该记录没有 FAU 时才收集 AU（避免同一人重复）
+                if not current_entry.get('_has_fau'):
+                    current_entry.setdefault('authors', [])
+                    current_entry['authors'].append(val)
                 current_key = 'authors'
             elif key == 'TI':                       # 标题
                 current_entry['title'] = val

@@ -217,14 +217,31 @@ class SyncExecutor(BaseExecutor):
             
             # 创建单篇XML
             root = ET.Element('reference')
-            
-            # 添加基本字段
-            for key in ['title', 'authors', 'year', 'journal', 'abstract', 'doi', 'url']:
-                value = entry.get(key)
+
+            # 所有应输出到 XML 的字段（顺序即为最终 XML 的元素顺序）
+            FIELD_MAP = [
+                ('title',          'Title'),
+                ('authors',        'Authors'),         # list 类型，用 '; ' 拼接
+                ('year',           'Year'),
+                ('journal',        'Journal'),
+                ('volume',         'Volume'),
+                ('issue',          'Issue'),
+                ('page',           'Page'),
+                ('date',           'Date'),
+                ('reference_type', 'ReferenceType'),
+                ('pmcid',          'PMCID'),
+                ('address',        'Address'),
+                ('abstract',       'Abstract'),
+                ('doi',            'Doi'),
+                ('url',            'Url'),
+            ]
+
+            for field_key, xml_tag in FIELD_MAP:
+                value = entry.get(field_key)
                 if value:
-                    elem = ET.SubElement(root, key.capitalize())
+                    elem = ET.SubElement(root, xml_tag)
                     if isinstance(value, list):
-                        elem.text = '; '.join(str(v) for v in value)
+                        elem.text = '; '.join(str(v) for v in value if v)
                     else:
                         elem.text = str(value)
             
