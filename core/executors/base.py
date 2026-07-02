@@ -87,48 +87,60 @@ class TaskLogger:
         self._save_progress()
     
     def _init_logger(self):
-        """初始化文件日志器"""
-        # 创建文件handler
+        """初始化文件日志器
+
+        任务日志只写入该任务专属的文件，不挂到 root logger，避免：
+        1. 污染全局日志（所有任务的日志混入平台主日志）
+        2. 多任务并发时 root handler 重复叠加
+        """
+        # 创建文件 handler
         self.file_handler = logging.FileHandler(
             self.log_file,
             encoding='utf-8',
             mode='a'
         )
         self.file_handler.setLevel(logging.DEBUG)
-        
-        # 设置格式
+
         formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s] %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         self.file_handler.setFormatter(formatter)
-        
-        # 添加到logger
-        logging.root.addHandler(self.file_handler)
-        
+
+        # 每个任务使用独立命名的 logger，避免多任务并发时 handler 交叉
+        # propagate=False：只写任务专属文件，不冒泡到 core/root（避免重复写入 platform_file）
+        self._task_file_logger = logging.getLogger(f'core.executors.task.{self.task_id}')
+        self._task_file_logger.setLevel(logging.DEBUG)
+        self._task_file_logger.propagate = False
+        self._task_file_logger.addHandler(self.file_handler)
+
         self.info(f"[初始化] 任务 {self.task_id} 日志系统启动")
     
     def info(self, msg: str):
-        """写入 INFO 日志"""
-        logger.info(msg)
+        """写入 INFO 日志（控制台 + platform_file + 任务专属文件）"""
+        logger.info(msg)                             # → console + platform_file（via settings.py core logger）
+        self._task_file_logger.info(msg)             # → 任务专属文件
         self._add_to_buffer(f"[INFO] {msg}")
         self._update_stats()
-    
+
     def error(self, msg: str):
         """写入 ERROR 日志"""
         logger.error(msg)
+        self._task_file_logger.error(msg)
         self._add_to_buffer(f"[ERROR] {msg}")
         self._update_stats()
-    
+
     def warning(self, msg: str):
         """写入 WARNING 日志"""
         logger.warning(msg)
+        self._task_file_logger.warning(msg)
         self._add_to_buffer(f"[WARN] {msg}")
         self._update_stats()
-    
+
     def debug(self, msg: str):
         """写入 DEBUG 日志"""
         logger.debug(msg)
+        self._task_file_logger.debug(msg)
         self._add_to_buffer(f"[DEBUG] {msg}")
         self._update_stats()
     
@@ -296,7 +308,8 @@ class TaskLogger:
         self._sync_logs_to_db()
         
         if self.file_handler:
-            logging.root.removeHandler(self.file_handler)
+            # 从 task 专属 logger 移除，而不是 root
+            self._task_file_logger.removeHandler(self.file_handler)
             self.file_handler.close()
             self.file_handler = None
 

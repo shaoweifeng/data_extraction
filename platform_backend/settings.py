@@ -184,3 +184,102 @@ CORS_ALLOW_ALL_ORIGINS = True # In production, restrict this to specific origins
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+
+# =============================================================================
+# 日志配置
+# 平台日志同时输出到控制台和文件，便于开发期实时查看
+# 日志文件写到项目根目录的 logs/ 下，Celery worker 也复用同一配置
+# =============================================================================
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # 保留 Django 内置 logger
+
+    # ── 格式 ──────────────────────────────────────────────────────────────────
+    'formatters': {
+        # 控制台：简洁带颜色感知（时间 + 级别 + 模块 + 消息）
+        'console': {
+            'format': '[{asctime}] {levelname:<8} {name} - {message}',
+            'datefmt': '%H:%M:%S',
+            'style': '{',
+        },
+        # 文件：完整信息
+        'file': {
+            'format': '{asctime} [{levelname}] {name} ({process}d/{thread}d) - {message}',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+            'style': '{',
+        },
+    },
+
+    # ── 处理器 ────────────────────────────────────────────────────────────────
+    'handlers': {
+        # 输出到终端（Django runserver 和 Celery worker 都能看到）
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+            'level': 'DEBUG',
+        },
+        # 平台主日志文件（旋转，单文件最大 20MB，保留 5 个）
+        'platform_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(LOGS_DIR / 'platform.log'),
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'file',
+            'encoding': 'utf-8',
+            'level': 'DEBUG',
+        },
+        # 单独记录 WARNING 以上的错误，方便排查
+        'error_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(LOGS_DIR / 'error.log'),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 3,
+            'formatter': 'file',
+            'encoding': 'utf-8',
+            'level': 'WARNING',
+        },
+    },
+
+    # ── Logger 树 ─────────────────────────────────────────────────────────────
+    'loggers': {
+        # Django 自身（HTTP 请求日志、数据库日志等）
+        'django': {
+            'handlers': ['console', 'platform_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Django 数据库查询日志（DEBUG 模式下才打印 SQL）
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING',   # 改为 DEBUG 可看每条 SQL，平时太吵关掉
+            'propagate': False,
+        },
+        # 平台核心业务逻辑（executors、scheduler、providers 等）
+        'core': {
+            'handlers': ['console', 'platform_file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Celery 自身
+        'celery': {
+            'handlers': ['console', 'platform_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Celery 任务（celery.task.*）
+        'celery.task': {
+            'handlers': ['console', 'platform_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+
+    # ── Root logger（兜底，捕获未在上方显式配置的所有模块）──────────────────
+    'root': {
+        'handlers': ['console', 'platform_file', 'error_file'],
+        'level': 'INFO',
+    },
+}

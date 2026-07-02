@@ -125,143 +125,151 @@ def parse_bib(file_path):
     return parsed_entries
 
 def parse_nbib(file_path):
-    # NBIB format is similar to RIS but with specific keys. 
-    # Using a simple parser since standard libraries might not cover all NBIB nuances perfectly.
-    # However, rispy often handles Medline/NBIB formats if they follow the tag-value structure.
-    # Let's try manual parsing for Medline format which NBIB usually is.
-    
-    entries = []
-    current_entry = {}
-    
-    with open(file_path, 'r', encoding='utf-8') as f:
+    """
+    解析 PubMed NBIB/Medline 格式文件。
+
+    Medline 格式规则：
+    - 每条记录以 PMID- 开头
+    - 每个字段格式：TAG - value（tag 为 2-4 个字母，后跟空格和连字符）
+    - 多行续行：以至少 6 个空格缩进，属于上一个 tag 的内容
+    - 记录间以空行分隔（也可能紧接着下一条 PMID-）
+
+    修复要点：
+    1. 使用正则精确匹配 tag 行（避免把续行或 PMID- 误识别为 tag）
+    2. 第二个 if 改为 elif，防止 PMID- 行被重复处理
+    3. 续行对所有字段生效，不只是 TI/AB
+    4. AD（机构地址）支持多行追加
+    """
+    import re
+
+    TAG_RE = re.compile(r'^([A-Z]{2,6})\s*-\s*(.*)')
+
+    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
         lines = f.readlines()
-    
-    current_key = None
-    current_value = []
-    
-    for line in lines:
-        line = line.rstrip()
-        if not line:
-            continue
-            
-        if line[:4] == '    ' and current_key: # Continuation line
-            current_value.append(line.strip())
-        else:
-            # Save previous key
-            if current_key:
-                val = ' '.join(current_value)
-                if current_key in current_entry:
-                    if isinstance(current_entry[current_key], list):
-                        current_entry[current_key].append(val)
-                    else:
-                        current_entry[current_key] = [current_entry[current_key], val]
-                else:
-                    current_entry[current_key] = val
-            
-            # New key
-            if '-' in line[:5]: # Standard Medline tag format "TI  - "
-                parts = line.split('-', 1)
-                key = parts[0].strip()
-                val = parts[1].strip() if len(parts) > 1 else ""
-                current_key = key
-                current_value = [val] if val else []
-            else:
-                current_key = None # Reset if format unrecognized
-                
-    # Add last entry
-    if current_entry:
-        entries.append(current_entry)
-        
-    # NBIB/Medline file usually contains multiple records separated by blank lines or implicit start.
-    # The above simple logic merges everything into one entry if separators aren't clear.
-    # Let's use a more robust approach: Split by "PMID-" or "TI  -" as start markers?
-    # Better yet, let's write a dedicated simple parser based on "PMID-" or "PT  -" start.
-    
-    # Re-implementation for multi-record NBIB
+
     entries = []
     current_entry = {}
-    
+    current_key = None  # 当前正在处理的字段 key，用于续行追加
+
+    def _finalize_entry(entry):
+        """入库前补全 URL"""
+        if 'url' not in entry and 'pmid' in entry:
+            entry['url'] = f"https://pubmed.ncbi.nlm.nih.gov/{entry['pmid']}"
+        return entry
+
+    def _append_continuation(entry, key, val):
+        """把续行内容追加到对应字段"""
+        if key == 'authors':
+            # 作者列表不续行追加，忽略
+            pass
+        elif key in ('title', 'abstract', 'address', 'journal', 'date',
+                     'volume', 'issue', 'page', 'pmcid', 'doi'):
+            if key in entry and entry[key]:
+                entry[key] += ' ' + val
+            else:
+                entry[key] = val
+
     for line in lines:
-        line = line.rstrip()
-        if not line: continue
-        
-        # Check for start of new record (usually PMID or just implicit if previous ended)
-        # But Medline format usually has tags at start of line.
-        
+        line = line.rstrip('\r\n')
+
+        # ── 空行：有些文件用空行分隔记录（但多数靠 PMID- 分隔，此处仅做保险）
+        if not line.strip():
+            continue
+
+        # ── 续行检测：以 6 个及以上空格开头，且不是新的 tag 行
+        if line.startswith('      ') and current_key:
+            val = line.strip()
+            if val:
+                _append_continuation(current_entry, current_key, val)
+            continue
+
+        # ── 记录起始行：PMID- 开头（Medline 每条记录必须有 PMID）
         if line.startswith('PMID-'):
             if current_entry:
-                # Construct URL from PMID if not present
-                if 'url' not in current_entry and 'pmid' in current_entry:
-                    current_entry['url'] = f"https://pubmed.ncbi.nlm.nih.gov/{current_entry['pmid']}"
-                entries.append(current_entry)
+                entries.append(_finalize_entry(current_entry))
                 current_entry = {}
-            
-            # Extract PMID
-            parts = line.split('-', 1)
-            if len(parts) > 1:
-                current_entry['pmid'] = parts[1].strip()
-        
-        if '-' in line[:5]:
-            parts = line.split('-', 1)
-            key = parts[0].strip()
-            val = parts[1].strip() if len(parts) > 1 else ""
-            
-            # Store current key for continuation lines
-            current_key = key
-            
-            if key == 'FAU' or key == 'AU': # Authors
-                if 'authors' not in current_entry:
-                    current_entry['authors'] = []
+            pmid_val = line[5:].strip().lstrip('-').strip()
+            current_entry['pmid'] = pmid_val
+            current_key = None  # PMID 本身不需要续行
+            continue
+
+        # ── 普通 tag 行
+        m = TAG_RE.match(line)
+        if m:
+            key = m.group(1)
+            val = m.group(2).strip()
+
+            # 将 Medline tag 映射到内部字段，同时记录 current_key 供续行使用
+            if key in ('FAU', 'AU'):               # 作者（可多行）
+                current_entry.setdefault('authors', [])
                 current_entry['authors'].append(val)
-            elif key == 'TI':
+                current_key = 'authors'
+            elif key == 'TI':                       # 标题
                 current_entry['title'] = val
-            elif key == 'AB':
+                current_key = 'title'
+            elif key == 'AB':                       # 摘要
                 current_entry['abstract'] = val
-            elif key == 'DP': # Date of Publication
+                current_key = 'abstract'
+            elif key == 'DP':                       # 发表日期，如 "2023 Jan"
                 current_entry['date'] = val
-                current_entry['year'] = val.split()[0]
-            elif key == 'JT': # Journal Title
-                current_entry['journal'] = val
-            elif key == 'UR' or key == 'URL': # URL
+                year_part = val.split()[0] if val else ''
+                current_entry['year'] = year_part if re.match(r'\d{4}', year_part) else ''
+                current_key = 'date'
+            elif key in ('JT', 'TA'):               # 期刊全称 / 缩写（优先 JT）
+                if 'journal' not in current_entry or key == 'JT':
+                    current_entry['journal'] = val
+                current_key = 'journal'
+            elif key in ('UR', 'URL'):              # URL
                 current_entry['url'] = val
-            elif key == 'PMID': # Alternative PMID tag
-                current_entry['pmid'] = val
-            elif key == 'PMCID' or key == 'PMC':
+                current_key = None
+            elif key in ('PMCID', 'PMC'):           # PMC ID
                 current_entry['pmcid'] = val
-            elif key == 'LID' and '[doi]' in val:
-                current_entry['doi'] = val.replace('[doi]', '').strip()
-            elif key == 'VI':
-                current_entry['volume'] = val
-            elif key == 'IP':
-                current_entry['issue'] = val
-            elif key == 'PG':
-                current_entry['page'] = val
-            elif key == 'AD':
-                current_entry['address'] = val
-            else:
-                # Reset key if we don't care about this field to avoid appending continuation lines to wrong field
-                if key not in ['AB', 'TI']: 
+                current_key = 'pmcid'
+            elif key == 'LID':                      # Location ID，可能包含 DOI
+                if '[doi]' in val.lower():
+                    current_entry['doi'] = val.lower().replace('[doi]', '').strip()
+                    current_key = 'doi'
+                else:
                     current_key = None
-                
-        elif line.startswith('      ') and current_key: # Continuation line (6 spaces indentation common in nbib)
-            val = line.strip()
-            if current_key == 'AB':
-                if 'abstract' in current_entry:
-                    current_entry['abstract'] += " " + val
+            elif key == 'AID':                      # Article ID，可能包含 DOI
+                if '[doi]' in val.lower() and 'doi' not in current_entry:
+                    current_entry['doi'] = val.lower().replace('[doi]', '').strip()
+                    current_key = 'doi'
                 else:
-                    current_entry['abstract'] = val
-            elif current_key == 'TI':
-                if 'title' in current_entry:
-                    current_entry['title'] += " " + val
+                    current_key = None
+            elif key == 'VI':                       # 卷号
+                current_entry['volume'] = val
+                current_key = 'volume'
+            elif key == 'IP':                       # 期号
+                current_entry['issue'] = val
+                current_key = 'issue'
+            elif key == 'PG':                       # 页码
+                current_entry['page'] = val
+                current_key = 'page'
+            elif key == 'AD':                       # 作者机构地址（可多行，多机构用分号拼接）
+                if 'address' in current_entry and current_entry['address']:
+                    current_entry['address'] += '; ' + val
                 else:
-                    current_entry['title'] = val
-            
+                    current_entry['address'] = val
+                current_key = 'address'
+            elif key == 'PT':                       # 文献类型
+                current_entry.setdefault('reference_type', val)
+                current_key = None
+            elif key == 'MH':                       # MeSH 词（可多值，存为列表备用）
+                current_entry.setdefault('mesh_terms', [])
+                current_entry['mesh_terms'].append(val)
+                current_key = None
+            else:
+                # 未知字段：不追加续行，避免污染已有字段
+                current_key = None
+        # 其他格式不符合的行（如 "ER  "）直接跳过
+        else:
+            current_key = None
+
+    # 收尾：保存最后一条记录
     if current_entry:
-        # Construct URL from PMID if not present (for the last entry)
-        if 'url' not in current_entry and 'pmid' in current_entry:
-            current_entry['url'] = f"https://pubmed.ncbi.nlm.nih.gov/{current_entry['pmid']}"
-        entries.append(current_entry)
-        
+        entries.append(_finalize_entry(current_entry))
+
     parsed_entries = []
     for i, entry in enumerate(entries, start=1):
         parsed_entries.append({
@@ -269,7 +277,7 @@ def parse_nbib(file_path):
             'authors': entry.get('authors', []),
             'journal': entry.get('journal'),
             'year': entry.get('year'),
-            'reference_type': entry.get('type') or entry.get('pt'),
+            'reference_type': entry.get('reference_type'),
             'volume': entry.get('volume'),
             'issue': entry.get('issue'),
             'page': entry.get('page'),

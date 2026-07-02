@@ -52,8 +52,10 @@ if [ -n "$OLD_PIDS" ]; then
     sleep 2
     echo "✅ 旧进程已终止"
 fi
-celery -A platform_backend worker --loglevel=info > celery.log 2>&1 &
-echo "✅ Celery Worker 已在后台启动 (日志: celery.log)"
+# -P threads: 使用线程池（代替 prefork），AI 初筛是 I/O 密集型任务，线程模式内存更省
+# -c 16: 允许最多 16 个任务并发（每个 ai_screen 项目占用 1 个槽）
+celery -A platform_backend worker --loglevel=info -P threads -c 16 > celery.log 2>&1 &
+echo "✅ Celery Worker 已在后台启动 (并发槽: 16, 模式: threads, 日志: celery.log)"
 
 # 3. 启动 Django Server
 echo "✅ Django 服务即将启动，请访问 http://127.0.0.1:8000"
