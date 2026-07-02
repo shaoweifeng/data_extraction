@@ -151,60 +151,19 @@ class SyncExecutor(BaseExecutor):
             self.logger.error(traceback.format_exc())
             return False
         
-        # 5. 为每个entry生成单篇XML（参考 xxc/develop 分支实现）
+        # 5. 为每个entry生成单篇XML
+        # 直接复用第4步 parse_directory 已经解析好的 entries，不再重复解析文件
+        # 旧代码会对同一批文件调用两次解析（parse_directory + parse_file 各一次），
+        # 导致 all_entries 数量翻倍，进而生成双倍单篇 XML。
         self.logger.info("[拆分] 开始生成单篇XML...")
-        
-        # 解析所有entry，逐文件报告进度
-        all_entries = []
-        total_parse_files = len(input_files)
-        if hasattr(parser, 'parse_file'):
-            from core.models import Task as _Task
+        all_entries = entries if isinstance(entries, list) else []
 
-            def _update_parse_progress(phase, current, total, message):
-                """合并更新 Task.config 中的 parse_progress，不覆盖其他字段"""
-                task_row = _Task.objects.filter(id=self.task_id).values('config').first()
-                current_config = task_row['config'] if task_row and task_row['config'] else {}
-                current_config['parse_progress'] = {
-                    "phase": phase,
-                    "current": current,
-                    "total": total,
-                    "message": message
-                }
-                _Task.objects.filter(id=self.task_id).update(config=current_config)
-
-            for fi, df in enumerate(input_files, 1):
-                src_path = Path(df.file.path)
-                if not src_path.exists():
-                    continue
-                
-                self.logger.info(f"[解析] 正在解析 {df.filename} ({fi}/{total_parse_files})...")
-                # 阶段1 parsing：占 0~30%
-                _update_parse_progress(
-                    "parsing",
-                    fi, total_parse_files * 10,  # 乘10让进度条只涨到10%
-                    f"[1/3] 解析文件 {fi}/{total_parse_files}：{df.filename}"
-                )
-                
-                try:
-                    entries = parser.parse_file(str(src_path))
-                    if entries:
-                        for entry in entries:
-                            # 添加来源信息
-                            if 'source_file' not in entry:
-                                entry['source_file'] = df.filename
-                            if 'source_position' not in entry:
-                                entry['source_position'] = entry.get('record_number') or entries.index(entry) + 1
-                        all_entries.extend(entries)
-                except Exception as e:
-                    self.logger.warning(f"[警告] 解析 {df.filename} 失败: {e}")
-        else:
-            # 使用简化解析（无逐文件进度）
-            from core.models import Task as _Task
-            task_row = _Task.objects.filter(id=self.task_id).values('config').first()
-            _cfg = task_row['config'] if task_row and task_row['config'] else {}
-            _cfg['parse_progress'] = {"phase": "parsing", "current": 0, "total": 0, "message": "[1/3] 正在解析文献..."}
-            _Task.objects.filter(id=self.task_id).update(config=_cfg)
-            all_entries = self._simple_parse(input_dir)
+        from core.models import Task as _Task
+        task_row = _Task.objects.filter(id=self.task_id).values('config').first()
+        _cfg = task_row['config'] if task_row and task_row['config'] else {}
+        _cfg['parse_progress'] = {"phase": "splitting", "current": 10, "total": 100,
+                                   "message": f"[2/3] 解析完成 {len(all_entries)} 条，准备生成单篇索引..."}
+        _Task.objects.filter(id=self.task_id).update(config=_cfg)
         
         # 为每个entry生成XML（用序号保证文件名唯一，避免同标题文献被覆盖）
         total_entries_count = len(all_entries)
@@ -990,8 +949,7 @@ class SyncExecutor(BaseExecutor):
             self.save_output_file(excel_path, excel_filename, "初筛结果Excel", "output")
         
         if ris_path and ris_path.exists():
-            ris_filename = f"screening_results_included_{model_suffix}_{ts}.ris"
-            self.save_output_file(ris_path, ris_filename, "初筛结果RIS", "output")
+            self.save_output_file(ris_path, ris_path.name, "初筛结果RIS", "output")
         
         # 6. 更新步骤元数据
         included_count = len([r for r in final_results if _is_included(r)])
@@ -1031,24 +989,104 @@ class SyncExecutor(BaseExecutor):
         return model_id
 
     def _generate_ris(self, results: List[Dict]) -> Optional[Path]:
-        """生成RIS格式文件"""
+        """生成 RIS 格式文件（完整字段，可直接导入 EndNote/Zotero/NoteExpress）
+
+        字段来源优先级：单篇 XML（通过 _load_xml_fields 读取） > JSON 结果字段 > 空
+        """
         model_suffix = self._get_model_suffix()
-        ris_path = Path(self.workspace) / f"screening_results_{model_suffix}.ris"
-        
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        ris_path = Path(self.workspace) / f"screening_results_included_{model_suffix}_{ts}.ris"
+
         try:
             with open(ris_path, 'w', encoding='utf-8') as f:
                 for r in results:
-                    f.write("TY  - JOUR\n")
-                    f.write(f"TI  - {r.get('title', '')}\n")
-                    f.write(f"AU  - {r.get('authors', '')}\n")
-                    f.write(f"PY  - {r.get('year', '')}\n")
-                    f.write(f"JO  - {r.get('journal', '')}\n")
-                    f.write(f"AB  - {r.get('abstract', '')}\n")
+                    # 今先从单篇 XML 读取完整元数据
+                    source_xml = r.get('source_xml', '')
+                    xml = self._load_xml_fields(source_xml) if source_xml else {}
+
+                    def _get(xml_key, json_key, default=''):
+                        """XML 字段优先，fallback 到 JSON 字段"""
+                        return xml.get(xml_key) or r.get(json_key, '') or default
+
+                    # 文献类型：如果有 ReferenceType 就用，否则默认 JOUR
+                    ref_type_raw = xml.get('ReferenceType', '')
+                    ris_type_map = {
+                        'Journal Article': 'JOUR', 'Review': 'JOUR', 'Clinical Trial': 'JOUR',
+                        'Book': 'BOOK', 'Book Chapter': 'CHAP', 'Conference Paper': 'CONF',
+                        'Thesis': 'THES', 'Report': 'RPRT', 'Web Page': 'ELEC',
+                    }
+                    ris_type = ris_type_map.get(ref_type_raw, 'JOUR')
+
+                    f.write(f"TY  - {ris_type}\n")
+
+                    title = _get('Title', 'title')
+                    if title:
+                        f.write(f"TI  - {title}\n")
+
+                    # 作者：每个作者写一行
+                    authors_raw = xml.get('Author') or r.get('authors', '')
+                    if authors_raw:
+                        if isinstance(authors_raw, list):
+                            for au in authors_raw:
+                                if au and str(au).strip():
+                                    f.write(f"AU  - {str(au).strip()}\n")
+                        else:
+                            # 字符串可能是 '; ' 分隔的多个作者
+                            for au in str(authors_raw).split('; '):
+                                if au.strip():
+                                    f.write(f"AU  - {au.strip()}\n")
+
+                    year = _get('Year', 'year')
+                    if year:
+                        f.write(f"PY  - {str(year)[:4]}\n")  # 只取前4位年份
+
+                    journal = _get('Journal', 'journal')
+                    if journal:
+                        f.write(f"JO  - {journal}\n")
+
+                    volume = _get('Volume', 'volume')
+                    if volume:
+                        f.write(f"VL  - {volume}\n")
+
+                    issue = _get('Issue', 'issue')
+                    if issue:
+                        f.write(f"IS  - {issue}\n")
+
+                    page = _get('Page', 'page')
+                    if page:
+                        # 处理 "100-110" 格式
+                        if '-' in str(page):
+                            parts = str(page).split('-', 1)
+                            f.write(f"SP  - {parts[0].strip()}\n")
+                            f.write(f"EP  - {parts[1].strip()}\n")
+                        else:
+                            f.write(f"SP  - {page}\n")
+
+                    doi = _get('Doi', 'doi')
+                    if doi:
+                        f.write(f"DO  - {doi}\n")
+
+                    pmcid = _get('PMCID', 'pmcid')
+                    if pmcid:
+                        f.write(f"AN  - {pmcid}\n")
+
+                    url = _get('URL', 'url')
+                    if url:
+                        f.write(f"UR  - {url}\n")
+
+                    abstract = _get('Abstract', 'abstract')
+                    if abstract:
+                        f.write(f"AB  - {abstract}\n")
+
+                    address = _get('Address', 'address')
+                    if address:
+                        f.write(f"AD  - {address}\n")
+
                     f.write("ER  - \n\n")
-            
+
             self.logger.info(f"[导出] 生成RIS: {len(results)} 条")
             return ris_path
-        
+
         except Exception as e:
             self.logger.error(f"[错误] 生成RIS失败: {e}")
             return None
