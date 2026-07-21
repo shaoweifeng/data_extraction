@@ -12,15 +12,12 @@
 - 流式读取大日志文件（避免内存溢出）
 """
 
-import os
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 from datetime import datetime
 
 from django.conf import settings
-from django.utils import timezone
-import asyncio
 
 
 class ProgressMonitor:
@@ -55,7 +52,6 @@ class ProgressMonitor:
         
         for item in self.workspace_root.iterdir():
             if item.name.startswith(f"{step_key}_") and item.is_dir():
-                progress_file = item / "logs" / f"progress_*.json"
                 # 使用 glob 查找
                 for pf in item.glob("logs/progress_*.json"):
                     progress_files.append(pf)
@@ -94,7 +90,7 @@ class ProgressMonitor:
         Returns:
             聚合的进度信息
         """
-        from core.step_config import get_step_config, get_sub_steps
+        from core.step_config import get_step_config
         
         config = get_step_config(stage_key)
         
@@ -294,80 +290,6 @@ class LogReader:
             return [{"error": str(e)}]
 
 
-class ProgressWebSocketConsumer:
-    """
-    WebSocket进度推送（异步）
-    
-    使用示例：
-        # 前端
-        const ws = new WebSocket(`ws://localhost:8000/ws/project_123/`);
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            updateProgressBar(data);
-        };
-    """
-    
-    def __init__(self, project_id: int):
-        self.project_id = project_id
-        self.room_group_name = f'project_{project_id}'
-        self.monitor = ProgressMonitor(project_id)
-    
-    async def connect(self):
-        """WebSocket连接建立"""
-        # 加入房间组
-        # from channels.layers import get_channel_layer
-        # channel_layer = get_channel_layer()
-        # await channel_layer.group_add(self.room_group_name, self.channel_name)
-        pass
-    
-    async def disconnect(self, close_code):
-        """WebSocket连接断开"""
-        # 离开房间组
-        # from channels.layers import get_channel_layer
-        # channel_layer = get_channel_layer()
-        # await channel_layer.group_discard(self.room_group_name, self.channel_name)
-        pass
-    
-    async def send_progress_updates(self):
-        """定时推送进度更新"""
-        while True:
-            try:
-                progress_data = self.monitor.get_project_progress()
-                
-                # 发送消息到房间组
-                # from channels.layers import get_channel_layer
-                # channel_layer = get_channel_layer()
-                # await channel_layer.group_send(
-                #     self.room_group_name,
-                #     {
-                #         "type": "progress_update",
-                #         "data": progress_data
-                #     }
-                # )
-                
-                # 检查是否所有阶段都已完成
-                all_completed = all(
-                    stage_data.get("status") == "completed"
-                    for stage_data in progress_data["stages"].values()
-                )
-                
-                if all_completed:
-                    break
-                
-                await asyncio.sleep(2)  # 每2秒推送一次
-                
-            except Exception as e:
-                # 发送错误消息
-                # await channel_layer.group_send(
-                #     self.room_group_name,
-                #     {
-                #         "type": "error",
-                #         "message": str(e)
-                #     }
-                # )
-                break
-
-
 # ============================================================================
 # 辅助函数
 # ============================================================================
@@ -420,17 +342,3 @@ def get_task_progress(task_id: int) -> Dict:
         "unit": "%",
         "status": task.status
     }
-
-
-def get_project_progress_summary(project_id: int) -> Dict:
-    """
-    快捷函数 - 获取项目进度汇总
-    
-    Args:
-        project_id: 项目ID
-    
-    Returns:
-        项目进度汇总
-    """
-    monitor = ProgressMonitor(project_id)
-    return monitor.get_project_progress()

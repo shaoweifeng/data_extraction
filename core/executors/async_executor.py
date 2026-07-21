@@ -191,8 +191,6 @@ class AsyncExecutor(BaseExecutor):
         self.logger.update_progress(processed_count, total_refs, "refs")
         
         # 批处理循环
-        batch_results = []
-        batch_index = 0
         
         for i in range(0, len(entries_to_process), batch_size):
             # 检查停止信号
@@ -219,7 +217,6 @@ class AsyncExecutor(BaseExecutor):
             self.logger.info(f"[批次] 处理 {i+1}-{i+len(batch)}/{len(entries_to_process)} 篇（并发{concurrency}线程）")
             
             results = self._process_batch(batch, criteria, results_dir, concurrency)
-            batch_results.extend(results)
             
             # 批次完成后统一更新进度、保存文件、写断点
             for entry, result in zip(batch, results):
@@ -244,8 +241,6 @@ class AsyncExecutor(BaseExecutor):
             
             # 将本批结果写入DB，供前端实时查看已筛选文献
             self._save_batch_results_to_db(batch, results)
-            
-            batch_index += 1
         
         # 8. 保存所有结果到DB
         self.logger.info("[保存] 将结果保存到数据库...")

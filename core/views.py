@@ -17,16 +17,14 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Q
 from functools import wraps
-import json
 
 from .models import (
-    UserProfile, Permission, UserPermission, RoleTemplate,
-    Project, ProjectStage, StageStep, DataFile, DataFileVersion, Task, ActivityLog
+    UserPermission, RoleTemplate, Project, ProjectStage,
+    StageStep, DataFile, Task, ActivityLog
 )
 from .serializers import (
-    UserSerializer, UserProfileSerializer, PermissionSerializer,
-    ProjectSerializer, ProjectStageSerializer, StageStepSerializer,
-    DataFileSerializer, DataFileVersionSerializer, TaskSerializer, ActivityLogSerializer
+    UserSerializer, ProjectSerializer, ProjectStageSerializer,
+    StageStepSerializer, DataFileSerializer, TaskSerializer, ActivityLogSerializer
 )
 
 
@@ -312,7 +310,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def clear_ai_screen_results(self, request, pk=None):
         """清除项目 ai_screen 步骤的所有 output 文件记录（启动/放弃任务时调用）"""
-        from core.models import StageStep, ProjectStage, DataFile
+        from core.models import StageStep, DataFile
         project = self.get_object()
 
         # 找到 ai_screen 步骤
@@ -341,7 +339,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def ai_screen_stats(self, request, pk=None):
         """返回项目 ai_screen 步骤真实纳排统计数量"""
-        from core.models import StageStep, ProjectStage, DataFile
+        from core.models import StageStep, DataFile
         project = self.get_object()
         ai_step = StageStep.objects.filter(
             stage__project=project,
@@ -355,14 +353,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         included = qs.filter(metadata__decision='included').count()
         excluded = qs.filter(metadata__decision='excluded').count()
         return Response({'included': included, 'excluded': excluded, 'total': total})
-
-
-        """获取项目整体进度"""
-        from .monitoring import ProgressMonitor
-        
-        project = self.get_object()
-        monitor = ProgressMonitor(project.id)
-        return Response(monitor.get_project_progress())
 
     @action(detail=True, methods=['get'])
     def get_prompt(self, request, pk=None):
@@ -1001,58 +991,6 @@ class DataFileViewSet(viewsets.ModelViewSet):
         )
         instance.delete()
 
-    @action(detail=True, methods=['get'])
-    def logs(self, request, pk=None):
-        """
-        获取任务的实际日志内容
-        
-        优先从 log_file 字段读取日志文件，fallback 到 logs 字段
-        """
-        from pathlib import Path
-        from django.http import JsonResponse
-        
-        task = self.get_object()
-        
-        # 优先使用 log_file 字段（绝对路径）
-        log_file_path = task.log_file if task.log_file else None
-        
-        # fallback：尝试从 logs 字段解析出 log_file 路径（兼容旧格式）
-        if not log_file_path and task.logs:
-            try:
-                log_meta = json.loads(task.logs)
-                log_file_path = log_meta.get('log_file')
-            except (json.JSONDecodeError, TypeError):
-                # logs 是纯文本，直接返回
-                return JsonResponse({'log_content': task.logs})
-        
-        # 有日志文件路径，读取文件内容
-        if log_file_path:
-            full_path = Path(log_file_path)
-            try:
-                if not full_path.exists():
-                    return JsonResponse({
-                        'log_content': task.logs or '',
-                        'error': f'日志文件不存在: {log_file_path}'
-                    })
-                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    lines = f.readlines()
-                last_lines = lines[-200:] if len(lines) > 200 else lines
-                return JsonResponse({
-                    'log_content': ''.join(last_lines),
-                    'log_file': log_file_path,
-                    'total_lines': len(lines),
-                    'returned_lines': len(last_lines)
-                })
-            except Exception as e:
-                return JsonResponse({
-                    'log_content': task.logs or '',
-                    'error': f'读取日志失败: {str(e)}'
-                })
-        
-        # 兜底：直接返回 logs 字段
-        return JsonResponse({'log_content': task.logs or ''})
-
-
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -1084,7 +1022,6 @@ class TaskViewSet(viewsets.ModelViewSet):
         - task_type: 'result_aggregation' → 触发 export 步骤
         """
         from .scheduler import TaskScheduler
-        from .step_config import get_step_config
         
         user = self.request.user
         
