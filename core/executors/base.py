@@ -529,8 +529,16 @@ class BaseExecutor(ABC):
         progress.json 中的 checkpoints 追溯列表通过直接 append 维护，
         不再调用 add_checkpoint（后者会再次覆盖 checkpoint.json 为 wrapped 格式）。
         """
+        checkpoint_data = dict(data or {})
+        checkpoint_data["_checkpoint_meta"] = {
+            "project_id": self.project_id,
+            "task_id": self.task_id,
+            "step_key": self.step_key,
+            "saved_at": datetime.now().isoformat(),
+        }
+
         # 写入 checkpoint.json（使用原始 data，供 load_checkpoint 直接读取）
-        self.logger._save_checkpoint(data)
+        self.logger._save_checkpoint(checkpoint_data)
         # 仅将摘要信息追加到 progress.json checkpoints 列表（不覆盖 checkpoint.json）
         summary = {
             "name": "manual_checkpoint",

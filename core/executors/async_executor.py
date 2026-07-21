@@ -32,6 +32,29 @@ from core.step_config import get_step_config
 
 class AsyncExecutor(BaseExecutor):
     """异步执行器 - 适用于长时间运行的任务"""
+
+    def _is_compatible_checkpoint(self, checkpoint: Dict) -> bool:
+        """校验 checkpoint 是否属于当前项目/步骤，避免串读其他任务的断点。"""
+        meta = checkpoint.get("_checkpoint_meta") or {}
+        if not meta:
+            # 兼容旧 checkpoint：不拦截，但不给全新任务自动加载。
+            return True
+
+        if meta.get("project_id") != self.project_id:
+            self.logger.warning(
+                f"[断点] 忽略其他项目的 checkpoint: "
+                f"project_id={meta.get('project_id')} current={self.project_id}"
+            )
+            return False
+
+        if meta.get("step_key") != self.step_key:
+            self.logger.warning(
+                f"[断点] 忽略其他步骤的 checkpoint: "
+                f"step_key={meta.get('step_key')} current={self.step_key}"
+            )
+            return False
+
+        return True
     
     def execute(self) -> bool:
         """
@@ -95,6 +118,7 @@ class AsyncExecutor(BaseExecutor):
         # 2. 检查断点
         # 优先从 task.config 里的 resume_checkpoint_path 加载（跨任务续传场景）
         checkpoint = None
+        is_resume = bool(self.config.get("resume_checkpoint_path"))
         resume_checkpoint_path = self.config.get("resume_checkpoint_path")
         if resume_checkpoint_path:
             from pathlib import Path as _Path
@@ -103,13 +127,19 @@ class AsyncExecutor(BaseExecutor):
                 try:
                     with open(_cp, 'r', encoding='utf-8') as f:
                         import json as _json
-                        checkpoint = _json.load(f)
-                    self.logger.info(f"[断点] 从上次任务恢复: {resume_checkpoint_path}")
+                        candidate_checkpoint = _json.load(f)
+                    if self._is_compatible_checkpoint(candidate_checkpoint):
+                        checkpoint = candidate_checkpoint
+                        self.logger.info(f"[断点] 从上次任务恢复: {resume_checkpoint_path}")
                 except Exception as e:
                     self.logger.warning(f"[断点] 加载跨任务 checkpoint 失败: {e}")
-        
-        if checkpoint is None:
-            checkpoint = self.load_checkpoint()
+
+        # 仅在显式续传时才允许回退到当前任务工作区中的 checkpoint.json。
+        # 全新任务不应自动继承任何旧断点，否则容易串到其他任务/项目。
+        if is_resume and checkpoint is None:
+            candidate_checkpoint = self.load_checkpoint()
+            if candidate_checkpoint and self._is_compatible_checkpoint(candidate_checkpoint):
+                checkpoint = candidate_checkpoint
         
         processed_sources: Set[str] = set()
         
@@ -142,7 +172,6 @@ class AsyncExecutor(BaseExecutor):
         results_dir.mkdir(parents=True, exist_ok=True)
         
         # 全新任务时清除旧的 output 文件；断点续传时保留（已处理结果不删，新结果追加）
-        is_resume = bool(self.config.get("resume_checkpoint_path"))
         if not is_resume:
             old_outputs = DataFile.objects.filter(
                 project=self.project_obj,
