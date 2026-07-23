@@ -155,69 +155,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def clear_ai_screen_results(self, request, pk=None):
+        from ..services import clear_ai_screen_outputs
+
         project = self.get_object()
-
-        ai_step = StageStep.objects.filter(
-            stage__project=project,
-            step_key='ai_screen',
-        ).first()
-
-        if ai_step:
-            deleted_count, _ = DataFile.objects.filter(
-                project=project,
-                step=ai_step,
-                data_category='output',
-            ).delete()
-
-            ActivityLog.objects.create(
-                project=project,
-                operation_type='task_abandon',
-                operation_detail={
-                    'task_type': 'AI初筛',
-                    'action': 'clear_results',
-                    'deleted_count': deleted_count,
-                },
-                created_by=request.user,
-            )
-            return Response({'message': f'已清除 {deleted_count} 条筛选结果记录'})
-
-        return Response({'message': '未找到 ai_screen 步骤，无需清除'})
+        result = clear_ai_screen_outputs(project, request.user)
+        return Response({'message': result['message']})
 
     @action(detail=True, methods=['get'])
     def ai_screen_stats(self, request, pk=None):
-        project = self.get_object()
-        ai_step = StageStep.objects.filter(
-            stage__project=project,
-            step_key='ai_screen',
-        ).first()
-        if not ai_step:
-            return Response({'included': 0, 'excluded': 0, 'total': 0})
+        from ..services import get_ai_screen_stats
 
-        qs = DataFile.objects.filter(project=project, step=ai_step, data_category='output')
-        total = qs.count()
-        included = qs.filter(metadata__decision='included').count()
-        excluded = qs.filter(metadata__decision='excluded').count()
-        return Response({'included': included, 'excluded': excluded, 'total': total})
+        project = self.get_object()
+        return Response(get_ai_screen_stats(project))
 
     @action(detail=True, methods=['get'])
     def get_prompt(self, request, pk=None):
-        from pathlib import Path
-        from django.conf import settings
+        from ..services import get_prompt
 
         project = self.get_object()
-        custom_prompt = (project.metadata or {}).get('custom_prompt', '')
-        use_custom = (project.metadata or {}).get('use_custom_prompt', False)
-
-        prompt_path = Path(settings.BASE_DIR) / "structural_screening/02_screening_ai/prompts/prompt1.txt"
-        default_prompt = prompt_path.read_text(encoding="utf-8") if prompt_path.exists() else ''
-
-        return Response(
-            {
-                'custom_prompt': custom_prompt,
-                'use_custom_prompt': use_custom,
-                'default_prompt': default_prompt,
-            }
-        )
+        return Response(get_prompt(project))
 
     @action(detail=True, methods=['post'])
     def log_model_select(self, request, pk=None):
@@ -245,48 +201,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def save_prompt(self, request, pk=None):
+        from ..services import save_prompt
+
         project = self.get_object()
         custom_prompt = request.data.get('custom_prompt', '').strip()
         use_custom = request.data.get('use_custom_prompt', True)
 
-        if use_custom and '{screening_criteria}' not in custom_prompt:
-            return Response(
-                {'error': 'Prompt 必须包含 {screening_criteria} 占位符'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        project.metadata = project.metadata or {}
-        project.metadata['custom_prompt'] = custom_prompt
-        project.metadata['use_custom_prompt'] = use_custom
-        project.save(update_fields=['metadata'])
-
-        ActivityLog.objects.create(
-            project=project,
-            operation_type='prompt_set',
-            operation_detail={
-                'use_custom': use_custom,
-                'prompt_length': len(custom_prompt),
-                'prompt_preview': custom_prompt[:100] if custom_prompt else '',
-            },
-            created_by=request.user,
-        )
-
-        return Response({'message': '已保存', 'use_custom_prompt': use_custom})
+        try:
+            result = save_prompt(project, custom_prompt, use_custom, request.user)
+            return Response(result)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def reset_prompt(self, request, pk=None):
+        from ..services import reset_prompt
+
         project = self.get_object()
-        project.metadata = project.metadata or {}
-        project.metadata['custom_prompt'] = ''
-        project.metadata['use_custom_prompt'] = False
-        project.save(update_fields=['metadata'])
-
-        ActivityLog.objects.create(
-            project=project,
-            operation_type='prompt_reset',
-            operation_detail={},
-            created_by=request.user,
-        )
-
-        return Response({'message': '已重置为默认 Prompt'})
+        return Response(reset_prompt(project, request.user))
 

@@ -115,28 +115,10 @@ class DataFileViewSet(viewsets.ModelViewSet):
             )
 
     def perform_destroy(self, instance):
+        from ..services import reset_downstream_on_input_delete
+
         if instance.data_category == 'input' and instance.project:
-            project = instance.project
-            parse_step = StageStep.objects.filter(stage__project=project, step_key='parse').first()
-            if parse_step:
-                old_intermediate = DataFile.objects.filter(project=project, step=parse_step, data_category='intermediate')
-                count = old_intermediate.count()
-                if count > 0:
-                    old_intermediate.delete()
-
-            dedup_step = StageStep.objects.filter(stage__project=project, step_key='dedup').first()
-            if dedup_step:
-                old_intermediate = DataFile.objects.filter(project=project, step=dedup_step, data_category='intermediate')
-                count = old_intermediate.count()
-                if count > 0:
-                    old_intermediate.delete()
-
-            for step_key in ['parse', 'dedup']:
-                step = StageStep.objects.filter(stage__project=project, step_key=step_key).first()
-                if step and step.status in ('completed', 'in_progress', 'failed'):
-                    step.status = 'pending'
-                    step.metadata = {}
-                    step.save()
+            reset_downstream_on_input_delete(instance.project, self.request.user)
 
         ActivityLog.objects.create(
             project=instance.project,
