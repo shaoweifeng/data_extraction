@@ -31,13 +31,12 @@ from core.step_config import get_step_config
 
 
 class AsyncExecutor(BaseExecutor):
-    """异步执行器 - 适用于长时间运行的任务"""
+    """异步执行器 - 根据注册表分发到对应 Handler"""
 
     def _is_compatible_checkpoint(self, checkpoint: Dict) -> bool:
         """校验 checkpoint 是否属于当前项目/步骤，避免串读其他任务的断点。"""
         meta = checkpoint.get("_checkpoint_meta") or {}
         if not meta:
-            # 兼容旧 checkpoint：不拦截，但不给全新任务自动加载。
             return True
 
         if meta.get("project_id") != self.project_id:
@@ -55,21 +54,24 @@ class AsyncExecutor(BaseExecutor):
             return False
 
         return True
-    
+
     def execute(self) -> bool:
         """
-        执行异步任务
-        
+        通过注册表查找并执行对应的 StepHandler。
+
         Returns:
             True if 成功, False if 失败
         """
-        if self.step_key == "ai_screen":
-            return self._execute_ai_screen()
-        elif self.step_key == "META":
-            return self._execute_meta_analysis()
-        else:
-            self.logger.error(f"未知的异步步骤: {self.step_key}")
+        from core.executors import handlers as _handlers  # noqa: F401 触发 @register 自注册
+        from core.executors.registry import get_handler
+
+        handler_cls = get_handler(self.step_key)
+        if handler_cls is None:
+            self.logger.error(f"未找到步骤 '{self.step_key}' 的 Handler，请检查注册表")
             return False
+
+        handler = handler_cls(self)
+        return handler.execute()
     
     # ========================================================================
     # AI初筛

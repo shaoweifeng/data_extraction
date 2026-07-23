@@ -28,42 +28,41 @@ from core.step_config import get_step_config
 
 
 class SyncExecutor(BaseExecutor):
-    """同步执行器 - 适用于轻量快速步骤"""
-    
+    """同步执行器 - 根据注册表分发到对应 Handler"""
+
     def execute(self) -> bool:
         """
-        执行同步任务
-        
+        通过注册表查找并执行对应的 StepHandler。
+
         Returns:
             True if 成功
-            
+
         Raises:
-            Exception: 任务执行失败时抛出，包含错误详情
+            ValueError: 步骤未注册
+            RuntimeError: 步骤执行返回失败
+            Exception: 执行过程中的其他异常
         """
+        # 首次调用时触发所有 handler 的 @register 自注册
+        from core.executors import handlers as _handlers  # noqa: F401
+        from core.executors.registry import get_handler
+
+        handler_cls = get_handler(self.step_key)
+        if handler_cls is None:
+            raise ValueError(f"未找到步骤 '{self.step_key}' 的 Handler，请检查注册表")
+
         try:
-            # 根据步骤类型执行不同逻辑
-            if self.step_key == "parse":
-                result = self._execute_parse()
-            elif self.step_key == "dedup":
-                result = self._execute_dedup()
-            elif self.step_key == "export":
-                result = self._execute_export()
-            else:
-                raise ValueError(f"未知的同步步骤: {self.step_key}")
-            
-            # 检查执行结果
+            handler = handler_cls(self)
+            result = handler.execute()
+
             if not result:
-                raise RuntimeError(f"{self.step_key}步骤执行失败，请查看日志获取详情")
-            
+                raise RuntimeError(f"{self.step_key} 步骤执行失败，请查看日志获取详情")
+
             return True
-        
+
         except Exception as e:
-            # 记录完整错误信息到日志
             self.logger.error(f"[失败] {type(e).__name__}: {str(e)}")
             import traceback
             self.logger.error(traceback.format_exc())
-            
-            # 重新抛出异常，让调度器捕获并设置error_message
             raise
     
     # ========================================================================
