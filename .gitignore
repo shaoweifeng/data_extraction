@@ -40,6 +40,9 @@ db.sqlite3-journal
 celerybeat-schedule
 celerybeat.pid
 
+# 进程 PID 文件（由 start.sh -d 守护模式生成）
+pids/
+
 # IDEs
 .vscode/
 .idea/
