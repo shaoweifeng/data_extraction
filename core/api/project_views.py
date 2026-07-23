@@ -4,10 +4,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from django.db.models import Q
-from django.utils import timezone
-
-from ..models import ActivityLog, DataFile, Project, ProjectStage, StageStep, UserPermission
+from ..models import ActivityLog, Project, ProjectStage, StageStep
 from ..serializers import ProjectSerializer, ProjectStageSerializer
 
 
@@ -19,133 +16,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Project.objects.for_user(self.request.user)
 
     def perform_create(self, serializer):
-        from ..step_config import get_stage_definition
+        from ..services import check_create_permission, initialize_project
 
         user = self.request.user
-        permission_code = 'project.create'
 
-        if not user.is_superuser:
-            has_perm = UserPermission.objects.filter(
-                user=user,
-                permission__code=permission_code,
-            ).filter(
-                Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
-            ).exists()
-
-            if not has_perm:
-                raise PermissionDenied(f"缺少权限：{permission_code}")
-
-        if not user.is_superuser and hasattr(user, 'profile'):
-            quota = user.profile.quota_projects
-            if quota >= 0:
-                current_count = Project.objects.filter(owner=user).count()
-                if current_count >= quota:
-                    raise PermissionDenied(f"已达项目配额上限({quota}个)")
+        try:
+            check_create_permission(user)
+        except PermissionError as e:
+            raise PermissionDenied(str(e))
 
         project = serializer.save(owner=user)
-
-        stage_keys = ['SEARCH', 'SCREEN_1', 'SCREEN_2', 'QUALITY', 'EXTRACT', 'META']
-
-        for stage_key in stage_keys:
-            stage_def = get_stage_definition(stage_key)
-
-            stage = ProjectStage.objects.create(
-                project=project,
-                stage_key=stage_key,
-                name=stage_def.get("name", stage_key),
-                order=stage_def.get("order", 100),
-                status="pending",
-            )
-
-            for step_def in stage_def.get("steps", []):
-                StageStep.objects.create(
-                    stage=stage,
-                    step_key=step_def["step_key"],
-                    name=step_def.get("name", step_def["step_key"]),
-                    order=step_def.get("order", 100),
-                    can_skip=step_def.get("can_skip", True),
-                    status="pending",
-                )
+        initialize_project(project, user)
 
     def perform_destroy(self, instance):
-        import os
-        import shutil
-
-        from django.conf import settings
-        from django.db import connection
-
-        user = self.request.user
-        permission_code = 'project.delete_own'
-
-        if not user.is_superuser:
-            has_perm = UserPermission.objects.filter(
-                user=user,
-                permission__code=permission_code,
-            ).filter(
-                Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
-            ).exists()
-
-            if not has_perm:
-                raise PermissionDenied(f"缺少权限：{permission_code}")
-
-        if instance.owner != user and not user.is_superuser:
-            raise PermissionDenied("无权删除该项目")
+        from ..services import delete_project
 
         try:
-            import json
-
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO plat_project_history
-                        (id, name, slug, description, owner_id, status, metadata, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON DUPLICATE KEY UPDATE
-                        name=VALUES(name), slug=VALUES(slug), description=VALUES(description),
-                        status=VALUES(status), metadata=VALUES(metadata), updated_at=VALUES(updated_at)
-                    """,
-                    [
-                        instance.id,
-                        instance.name,
-                        instance.slug,
-                        instance.description,
-                        instance.owner_id,
-                        'deleted',
-                        json.dumps(instance.metadata) if instance.metadata else '{}',
-                        instance.created_at,
-                        instance.updated_at,
-                    ],
-                )
-        except Exception as e:
-            print(f"归档项目到历史表失败: {e}")
-
-        try:
-            for data_file in instance.files.all():
-                if data_file.file:
-                    try:
-                        path = data_file.file.path
-                        if os.path.exists(path):
-                            os.remove(path)
-                    except Exception as e:
-                        print(f"删除文件失败: {e}")
-        except Exception as e:
-            print(f"清理文件时出错: {e}")
-
-        media_project_dir = os.path.join(settings.MEDIA_ROOT, 'projects', f'project_{instance.id}')
-        try:
-            if os.path.exists(media_project_dir):
-                shutil.rmtree(media_project_dir)
-        except Exception as e:
-            print(f"删除 media 目录失败: {e}")
-
-        workspace_dir = os.path.join(settings.BASE_DIR, 'workspaces', f'project_{instance.id}')
-        try:
-            if os.path.exists(workspace_dir):
-                shutil.rmtree(workspace_dir)
-        except Exception as e:
-            print(f"删除 workspace 目录失败: {e}")
-
-        instance.delete()
+            delete_project(instance, self.request.user)
+        except PermissionError as e:
+            raise PermissionDenied(str(e))
 
     @action(detail=True, methods=['get'])
     def stages(self, request, pk=None):

@@ -25,28 +25,21 @@
     task = scheduler.resume_task(task_id)
 """
 
-import os
 import json
-import shutil
 import logging
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 from datetime import datetime
 
 from django.utils import timezone
 from django.conf import settings
-from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
-from core.models import Task, Project, ProjectStage, StageStep, DataFile
+from core.models import Task, Project, ProjectStage, StageStep
 from core.step_config import (
-    get_step_config, 
+    get_step_config,
     get_stage_definition,
-    is_async_step,
-    is_manual_step,
-    get_sub_steps,
-    get_step_order
 )
 
 
@@ -392,39 +385,17 @@ class TaskScheduler:
             task_id: 任务ID
         
         Returns:
-            进度信息字典
+            进度信息字典（含 elapsed_time）
         """
+        from .services.progress_service import get_task_progress as _svc_progress
+
+        result = _svc_progress(task_id)
+
+        # scheduler 层额外追加 elapsed_time 字段
         task = Task.objects.get(id=task_id, project=self.project)
-        
-        # 尝试读取进度文件
-        if task.log_file:
-            progress_file = self._get_progress_file_path(task.log_file)
-            
-            if progress_file and os.path.exists(progress_file):
-                try:
-                    with open(progress_file, 'r') as f:
-                        progress_data = json.load(f)
-                        return {
-                            "current": progress_data.get("current", 0),
-                            "total": progress_data.get("total", 0),
-                            "percentage": progress_data.get("percentage", 0.0),
-                            "unit": progress_data.get("unit", ""),
-                            "elapsed_time": str(timezone.now() - task.started_at) if task.started_at else None,
-                            "status": task.status,
-                            "last_update": progress_data.get("last_update")
-                        }
-                except Exception as e:
-                    pass
-        
-        # 回退到任务表的进度字段
-        return {
-            "current": int(task.progress * 100),
-            "total": 100,
-            "percentage": task.progress * 100,
-            "unit": "%",
-            "elapsed_time": str(timezone.now() - task.started_at) if task.started_at else None,
-            "status": task.status
-        }
+        result["elapsed_time"] = str(timezone.now() - task.started_at) if task.started_at else None
+
+        return result
     
     def get_stage_progress(self, stage_key: str) -> Dict:
         """
@@ -460,6 +431,8 @@ class TaskScheduler:
     
     def get_step_progress(self, step_key: str) -> Dict:
         """获取单个步骤的进度"""
+        from .services.progress_service import _derive_progress_path
+
         try:
             stage_key = get_step_config(step_key).get("stage_key")
             stage = ProjectStage.objects.get(
@@ -470,19 +443,19 @@ class TaskScheduler:
                 stage=stage,
                 step_key=step_key
             )
-            
+
             # 尝试读取进度文件
             latest_task = Task.objects.filter(
                 project=self.project,
                 task_type=step_key,
                 status='running'
             ).order_by('-created_at').first()
-            
+
             if latest_task and latest_task.log_file:
-                progress_file = self._get_progress_file_path(latest_task.log_file)
-                
-                if progress_file and os.path.exists(progress_file):
-                    with open(progress_file, 'r') as f:
+                progress_path = _derive_progress_path(latest_task.log_file)
+
+                if progress_path and progress_path.exists():
+                    with open(progress_path, 'r') as f:
                         progress_data = json.load(f)
                         return {
                             "step_key": step_key,
@@ -492,14 +465,14 @@ class TaskScheduler:
                             "total": progress_data.get("total", 0),
                             "unit": progress_data.get("unit", "")
                         }
-            
+
             return {
                 "step_key": step_key,
                 "status": step.status,
                 "percentage": 100.0 if step.status == 'completed' else 0.0
             }
-        
-        except Exception as e:
+
+        except Exception:
             return {
                 "step_key": step_key,
                 "status": "not_started",
@@ -562,14 +535,4 @@ class TaskScheduler:
         
         return str(stop_file)
     
-    def _get_progress_file_path(self, log_file: str) -> Optional[str]:
-        """根据日志文件路径获取进度文件路径"""
-        if not log_file:
-            return None
-        
-        # 替换日志文件名中的 "task_" 为 "progress_"
-        progress_file = log_file.replace("task_", "progress_").replace(".log", ".json")
-        
-        full_path = os.path.join(settings.MEDIA_ROOT, progress_file)
-        
-        return full_path if os.path.exists(full_path) else None
+    # _get_progress_file_path 已迁移到 core/services/progress_service._derive_progress_path
