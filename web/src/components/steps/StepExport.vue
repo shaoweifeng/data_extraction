@@ -11,19 +11,19 @@
     </div>
 
     <!-- 统计数据 -->
-    <div v-if="s.screeningResults" class="bg-gray-50 rounded-xl p-6 mb-6 max-w-md mx-auto">
+    <div v-if="s.screeningResults" class="step-list-box mb-6 max-w-md mx-auto" style="padding:20px 24px">
       <div class="grid grid-cols-3 gap-4">
-        <div class="text-center">
+        <div class="step-stat-card text-center">
           <div class="text-3xl font-bold text-green-600">{{ s.screeningResults.included }}</div>
-          <div class="text-sm text-gray-500">已纳入</div>
+          <div class="text-sm text-gray-500 mt-1">已纳入</div>
         </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-red-600">{{ s.screeningResults.excluded }}</div>
-          <div class="text-sm text-gray-500">已排除</div>
+        <div class="step-stat-card text-center">
+          <div class="text-3xl font-bold text-red-500">{{ s.screeningResults.excluded }}</div>
+          <div class="text-sm text-gray-500 mt-1">已排除</div>
         </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-gray-600">{{ s.screeningResults.total }}</div>
-          <div class="text-sm text-gray-500">总计</div>
+        <div class="step-stat-card text-center">
+          <div class="text-3xl font-bold text-gray-700">{{ s.screeningResults.total }}</div>
+          <div class="text-sm text-gray-500 mt-1">总计</div>
         </div>
       </div>
     </div>
@@ -59,7 +59,7 @@
       </div>
 
       <!-- 下载区 -->
-      <div class="border rounded-xl p-3 bg-gray-50 space-y-2">
+      <div class="step-list-box" style="padding:14px 16px">
         <p class="text-xs text-gray-400 mb-1">下载历史版本（点击导出后自动更新）</p>
 
         <!-- 所有文献 Excel -->
@@ -111,7 +111,7 @@ const ExportRow = {
         v-if="files && files.length > 0"
         :value="selected"
         @change="$emit('update:selected', Number($event.target.value))"
-        class="border rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm min-w-0 flex-1"
+        class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base" style="padding-top:5px;padding-bottom:5px"
       >
         <option v-for="(f, i) in files" :key="f.id" :value="i">{{ fileLabel(f) }}</option>
       </select>

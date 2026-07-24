@@ -11,14 +11,14 @@
     </div>
 
     <!-- 文件数量与状态 -->
-    <div class="bg-gray-50 rounded-xl p-8 mb-6 max-w-2xl mx-auto">
-      <div class="flex justify-between items-center text-sm text-gray-600 mb-2">
-        <span>当前 Reference 文件:</span>
-        <span class="font-bold text-lg">{{ s.referenceFiles.length }} 个</span>
+    <div class="step-list-box mb-6 max-w-2xl mx-auto" style="padding:20px 24px">
+      <div class="flex justify-between items-center text-sm text-gray-600 mb-3">
+        <span class="text-gray-500"><i class="fas fa-file-alt mr-1.5 text-purple-400"></i>当前 Reference 文件:</span>
+        <span class="font-bold text-base text-gray-800">{{ s.referenceFiles.length }} 个</span>
       </div>
       <div class="flex justify-between items-center text-sm text-gray-600">
-        <span>去重状态:</span>
-        <span class="font-bold text-lg">{{ s.dedupCompleted ? '已完成' : '待处理' }}</span>
+        <span class="text-gray-500"><i class="fas fa-check-circle mr-1.5 text-purple-400"></i>去重状态:</span>
+        <span :class="s.dedupCompleted ? 'badge badge-green' : 'badge badge-gray'">{{ s.dedupCompleted ? '已完成' : '待处理' }}</span>
       </div>
     </div>
 
@@ -39,28 +39,28 @@
     <!-- 去重统计信息 -->
     <div
       v-if="s.dedupStats"
-      class="mt-8 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-200"
+      class="mt-8 rounded-xl p-6" style="background:linear-gradient(135deg,#faf5ff,#eef2ff);border:1px solid #ddd6fe"
     >
       <h4 class="text-lg font-bold text-purple-800 mb-4 flex items-center">
         <i class="fas fa-chart-pie mr-2"></i>
         去重统计报告
       </h4>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
+        <div class="step-stat-card">
           <div class="text-3xl font-bold text-gray-800">{{ s.dedupStats.total_files }}</div>
-          <div class="text-sm text-gray-500">原始文献</div>
+          <div class="text-sm text-gray-500 mt-1">原始文献</div>
         </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
+        <div class="step-stat-card">
           <div class="text-3xl font-bold text-green-600">{{ s.dedupStats.kept_files }}</div>
-          <div class="text-sm text-gray-500">保留文献</div>
+          <div class="text-sm text-gray-500 mt-1">保留文献</div>
         </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
+        <div class="step-stat-card">
           <div class="text-3xl font-bold text-red-500">{{ s.dedupStats.duplicates }}</div>
-          <div class="text-sm text-gray-500">重复文献</div>
+          <div class="text-sm text-gray-500 mt-1">重复文献</div>
         </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
+        <div class="step-stat-card">
           <div class="text-3xl font-bold text-purple-600">{{ s.dedupStats.duplicate_rate }}</div>
-          <div class="text-sm text-gray-500">重复率</div>
+          <div class="text-sm text-gray-500 mt-1">重复率</div>
         </div>
       </div>
       <div v-if="s.dedupStats.completion_time" class="text-xs text-gray-400 mt-2">
@@ -86,11 +86,12 @@
           </button>
         </div>
 
-        <div v-show="s.showDuplicateDetails" class="bg-white rounded-lg border max-h-96 overflow-y-auto">
+        <div v-show="s.showDuplicateDetails" class="step-list-box" style="max-height:24rem;padding:8px">
           <div
             v-for="(dup, idx) in s.dedupStats.duplicate_details"
             :key="idx"
-            class="border-b last:border-b-0 p-4 hover:bg-gray-50"
+            class="p-3 rounded-lg hover:bg-white mb-1 transition"
+            style="border-bottom:1px solid #f8fafc"
           >
             <div class="font-medium text-gray-800 mb-2">{{ idx + 1 }}. {{ dup.title || '(无标题)' }}</div>
 
@@ -117,7 +118,7 @@
             <div
               v-for="(dup_item, di) in dup.duplicates"
               :key="di"
-              class="text-sm text-gray-600 mt-2 pl-4 border-l-2 border-red-200"
+              class="text-sm text-gray-600 mt-2 pl-4" style="border-left:2px solid #fca5a5"
             >
               <div class="flex items-start">
                 <span class="text-red-500 font-medium mr-2 whitespace-nowrap">✗ 重复:</span>

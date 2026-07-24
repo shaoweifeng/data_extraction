@@ -17,14 +17,14 @@
         @keyup.enter="newDef && addField()"
         type="text"
         placeholder="字段名称（如：年龄）"
-        class="w-48 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-cyan-500"
+        class="w-48 px-4 py-2.5 input-base"
       />
       <input
         v-model="newDef"
         @keyup.enter="newName && addField()"
         type="text"
         placeholder="字段定义（如：研究中纳入患者的年龄情况）"
-        class="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-cyan-500"
+        class="flex-1 px-4 py-2.5 input-base"
       />
       <button @click="addField" class="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">
         <i class="fas fa-plus"></i> 添加
@@ -32,7 +32,7 @@
     </div>
 
     <!-- 字段列表 -->
-    <div class="bg-gray-50 rounded-xl border p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+    <div class="step-list-box" style="min-height:200px;max-height:400px">
       <div v-if="s.extractionFields.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400 py-8">
         <i class="fas fa-tag text-3xl mb-2 opacity-50"></i>
         <p>暂未添加提取字段，请在上方输入</p>
@@ -41,7 +41,7 @@
         <div
           v-for="(f, idx) in s.extractionFields"
           :key="idx"
-          class="flex justify-between items-center bg-white px-4 py-3 rounded-lg border shadow-sm group"
+          class="step-list-item group"
         >
           <div>
             <span class="font-bold text-cyan-600 mr-2">{{ idx + 1 }}. {{ f.name }}</span>

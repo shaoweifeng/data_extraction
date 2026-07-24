@@ -58,18 +58,18 @@
     </div>
 
     <!-- Prompt 设置（折叠面板） -->
-    <div class="mb-6 border rounded-xl overflow-hidden">
+    <div class="step-collapse mb-6">
       <button
         @click="promptPanelOpen = !promptPanelOpen"
-        class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition text-sm font-medium text-gray-700"
+        class="step-collapse-header"
       >
         <span><i class="fas fa-sliders-h mr-2 text-gray-400"></i>Prompt 设置（可选）</span>
         <span class="flex items-center gap-2">
-          <span v-if="s.useCustomPrompt" class="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full">已自定义</span>
+          <span v-if="s.useCustomPrompt" class="badge badge-purple">已自定义</span>
           <i :class="promptPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-gray-400 text-xs"></i>
         </span>
       </button>
-      <div v-show="promptPanelOpen" class="p-4 bg-white space-y-3">
+      <div v-show="promptPanelOpen" class="step-collapse-body space-y-3">
         <div class="flex gap-6 text-sm">
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="radio" :value="false" v-model="s.useCustomPrompt" class="accent-indigo-600" />
@@ -81,7 +81,7 @@
           </label>
         </div>
         <div v-if="s.useCustomPrompt" class="space-y-2">
-          <div class="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+          <div class="flex items-center gap-2 text-xs text-amber-600 rounded-lg px-3 py-2" style="background:#fffbeb;border:1px solid #fde68a">
             <i class="fas fa-exclamation-triangle"></i>
             <span>
               必须包含 <code class="bg-amber-100 px-1 rounded font-mono">{screening_criteria}</code> 占位符，纳排标准会被自动注入到此处
@@ -91,11 +91,12 @@
             v-model="s.customPromptText"
             rows="10"
             placeholder="在此输入自定义 Prompt，必须包含 {screening_criteria} 占位符..."
-            class="w-full text-xs font-mono border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y"
+            class="w-full text-xs font-mono input-base resize-y"
+            style="font-family:'JetBrains Mono',monospace;min-height:120px"
             :class="
               s.customPromptText && !s.customPromptText.includes('{screening_criteria}')
                 ? 'border-red-400 bg-red-50'
-                : 'border-gray-300'
+                : ''
             "
           ></textarea>
           <div
@@ -105,7 +106,7 @@
             <i class="fas fa-times-circle"></i> 缺少 {screening_criteria} 占位符，无法保存
           </div>
         </div>
-        <div v-else class="bg-gray-50 rounded-lg p-3 text-xs font-mono text-gray-500 max-h-32 overflow-y-auto whitespace-pre-wrap">
+        <div v-else class="step-prompt-preview">
           {{ defaultPromptPreview }}
         </div>
         <div class="flex gap-2 pt-1">
@@ -119,7 +120,7 @@
           <button
             v-if="s.useCustomPrompt"
             @click="resetPrompt"
-            class="px-4 py-1.5 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition"
+            class="px-4 py-1.5 text-sm btn-secondary"
           >
             <i class="fas fa-undo mr-1"></i>重置为默认
           </button>
@@ -133,19 +134,19 @@
     <!-- 文献列表 + 日志 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
       <!-- 左侧：待/已筛选列表 -->
-      <div class="bg-gray-50 p-4 rounded-xl border h-96 flex flex-col">
-        <div class="flex items-center gap-4 mb-3 border-b pb-2 flex-shrink-0">
+      <div class="step-ref-panel">
+        <div class="step-ref-panel-tabs">
           <button
             @click="screeningTab = 'pending'; loadPending(0)"
-            :class="screeningTab === 'pending' ? 'text-blue-600 border-b-2 border-blue-600 font-semibold' : 'text-gray-500'"
-            class="pb-1 text-sm"
+            :class="screeningTab === 'pending' ? 'active-pending' : ''"
+            class="step-ref-panel-tab"
           >
             待筛选 ({{ Math.max(0, s.pendingTotal - s.screenedTotal) }})
           </button>
           <button
             @click="screeningTab = 'screened'; loadScreened(0)"
-            :class="screeningTab === 'screened' ? 'text-green-600 border-b-2 border-green-600 font-semibold' : 'text-gray-500'"
-            class="pb-1 text-sm"
+            :class="screeningTab === 'screened' ? 'active-screened' : ''"
+            class="step-ref-panel-tab"
           >
             已筛选 ({{ s.screenedTotal || s.processedCount }})
           </button>
@@ -153,65 +154,65 @@
 
         <!-- 待筛选 -->
         <div v-show="screeningTab === 'pending'" class="flex-1 flex flex-col min-h-0">
-          <div class="flex-1 bg-white rounded border overflow-y-auto p-2">
-            <div v-if="s.pendingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs">暂无待筛选文献</div>
-            <div v-else class="space-y-1">
+          <div class="step-ref-list">
+            <div v-if="s.pendingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs py-4">暂无待筛选文献</div>
+            <div v-else>
               <div
                 v-for="file in s.pendingFiles"
                 :key="file.id"
-                class="flex items-center justify-between px-2 py-1 hover:bg-gray-50 border-b text-xs"
+                class="step-ref-row"
               >
                 <div class="flex items-center overflow-hidden">
-                  <i class="fas fa-file-code text-blue-500 mr-2 flex-shrink-0"></i>
+                  <i class="fas fa-file-code text-blue-400 mr-2 flex-shrink-0"></i>
                   <span class="truncate" :title="file.filename">{{ file.filename }}</span>
                 </div>
-                <span class="text-xs px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 flex-shrink-0 ml-2">待筛选</span>
+                <span class="badge badge-gray ml-2">待筛选</span>
               </div>
             </div>
           </div>
-          <div v-if="(s.pendingTotal - s.screenedTotal) > PAGE_SIZE" class="flex items-center justify-center gap-2 mt-1 text-xs flex-shrink-0">
-            <button @click="loadPending(Math.max(0, s.pendingPage - 1))" :disabled="s.pendingPage === 0" class="px-2 py-0.5 border rounded disabled:opacity-50">上一页</button>
-            <span>{{ s.pendingPage + 1 }}/{{ Math.ceil(Math.max(1, s.pendingTotal - s.screenedTotal) / PAGE_SIZE) }}</span>
-            <button @click="loadPending(s.pendingPage + 1)" :disabled="s.pendingPage >= Math.ceil(Math.max(1, s.pendingTotal - s.screenedTotal) / PAGE_SIZE) - 1" class="px-2 py-0.5 border rounded disabled:opacity-50">下一页</button>
+          <div v-if="(s.pendingTotal - s.screenedTotal) > PAGE_SIZE" class="flex items-center justify-center gap-2 mt-2 flex-shrink-0">
+            <button @click="loadPending(Math.max(0, s.pendingPage - 1))" :disabled="s.pendingPage === 0" class="step-page-btn">上一页</button>
+            <span class="text-xs text-gray-400">{{ s.pendingPage + 1 }}/{{ Math.ceil(Math.max(1, s.pendingTotal - s.screenedTotal) / PAGE_SIZE) }}</span>
+            <button @click="loadPending(s.pendingPage + 1)" :disabled="s.pendingPage >= Math.ceil(Math.max(1, s.pendingTotal - s.screenedTotal) / PAGE_SIZE) - 1" class="step-page-btn">下一页</button>
           </div>
         </div>
 
         <!-- 已筛选 -->
         <div v-show="screeningTab === 'screened'" class="flex-1 flex flex-col min-h-0">
-          <div class="flex-1 bg-white rounded border overflow-y-auto p-2">
-            <div v-if="s.screenedFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs">暂无已筛选文献</div>
-            <div v-else class="space-y-1">
+          <div class="step-ref-list">
+            <div v-if="s.screenedFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs py-4">暂无已筛选文献</div>
+            <div v-else>
               <div
                 v-for="file in s.screenedFiles"
                 :key="file.id"
-                class="flex items-center justify-between px-2 py-1 hover:bg-gray-50 border-b text-xs"
+                class="step-ref-row"
               >
                 <div class="flex items-center overflow-hidden">
                   <i
                     class="fas fa-file-code mr-2 flex-shrink-0"
-                    :class="file.metadata?.decision === 'included' ? 'text-green-500' : 'text-red-500'"
+                    :class="file.metadata?.decision === 'included' ? 'text-green-500' : 'text-red-400'"
                   ></i>
                   <span class="truncate" :title="file.filename">{{ file.filename }}</span>
                 </div>
                 <span
-                  class="text-xs px-1.5 py-0.5 rounded flex-shrink-0 ml-2"
-                  :class="file.metadata?.decision === 'included' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'"
+                  class="badge ml-2"
+                  :class="file.metadata?.decision === 'included' ? 'badge-green' : 'badge-red'"
                 >
                   {{ file.metadata?.decision === 'included' ? '已纳入' : '已排除' }}
                 </span>
               </div>
             </div>
           </div>
-          <div v-if="s.screenedTotal > PAGE_SIZE" class="flex items-center justify-center gap-2 mt-1 text-xs flex-shrink-0">
-            <button @click="loadScreened(Math.max(0, s.screenedPage - 1))" :disabled="s.screenedPage === 0" class="px-2 py-0.5 border rounded disabled:opacity-50">上一页</button>
-            <span>{{ s.screenedPage + 1 }}/{{ Math.ceil(s.screenedTotal / PAGE_SIZE) }}</span>
-            <button @click="loadScreened(s.screenedPage + 1)" :disabled="s.screenedPage >= Math.ceil(s.screenedTotal / PAGE_SIZE) - 1" class="px-2 py-0.5 border rounded disabled:opacity-50">下一页</button>
+          <div v-if="s.screenedTotal > PAGE_SIZE" class="flex items-center justify-center gap-2 mt-2 flex-shrink-0">
+            <button @click="loadScreened(Math.max(0, s.screenedPage - 1))" :disabled="s.screenedPage === 0" class="step-page-btn">上一页</button>
+            <span class="text-xs text-gray-400">{{ s.screenedPage + 1 }}/{{ Math.ceil(s.screenedTotal / PAGE_SIZE) }}</span>
+            <button @click="loadScreened(s.screenedPage + 1)" :disabled="s.screenedPage >= Math.ceil(s.screenedTotal / PAGE_SIZE) - 1" class="step-page-btn">下一页</button>
           </div>
         </div>
       </div>
 
       <!-- 右侧：日志控制台 -->
-      <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-green-400 font-mono text-xs shadow-inner h-96 flex flex-col">
+      <div class="log-console h-96 flex flex-col" style="border:1px solid #1e293b">
         <div class="flex-1 overflow-y-auto">
           <div v-if="s.latestAiScreenTask?.status === 'stopped' && !s.aiScreenLogContent" class="text-yellow-700 whitespace-pre-wrap">
             任务已暂停。

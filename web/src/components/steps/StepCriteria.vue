@@ -16,7 +16,7 @@
     </div>
 
     <!-- 常用排除标准快捷勾选 -->
-    <div class="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+    <div class="step-list-box mb-4" style="background:#eff6ff;border-color:#bfdbfe;padding:14px 16px">
       <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">
         <i class="fas fa-bolt mr-1"></i>常用排除标准（勾选后自动添加）
       </p>
@@ -40,7 +40,7 @@
         @keyup.enter="addCriteria"
         type="text"
         placeholder="自定义：输入一条标准并回车"
-        class="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+        class="flex-1 px-4 py-2.5 input-base"
       />
       <button @click="addCriteria" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
         <i class="fas fa-plus"></i> 添加
@@ -48,7 +48,7 @@
     </div>
 
     <!-- 标准列表 -->
-    <div class="bg-gray-50 rounded-xl border p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+    <div class="step-list-box" style="min-height:200px;max-height:400px">
       <div v-if="s.criteriaList.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400 py-8">
         <i class="fas fa-clipboard-list text-3xl mb-2 opacity-50"></i>
         <p>暂无标准，请在上方添加</p>
@@ -57,7 +57,7 @@
         <div
           v-for="(c, idx) in s.criteriaList"
           :key="idx"
-          class="flex justify-between items-center bg-white px-4 py-3 rounded-lg border shadow-sm group"
+          class="step-list-item group"
         >
           <span class="text-gray-700">
             <span class="font-bold text-green-600 mr-2">{{ idx + 1 }}.</span>{{ c }}
