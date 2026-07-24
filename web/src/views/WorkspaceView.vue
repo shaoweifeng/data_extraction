@@ -1,62 +1,65 @@
 <template>
   <div class="page-layout">
-    <!-- 左侧项目列表 -->
     <AppSidebar />
 
-    <!-- 主内容区 -->
     <main class="main-content">
       <!-- 加载中 -->
       <div v-if="loading" class="loading-state">
-        <div class="loading-spinner">
-          <svg class="spin-icon" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-          </svg>
-        </div>
-        <p class="loading-text">正在加载项目数据...</p>
+        <svg class="spin-icon" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/>
+          <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" class="opacity-75"/>
+        </svg>
+        <p>正在加载项目数据...</p>
       </div>
 
       <template v-else>
-        <!-- 顶部 Header -->
-        <div class="workspace-header">
-          <div class="workspace-header-left">
-            <div class="workspace-project-badge">
-              <i class="fas fa-folder-open"></i>
-            </div>
-            <div>
-              <h2 class="workspace-project-name">{{ project.currentProject?.name || '工作区' }}</h2>
-              <p class="workspace-project-desc">
-                {{ project.currentProject?.description || '暂无描述' }}
-              </p>
+        <!-- ── SCREEN_1：文献初筛（含步骤指示器）── -->
+        <template v-if="project.currentStage === 'SCREEN_1'">
+          <!-- 顶部：项目名 + 步骤指示器 -->
+          <div class="ws-header">
+            <div class="ws-header-left">
+              <div class="ws-stage-badge" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+                <i class="fas fa-filter"></i>
+              </div>
+              <div>
+                <h2 class="ws-stage-title">文献初筛</h2>
+                <p class="ws-stage-sub">{{ project.currentProject?.name }}</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <!-- 步骤指示器 -->
-        <div class="step-indicator-wrap">
-          <StepIndicator
-            :steps="screen1Steps"
-            :current-step="screening.currentStep"
-            :stages-data="project.stagesData"
-          />
-        </div>
-
-        <!-- 步骤内容 + 右侧任务栏 -->
-        <div class="workspace-body">
-          <div class="step-content-area">
-            <StepParse    v-if="screening.currentStep === 1" />
-            <StepDedup    v-else-if="screening.currentStep === 2" />
-            <StepCriteria v-else-if="screening.currentStep === 3" />
-            <StepFields   v-else-if="screening.currentStep === 4" />
-            <StepAiScreen v-else-if="screening.currentStep === 5" />
-            <StepExport   v-else-if="screening.currentStep === 6" />
-            <!-- 步骤导航 -->
-            <StepNav class="step-nav-bar" />
+          <div class="ws-step-bar">
+            <StepIndicator
+              :steps="screen1Steps"
+              :current-step="screening.currentStep"
+              :stages-data="project.stagesData"
+            />
           </div>
+          <!-- 步骤内容 + 右侧任务栏 -->
+          <div class="ws-body">
+            <div class="ws-step-content">
+              <StepParse    v-if="screening.currentStep === 1" />
+              <StepDedup    v-else-if="screening.currentStep === 2" />
+              <StepCriteria v-else-if="screening.currentStep === 3" />
+              <StepFields   v-else-if="screening.currentStep === 4" />
+              <StepAiScreen v-else-if="screening.currentStep === 5" />
+              <StepExport   v-else-if="screening.currentStep === 6" />
+              <StepNav class="step-nav-bar" />
+            </div>
+            <TaskSidebar class="ws-task-sidebar" />
+          </div>
+        </template>
 
-          <!-- 右侧任务侧栏 -->
-          <TaskSidebar class="task-sidebar" />
-        </div>
+        <!-- ── 其他阶段：占位页 ── -->
+        <template v-else>
+          <div class="ws-placeholder">
+            <div class="placeholder-icon" :style="{ background: stageMeta[project.currentStage]?.bg || '#f1f5f9' }">
+              <i :class="stageMeta[project.currentStage]?.icon || 'fas fa-tools'" :style="{ color: stageMeta[project.currentStage]?.color || '#6366f1' }"></i>
+            </div>
+            <h2 class="placeholder-title">{{ stageMeta[project.currentStage]?.name || project.currentStage }}</h2>
+            <p class="placeholder-desc">该功能模块正在建设中，敬请期待。</p>
+            <div class="placeholder-tag">Coming Soon</div>
+          </div>
+        </template>
       </template>
     </main>
   </div>
@@ -91,10 +94,18 @@ const screen1Steps = [
   { id: 1, name: '文献解析',  stepKey: 'parse' },
   { id: 2, name: '自动去重',  stepKey: 'dedup' },
   { id: 3, name: '纳排标准',  stepKey: 'criteria' },
-  { id: 4, name: '提取字段',  stepKey: 'extraction_fields' },
+  { id: 4, name: '提取字段',  stepKey: 'field_extraction' },
   { id: 5, name: 'AI 初筛',   stepKey: 'ai_screen' },
   { id: 6, name: '结果导出',  stepKey: 'export' },
 ]
+
+const stageMeta = {
+  SEARCH:   { name: '文献检索', icon: 'fas fa-search',       bg: '#eff6ff', color: '#3b82f6' },
+  SCREEN_2: { name: '文献复筛', icon: 'fas fa-tasks',        bg: '#faf5ff', color: '#8b5cf6' },
+  QUALITY:  { name: '文献质量评价', icon: 'fas fa-shield-virus', bg: '#f0fdf4', color: '#10b981' },
+  EXTRACT:  { name: '数据提取', icon: 'fas fa-file-export',  bg: '#fff7ed', color: '#f59e0b' },
+  META:     { name: 'Meta 分析', icon: 'fas fa-chart-line',  bg: '#fdf2f8', color: '#ec4899' },
+}
 
 onMounted(async () => {
   const projectId = Number(route.params.projectId)
@@ -102,10 +113,7 @@ onMounted(async () => {
   if (!project.currentProject || project.currentProject.id !== projectId) {
     await project.fetchProjects()
     const found = project.projects.find((p) => p.id === projectId)
-    if (!found) {
-      router.push('/')
-      return
-    }
+    if (!found) { router.push('/'); return }
     await project.selectProject(found)
   }
 
@@ -113,105 +121,85 @@ onMounted(async () => {
     taskStore.fetchRecentTasks(projectId, project.stagesData),
     taskStore.fetchActivityLogs(projectId),
   ])
-
   loading.value = false
 })
 </script>
 
 <style scoped>
 .page-layout {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-  background: #f8fafc;
+  display: flex; height: 100vh; overflow: hidden; background: #f8fafc;
 }
 .main-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
 }
 
-/* 加载状态 */
+/* 加载 */
 .loading-state {
-  flex: 1;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 12px;
-}
-.loading-spinner {
-  width: 40px; height: 40px;
-  display: flex; align-items: center; justify-content: center;
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px; color: #94a3b8;
 }
 .spin-icon {
   width: 32px; height: 32px; color: #6366f1;
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 0.875rem; color: #94a3b8; margin: 0; }
 
-/* Header */
-.workspace-header {
+/* SCREEN_1 布局 */
+.ws-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 24px 14px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fff;
+  padding: 14px 24px;
+  background: #fff; border-bottom: 1px solid #f1f5f9;
   flex-shrink: 0;
 }
-.workspace-header-left {
-  display: flex; align-items: center; gap: 12px;
+.ws-header-left { display: flex; align-items: center; gap: 12px; }
+.ws-stage-badge {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(99,102,241,.25);
 }
-.workspace-project-badge {
-  width: 38px; height: 38px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.workspace-project-badge i { color: #fff; font-size: 0.95rem; }
-.workspace-project-name {
-  font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0;
-}
-.workspace-project-desc {
-  font-size: 0.75rem; color: #94a3b8; margin: 2px 0 0;
+.ws-stage-badge i { color: #fff; font-size: 0.9rem; }
+.ws-stage-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0; }
+.ws-stage-sub { font-size: 0.72rem; color: #94a3b8; margin: 2px 0 0; }
+
+.ws-step-bar {
+  padding: 10px 24px;
+  background: #fff; border-bottom: 1px solid #f1f5f9; flex-shrink: 0;
+  overflow-x: auto;
 }
 
-/* 步骤指示器区 */
-.step-indicator-wrap {
-  padding: 12px 24px;
-  background: #fff;
-  border-bottom: 1px solid #f1f5f9;
-  flex-shrink: 0;
+.ws-body {
+  flex: 1; display: flex; overflow: hidden; min-height: 0;
 }
-
-/* 主体区 */
-.workspace-body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  min-height: 0;
+.ws-step-content {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+  min-width: 0; display: flex; flex-direction: column;
 }
+.step-nav-bar { margin-top: auto; padding-top: 12px; }
 
-.step-content-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 24px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.step-nav-bar { margin-top: auto; padding-top: 16px; }
-
-/* 任务侧栏 */
-.task-sidebar {
-  width: 288px;
-  min-width: 288px;
+.ws-task-sidebar {
+  width: 280px; min-width: 280px;
   border-left: 1px solid #f1f5f9;
-  background: #fff;
-  overflow-y: auto;
-  flex-shrink: 0;
+  background: #fff; overflow-y: auto; flex-shrink: 0;
+}
+
+/* 占位页 */
+.ws-placeholder {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  padding: 4rem 2rem; text-align: center;
+}
+.placeholder-icon {
+  width: 80px; height: 80px; border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 4px;
+}
+.placeholder-icon i { font-size: 2rem; }
+.placeholder-title { font-size: 1.4rem; font-weight: 700; color: #1e293b; margin: 0; }
+.placeholder-desc { font-size: 0.875rem; color: #94a3b8; margin: 0; max-width: 320px; }
+.placeholder-tag {
+  display: inline-flex; padding: 4px 14px;
+  background: #ede9fe; color: #7c3aed;
+  border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+  margin-top: 4px;
 }
 </style>
