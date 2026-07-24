@@ -138,7 +138,17 @@ async function loadExportFiles() {
   s.exportStepId = expStep.id
   try {
     const res = await http.get(`/files/?project=${project.currentProject.id}&step=${expStep.id}&data_category=output&limit=100`)
-    s.exportFiles = extractListData(res.data)
+    const allFiles = extractListData(res.data)
+    s.exportFiles = allFiles
+    // 按文件名分类填充各导出列表（文件名规律：screening_results_{type}_*.xlsx / *.ris）
+    s.exportXlsxAllFiles = allFiles.filter(f => f.filename?.includes('_all_') && f.filename?.endsWith('.xlsx'))
+    s.exportXlsxIncludedFiles = allFiles.filter(f => f.filename?.includes('_included_') && f.filename?.endsWith('.xlsx'))
+    s.exportXlsxExcludedFiles = allFiles.filter(f => f.filename?.includes('_excluded_') && f.filename?.endsWith('.xlsx'))
+    s.exportRisFiles = allFiles.filter(f => f.filename?.endsWith('.ris'))
+    // 兼容：若无明确分类文件则全部放入 All
+    if (s.exportXlsxAllFiles.length === 0 && s.exportXlsxIncludedFiles.length === 0 && s.exportXlsxExcludedFiles.length === 0) {
+      s.exportXlsxAllFiles = allFiles.filter(f => f.filename?.endsWith('.xlsx'))
+    }
   } catch {}
 }
 

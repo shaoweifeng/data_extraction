@@ -125,6 +125,11 @@ async function saveCriteria() {
     await http.patch(`/steps/${step.id}/update_metadata/`, {
       metadata: { criteria: s.criteriaList },
     })
+    // 有纳排标准时，将步骤标记为 completed
+    if (s.criteriaList.length > 0 && step.status !== 'completed') {
+      await http.post(`/steps/${step.id}/complete/`)
+      await project.fetchStages(project.currentProject.id)
+    }
   } catch (err) {
     console.error('保存纳排标准失败', err)
   }

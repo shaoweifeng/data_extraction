@@ -1,209 +1,134 @@
 <template>
-  <div class="step-wrap">
-    <div class="step-head">
-      <div class="step-head-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
-        <i class="fas fa-robot"></i>
+  <div class="ai-screen-layout">
+    <!-- ── 顶部：标题 + 模型选择 ── -->
+    <div class="ai-screen-top">
+      <!-- 步骤标题（紧凑） -->
+      <div class="ai-top-title">
+        <div class="step-head-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);width:32px;height:32px;border-radius:9px">
+          <i class="fas fa-robot" style="font-size:0.85rem"></i>
+        </div>
+        <div>
+          <h3 class="step-title" style="font-size:1rem;margin:0">AI 智能初筛</h3>
+          <p class="step-subtitle" style="font-size:0.72rem;margin:0">基于纳排标准，大模型自动判断文献是否纳入</p>
+        </div>
       </div>
-      <div>
-        <h3 class="step-title">AI 智能初筛</h3>
-        <p class="step-subtitle">基于纳排标准，大模型自动判断文献是否纳入</p>
-      </div>
-    </div>
 
-    <!-- 模型选择 -->
-    <div class="mb-6">
-      <div v-if="s.aiModelsLoading" class="text-center py-4 text-gray-400 text-sm">
-        <i class="fas fa-spinner fa-spin mr-1"></i>加载模型列表...
-      </div>
-      <div v-else class="grid grid-cols-3 gap-3">
-        <div
-          v-for="m in s.aiModelsList"
-          :key="m.id"
-          @click="!s.isProcessing && selectModel(m)"
-          :class="[
-            'relative border-2 rounded-xl p-4 cursor-pointer transition select-none',
-            s.selectedAiModel === m.id
-              ? 'border-indigo-500 bg-indigo-50'
-              : m.configured
-              ? 'border-gray-200 hover:border-indigo-300 bg-white'
-              : 'border-dashed border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed',
-            s.isProcessing ? 'pointer-events-none' : '',
-          ]"
-        >
-          <span
-            v-if="s.selectedAiModel === m.id"
-            class="absolute top-2 right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center"
+      <!-- 模型选择（横向芯片） -->
+      <div class="ai-model-chips">
+        <span class="text-xs text-gray-500 font-medium mr-2 whitespace-nowrap">选择模型：</span>
+        <div v-if="s.aiModelsLoading" class="text-xs text-gray-400"><i class="fas fa-spinner fa-spin mr-1"></i>加载中...</div>
+        <div v-else class="flex flex-wrap gap-1.5">
+          <button
+            v-for="m in s.aiModelsList"
+            :key="m.id"
+            @click="!s.isProcessing && m.configured && selectModel(m)"
+            :class="[
+              'model-chip',
+              s.selectedAiModel === m.id ? 'model-chip-active' : '',
+              !m.configured ? 'model-chip-disabled' : '',
+            ]"
           >
-            <i class="fas fa-check text-white text-[10px]"></i>
-          </span>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-2xl">
+            <span>
               <span v-if="m.logo === 'deepseek'">🤖</span>
               <span v-else-if="m.logo === 'doubao'">🫘</span>
               <span v-else-if="m.logo === 'qwen'">🌙</span>
               <span v-else>🧠</span>
             </span>
-            <div>
-              <p class="text-sm font-bold text-gray-800">{{ m.name }}</p>
-              <p class="text-[10px] text-gray-400 font-mono">{{ m.model }}</p>
-            </div>
-          </div>
-          <p class="text-xs text-gray-500">{{ m.description }}</p>
-          <div class="mt-2">
-            <span v-if="m.configured" class="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-600 rounded">已配置</span>
-            <span v-else class="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded">未配置 API Key</span>
-          </div>
+            {{ m.name }}
+            <i v-if="s.selectedAiModel === m.id" class="fas fa-check ml-1 text-indigo-500" style="font-size:0.65rem"></i>
+            <span v-if="!m.configured" class="text-[10px] text-gray-400 ml-1">（未配置）</span>
+          </button>
         </div>
+      </div>
+
+      <!-- Prompt 设置（折叠，内嵌右侧） -->
+      <div class="ai-prompt-toggle">
+        <button @click="promptPanelOpen = !promptPanelOpen" class="prompt-toggle-btn">
+          <i class="fas fa-sliders-h mr-1"></i>Prompt
+          <span v-if="s.useCustomPrompt" class="badge badge-purple ml-1" style="font-size:0.65rem;padding:1px 6px">自定义</span>
+          <i :class="promptPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas ml-1 text-xs text-gray-400"></i>
+        </button>
       </div>
     </div>
 
-    <!-- Prompt 设置（折叠面板） -->
-    <div class="step-collapse mb-6">
-      <button
-        @click="promptPanelOpen = !promptPanelOpen"
-        class="step-collapse-header"
-      >
-        <span><i class="fas fa-sliders-h mr-2 text-gray-400"></i>Prompt 设置（可选）</span>
-        <span class="flex items-center gap-2">
-          <span v-if="s.useCustomPrompt" class="badge badge-purple">已自定义</span>
-          <i :class="promptPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-gray-400 text-xs"></i>
+    <!-- Prompt 展开区（可折叠，绝对定位覆盖） -->
+    <div v-show="promptPanelOpen" class="ai-prompt-panel step-collapse-body space-y-2">
+      <div class="flex gap-4 text-sm">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" :value="false" v-model="s.useCustomPrompt" class="accent-indigo-600" />
+          <span :class="!s.useCustomPrompt ? 'text-indigo-700 font-semibold' : 'text-gray-600'">默认 Prompt</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" :value="true" v-model="s.useCustomPrompt" class="accent-indigo-600" />
+          <span :class="s.useCustomPrompt ? 'text-indigo-700 font-semibold' : 'text-gray-600'">自定义 Prompt</span>
+        </label>
+        <button @click="savePrompt" :disabled="s.useCustomPrompt && (!s.customPromptText || !s.customPromptText.includes('{screening_criteria}'))" class="ml-auto px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-40 transition">
+          <i class="fas fa-save mr-1"></i>保存
+        </button>
+        <button v-if="s.useCustomPrompt" @click="resetPrompt" class="px-3 py-1 text-xs btn-secondary">
+          <i class="fas fa-undo mr-1"></i>重置
+        </button>
+        <span v-if="promptSaveStatus" class="text-xs self-center" :class="promptSaveStatus === 'ok' ? 'text-green-600' : 'text-red-500'">
+          {{ promptSaveStatus === 'ok' ? '✓ 已保存' : '✗ 失败' }}
         </span>
-      </button>
-      <div v-show="promptPanelOpen" class="step-collapse-body space-y-3">
-        <div class="flex gap-6 text-sm">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="radio" :value="false" v-model="s.useCustomPrompt" class="accent-indigo-600" />
-            <span :class="!s.useCustomPrompt ? 'text-indigo-700 font-semibold' : 'text-gray-600'">使用默认 Prompt</span>
-          </label>
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="radio" :value="true" v-model="s.useCustomPrompt" class="accent-indigo-600" />
-            <span :class="s.useCustomPrompt ? 'text-indigo-700 font-semibold' : 'text-gray-600'">自定义 Prompt</span>
-          </label>
-        </div>
-        <div v-if="s.useCustomPrompt" class="space-y-2">
-          <div class="flex items-center gap-2 text-xs text-amber-600 rounded-lg px-3 py-2" style="background:#fffbeb;border:1px solid #fde68a">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>
-              必须包含 <code class="bg-amber-100 px-1 rounded font-mono">{screening_criteria}</code> 占位符，纳排标准会被自动注入到此处
-            </span>
-          </div>
-          <textarea
-            v-model="s.customPromptText"
-            rows="10"
-            placeholder="在此输入自定义 Prompt，必须包含 {screening_criteria} 占位符..."
-            class="w-full text-xs font-mono input-base resize-y"
-            style="font-family:'JetBrains Mono',monospace;min-height:120px"
-            :class="
-              s.customPromptText && !s.customPromptText.includes('{screening_criteria}')
-                ? 'border-red-400 bg-red-50'
-                : ''
-            "
-          ></textarea>
-          <div
-            v-if="s.customPromptText && !s.customPromptText.includes('{screening_criteria}')"
-            class="text-xs text-red-500 flex items-center gap-1"
-          >
-            <i class="fas fa-times-circle"></i> 缺少 {screening_criteria} 占位符，无法保存
-          </div>
-        </div>
-        <div v-else class="step-prompt-preview">
-          {{ defaultPromptPreview }}
-        </div>
-        <div class="flex gap-2 pt-1">
-          <button
-            @click="savePrompt"
-            :disabled="s.useCustomPrompt && (!s.customPromptText || !s.customPromptText.includes('{screening_criteria}'))"
-            class="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
-          >
-            <i class="fas fa-save mr-1"></i>保存
-          </button>
-          <button
-            v-if="s.useCustomPrompt"
-            @click="resetPrompt"
-            class="px-4 py-1.5 text-sm btn-secondary"
-          >
-            <i class="fas fa-undo mr-1"></i>重置为默认
-          </button>
-          <span v-if="promptSaveStatus" class="text-xs self-center" :class="promptSaveStatus === 'ok' ? 'text-green-600' : 'text-red-500'">
-            {{ promptSaveStatus === 'ok' ? '✓ 已保存' : '✗ 保存失败' }}
-          </span>
-        </div>
       </div>
+      <div v-if="s.useCustomPrompt" class="space-y-1">
+        <div class="flex items-center gap-1 text-xs text-amber-600" style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 8px">
+          <i class="fas fa-exclamation-triangle"></i>
+          必须含 <code class="bg-amber-100 px-1 rounded font-mono">{screening_criteria}</code> 占位符
+        </div>
+        <textarea v-model="s.customPromptText" rows="6" placeholder="自定义 Prompt，含 {screening_criteria}..." class="w-full text-xs font-mono input-base resize-y" style="font-family:monospace;min-height:80px" :class="s.customPromptText && !s.customPromptText.includes('{screening_criteria}') ? 'border-red-400 bg-red-50' : ''"></textarea>
+      </div>
+      <div v-else class="step-prompt-preview" style="max-height:80px;overflow-y:auto">{{ defaultPromptPreview }}</div>
     </div>
 
-    <!-- 文献列表 + 日志 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-      <!-- 左侧：待/已筛选列表 -->
-      <div class="step-ref-panel">
+    <!-- ── 主体：文献列表（左） + 日志+进度+操作（右） ── -->
+    <div class="ai-screen-body">
+      <!-- 左：文献 Tab 列表 -->
+      <div class="step-ref-panel ai-ref-panel">
         <div class="step-ref-panel-tabs">
-          <button
-            @click="screeningTab = 'pending'; loadPending(0)"
-            :class="screeningTab === 'pending' ? 'active-pending' : ''"
-            class="step-ref-panel-tab"
-          >
+          <button @click="screeningTab = 'pending'; loadPending(0)" :class="screeningTab === 'pending' ? 'active-pending' : ''" class="step-ref-panel-tab">
             待筛选 ({{ Math.max(0, s.pendingTotal - s.screenedTotal) }})
           </button>
-          <button
-            @click="screeningTab = 'screened'; loadScreened(0)"
-            :class="screeningTab === 'screened' ? 'active-screened' : ''"
-            class="step-ref-panel-tab"
-          >
+          <button @click="screeningTab = 'screened'; loadScreened(0)" :class="screeningTab === 'screened' ? 'active-screened' : ''" class="step-ref-panel-tab">
             已筛选 ({{ s.screenedTotal || s.processedCount }})
           </button>
         </div>
-
-        <!-- 待筛选 -->
         <div v-show="screeningTab === 'pending'" class="flex-1 flex flex-col min-h-0">
           <div class="step-ref-list">
             <div v-if="s.pendingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs py-4">暂无待筛选文献</div>
             <div v-else>
-              <div
-                v-for="file in s.pendingFiles"
-                :key="file.id"
-                class="step-ref-row"
-              >
+              <div v-for="file in s.pendingFiles" :key="file.id" class="step-ref-row">
                 <div class="flex items-center overflow-hidden">
                   <i class="fas fa-file-code text-blue-400 mr-2 flex-shrink-0"></i>
                   <span class="truncate" :title="file.filename">{{ file.filename }}</span>
                 </div>
-                <span class="badge badge-gray ml-2">待筛选</span>
+                <span class="badge badge-gray ml-2">待筛</span>
               </div>
             </div>
           </div>
-          <div v-if="(s.pendingTotal - s.screenedTotal) > PAGE_SIZE" class="flex items-center justify-center gap-2 mt-2 flex-shrink-0">
+          <div v-if="(s.pendingTotal - s.screenedTotal) > PAGE_SIZE" class="flex items-center justify-center gap-1 mt-1 flex-shrink-0">
             <button @click="loadPending(Math.max(0, s.pendingPage - 1))" :disabled="s.pendingPage === 0" class="step-page-btn">上一页</button>
             <span class="text-xs text-gray-400">{{ s.pendingPage + 1 }}/{{ Math.ceil(Math.max(1, s.pendingTotal - s.screenedTotal) / PAGE_SIZE) }}</span>
             <button @click="loadPending(s.pendingPage + 1)" :disabled="s.pendingPage >= Math.ceil(Math.max(1, s.pendingTotal - s.screenedTotal) / PAGE_SIZE) - 1" class="step-page-btn">下一页</button>
           </div>
         </div>
-
-        <!-- 已筛选 -->
         <div v-show="screeningTab === 'screened'" class="flex-1 flex flex-col min-h-0">
           <div class="step-ref-list">
             <div v-if="s.screenedFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs py-4">暂无已筛选文献</div>
             <div v-else>
-              <div
-                v-for="file in s.screenedFiles"
-                :key="file.id"
-                class="step-ref-row"
-              >
+              <div v-for="file in s.screenedFiles" :key="file.id" class="step-ref-row">
                 <div class="flex items-center overflow-hidden">
-                  <i
-                    class="fas fa-file-code mr-2 flex-shrink-0"
-                    :class="file.metadata?.decision === 'included' ? 'text-green-500' : 'text-red-400'"
-                  ></i>
+                  <i class="fas fa-file-code mr-2 flex-shrink-0" :class="file.metadata?.decision === 'included' ? 'text-green-500' : 'text-red-400'"></i>
                   <span class="truncate" :title="file.filename">{{ file.filename }}</span>
                 </div>
-                <span
-                  class="badge ml-2"
-                  :class="file.metadata?.decision === 'included' ? 'badge-green' : 'badge-red'"
-                >
-                  {{ file.metadata?.decision === 'included' ? '已纳入' : '已排除' }}
+                <span class="badge ml-2" :class="file.metadata?.decision === 'included' ? 'badge-green' : 'badge-red'">
+                  {{ file.metadata?.decision === 'included' ? '纳入' : '排除' }}
                 </span>
               </div>
             </div>
           </div>
-          <div v-if="s.screenedTotal > PAGE_SIZE" class="flex items-center justify-center gap-2 mt-2 flex-shrink-0">
+          <div v-if="s.screenedTotal > PAGE_SIZE" class="flex items-center justify-center gap-1 mt-1 flex-shrink-0">
             <button @click="loadScreened(Math.max(0, s.screenedPage - 1))" :disabled="s.screenedPage === 0" class="step-page-btn">上一页</button>
             <span class="text-xs text-gray-400">{{ s.screenedPage + 1 }}/{{ Math.ceil(s.screenedTotal / PAGE_SIZE) }}</span>
             <button @click="loadScreened(s.screenedPage + 1)" :disabled="s.screenedPage >= Math.ceil(s.screenedTotal / PAGE_SIZE) - 1" class="step-page-btn">下一页</button>
@@ -211,78 +136,66 @@
         </div>
       </div>
 
-      <!-- 右侧：日志控制台 -->
-      <div class="log-console h-96 flex flex-col" style="border:1px solid #1e293b">
-        <div class="flex-1 overflow-y-auto">
-          <div v-if="s.latestAiScreenTask?.status === 'stopped' && !s.aiScreenLogContent" class="text-yellow-700 whitespace-pre-wrap">
-            任务已暂停。
+      <!-- 右：日志 + 进度 + 操作按钮 -->
+      <div class="ai-right-panel">
+        <!-- 日志控制台 -->
+        <div class="log-console ai-log-console" style="border:1px solid #1e293b">
+          <div class="flex-1 overflow-y-auto">
+            <div v-if="s.latestAiScreenTask?.status === 'stopped' && !s.aiScreenLogContent" class="text-yellow-700 whitespace-pre-wrap">任务已暂停。
 已处理: {{ s.screeningProgress.processed }} / {{ s.screeningProgress.total }} 篇 ({{ s.screeningProgress.percent }}%)
-点击「继续筛选」从断点处继续，已筛选结果已保留。
+点击「继续筛选」从断点处继续。</div>
+            <div v-else-if="!s.latestAiScreenTask && !s.aiScreenLogContent" class="text-gray-400">等待任务启动...</div>
+            <div v-else class="whitespace-pre-wrap">{{ s.aiScreenLogContent || '正在初始化...' }}</div>
           </div>
-          <div v-else-if="!s.latestAiScreenTask && !s.aiScreenLogContent" class="text-gray-400">等待任务启动...</div>
-          <div v-else class="whitespace-pre-wrap">{{ s.aiScreenLogContent || '正在初始化...' }}</div>
+        </div>
+
+        <!-- 进度条（有任务时显示） -->
+        <div v-if="s.isProcessing || (s.latestAiScreenTask && ['completed','stopped'].includes(s.latestAiScreenTask.status))" class="ai-progress-bar">
+          <div class="flex justify-between text-xs mb-1 text-gray-600">
+            <span>筛选进度</span>
+            <span class="font-bold">{{ s.screeningProgress.processed }}/{{ s.screeningProgress.total }} ({{ s.screeningProgress.percent }}%)</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+            <div class="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" :style="{ width: s.screeningProgress.percent + '%' }"></div>
+          </div>
+          <div v-if="s.latestAiScreenTask?.status === 'completed'" class="mt-1.5 text-xs text-green-600 font-semibold">
+            <i class="fas fa-check-circle mr-1"></i>筛选完成！结果已生成
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="ai-action-area">
+          <template v-if="!s.latestAiScreenTask || ['completed','failed'].includes(s.latestAiScreenTask.status)">
+            <button @click="startScreening" :disabled="s.isProcessing" :class="s.latestAiScreenTask?.status === 'completed' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'" class="ai-action-btn text-white">
+              <i v-if="s.isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
+              {{ s.isProcessing ? 'AI 正在筛选...' : s.latestAiScreenTask?.status === 'completed' ? '重新筛选' : '启动 AI 筛选' }}
+            </button>
+          </template>
+          <template v-else-if="s.latestAiScreenTask.status === 'pending'">
+            <button disabled class="ai-action-btn bg-gray-400 text-white cursor-wait">
+              <i class="fas fa-hourglass-half fa-spin mr-2"></i>队列等待中...
+            </button>
+          </template>
+          <template v-else-if="s.latestAiScreenTask.status === 'running'">
+            <button @click="stopTask" class="ai-action-btn bg-red-600 hover:bg-red-700 text-white">
+              <i class="fas fa-stop mr-2"></i>暂停筛选
+            </button>
+          </template>
+          <template v-else-if="s.latestAiScreenTask.status === 'stopping'">
+            <button disabled class="ai-action-btn bg-yellow-500 text-white cursor-wait">
+              <i class="fas fa-spinner fa-spin mr-2"></i>正在停止...
+            </button>
+          </template>
+          <template v-else-if="s.latestAiScreenTask.status === 'stopped'">
+            <button @click="resumeTask" class="ai-action-btn bg-green-600 hover:bg-green-700 text-white">
+              <i class="fas fa-play mr-2"></i>继续筛选
+            </button>
+            <button @click="abandonTask" class="ai-action-btn bg-gray-400 hover:bg-gray-500 text-white mt-2">
+              <i class="fas fa-trash mr-2"></i>放弃任务
+            </button>
+          </template>
         </div>
       </div>
-    </div>
-
-    <!-- 进度条 -->
-    <div
-      v-if="s.isProcessing || (s.latestAiScreenTask && ['completed', 'stopped'].includes(s.latestAiScreenTask.status))"
-      class="mb-4 w-full max-w-2xl mx-auto"
-    >
-      <div class="flex justify-between text-sm mb-1 text-gray-600">
-        <span>筛选进度</span>
-        <span class="font-bold">
-          {{ s.screeningProgress.processed }} / {{ s.screeningProgress.total }} ({{ s.screeningProgress.percent }}%)
-        </span>
-      </div>
-      <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-        <div
-          class="bg-indigo-600 h-4 rounded-full transition-all duration-500 ease-out"
-          :style="{ width: s.screeningProgress.percent + '%' }"
-        ></div>
-      </div>
-      <div v-if="s.latestAiScreenTask?.status === 'completed'" class="mt-2 text-green-600 font-bold animate-bounce">
-        <i class="fas fa-check-circle"></i> 筛选完成！结果已生成
-      </div>
-    </div>
-
-    <!-- 按钮区域 -->
-    <div class="text-center space-y-4">
-      <template v-if="!s.latestAiScreenTask || ['completed', 'failed'].includes(s.latestAiScreenTask.status)">
-        <button
-          @click="startScreening"
-          :disabled="s.isProcessing"
-          :class="s.latestAiScreenTask?.status === 'completed' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'"
-          class="text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg disabled:opacity-50 transition"
-        >
-          <i v-if="s.isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
-          {{ s.isProcessing ? 'AI 正在筛选中...' : s.latestAiScreenTask?.status === 'completed' ? '重新筛选' : '启动 AI 筛选任务' }}
-        </button>
-      </template>
-      <template v-else-if="s.latestAiScreenTask.status === 'pending'">
-        <button disabled class="bg-gray-400 text-white px-8 py-3 rounded-xl font-bold text-base shadow cursor-wait">
-          <i class="fas fa-hourglass-half fa-spin mr-2"></i>等待队列中，即将启动...
-        </button>
-      </template>
-      <template v-else-if="s.latestAiScreenTask.status === 'running'">
-        <button @click="stopTask" class="bg-red-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-red-700 transition">
-          <i class="fas fa-stop mr-2"></i>暂停筛选
-        </button>
-      </template>
-      <template v-else-if="s.latestAiScreenTask.status === 'stopping'">
-        <button disabled class="bg-yellow-500 text-white px-8 py-3 rounded-xl font-bold text-base shadow cursor-wait">
-          <i class="fas fa-spinner fa-spin mr-2"></i>正在停止...
-        </button>
-      </template>
-      <template v-else-if="s.latestAiScreenTask.status === 'stopped'">
-        <button @click="resumeTask" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-green-700 transition mr-4">
-          <i class="fas fa-play mr-2"></i>继续筛选
-        </button>
-        <button @click="abandonTask" class="bg-gray-400 text-white px-8 py-3 rounded-xl font-bold text-base shadow hover:bg-gray-500 transition">
-          <i class="fas fa-trash mr-2"></i>放弃任务
-        </button>
-      </template>
     </div>
   </div>
 </template>
@@ -586,3 +499,154 @@ async function pollAiScreening(taskId) {
   await poll()
 }
 </script>
+
+<style scoped>
+/* ── AI初筛专属一页布局 ── */
+.ai-screen-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* 顶部：标题 + 模型 + Prompt 开关 */
+.ai-screen-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.ai-top-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.ai-model-chips {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.model-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 0.78rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.model-chip:hover { border-color: #a5b4fc; color: #4338ca; }
+.model-chip-active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 600;
+}
+.model-chip-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ai-prompt-toggle {
+  flex-shrink: 0;
+}
+.prompt-toggle-btn {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 0.78rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.prompt-toggle-btn:hover { border-color: #a5b4fc; color: #4338ca; }
+
+/* Prompt 展开面板 */
+.ai-prompt-panel {
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+/* 主体：左文献列表 + 右日志/进度/按钮 */
+.ai-screen-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ai-ref-panel {
+  height: 100% !important;
+}
+
+/* 右侧面板 */
+.ai-right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 日志控制台 */
+.ai-log-console {
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+/* 进度条 */
+.ai-progress-bar {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+/* 操作按钮区 */
+.ai-action-area {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ai-action-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  disabled: opacity-50;
+}
+.ai-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>

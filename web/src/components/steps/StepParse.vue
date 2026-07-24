@@ -128,7 +128,7 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
@@ -274,6 +274,8 @@ async function pollParsingStatus(taskId) {
   }
   await poll()
 }
+onMounted(loadScreen1Files)
+
 async function handleDeleteFile(fileId) {
   if (!confirm('确定删除该文件？')) return
   try {

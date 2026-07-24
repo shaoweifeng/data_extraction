@@ -10,25 +10,40 @@
       </div>
     </div>
 
-    <!-- 输入区域 -->
-    <div class="flex gap-2 mb-4">
-      <input
-        v-model="newName"
-        @keyup.enter="newDef && addField()"
-        type="text"
-        placeholder="字段名称（如：年龄）"
-        class="w-48 px-4 py-2.5 input-base"
-      />
-      <input
-        v-model="newDef"
-        @keyup.enter="newName && addField()"
-        type="text"
-        placeholder="字段定义（如：研究中纳入患者的年龄情况）"
-        class="flex-1 px-4 py-2.5 input-base"
-      />
-      <button @click="addField" class="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">
-        <i class="fas fa-plus"></i> 添加
-      </button>
+    <!-- 输入区域 — 两行布局，避免失衡 -->
+    <div class="mb-4 p-4 rounded-xl" style="background:#f0f9ff;border:1px solid #bae6fd">
+      <div class="flex gap-2 mb-2">
+        <div style="width:160px;flex-shrink:0">
+          <label class="text-xs font-semibold text-cyan-700 mb-1 block">字段名称</label>
+          <input
+            v-model="newName"
+            @keyup.enter="newDef && addField()"
+            type="text"
+            placeholder="如：年龄"
+            class="input-base"
+          />
+        </div>
+        <div class="flex-1 min-w-0">
+          <label class="text-xs font-semibold text-cyan-700 mb-1 block">字段定义</label>
+          <input
+            v-model="newDef"
+            @keyup.enter="newName && addField()"
+            type="text"
+            placeholder="如：研究中纳入患者的年龄情况"
+            class="input-base"
+          />
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <button
+          @click="addField"
+          :disabled="!newName.trim() || !newDef.trim()"
+          class="btn-primary"
+          style="background:linear-gradient(135deg,#0891b2,#22d3ee);font-size:0.82rem"
+        >
+          <i class="fas fa-plus"></i> 添加字段
+        </button>
+      </div>
     </div>
 
     <!-- 字段列表 -->
@@ -42,16 +57,20 @@
           v-for="(f, idx) in s.extractionFields"
           :key="idx"
           class="step-list-item group"
+          style="align-items:flex-start"
         >
-          <div>
-            <span class="font-bold text-cyan-600 mr-2">{{ idx + 1 }}. {{ f.name }}</span>
-            <span class="text-gray-500 text-sm">— {{ f.definition }}</span>
+          <div class="flex-1 min-w-0 pr-3">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="badge badge-blue" style="font-size:0.68rem">{{ idx + 1 }}</span>
+              <span class="font-semibold text-gray-800 text-sm">{{ f.name }}</span>
+            </div>
+            <p class="text-gray-500 text-xs leading-relaxed">{{ f.definition }}</p>
           </div>
           <button
             @click="removeField(idx)"
-            class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
+            class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 flex-shrink-0 mt-0.5"
           >
-            <i class="fas fa-trash-alt"></i>
+            <i class="fas fa-trash-alt text-sm"></i>
           </button>
         </div>
       </div>
@@ -82,6 +101,11 @@ async function saveFields() {
     await http.patch(`/steps/${step.id}/update_metadata/`, {
       metadata: { fields: s.extractionFields },
     })
+    // 有提取字段时，标记步骤为 completed（或字段为空时可保持 skipped/completed 不变）
+    if (s.extractionFields.length > 0 && step.status !== 'completed') {
+      await http.post(`/steps/${step.id}/complete/`)
+      await project.fetchStages(project.currentProject.id)
+    }
   } catch (err) {
     console.error('保存提取字段失败', err)
   }
