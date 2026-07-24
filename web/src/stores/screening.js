@@ -1,10 +1,9 @@
 /**
  * stores/screening.js
  * AI 初筛全流程状态（步骤 1~6 共享）
- * 完整业务逻辑在 E3/E4 批次中填充
  */
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 export const useScreeningStore = defineStore('screening', () => {
   // 步骤导航
@@ -49,15 +48,34 @@ export const useScreeningStore = defineStore('screening', () => {
   const screenedPage = ref(0)
   const pendingTotal = ref(0)
   const screenedTotal = ref(0)
-  const PAGE_SIZE = 20
+  const PAGE_SIZE = 50
   const latestTask = ref(null)
+  const latestAiScreenTask = ref(null) // 专门追踪最新的 ai_screen 任务
   const isProcessing = ref(false)
   const aiScreenStats = ref(null)
-  const screeningResults = ref([])
   const aiScreenLogContent = ref('')
   const processedCount = ref(0)
   const screeningProgressValue = ref(0)
   const totalRefs = ref(0)
+
+  // computed：筛选统计（优先使用后端统计值）
+  const screeningResults = computed(() => {
+    if (aiScreenStats.value) return aiScreenStats.value
+    if (screenedFiles.value.length === 0 && !latestAiScreenTask.value) return null
+    const included = screenedFiles.value.filter((f) => f.metadata?.decision === 'included').length
+    const excluded = screenedFiles.value.filter((f) => f.metadata?.decision === 'excluded').length
+    const total = totalRefs.value || pendingTotal.value || 0
+    return { included, excluded, total }
+  })
+
+  // computed：筛选进度（基于后端 progress_percentage）
+  const screeningProgress = computed(() => {
+    const percent = Math.round(screeningProgressValue.value)
+    const total = totalRefs.value || pendingTotal.value || pendingFiles.value.length
+    const processed =
+      processedCount.value > 0 ? processedCount.value : Math.round((total * percent) / 100)
+    return { processed, total, percent }
+  })
 
   // AI 模型选择
   const aiModelsList = ref([])
@@ -119,9 +137,9 @@ export const useScreeningStore = defineStore('screening', () => {
     pendingTotal.value = 0
     screenedTotal.value = 0
     latestTask.value = null
+    latestAiScreenTask.value = null
     isProcessing.value = false
     aiScreenStats.value = null
-    screeningResults.value = []
     aiScreenLogContent.value = ''
     processedCount.value = 0
     screeningProgressValue.value = 0
@@ -154,8 +172,8 @@ export const useScreeningStore = defineStore('screening', () => {
     newCriteria, criteriaList, showCriteriaGuide,
     newExtractionFieldName, newExtractionFieldDef, extractionFields,
     screeningTab, pendingFiles, screenedFiles, pendingPage, screenedPage,
-    pendingTotal, screenedTotal, PAGE_SIZE, latestTask, isProcessing,
-    aiScreenStats, screeningResults, aiScreenLogContent, processedCount,
+    pendingTotal, screenedTotal, PAGE_SIZE, latestTask, latestAiScreenTask, isProcessing,
+    aiScreenStats, screeningResults, screeningProgress, aiScreenLogContent, processedCount,
     screeningProgressValue, totalRefs,
     aiModelsList, aiModelsLoading, selectedAiModel,
     promptPanelOpen, useCustomPrompt, customPromptText, promptSaveStatus, defaultPromptPreview,
