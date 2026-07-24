@@ -60,7 +60,10 @@ ROOT_URLCONF = 'platform_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'frontend')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'web', 'dist'),   # Vite 构建产物（优先）
+            os.path.join(BASE_DIR, 'frontend'),       # 旧入口（迁移完成后可删除）
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -133,6 +136,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Vite 构建产物中的 assets 目录作为额外静态文件来源
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'web', 'dist', 'assets'),
+] if os.path.isdir(os.path.join(BASE_DIR, 'web', 'dist', 'assets')) else []
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
