@@ -1,9 +1,13 @@
 <template>
-  <div class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
-    <div class="text-center mb-6">
-      <i class="fas fa-file-import text-6xl text-blue-100 mb-4"></i>
-      <h3 class="text-2xl font-bold text-gray-800">步骤 1: 导入文献索引</h3>
-      <p class="text-gray-500 mt-2">支持上传 .ris, .bib, .nbib, .xml, .ciw, .enw, .txt, .doc, .docx 格式的文件</p>
+  <div class="step-wrap">
+    <div class="step-head">
+      <div class="step-head-icon" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">
+        <i class="fas fa-file-import"></i>
+      </div>
+      <div>
+        <h3 class="step-title">导入文献索引</h3>
+        <p class="step-subtitle">上传 RIS / BibTeX / NBIB / TXT 格式的文献文件</p>
+      </div>
     </div>
 
     <!-- 上传/解析进度区域 -->

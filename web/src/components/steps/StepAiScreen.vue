@@ -1,9 +1,13 @@
 <template>
-  <div class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
-    <div class="text-center mb-6">
-      <i class="fas fa-robot text-6xl text-indigo-100 mb-4"></i>
-      <h3 class="text-2xl font-bold text-gray-800">步骤 5: AI 智能初筛</h3>
-      <p class="text-gray-500 mt-2">选择 AI 模型，根据纳排标准对文献进行自动初筛</p>
+  <div class="step-wrap">
+    <div class="step-head">
+      <div class="step-head-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div>
+        <h3 class="step-title">AI 智能初筛</h3>
+        <p class="step-subtitle">基于纳排标准，大模型自动判断文献是否纳入</p>
+      </div>
     </div>
 
     <!-- 模型选择 -->

@@ -1,107 +1,134 @@
 <template>
-  <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full">
-    <!-- Logo / 标题 -->
-    <div class="p-4 border-b border-gray-200">
-      <h2 class="font-bold text-gray-800 text-sm">科研数据提取平台</h2>
-      <p class="text-xs text-gray-500 mt-0.5">{{ auth.user?.username }}</p>
+  <aside class="sidebar">
+    <!-- Logo 区 -->
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <i class="fas fa-flask"></i>
+      </div>
+      <div class="sidebar-logo-text">
+        <span class="sidebar-logo-name">科研提取平台</span>
+        <span class="sidebar-logo-user">
+          <i class="fas fa-circle text-green-400" style="font-size:6px;vertical-align:middle;margin-right:4px;"></i>
+          {{ auth.user?.username }}
+        </span>
+      </div>
     </div>
 
     <!-- 新建项目按钮 -->
-    <div class="p-3">
-      <button
-        @click="showModal = true"
-        class="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
-      >
-        <span>+</span> 新建项目
+    <div class="sidebar-new-btn-wrap">
+      <button @click="showModal = true" class="sidebar-new-btn">
+        <i class="fas fa-plus"></i>
+        <span>新建项目</span>
       </button>
     </div>
 
     <!-- 项目列表 -->
-    <div class="flex-1 overflow-auto px-2">
-      <p class="text-xs text-gray-400 px-2 py-1 font-medium">项目列表</p>
+    <div class="sidebar-list-wrap">
+      <p class="sidebar-section-label">我的项目</p>
 
-      <div v-if="project.projects.length === 0" class="px-3 py-4 text-xs text-gray-400 text-center">
-        暂无项目
+      <div v-if="project.projects.length === 0" class="sidebar-empty">
+        <i class="fas fa-folder-open mb-2 text-xl opacity-40"></i>
+        <span>暂无项目，点击新建</span>
       </div>
 
       <div
         v-for="p in project.projects"
         :key="p.id"
         @click="handleSelectProject(p)"
-        :class="[
-          'flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer mb-1 group transition-colors',
-          project.currentProject?.id === p.id
-            ? 'sidebar-item-active'
-            : 'hover:bg-gray-100 text-gray-700',
-        ]"
+        :class="['sidebar-item', project.currentProject?.id === p.id ? 'sidebar-item-active' : '']"
       >
-        <div class="min-w-0 flex-1">
-          <p class="text-sm font-medium truncate">{{ p.name }}</p>
-          <p class="text-xs text-gray-400 truncate mt-0.5">{{ p.description || '暂无描述' }}</p>
+        <div class="sidebar-item-icon">
+          {{ p.name.charAt(0).toUpperCase() }}
+        </div>
+        <div class="sidebar-item-info">
+          <p class="sidebar-item-name">{{ p.name }}</p>
+          <p class="sidebar-item-desc">{{ p.description || '暂无描述' }}</p>
         </div>
         <button
           @click.stop="handleDeleteProject(p.id)"
-          class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 ml-2 text-xs transition-all shrink-0"
+          class="sidebar-item-del"
           title="删除项目"
-        >✕</button>
+        >
+          <i class="fas fa-times"></i>
+        </button>
       </div>
     </div>
 
-    <!-- 底部退出按钮 -->
-    <div class="p-3 border-t border-gray-200">
-      <button
-        @click="handleLogout"
-        class="w-full px-3 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-left"
-      >退出登录</button>
+    <!-- 底部操作 -->
+    <div class="sidebar-footer">
+      <button @click="handleLogout" class="sidebar-logout-btn">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>退出登录</span>
+      </button>
     </div>
   </aside>
 
-  <!-- 新建项目 Modal（放在 aside 外，避免被 overflow:hidden 裁剪）-->
+  <!-- 新建项目 Modal -->
   <Teleport to="body">
-    <div
-      v-if="showModal"
-      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      @click.self="showModal = false"
-    >
-      <div class="bg-white rounded-xl p-6 w-96 shadow-xl">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">新建项目</h3>
-        <form @submit.prevent="handleCreate" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">项目名称 *</label>
-            <input
-              v-model="newProject.name"
-              type="text"
-              required
-              autofocus
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="输入项目名称"
-            />
+    <Transition name="modal-fade">
+      <div
+        v-if="showModal"
+        class="modal-mask"
+        @click.self="showModal = false"
+      >
+        <div class="modal-box">
+          <div class="modal-header">
+            <div class="modal-title-icon">
+              <i class="fas fa-folder-plus"></i>
+            </div>
+            <div>
+              <h3 class="modal-title">新建项目</h3>
+              <p class="modal-subtitle">创建一个新的文献筛选项目</p>
+            </div>
+            <button @click="showModal = false" class="modal-close">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">项目描述</label>
-            <textarea
-              v-model="newProject.description"
-              rows="3"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              placeholder="（可选）简短描述项目内容"
-            />
-          </div>
-          <p v-if="createError" class="text-red-500 text-sm">{{ createError }}</p>
-          <div class="flex gap-3 pt-2">
-            <button
-              type="button"
-              @click="showModal = false"
-              class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >取消</button>
-            <button
-              type="submit"
-              :disabled="creating"
-              class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >{{ creating ? '创建中...' : '创建' }}</button>
-          </div>
-        </form>
+
+          <form @submit.prevent="handleCreate" class="modal-body">
+            <div class="form-group">
+              <label class="form-label">项目名称 <span class="text-red-500">*</span></label>
+              <input
+                v-model="newProject.name"
+                type="text"
+                required
+                autofocus
+                class="input-base"
+                placeholder="例如：糖尿病文献筛查 2024"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">项目描述</label>
+              <textarea
+                v-model="newProject.description"
+                rows="3"
+                class="input-base"
+                style="resize:none"
+                placeholder="（可选）简述项目研究方向"
+              />
+            </div>
+            <p v-if="createError" class="form-error-msg">
+              <i class="fas fa-exclamation-circle mr-1"></i>{{ createError }}
+            </p>
+            <div class="modal-actions">
+              <button
+                type="button"
+                @click="showModal = false"
+                class="btn-secondary"
+              >取消</button>
+              <button
+                type="submit"
+                :disabled="creating"
+                class="btn-primary"
+              >
+                <span v-if="creating"><i class="fas fa-spinner fa-spin mr-1"></i>创建中...</span>
+                <span v-else><i class="fas fa-check mr-1"></i>创建项目</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -125,7 +152,6 @@ const creating = ref(false)
 const createError = ref('')
 
 async function handleSelectProject(p) {
-  // 重置所有相关状态
   screening.reset()
   taskStore.reset()
   await project.selectProject(p)
@@ -152,7 +178,6 @@ async function handleCreate() {
     const created = await project.createProject({ ...newProject.value })
     showModal.value = false
     newProject.value = { name: '', description: '' }
-    // 创建后直接进入工作区
     await project.selectProject(created)
     router.push(`/workspace/${created.id}`)
   } catch (e) {
@@ -167,3 +192,184 @@ async function handleLogout() {
   router.push('/login')
 }
 </script>
+
+<style scoped>
+/* ── 侧边栏容器 ── */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+  color: #e2e8f0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* ── Logo 区 ── */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #818cf8, #a78bfa);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(129,140,248,.4);
+}
+.sidebar-logo-icon i { color: #fff; font-size: 0.9rem; }
+.sidebar-logo-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sidebar-logo-name { font-size: 0.8rem; font-weight: 700; color: #e2e8f0; white-space: nowrap; }
+.sidebar-logo-user { font-size: 0.7rem; color: #94a3b8; }
+
+/* ── 新建按钮 ── */
+.sidebar-new-btn-wrap { padding: 12px 12px 6px; }
+.sidebar-new-btn {
+  width: 100%;
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px;
+  background: rgba(129,140,248,0.18);
+  border: 1px solid rgba(129,140,248,0.3);
+  border-radius: 10px;
+  color: #a5b4fc;
+  font-size: 0.85rem; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sidebar-new-btn:hover {
+  background: rgba(129,140,248,0.28);
+  color: #c7d2fe;
+  border-color: rgba(129,140,248,0.5);
+}
+
+/* ── 项目列表 ── */
+.sidebar-list-wrap { flex: 1; overflow-y: auto; padding: 6px 8px 0; }
+.sidebar-section-label {
+  font-size: 0.65rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: #475569; padding: 4px 8px 6px;
+}
+.sidebar-empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 2rem 1rem; color: #475569; font-size: 0.75rem;
+  text-align: center; gap: 4px;
+}
+
+.sidebar-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: all 0.18s;
+  border-left: 3px solid transparent;
+  position: relative;
+}
+.sidebar-item:hover { background: rgba(255,255,255,0.06); }
+.sidebar-item-active {
+  background: rgba(99,102,241,0.2) !important;
+  border-left-color: #818cf8;
+}
+.sidebar-item-icon {
+  width: 30px; height: 30px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700; color: #a5b4fc;
+  flex-shrink: 0;
+}
+.sidebar-item-active .sidebar-item-icon {
+  background: rgba(129,140,248,0.3); color: #c7d2fe;
+}
+.sidebar-item-info { flex: 1; min-width: 0; }
+.sidebar-item-name {
+  font-size: 0.8rem; font-weight: 500; color: #cbd5e1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar-item-active .sidebar-item-name { color: #e0e7ff; }
+.sidebar-item-desc {
+  font-size: 0.68rem; color: #475569;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.sidebar-item-del {
+  opacity: 0; width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; border: none;
+  background: transparent; color: #64748b;
+  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.sidebar-item:hover .sidebar-item-del { opacity: 1; }
+.sidebar-item-del:hover { background: rgba(239,68,68,0.15); color: #f87171; }
+
+/* ── 底部 ── */
+.sidebar-footer {
+  padding: 10px 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-logout-btn {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border-radius: 10px; border: none;
+  background: transparent; color: #64748b;
+  font-size: 0.82rem; cursor: pointer; transition: all 0.18s;
+}
+.sidebar-logout-btn:hover { background: rgba(239,68,68,0.1); color: #f87171; }
+
+/* ── Modal ── */
+.modal-mask {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.modal-box {
+  background: #fff; border-radius: 16px;
+  width: 100%; max-width: 440px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 20px 0;
+}
+.modal-title-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg,#6366f1,#8b5cf6);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.modal-title-icon i { color: #fff; font-size: 1rem; }
+.modal-title { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0; }
+.modal-subtitle { font-size: 0.75rem; color: #94a3b8; margin: 2px 0 0; }
+.modal-close {
+  margin-left: auto; width: 28px; height: 28px;
+  border: none; border-radius: 8px; background: #f1f5f9;
+  color: #64748b; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: #fee2e2; color: #ef4444; }
+
+.modal-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 0.8rem; font-weight: 600; color: #374151; }
+.form-error-msg {
+  background: #fff1f2; border: 1px solid #fecdd3;
+  color: #be123c; font-size: 0.8rem;
+  padding: 0.5rem 0.75rem; border-radius: 8px;
+}
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 4px; }
+
+/* Modal 动画 */
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.modal-fade-enter-from .modal-box, .modal-fade-leave-to .modal-box { transform: scale(0.96) translateY(8px); }
+</style>

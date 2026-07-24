@@ -1,9 +1,13 @@
 <template>
-  <div class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
-    <div class="text-center mb-6">
-      <i class="fas fa-clone text-6xl text-purple-100 mb-4"></i>
-      <h3 class="text-2xl font-bold text-gray-800">步骤 2: 文献自动去重</h3>
-      <p class="text-gray-500 mt-2">系统将基于论文标题对解析后的 XML 文献进行去重处理</p>
+  <div class="step-wrap">
+    <div class="step-head">
+      <div class="step-head-icon" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa)">
+        <i class="fas fa-clone"></i>
+      </div>
+      <div>
+        <h3 class="step-title">文献自动去重</h3>
+        <p class="step-subtitle">检测并合并重复文献，保留最优记录</p>
+      </div>
     </div>
 
     <!-- 文件数量与状态 -->

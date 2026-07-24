@@ -1,9 +1,13 @@
 <template>
-  <div class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
-    <div class="text-center mb-6">
-      <i class="fas fa-chart-pie text-6xl text-teal-100 mb-4"></i>
-      <h3 class="text-2xl font-bold text-gray-800">步骤 6: 结果归纳</h3>
-      <p class="text-gray-500 mt-2">查看 AI 初筛结果并导出报告</p>
+  <div class="step-wrap">
+    <div class="step-head">
+      <div class="step-head-icon" style="background:linear-gradient(135deg,#0d9488,#14b8a6)">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <div>
+        <h3 class="step-title">结果归纳与导出</h3>
+        <p class="step-subtitle">汇总筛选结果，导出 Excel 和 RIS 文件</p>
+      </div>
     </div>
 
     <!-- 统计数据 -->

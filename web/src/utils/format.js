@@ -35,16 +35,17 @@ export function getTaskTypeName(taskType) {
   return names[taskType] || taskType
 }
 
-/** 任务状态 → Tailwind CSS 类 */
+/** 任务状态 → badge CSS 类 */
 export function getTaskStatusClass(status) {
   const classes = {
-    completed: 'bg-green-100 text-green-800',
-    running: 'bg-blue-100 text-blue-800',
-    pending: 'bg-gray-100 text-gray-800',
-    failed: 'bg-red-100 text-red-800',
-    stopped: 'bg-yellow-100 text-yellow-800',
+    completed: 'badge badge-green',
+    running:   'badge badge-blue',
+    pending:   'badge badge-gray',
+    failed:    'badge badge-red',
+    stopped:   'badge badge-yellow',
+    stopping:  'badge badge-yellow',
   }
-  return classes[status] || 'bg-gray-100 text-gray-800'
+  return classes[status] || 'badge badge-gray'
 }
 
 /** 任务状态 → 中文名 */

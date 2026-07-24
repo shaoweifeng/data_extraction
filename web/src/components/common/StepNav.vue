@@ -1,21 +1,28 @@
 <template>
-  <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+  <div class="step-nav">
     <button
       v-if="screening.currentStep > 1"
       @click="screening.currentStep--"
-      class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+      class="nav-btn nav-prev"
     >
-      ← 上一步
+      <i class="fas fa-arrow-left"></i>
+      <span>上一步</span>
     </button>
-    <div v-else />
+    <div v-else></div>
+
+    <div class="step-nav-info">
+      第 <span class="step-num">{{ screening.currentStep }}</span> 步 / 共 6 步
+    </div>
 
     <button
       v-if="screening.currentStep < 6"
       @click="screening.currentStep++"
-      class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      class="nav-btn nav-next"
     >
-      下一步 →
+      <span>下一步</span>
+      <i class="fas fa-arrow-right"></i>
     </button>
+    <div v-else></div>
   </div>
 </template>
 
@@ -23,3 +30,44 @@
 import { useScreeningStore } from '@/stores/screening'
 const screening = useScreeningStore()
 </script>
+
+<style scoped>
+.step-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 4px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 16px;
+}
+
+.nav-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 18px;
+  border-radius: 8px; border: 1px solid #e2e8f0;
+  font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; transition: all 0.18s;
+  background: #fff; color: #374151;
+}
+.nav-btn:hover {
+  border-color: #a5b4fc; color: #6366f1;
+  box-shadow: 0 2px 8px rgba(99,102,241,.12);
+}
+
+.nav-next {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; border-color: transparent;
+}
+.nav-next:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(99,102,241,.35);
+  border-color: transparent; color: #fff;
+}
+
+.step-nav-info {
+  font-size: 0.8rem; color: #94a3b8;
+}
+.step-num {
+  color: #6366f1; font-weight: 700;
+}
+</style>

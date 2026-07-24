@@ -1,17 +1,18 @@
 <template>
-  <div class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
-    <div class="text-center mb-6">
-      <i class="fas fa-list-check text-6xl text-green-100 mb-4"></i>
-      <h3 class="text-2xl font-bold text-gray-800">步骤 3: 设定纳排标准</h3>
-      <p class="text-gray-500 mt-2">
-        初筛需要根据排除标准进行排除，故需要设定排除理由
-        <button
-          @click="showGuide = true"
-          class="ml-2 text-xs text-blue-500 hover:text-blue-700 underline underline-offset-2 font-normal"
-        >
-          <i class="fas fa-lightbulb mr-0.5"></i>查看撰写指南
-        </button>
-      </p>
+  <div class="step-wrap">
+    <div class="step-head">
+      <div class="step-head-icon" style="background:linear-gradient(135deg,#10b981,#34d399)">
+        <i class="fas fa-list-check"></i>
+      </div>
+      <div>
+        <h3 class="step-title">设定纳排标准</h3>
+        <p class="step-subtitle">
+          定义文献应达到的纳入或排除条件
+          <button @click="showGuide = true" class="ml-2 text-xs text-indigo-500 hover:text-indigo-700 underline">
+            <i class="fas fa-lightbulb mr-0.5"></i>查看撰写指南
+          </button>
+        </p>
+      </div>
     </div>
 
     <!-- 常用排除标准快捷勾选 -->

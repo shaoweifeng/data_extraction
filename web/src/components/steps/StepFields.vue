@@ -1,9 +1,13 @@
 <template>
-  <div class="max-w-4xl bg-white p-8 rounded-xl border shadow-sm">
-    <div class="text-center mb-6">
-      <i class="fas fa-tags text-6xl text-cyan-100 mb-4"></i>
-      <h3 class="text-2xl font-bold text-gray-800">步骤 4: 提取字段</h3>
-      <p class="text-gray-500 mt-2">自定义需要 AI 从纳入文献中提取的字段（字段名 + 定义）</p>
+  <div class="step-wrap">
+    <div class="step-head">
+      <div class="step-head-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">
+        <i class="fas fa-tags"></i>
+      </div>
+      <div>
+        <h3 class="step-title">设定提取字段</h3>
+        <p class="step-subtitle">定义需要从文献中提取的数据字段及其含义</p>
+      </div>
     </div>
 
     <!-- 输入区域 -->
