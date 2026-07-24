@@ -1,11 +1,9 @@
 #!/bin/bash
-
 # ============================================================
 # 停止脚本：停止由 start.sh -d 启动的所有后台进程
 #
 # 用法：./stop.sh
 # ============================================================
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PID_DIR="$SCRIPT_DIR/pids"
 
@@ -38,6 +36,9 @@ stop_process() {
 
     rm -f "$pid_file"
 }
+
+# 停止 Vite dev server（开发模式启动时存在）
+stop_process "vite"
 
 # 停止 Django
 stop_process "django"
