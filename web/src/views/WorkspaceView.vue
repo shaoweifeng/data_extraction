@@ -1,67 +1,59 @@
 <template>
   <div class="page-layout">
-    <AppSidebar />
+    <!-- 统一顶部导航（贯穿全页面顶部） -->
+    <AppHeader />
 
-    <main class="main-content">
-      <!-- 加载中 -->
-      <div v-if="loading" class="loading-state">
-        <svg class="spin-icon" fill="none" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/>
-          <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" class="opacity-75"/>
-        </svg>
-        <p>正在加载项目数据...</p>
-      </div>
+    <!-- 下方主体：侧边栏 + 内容区 -->
+    <div class="page-body">
+      <AppSidebar />
 
-      <template v-else>
-        <!-- ── SCREEN_1：文献初筛（含步骤指示器）── -->
-        <template v-if="project.currentStage === 'SCREEN_1'">
-          <!-- 顶部：项目名 + 步骤指示器 -->
-          <div class="ws-header">
-            <div class="ws-header-left">
-              <div class="ws-stage-badge" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
-                <i class="fas fa-filter"></i>
-              </div>
-              <div>
-                <h2 class="ws-stage-title">文献初筛</h2>
-                <p class="ws-stage-sub">{{ project.currentProject?.name }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="ws-step-bar">
-            <StepIndicator
-              :steps="screen1Steps"
-              :current-step="screening.currentStep"
-              :stages-data="project.stagesData"
-            />
-          </div>
-          <!-- 步骤内容 + 右侧任务栏 -->
-          <div class="ws-body">
-            <div class="ws-step-content">
-              <StepParse    v-if="screening.currentStep === 1" />
-              <StepDedup    v-else-if="screening.currentStep === 2" />
-              <StepCriteria v-else-if="screening.currentStep === 3" />
-              <StepFields   v-else-if="screening.currentStep === 4" />
-              <StepAiScreen v-else-if="screening.currentStep === 5" />
-              <StepExport   v-else-if="screening.currentStep === 6" />
-              <StepNav class="step-nav-bar" />
-            </div>
-            <TaskSidebar class="ws-task-sidebar" />
-          </div>
-        </template>
+      <main class="main-content">
+        <!-- 加载中 -->
+        <div v-if="loading" class="loading-state">
+          <i class="fas fa-spinner fa-spin" style="font-size:1.4rem;color:#a5b4fc"></i>
+          <p>正在加载项目数据...</p>
+        </div>
 
-        <!-- ── 其他阶段：占位页 ── -->
         <template v-else>
-          <div class="ws-placeholder">
-            <div class="placeholder-icon" :style="{ background: stageMeta[project.currentStage]?.bg || '#f1f5f9' }">
-              <i :class="stageMeta[project.currentStage]?.icon || 'fas fa-tools'" :style="{ color: stageMeta[project.currentStage]?.color || '#6366f1' }"></i>
+          <!-- ── SCREEN_1：文献初筛（含步骤指示器）── -->
+          <template v-if="project.currentStage === 'SCREEN_1'">
+            <!-- 步骤指示器 -->
+            <div class="ws-step-bar">
+              <StepIndicator
+                :steps="screen1Steps"
+                :current-step="screening.currentStep"
+                :stages-data="project.stagesData"
+              />
             </div>
-            <h2 class="placeholder-title">{{ stageMeta[project.currentStage]?.name || project.currentStage }}</h2>
-            <p class="placeholder-desc">该功能模块正在建设中，敬请期待。</p>
-            <div class="placeholder-tag">Coming Soon</div>
-          </div>
+            <!-- 步骤内容 + 右侧任务栏 -->
+            <div class="ws-body">
+              <div class="ws-step-content">
+                <StepParse    v-if="screening.currentStep === 1" />
+                <StepDedup    v-else-if="screening.currentStep === 2" />
+                <StepCriteria v-else-if="screening.currentStep === 3" />
+                <StepFields   v-else-if="screening.currentStep === 4" />
+                <StepAiScreen v-else-if="screening.currentStep === 5" />
+                <StepExport   v-else-if="screening.currentStep === 6" />
+                <StepNav class="step-nav-bar" />
+              </div>
+              <TaskSidebar class="ws-task-sidebar" />
+            </div>
+          </template>
+
+          <!-- ── 其他阶段：占位页 ── -->
+          <template v-else>
+            <div class="ws-placeholder">
+              <div class="placeholder-icon" :style="{ background: stageMeta[project.currentStage]?.bg || '#f1f5f9' }">
+                <i :class="stageMeta[project.currentStage]?.icon || 'fas fa-tools'" :style="{ color: stageMeta[project.currentStage]?.color || '#6366f1' }"></i>
+              </div>
+              <h2 class="placeholder-title">{{ stageMeta[project.currentStage]?.name || project.currentStage }}</h2>
+              <p class="placeholder-desc">该功能模块正在建设中，敬请期待。</p>
+              <div class="placeholder-tag">Coming Soon</div>
+            </div>
+          </template>
         </template>
-      </template>
-    </main>
+      </main>
+    </div>
   </div>
 </template>
 
@@ -71,6 +63,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useScreeningStore } from '@/stores/screening'
 import { useTaskStore } from '@/stores/task'
+import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import TaskSidebar from '@/components/layout/TaskSidebar.vue'
 import StepIndicator from '@/components/common/StepIndicator.vue'
@@ -100,11 +93,11 @@ const screen1Steps = [
 ]
 
 const stageMeta = {
-  SEARCH:   { name: '文献检索', icon: 'fas fa-search',       bg: '#eff6ff', color: '#3b82f6' },
-  SCREEN_2: { name: '文献复筛', icon: 'fas fa-tasks',        bg: '#faf5ff', color: '#8b5cf6' },
+  SEARCH:   { name: '文献检索',   icon: 'fas fa-search',       bg: '#eff6ff', color: '#3b82f6' },
+  SCREEN_2: { name: '文献复筛',   icon: 'fas fa-tasks',        bg: '#faf5ff', color: '#8b5cf6' },
   QUALITY:  { name: '文献质量评价', icon: 'fas fa-shield-virus', bg: '#f0fdf4', color: '#10b981' },
-  EXTRACT:  { name: '数据提取', icon: 'fas fa-file-export',  bg: '#fff7ed', color: '#f59e0b' },
-  META:     { name: 'Meta 分析', icon: 'fas fa-chart-line',  bg: '#fdf2f8', color: '#ec4899' },
+  EXTRACT:  { name: '数据提取',   icon: 'fas fa-file-export',  bg: '#fff7ed', color: '#f59e0b' },
+  META:     { name: 'Meta 分析',  icon: 'fas fa-chart-line',  bg: '#fdf2f8', color: '#ec4899' },
 }
 
 onMounted(async () => {
@@ -126,8 +119,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* 整体布局：顶部固定 header + 下方左右分栏 */
 .page-layout {
-  display: flex; height: 100vh; overflow: hidden; background: #f8fafc;
+  height: 100vh; overflow: hidden; background: #f8fafc;
+  display: flex; flex-direction: column;
+}
+.page-body {
+  flex: 1; display: flex; overflow: hidden; min-height: 0;
 }
 .main-content {
   flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
@@ -136,37 +134,18 @@ onMounted(async () => {
 /* 加载 */
 .loading-state {
   flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 12px; color: #94a3b8;
+  align-items: center; justify-content: center; gap: 10px; color: #94a3b8;
+  font-size: 0.85rem;
 }
-.spin-icon {
-  width: 32px; height: 32px; color: #6366f1;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 
-/* SCREEN_1 布局 */
-.ws-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 24px;
-  background: #fff; border-bottom: 1px solid #f1f5f9;
-  flex-shrink: 0;
-}
-.ws-header-left { display: flex; align-items: center; gap: 12px; }
-.ws-stage-badge {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  box-shadow: 0 3px 8px rgba(99,102,241,.25);
-}
-.ws-stage-badge i { color: #fff; font-size: 0.9rem; }
-.ws-stage-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0; }
-.ws-stage-sub { font-size: 0.72rem; color: #94a3b8; margin: 2px 0 0; }
-
+/* 步骤指示器条 */
 .ws-step-bar {
   padding: 10px 24px;
   background: #fff; border-bottom: 1px solid #f1f5f9; flex-shrink: 0;
   overflow-x: auto;
 }
 
+/* 内容 + 任务栏 */
 .ws-body {
   flex: 1; display: flex; overflow: hidden; min-height: 0;
 }
@@ -194,7 +173,7 @@ onMounted(async () => {
   margin-bottom: 4px;
 }
 .placeholder-icon i { font-size: 2rem; }
-.placeholder-title { font-size: 1.4rem; font-weight: 700; color: #1e293b; margin: 0; }
+.placeholder-title { font-size: 1.3rem; font-weight: 700; color: #1e293b; margin: 0; }
 .placeholder-desc { font-size: 0.875rem; color: #94a3b8; margin: 0; max-width: 320px; }
 .placeholder-tag {
   display: inline-flex; padding: 4px 14px;
