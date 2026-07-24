@@ -64,3 +64,7 @@ htmlcov/
 # Backup files
 *_backup*
 *.bak
+
+# Vite 前端工程
+web/node_modules/
+web/dist/
