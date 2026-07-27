@@ -78,13 +78,6 @@ class TaskViewSet(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'])
-    def progress(self, request, pk=None):
-        from ..services import get_task_progress
-
-        task = self.get_object()
-        return Response(get_task_progress(task.id))
-
-    @action(detail=True, methods=['get'])
     def logs(self, request, pk=None):
         from ..services import read_task_logs
 

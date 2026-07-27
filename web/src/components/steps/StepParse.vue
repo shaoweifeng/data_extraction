@@ -239,10 +239,11 @@ async function pollParsingStatus(taskId) {
       const res = await http.get(`/tasks/${taskId}/`)
       const task = res.data
       const status = task.status
-      s.parseProgressMsg = task.config?.progress_message || `解析中... [${pollCount}]`
-      if (task.config?.progress_current != null) {
-        s.parseProgressCurrent = task.config.progress_current
-        s.parseProgressTotal = task.config.progress_total || 100
+      const pp = task.config?.parse_progress
+      s.parseProgressMsg = pp?.message || `解析中... [${pollCount}]`
+      if (pp?.current != null) {
+        s.parseProgressCurrent = pp.current
+        s.parseProgressTotal = pp.total || 100
       }
       if (status === 'running' || status === 'pending') {
         s.parsedCount = task.config.total_entries || task.config.split_files || 0

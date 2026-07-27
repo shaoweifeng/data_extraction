@@ -1,4 +1,4 @@
-from .progress_service import get_task_progress, read_task_logs, tail_task_logs
+from .progress_service import read_task_logs, tail_task_logs
 from .prompt_service import get_prompt, save_prompt, reset_prompt
 from .artifact_service import (
     get_ai_screen_stats,

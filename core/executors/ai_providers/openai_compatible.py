@@ -1,5 +1,5 @@
 """
-DeepSeek AI Provider
+OpenAI 兼容接口 Provider
 
 参考 xxc/develop 分支 structural_screening/02_screening_ai/screener.py 实现。
 使用 OpenAI 兼容接口（/v1/chat/completions），可切换任何兼容格式的模型。
@@ -23,9 +23,9 @@ from .base import BaseAIProvider, ScreeningResult
 logger = logging.getLogger(__name__)
 
 
-class DeepSeekProvider(BaseAIProvider):
+class OpenAICompatibleProvider(BaseAIProvider):
     """
-    DeepSeek AI Provider（OpenAI 兼容格式）
+    OpenAI 兼容接口 Provider（OpenAI 兼容格式）
     
     将来扩展其他模型时，只需新建类继承 BaseAIProvider 并实现 screen_single()。
     """
@@ -54,7 +54,7 @@ class DeepSeekProvider(BaseAIProvider):
 
     @property
     def name(self) -> str:
-        return f"deepseek/{self.model}"
+        return f"openai_compatible/{self.model}"
 
     def screen_single(self, entry: Dict, criteria: List[str], prompt_template: str) -> ScreeningResult:
         """

@@ -25,7 +25,7 @@ from core.executors.parsers import parser as _parser
 class ParseHandler(BaseStepHandler):
     """文献解析步骤 Handler（同步执行）"""
 
-    execution_mode = "sync"
+    execution_mode = "async"
 
     def execute(self) -> bool:
         """

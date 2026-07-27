@@ -124,7 +124,7 @@ class ExportHandler(BaseStepHandler):
         if not model_id:
             return "default"
         try:
-            from platform_backend.ai_models_config import get_models_for_frontend
+            from core.services.ai_models_config import get_models_for_frontend
             for m in get_models_for_frontend():
                 if m["id"] == model_id:
                     return m["name"]

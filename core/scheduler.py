@@ -124,13 +124,6 @@ class TaskScheduler:
         
         # 根据执行模式调度
         if mode == "sync":
-            if step_key == 'parse':
-                # parse 步骤在后台线程执行，立即返回 task 让前端轮询进度
-                import threading
-                def _run():
-                    self._execute_sync(task, step_key)
-                threading.Thread(target=_run, daemon=True).start()
-                return task
             return self._execute_sync(task, step_key)
         elif mode == "async":
             return self._execute_async(task, step_key)
@@ -145,9 +138,9 @@ class TaskScheduler:
     
     def _execute_sync(self, task: Task, step_key: str) -> Task:
         """同步执行"""
-        from .executors.sync_executor import SyncExecutor
-        
-        executor = SyncExecutor(task.id, step_key, self.project_id)
+        from .executors.executor import StepExecutor
+
+        executor = StepExecutor(task.id, step_key, self.project_id)
         # 将 Task 的动态 config（含 ai_model 等）合并进 executor.config
         task_config = task.config or {}
         executor.config.update(task_config)
@@ -372,124 +365,6 @@ class TaskScheduler:
             return self._execute_async(new_task, step_key)
         else:
             return self._execute_sync(new_task, step_key)
-    
-    # ========================================================================
-    # 进度查询
-    # ========================================================================
-    
-    def get_progress(self, task_id: int) -> Dict:
-        """
-        获取任务进度
-        
-        Args:
-            task_id: 任务ID
-        
-        Returns:
-            进度信息字典（含 elapsed_time）
-        """
-        from .services.progress_service import get_task_progress as _svc_progress
-
-        result = _svc_progress(task_id)
-
-        # scheduler 层额外追加 elapsed_time 字段
-        task = Task.objects.get(id=task_id, project=self.project)
-        result["elapsed_time"] = str(timezone.now() - task.started_at) if task.started_at else None
-
-        return result
-    
-    def get_stage_progress(self, stage_key: str) -> Dict:
-        """
-        获取阶段进度（聚合子步骤）
-        
-        Args:
-            stage_key: 阶段标识
-        
-        Returns:
-            聚合的进度信息
-        """
-        config = get_step_config(stage_key)
-        
-        # 如果是单步骤，直接返回
-        if "sub_steps" not in config:
-            return self.get_step_progress(stage_key)
-        
-        # 聚合子步骤进度
-        weights = config.get("monitoring", {}).get("weight_distribution", {})
-        total_percentage = 0.0
-        
-        sub_step_progress = {}
-        for step_key, weight in weights.items():
-            step_prog = self.get_step_progress(step_key)
-            sub_step_progress[step_key] = step_prog
-            total_percentage += step_prog.get("percentage", 0) * weight
-        
-        return {
-            "stage_key": stage_key,
-            "percentage": round(total_percentage, 2),
-            "sub_steps": sub_step_progress
-        }
-    
-    def get_step_progress(self, step_key: str) -> Dict:
-        """获取单个步骤的进度"""
-        from .services.progress_service import _derive_progress_path
-
-        try:
-            stage_key = get_step_config(step_key).get("stage_key")
-            stage = ProjectStage.objects.get(
-                project=self.project,
-                stage_key=stage_key
-            )
-            step = StageStep.objects.get(
-                stage=stage,
-                step_key=step_key
-            )
-
-            # 尝试读取进度文件
-            latest_task = Task.objects.filter(
-                project=self.project,
-                task_type=step_key,
-                status='running'
-            ).order_by('-created_at').first()
-
-            if latest_task and latest_task.log_file:
-                progress_path = _derive_progress_path(latest_task.log_file)
-
-                if progress_path and progress_path.exists():
-                    with open(progress_path, 'r') as f:
-                        progress_data = json.load(f)
-                        return {
-                            "step_key": step_key,
-                            "status": step.status,
-                            "percentage": progress_data.get("percentage", 0.0),
-                            "current": progress_data.get("current", 0),
-                            "total": progress_data.get("total", 0),
-                            "unit": progress_data.get("unit", "")
-                        }
-
-            return {
-                "step_key": step_key,
-                "status": step.status,
-                "percentage": 100.0 if step.status == 'completed' else 0.0
-            }
-
-        except Exception:
-            return {
-                "step_key": step_key,
-                "status": "not_started",
-                "percentage": 0.0
-            }
-    
-    def get_project_progress(self) -> Dict:
-        """获取项目整体进度"""
-        stages = ProjectStage.objects.filter(project=self.project)
-        
-        return {
-            "project_id": self.project_id,
-            "stages": {
-                stage.stage_key: self.get_stage_progress(stage.stage_key)
-                for stage in stages
-            }
-        }
     
     # ========================================================================
     # 辅助方法

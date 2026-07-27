@@ -9,7 +9,7 @@
 注册表规则：
 - 每个 step_key 只能注册一个 handler
 - 注册发生在 handlers/__init__.py 导入时（模块加载时自动注册）
-- SyncExecutor / AsyncExecutor 的 execute() 通过注册表分发步骤
+- StepExecutor 的 execute() 通过注册表分发步骤
 
 使用示例：
     from core.executors.registry import get_handler

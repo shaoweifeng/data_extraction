@@ -60,23 +60,94 @@
 
       <!-- 下载区 -->
       <div class="step-list-box" style="padding:14px 16px">
-        <p class="text-xs text-gray-400 mb-1">下载历史版本（点击导出后自动更新）</p>
+        <p class="text-xs text-gray-400 mb-2">下载历史版本（点击导出后自动更新）</p>
 
         <!-- 所有文献 Excel -->
-        <ExportRow label="所有文献" :files="s.exportXlsxAllFiles" v-model:selected="selectedAllVer" color="teal" />
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0">所有文献</span>
+          <button
+            @click="downloadFile(s.exportXlsxAllFiles[selectedAllVer])"
+            :disabled="!s.exportXlsxAllFiles || s.exportXlsxAllFiles.length === 0"
+            class="bg-teal-600 hover:bg-teal-700 text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
+          >
+            <i class="fas fa-file-download mr-1"></i>下载Excel
+          </button>
+          <select
+            v-if="s.exportXlsxAllFiles && s.exportXlsxAllFiles.length > 0"
+            v-model="selectedAllVer"
+            class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base"
+          >
+            <option v-for="(f, i) in s.exportXlsxAllFiles" :key="f.id" :value="i">{{ exportFileLabel(f) }}</option>
+          </select>
+          <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
+        </div>
+
         <!-- 纳入文献 Excel -->
-        <ExportRow label="纳入文献" :files="s.exportXlsxIncludedFiles" v-model:selected="selectedIncluVer" color="green" />
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0">纳入文献</span>
+          <button
+            @click="downloadFile(s.exportXlsxIncludedFiles[selectedIncluVer])"
+            :disabled="!s.exportXlsxIncludedFiles || s.exportXlsxIncludedFiles.length === 0"
+            class="bg-green-600 hover:bg-green-700 text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
+          >
+            <i class="fas fa-file-download mr-1"></i>下载Excel
+          </button>
+          <select
+            v-if="s.exportXlsxIncludedFiles && s.exportXlsxIncludedFiles.length > 0"
+            v-model="selectedIncluVer"
+            class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base"
+          >
+            <option v-for="(f, i) in s.exportXlsxIncludedFiles" :key="f.id" :value="i">{{ exportFileLabel(f) }}</option>
+          </select>
+          <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
+        </div>
+
         <!-- 排除文献 Excel -->
-        <ExportRow label="排除文献" :files="s.exportXlsxExcludedFiles" v-model:selected="selectedExcluVer" color="red" />
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0">排除文献</span>
+          <button
+            @click="downloadFile(s.exportXlsxExcludedFiles[selectedExcluVer])"
+            :disabled="!s.exportXlsxExcludedFiles || s.exportXlsxExcludedFiles.length === 0"
+            class="bg-red-500 hover:bg-red-600 text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
+          >
+            <i class="fas fa-file-download mr-1"></i>下载Excel
+          </button>
+          <select
+            v-if="s.exportXlsxExcludedFiles && s.exportXlsxExcludedFiles.length > 0"
+            v-model="selectedExcluVer"
+            class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base"
+          >
+            <option v-for="(f, i) in s.exportXlsxExcludedFiles" :key="f.id" :value="i">{{ exportFileLabel(f) }}</option>
+          </select>
+          <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
+        </div>
+
         <!-- EndNote RIS -->
-        <ExportRow label="EndNote（仅纳入）" :files="s.exportRisFiles" v-model:selected="selectedRisVer" color="blue" ris />
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0">EndNote<br/><span class="text-gray-400">（仅纳入）</span></span>
+          <button
+            @click="downloadFile(s.exportRisFiles[selectedRisVer])"
+            :disabled="!s.exportRisFiles || s.exportRisFiles.length === 0"
+            class="bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
+          >
+            <i class="fas fa-file-download mr-1"></i>下载EndNote
+          </button>
+          <select
+            v-if="s.exportRisFiles && s.exportRisFiles.length > 0"
+            v-model="selectedRisVer"
+            class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base"
+          >
+            <option v-for="(f, i) in s.exportRisFiles" :key="f.id" :value="i">{{ exportFileLabel(f) }}</option>
+          </select>
+          <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
@@ -92,41 +163,15 @@ const selectedIncluVer = ref(0)
 const selectedExcluVer = ref(0)
 const selectedRisVer = ref(0)
 
-// ── 内联子组件（简单导出行）──
-const ExportRow = {
-  props: ['label', 'files', 'selected', 'color', 'ris'],
-  emits: ['update:selected'],
-  template: `
-    <div class="flex items-center gap-2">
-      <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0" v-html="label.replace('（', '<br/><span class=&quot;text-gray-400&quot;>（').replace('）', '）</span>')"></span>
-      <button
-        @click="files[selected] && downloadFile(files[selected])"
-        :disabled="!files || files.length === 0"
-        :class="'bg-' + color + '-600 hover:bg-' + color + '-700'"
-        class="text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
-      >
-        <i class="fas fa-file-download mr-1"></i>{{ ris ? '下载EndNote' : '下载Excel' }}
-      </button>
-      <select
-        v-if="files && files.length > 0"
-        :value="selected"
-        @change="$emit('update:selected', Number($event.target.value))"
-        class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base" style="padding-top:5px;padding-bottom:5px"
-      >
-        <option v-for="(f, i) in files" :key="f.id" :value="i">{{ fileLabel(f) }}</option>
-      </select>
-      <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
-    </div>
-  `,
-  setup(props) {
-    const downloadFile = (f) => {
-      const a = document.createElement('a')
-      a.href = f.file
-      a.download = f.filename
-      a.click()
-    }
-    return { downloadFile, fileLabel: exportFileLabel }
-  },
+// ── 下载文件 ──
+function downloadFile(f) {
+  if (!f) return
+  const a = document.createElement('a')
+  a.href = f.file_url || f.file
+  a.download = f.filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
 }
 
 // ── 加载导出文件列表 ──
@@ -140,7 +185,7 @@ async function loadExportFiles() {
     const res = await http.get(`/files/?project=${project.currentProject.id}&step=${expStep.id}&data_category=output&limit=100`)
     const allFiles = extractListData(res.data)
     s.exportFiles = allFiles
-    // 按文件名分类填充各导出列表（文件名规律：screening_results_{type}_*.xlsx / *.ris）
+    // 按文件名分类填充各导出列表
     s.exportXlsxAllFiles = allFiles.filter(f => f.filename?.includes('_all_') && f.filename?.endsWith('.xlsx'))
     s.exportXlsxIncludedFiles = allFiles.filter(f => f.filename?.includes('_included_') && f.filename?.endsWith('.xlsx'))
     s.exportXlsxExcludedFiles = allFiles.filter(f => f.filename?.includes('_excluded_') && f.filename?.endsWith('.xlsx'))
@@ -149,7 +194,14 @@ async function loadExportFiles() {
     if (s.exportXlsxAllFiles.length === 0 && s.exportXlsxIncludedFiles.length === 0 && s.exportXlsxExcludedFiles.length === 0) {
       s.exportXlsxAllFiles = allFiles.filter(f => f.filename?.endsWith('.xlsx'))
     }
-  } catch {}
+    // 重置选中项
+    selectedAllVer.value = 0
+    selectedIncluVer.value = 0
+    selectedExcluVer.value = 0
+    selectedRisVer.value = 0
+  } catch (e) {
+    console.error('[StepExport] loadExportFiles 失败', e)
+  }
 }
 
 // ── 导出任务 ──
@@ -163,6 +215,14 @@ async function exportResults(exportType) {
       config: { ai_model: s.selectedAiModel, export_type: exportType },
     })
     const task = res.data
+    // export 是同步步骤，POST 返回时任务已完成；用轮询作兜底
+    if (task.status === 'completed') {
+      s.isExporting = false
+      s.exportingType = ''
+      await project.fetchStages(project.currentProject.id)
+      await loadExportFiles()
+      return
+    }
     const pollInterval = setInterval(async () => {
       try {
         const statusRes = await http.get(`/tasks/${task.id}/`)

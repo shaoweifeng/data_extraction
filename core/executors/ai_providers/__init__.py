@@ -3,16 +3,11 @@ AI Provider 抽象层
 
 架构设计：
 - BaseAIProvider: 抽象基类，定义统一接口
-- DeepSeekProvider: 当前默认实现（OpenAI 兼容格式）
-- 将来可扩展：ClaudeProvider, GPT4Provider, QwenProvider 等
-
-多模型支持预留接口（当前未实现）：
-- get_provider(name) 工厂函数，按名称获取 provider 实例
-- 将来可并发跑多个 provider，对有分歧的文献单独列出
+- OpenAICompatibleProvider: OpenAI 兼容接口实现（DeepSeek / 豆包 / 千问均适用）
+- 将来可扩展：ClaudeProvider 等非 OpenAI 接口的模型
 """
-
 from .base import BaseAIProvider, ScreeningResult
-from .deepseek import DeepSeekProvider
+from .openai_compatible import OpenAICompatibleProvider
 
 
 def get_provider(name: str = None, config: dict = None) -> BaseAIProvider:
@@ -24,11 +19,10 @@ def get_provider(name: str = None, config: dict = None) -> BaseAIProvider:
         config: 额外配置，None 时从 ai_models_config 读取对应配置
     """
     import os
-    from platform_backend.ai_models_config import get_model_config
+    from core.services.ai_models_config import get_model_config
 
     provider_name = name or os.environ.get("AI_PROVIDER", "deepseek")
 
-    # 从配置表读取该模型的 api_url / api_key / model
     if config is None:
         model_cfg = get_model_config(provider_name)
         if model_cfg:
@@ -41,18 +35,16 @@ def get_provider(name: str = None, config: dict = None) -> BaseAIProvider:
         else:
             config = {}
 
-    # 豆包和千问均兼容 OpenAI 接口，直接复用 DeepSeekProvider
+    # deepseek / doubao / qwen 均兼容 OpenAI 接口
     registry = {
-        "deepseek": DeepSeekProvider,
-        "doubao":   DeepSeekProvider,   # OpenAI 兼容
-        "qwen":     DeepSeekProvider,   # OpenAI 兼容（DashScope）
+        "deepseek": OpenAICompatibleProvider,
+        "doubao":   OpenAICompatibleProvider,
+        "qwen":     OpenAICompatibleProvider,
     }
-
     cls = registry.get(provider_name.lower())
     if cls is None:
         raise ValueError(f"未知的 AI Provider: {provider_name}，可用: {list(registry.keys())}")
-
     return cls(config)
 
 
-__all__ = ["BaseAIProvider", "ScreeningResult", "DeepSeekProvider", "get_provider"]
+__all__ = ["BaseAIProvider", "ScreeningResult", "OpenAICompatibleProvider", "get_provider"]

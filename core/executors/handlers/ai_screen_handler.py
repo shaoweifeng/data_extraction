@@ -295,7 +295,7 @@ class AIScreenHandler(BaseStepHandler):
         from core.executors.ai_providers import get_provider
 
         model_id = self.config.get("ai_model") or os.environ.get("AI_PROVIDER", "deepseek")
-        from platform_backend.ai_models_config import get_model_config
+        from core.services.ai_models_config import get_model_config
         model_cfg = get_model_config(model_id)
         has_key = bool(model_cfg and model_cfg.get("api_key")) or bool(os.environ.get("AI_API_KEY"))
         if not has_key:

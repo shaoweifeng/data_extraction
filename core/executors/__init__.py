@@ -2,11 +2,11 @@
 任务执行器包 - 数据提取平台
 
 提供统一的任务执行框架：
-- BaseExecutor: 执行器基类
-- SyncExecutor: 同步执行器
-- AsyncExecutor: 异步执行器
+- BaseExecutor:  执行器基类（日志、进度、checkpoint、workspace 管理）
+- StepExecutor:  统一步骤执行器，同步/异步共用，通过 Handler 注册表分发
 """
 
 from .base import BaseExecutor, TaskLogger
+from .executor import StepExecutor
 
-__all__ = ['BaseExecutor', 'TaskLogger']
+__all__ = ['BaseExecutor', 'TaskLogger', 'StepExecutor']

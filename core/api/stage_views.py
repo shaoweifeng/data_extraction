@@ -83,11 +83,4 @@ class ProjectStageViewSet(viewsets.ModelViewSet):
 
         return Response(ProjectStageSerializer(stage).data)
 
-    @action(detail=True, methods=['get'])
-    def progress(self, request, pk=None):
-        from ..monitoring import ProgressMonitor
-
-        stage = self.get_object()
-        monitor = ProgressMonitor(stage.project.id)
-        return Response(monitor.get_stage_progress(stage.stage_key))
 

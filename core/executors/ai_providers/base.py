@@ -56,12 +56,12 @@ class BaseAIProvider(ABC):
     """
     AI Provider 抽象基类
     
-    子类实现 screen_single() 即可，批处理和并发由框架层（AsyncExecutor）控制。
+    子类实现 screen_single() 即可，批处理和并发由框架层（StepExecutor）控制。
     
     将来多模型扩展时：
     1. 新建 xxx_provider.py 继承此类，实现 screen_single()
     2. 在 __init__.py 的 registry 里注册
-    3. AsyncExecutor 可并发调用多个 provider，对结果有分歧的文献单独列出
+    3. StepExecutor 可并发调用多个 provider，对结果有分歧的文献单独列出
     """
 
     def __init__(self, config: dict):

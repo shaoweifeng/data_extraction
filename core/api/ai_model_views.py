@@ -6,7 +6,7 @@ from rest_framework.response import Response
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ai_models_list(request):
-    from platform_backend.ai_models_config import get_models_for_frontend
+    from core.services.ai_models_config import get_models_for_frontend
 
     return Response(get_models_for_frontend())
 

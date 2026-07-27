@@ -161,31 +161,4 @@ class StageStepViewSet(viewsets.ModelViewSet):
         step.save()
         return Response(StageStepSerializer(step).data)
 
-    @action(detail=True, methods=['get'])
-    def progress(self, request, pk=None):
-        from ..monitoring import ProgressMonitor
-
-        step = self.get_object()
-        stage = step.stage
-        monitor = ProgressMonitor(stage.project.id)
-        return Response(monitor.get_step_progress(step.step_key))
-
-    @action(detail=True, methods=['get'])
-    def logs(self, request, pk=None):
-        from ..monitoring import LogReader
-
-        step = self.get_object()
-        stage = step.stage
-        project = stage.project
-
-        latest_task = Task.objects.filter(project=project, task_type=step.step_key).order_by('-created_at').first()
-
-        if not latest_task:
-            return Response({"lines": [], "total": 0})
-
-        reader = LogReader(latest_task.id)
-        from_line = int(request.query_params.get('from_line', 0))
-        max_lines = int(request.query_params.get('max_lines', 100))
-
-        return Response(reader.read_logs(from_line, max_lines))
 

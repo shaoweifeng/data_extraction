@@ -70,7 +70,7 @@ STEP_CONFIGURATIONS = {
     "parse": {
         "name": "导入文献索引",
         "stage_key": "SCREEN_1",
-        "execution_mode": "sync",
+        "execution_mode": "async",
         "description": "解析RIS/BIB/NBIB/XML格式文献",
         "timeout": 300,
         "retry_policy": {
