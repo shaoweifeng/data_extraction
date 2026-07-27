@@ -3,7 +3,7 @@
 
 负责：
 - 复制上传文件到工作区
-- 调用解析脚本（parser.py）生成条目
+- 调用解析器（core.executors.parsers.parser）生成条目
 - 生成单篇 XML 索引文件
 - 保存产物到 DataFile
 """
@@ -14,12 +14,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict
 
-from django.conf import settings
-
 from core.models import DataFile
 from core.executors.registry import register
 from core.executors.handlers.base_handler import BaseStepHandler
 from core.executors.base import safe_title
+from core.executors.parsers import parser as _parser
 
 
 @register("parse")
@@ -108,26 +107,13 @@ class ParseHandler(BaseStepHandler):
         ))
 
     def _run_parser(self, input_dir: Path, output_dir: Path):
-        """调用外部解析脚本，返回 (entries, merged_xml_path)。失败返回 (None, None)。"""
-        import sys
-        import importlib.util
-
+        """调用解析器，返回 (entries, merged_xml_path)。失败返回 (None, None)。"""
         merged_xml = output_dir / "references.xml"
-        parser_path = Path(settings.BASE_DIR) / "structural_screening/scripts/parser.py"
 
         try:
-            if not parser_path.exists():
-                self.logger.warning(f"[警告] 解析脚本不存在: {parser_path}，使用内置简化逻辑")
-                entries = self._simple_parse(input_dir)
-            else:
-                spec = importlib.util.spec_from_file_location("parser", parser_path)
-                parser = importlib.util.module_from_spec(spec)
-                sys.modules["parser"] = parser
-                spec.loader.exec_module(parser)
-
-                entries = parser.parse_directory(str(input_dir))
-                if entries and hasattr(parser, 'convert_to_xml'):
-                    parser.convert_to_xml(entries, str(merged_xml))
+            entries = _parser.parse_directory(str(input_dir))
+            if entries:
+                _parser.convert_to_xml(entries, str(merged_xml))
         except Exception as e:
             self.logger.error(f"[错误] 解析失败: {str(e)}")
             import traceback
@@ -135,26 +121,6 @@ class ParseHandler(BaseStepHandler):
             return None, None
 
         return entries, merged_xml
-
-    def _simple_parse(self, input_dir: Path) -> List[Dict]:
-        """备用简化解析逻辑（当 parser.py 不存在时使用）。"""
-        entries = []
-        for file_path in input_dir.iterdir():
-            if file_path.suffix.lower() == '.xml':
-                try:
-                    tree = ET.parse(file_path)
-                    root = tree.getroot()
-                    for ref in root.findall('.//reference'):
-                        entries.append({
-                            'title': ref.findtext('title', ''),
-                            'authors': ref.findtext('authors', ''),
-                            'year': ref.findtext('year', ''),
-                            'journal': ref.findtext('journal', ''),
-                            'abstract': ref.findtext('abstract', ''),
-                        })
-                except Exception as e:
-                    self.logger.warning(f"[警告] 解析 {file_path.name} 失败: {e}")
-        return entries
 
     def _generate_split_xmls(self, all_entries: List[Dict], split_dir: Path) -> int:
         """为每条条目生成单篇 XML 文件，返回生成数量。"""

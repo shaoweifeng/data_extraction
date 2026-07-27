@@ -92,8 +92,6 @@ class AIScreenHandler(BaseStepHandler):
         else:
             self.logger.info("[断点] 续传模式：保留已有结果，追加新结果")
 
-        self._copy_screening_scripts(workspace_ai)
-
         # 收集待处理条目（跳过已处理）
         entries_to_process = []
         for df in input_files:
@@ -427,7 +425,7 @@ class AIScreenHandler(BaseStepHandler):
         except Exception as e:
             self.logger.warning(f"[Prompt] 读取自定义 Prompt 失败: {e}")
 
-        prompt_path = Path(settings.BASE_DIR) / "structural_screening/02_screening_ai/prompts/prompt1.txt"
+        prompt_path = Path(settings.BASE_DIR) / "core/resources/prompts/prompt1.txt"
         if prompt_path.exists():
             base_prompt = prompt_path.read_text(encoding="utf-8")
         else:
@@ -471,17 +469,6 @@ class AIScreenHandler(BaseStepHandler):
         return {f["name"]: f"(模拟) {f['definition'][:30]}..." for f in self._get_extraction_fields()}
 
     # ── 工具方法 ─────────────────────────────────────────────────────────
-
-    def _copy_screening_scripts(self, target_dir: Path):
-        source_dir = Path(settings.BASE_DIR) / "structural_screening/scripts"
-        if source_dir.exists():
-            try:
-                shutil.copytree(source_dir, target_dir / "scripts",
-                                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-                                dirs_exist_ok=True)
-                self.logger.info("[脚本] 已复制筛选脚本到工作区")
-            except Exception as e:
-                self.logger.warning(f"[警告] 复制脚本失败: {e}")
 
     def _parse_xml_entry(self, xml_path: str) -> Dict:
         try:

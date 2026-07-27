@@ -188,9 +188,6 @@ class AsyncExecutor(BaseExecutor):
         else:
             self.logger.info("[断点] 断点续传模式：保留已有筛选结果，仅追加新结果")
         
-        # 4. 复制筛选脚本（如果存在）
-        self._copy_screening_scripts(workspace_ai)
-        
         # 5. 收集待处理条目
         entries_to_process = []
         
@@ -388,7 +385,7 @@ class AsyncExecutor(BaseExecutor):
             self.logger.warning(f"[Prompt] 读取自定义 Prompt 失败: {e}，回退到默认")
 
         # 2. 回退：prompt1.txt 文件
-        prompt_path = Path(settings.BASE_DIR) / "structural_screening/02_screening_ai/prompts/prompt1.txt"
+        prompt_path = Path(settings.BASE_DIR) / "core/resources/prompts/prompt1.txt"
         if prompt_path.exists():
             base_prompt = prompt_path.read_text(encoding="utf-8")
         else:
@@ -684,27 +681,6 @@ class AsyncExecutor(BaseExecutor):
             "排除动物实验研究",
             "排除病例报告"
         ]
-    
-    def _copy_screening_scripts(self, target_dir: Path):
-        """
-        复制筛选脚本到工作区（可选）
-        
-        Args:
-            target_dir: 目标目录
-        """
-        source_dir = Path(settings.BASE_DIR) / "structural_screening/scripts"
-        
-        if source_dir.exists():
-            try:
-                shutil.copytree(
-                    source_dir,
-                    target_dir / "scripts",
-                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-                    dirs_exist_ok=True
-                )
-                self.logger.info("[脚本] 已复制筛选脚本到工作区")
-            except Exception as e:
-                self.logger.warning(f"[警告] 复制脚本失败: {e}")
     
     def _parse_xml_entry(self, xml_path: str) -> Dict:
         """

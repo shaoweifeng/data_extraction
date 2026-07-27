@@ -19,7 +19,7 @@ from core.models import ActivityLog, Project
 
 
 # 默认 Prompt 文件路径（相对 BASE_DIR）
-_DEFAULT_PROMPT_REL = "structural_screening/02_screening_ai/prompts/prompt1.txt"
+_DEFAULT_PROMPT_REL = "core/resources/prompts/prompt1.txt"
 
 # Prompt 必须包含的占位符
 _REQUIRED_PLACEHOLDER = '{screening_criteria}'
