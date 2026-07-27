@@ -61,8 +61,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(BASE_DIR, 'web', 'dist'),   # Vite 构建产物（优先）
-            os.path.join(BASE_DIR, 'frontend'),       # 旧入口（迁移完成后可删除）
+            os.path.join(BASE_DIR, 'web', 'dist'),   # Vite 构建产物
         ],
         'APP_DIRS': True,
         'OPTIONS': {
