@@ -420,10 +420,13 @@ class BaseExecutor(ABC):
             if self.step_obj:
                 self.task_obj.refresh_from_db()  # 先刷新 task 状态，再决定 step 状态
                 if self.task_obj.status in ('stopping', 'stopped'):
-                    self.step_obj.status = 'stopped'
+                    # 暂停：步骤执行了一半、可断点续传，语义上仍是“进行中”。
+                    # 不能写 'stopped'（不在 StageStep.STATUS_CHOICES 内，会导致前端进度条显示为灰色未开始）。
+                    self.step_obj.status = 'in_progress'
+                    # 未完成，不写 completed_at
                 else:
                     self.step_obj.status = 'completed' if success else 'failed'
-                self.step_obj.completed_at = timezone.now()
+                    self.step_obj.completed_at = timezone.now()
                 
                 # 保留已有的metadata（如去重统计信息），只更新基础信息
                 existing_metadata = self.step_obj.metadata or {}

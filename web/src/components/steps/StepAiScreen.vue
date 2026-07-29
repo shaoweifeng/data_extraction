@@ -88,7 +88,7 @@
       <div class="step-ref-panel ai-ref-panel">
         <div class="step-ref-panel-tabs">
           <button @click="screeningTab = 'pending'; loadPending(0)" :class="screeningTab === 'pending' ? 'active-pending' : ''" class="step-ref-panel-tab">
-            待筛选 ({{ Math.max(0, s.pendingTotal - s.screenedTotal) }})
+            待筛选 ({{ s.pendingTotal }})
           </button>
           <button @click="screeningTab = 'screened'; loadScreened(0)" :class="screeningTab === 'screened' ? 'active-screened' : ''" class="step-ref-panel-tab">
             已筛选 ({{ s.screenedTotal || s.processedCount }})
@@ -99,7 +99,7 @@
             <div v-if="s.pendingFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs py-4">暂无待筛选文献</div>
             <div v-else>
               <div v-for="file in s.pendingFiles" :key="file.id" class="step-ref-row">
-                <div class="flex items-center overflow-hidden">
+                <div class="flex items-center overflow-hidden flex-1 min-w-0">
                   <i class="fas fa-file-code text-blue-400 mr-2 flex-shrink-0"></i>
                   <span class="truncate" :title="file.filename">{{ file.filename }}</span>
                 </div>
@@ -107,10 +107,10 @@
               </div>
             </div>
           </div>
-          <div v-if="(s.pendingTotal - s.screenedTotal) > PAGE_SIZE" class="flex items-center justify-center gap-1 mt-1 flex-shrink-0">
+          <div v-if="s.pendingTotal > PAGE_SIZE" class="flex items-center justify-center gap-1 mt-1 flex-shrink-0">
             <button @click="loadPending(Math.max(0, s.pendingPage - 1))" :disabled="s.pendingPage === 0" class="step-page-btn">上一页</button>
-            <span class="text-xs text-gray-400">{{ s.pendingPage + 1 }}/{{ Math.ceil(Math.max(1, s.pendingTotal - s.screenedTotal) / PAGE_SIZE) }}</span>
-            <button @click="loadPending(s.pendingPage + 1)" :disabled="s.pendingPage >= Math.ceil(Math.max(1, s.pendingTotal - s.screenedTotal) / PAGE_SIZE) - 1" class="step-page-btn">下一页</button>
+            <span class="text-xs text-gray-400">{{ s.pendingPage + 1 }}/{{ Math.ceil(Math.max(1, s.pendingTotal) / PAGE_SIZE) }}</span>
+            <button @click="loadPending(s.pendingPage + 1)" :disabled="s.pendingPage >= Math.ceil(Math.max(1, s.pendingTotal) / PAGE_SIZE) - 1" class="step-page-btn">下一页</button>
           </div>
         </div>
         <div v-show="screeningTab === 'screened'" class="flex-1 flex flex-col min-h-0">
@@ -118,7 +118,7 @@
             <div v-if="s.screenedFiles.length === 0" class="h-full flex items-center justify-center text-gray-400 text-xs py-4">暂无已筛选文献</div>
             <div v-else>
               <div v-for="file in s.screenedFiles" :key="file.id" class="step-ref-row">
-                <div class="flex items-center overflow-hidden">
+                <div class="flex items-center overflow-hidden flex-1 min-w-0">
                   <i class="fas fa-file-code mr-2 flex-shrink-0" :class="file.metadata?.decision === 'included' ? 'text-green-500' : 'text-red-400'"></i>
                   <span class="truncate" :title="file.filename">{{ file.filename }}</span>
                 </div>
@@ -315,24 +315,40 @@ async function loadPending(page) {
   if (!stage) return
   const pageNum = page ?? s.pendingPage
   const offset = pageNum * PAGE_SIZE
+  const pid = project.currentProject.id
 
+  // 先确定数据源 step：优先 dedup，其次 parse（与后端 _get_input_files 一致）。
+  // 用不带 exclude_screened 的探测判断该 step 是否“本来就有”源文件，
+  // 避免筛完后 dedup 返回空、错误 fallback 到 parse 显示全量。
+  let sourceStep = null
   for (const key of ['dedup', 'parse']) {
     const step = stage.steps.find((st) => st.step_key === key)
     if (!step) continue
     try {
-      const res = await http.get(`/files/?project=${project.currentProject.id}&step=${step.id}&data_category=intermediate&limit=${PAGE_SIZE}&offset=${offset}`)
-      const data = res.data
-      const files = extractListData(data)
-      if (data.total > 0 || files.length > 0) {
-        s.pendingFiles = files
-        s.pendingTotal = data.total ?? files.length
-        if (page !== undefined) s.pendingPage = page
-        return
+      const probe = await http.get(`/files/?project=${pid}&step=${step.id}&data_category=intermediate&limit=1&offset=0`)
+      if ((probe.data.total ?? 0) > 0) {
+        sourceStep = step
+        break
       }
     } catch {}
   }
-  s.pendingFiles = []
-  s.pendingTotal = 0
+
+  if (!sourceStep) {
+    s.pendingFiles = []
+    s.pendingTotal = 0
+    return
+  }
+
+  try {
+    const res = await http.get(`/files/?project=${pid}&step=${sourceStep.id}&data_category=intermediate&exclude_screened=1&limit=${PAGE_SIZE}&offset=${offset}`)
+    const data = res.data
+    s.pendingFiles = extractListData(data)
+    s.pendingTotal = data.total ?? s.pendingFiles.length
+    if (page !== undefined) s.pendingPage = page
+  } catch {
+    s.pendingFiles = []
+    s.pendingTotal = 0
+  }
 }
 
 async function loadScreened(page) {
@@ -363,7 +379,24 @@ async function loadAiScreenStats() {
 // 同步最新 ai_screen 任务
 function syncLatestAiTask() {
   const aiTask = taskStore.recentTasks.find((t) => t.task_type === 'ai_screen')
-  if (aiTask) s.latestAiScreenTask = aiTask
+  if (!aiTask) return
+  s.latestAiScreenTask = aiTask
+  // 从任务对象恢复筛选进度（刷新页面后进度条不归零）
+  s.screeningProgressValue = aiTask.progress_percentage || 0
+  const sp = aiTask.config?.screen_progress
+  if (sp) {
+    s.totalRefs = sp.total_refs || s.totalRefs
+    s.processedCount = sp.processed_refs || 0
+  }
+  // 已实际筛选出的文件数是最可靠的已处理数，用它兜底
+  if ((!s.processedCount || s.processedCount === 0) && s.screenedTotal > 0) {
+    s.processedCount = s.screenedTotal
+  }
+  // 若任务处于运行中/等待中，恢复轮询
+  if (['running', 'pending', 'stopping'].includes(aiTask.status)) {
+    s.isProcessing = aiTask.status !== 'stopping'
+    pollAiScreening(aiTask.id)
+  }
 }
 
 // ── 筛选任务 ──────────────────────────────────────────────────
@@ -415,7 +448,7 @@ async function resumeTask() {
     const newTask = res.data.task || res.data
     s.latestAiScreenTask = newTask
     s.screeningProgressValue = newTask.progress_percentage || 0
-    s.totalRefs = newTask.metadata?.total_refs || s.totalRefs || s.pendingTotal
+    s.totalRefs = newTask.config?.screen_progress?.total_refs || s.totalRefs || s.pendingTotal
     s.isProcessing = true
     s.aiScreenLogContent = '正在恢复任务，即将继续从上次断点处理...'
     pollAiScreening(newTask.id)
@@ -457,9 +490,10 @@ async function pollAiScreening(taskId) {
       s.latestAiScreenTask = task
       const status = task.status
       s.screeningProgressValue = task.progress_percentage || 0
-      if (task.metadata) {
-        s.totalRefs = task.metadata.total_refs || s.totalRefs
-        s.processedCount = task.metadata.processed_refs || 0
+      const sp = task.config?.screen_progress
+      if (sp) {
+        s.totalRefs = sp.total_refs || s.totalRefs
+        s.processedCount = sp.processed_refs || 0
       }
       // 拉日志
       try {
@@ -505,7 +539,8 @@ async function pollAiScreening(taskId) {
 .ai-screen-layout {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   gap: 0;
   padding: 16px;
   overflow: hidden;
@@ -590,6 +625,7 @@ async function pollAiScreening(taskId) {
 .ai-screen-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr);
   gap: 12px;
   flex: 1;
   min-height: 0;
@@ -598,6 +634,8 @@ async function pollAiScreening(taskId) {
 
 .ai-ref-panel {
   height: 100% !important;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* 右侧面板 */

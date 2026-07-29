@@ -110,6 +110,8 @@ class AIScreenHandler(BaseStepHandler):
         batch_size = self.config.get("batch_size", 16)
         concurrency = self.config.get("concurrency", 16)
         processed_count = len(processed_sources)
+        # 进入循环前先上报一次起点篇数（续传时 processed_count 已是断点值）
+        self._send_heartbeat(processed_count, total_refs)
         self.logger.update_progress(processed_count, total_refs, "refs")
 
         for i in range(0, len(entries_to_process), batch_size):
@@ -122,7 +124,6 @@ class AIScreenHandler(BaseStepHandler):
                 })
                 return False
 
-            self._send_heartbeat(processed_count, total_refs)
             batch = entries_to_process[i:i + batch_size]
             self.logger.info(f"[批次] 处理 {i + 1}-{i + len(batch)}/{len(entries_to_process)} 篇（并发{concurrency}线程）")
 
@@ -133,6 +134,8 @@ class AIScreenHandler(BaseStepHandler):
                 processed_sources.add(entry["source_xml"])
                 processed_count += 1
 
+            # 篇数递增后立即上报心跳（放在批次结尾，确保最后一批也能上报最新篇数）
+            self._send_heartbeat(processed_count, total_refs)
             self.logger.update_progress(processed_count, total_refs, "refs")
             self.save_checkpoint({
                 "processed_sources": list(processed_sources),
@@ -212,18 +215,27 @@ class AIScreenHandler(BaseStepHandler):
     # ── 心跳 ─────────────────────────────────────────────────────────────
 
     def _send_heartbeat(self, current: int, total: int):
+        """将筛选进度写入 Task.config.screen_progress（供前端轮询）。
+
+        注意：Task 模型没有 metadata 字段，进度统一存放在 config 里
+        （与 parse 步骤的 config.parse_progress 保持一致）。
+        """
         try:
+            from django.db import close_old_connections
             from core.models import Task
-            Task.objects.filter(id=self.executor.task_id).update(
-                metadata={
-                    'heartbeat': datetime.now().isoformat(),
-                    'processed_refs': current,
-                    'total_refs': total,
-                    'status_message': f'正在处理第 {current}/{total} 篇文献',
-                }
-            )
-        except Exception:
-            pass
+            close_old_connections()
+            # 读取现有 config 再合并，避免覆盖 criteria / ai_model 等配置
+            row = Task.objects.filter(id=self.executor.task_id).values('config').first()
+            cfg = (row['config'] if row and row['config'] else {})
+            cfg['screen_progress'] = {
+                'heartbeat': datetime.now().isoformat(),
+                'processed_refs': current,
+                'total_refs': total,
+                'status_message': f'正在处理第 {current}/{total} 篇文献',
+            }
+            Task.objects.filter(id=self.executor.task_id).update(config=cfg)
+        except Exception as e:
+            self.logger.warning(f"[心跳] 更新失败: {e}")
 
     # ── 数据获取 ─────────────────────────────────────────────────────────
 

@@ -146,7 +146,7 @@ body {
 /* =============================================
    Badge
    ============================================= */
-.badge { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+.badge { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .badge-green  { background: #dcfce7; color: #16a34a; }
 .badge-blue   { background: #dbeafe; color: #2563eb; }
 .badge-yellow { background: #fef9c3; color: #a16207; }

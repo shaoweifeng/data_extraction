@@ -39,6 +39,24 @@ class DataFileViewSet(viewsets.ModelViewSet):
         if data_category:
             qs = qs.filter(data_category=data_category)
 
+        # 排除已被 AI 初筛处理过的源文件（供 AI 初筛"待筛选"列表使用）
+        # 已筛选结果 DataFile 的 metadata.source_xml 记录了源文件名，
+        # 用它反查、排除掉源文件列表中已筛选的条目，使列表随筛选进度动态减少。
+        if qp.get('exclude_screened') in ('1', 'true', 'True') and project_id:
+            ai_step = StageStep.objects.filter(
+                stage__project_id=project_id,
+                stage__stage_key='SCREEN_1',
+                step_key='ai_screen',
+            ).first()
+            if ai_step:
+                screened_sources = (
+                    DataFile.objects.filter(step=ai_step, data_category='output')
+                    .values_list('metadata__source_xml', flat=True)
+                )
+                screened_sources = [s for s in screened_sources if s]
+                if screened_sources:
+                    qs = qs.exclude(filename__in=screened_sources)
+
         return qs.select_related('stage', 'step', 'created_by').prefetch_related('versions')
 
     def list(self, request, *args, **kwargs):

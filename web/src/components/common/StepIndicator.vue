@@ -40,8 +40,13 @@ function getStepObj(step) {
   return stage?.steps.find((s) => s.step_key === step.stepKey)
 }
 
+// 归一化后端步骤状态 → UI 状态
+// 后端 StageStep.status 取值：pending / in_progress / completed / failed / skipped
+// （历史上执行器还可能写入越界的 stopped，这里一并按“进行中”处理）
 function getStepStatus(step) {
-  return getStepObj(step)?.status || 'pending'
+  const raw = getStepObj(step)?.status || 'pending'
+  if (raw === 'in_progress' || raw === 'stopped' || raw === 'stopping') return 'running'
+  return raw
 }
 
 function getNodeClass(step, idx) {

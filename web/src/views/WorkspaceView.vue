@@ -151,7 +151,7 @@ onMounted(async () => {
 }
 .ws-step-content {
   flex: 1; overflow-y: auto; padding: 20px 24px;
-  min-width: 0; display: flex; flex-direction: column;
+  min-width: 0; min-height: 0; display: flex; flex-direction: column;
 }
 .step-nav-bar { margin-top: auto; padding-top: 12px; }
 
