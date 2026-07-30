@@ -6,7 +6,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+/dist/
 downloads/
 eggs/
 .eggs/
@@ -31,6 +31,7 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 /static/
+/staticfiles/
 /media/
 
 # Task workspaces
@@ -67,4 +68,8 @@ htmlcov/
 
 # Vite 前端工程
 web/node_modules/
-web/dist/
+
+# 前端构建产物：需要提交到仓库，供服务器 git pull 后直接使用（服务器无 Node 环境）
+# 上面的 /dist/ 只忽略项目根目录的 Python 打包产物，不影响 web/dist
+!web/dist/
+!web/dist/**

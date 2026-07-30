@@ -8,7 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist 需要提交到仓库供服务器直接使用（服务器无 Node 环境），故不忽略
+# dist
 dist-ssr
 *.local
 

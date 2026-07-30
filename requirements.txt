@@ -8,6 +8,7 @@ djangorestframework
 celery
 redis
 django-cors-headers
+whitenoise
 python-dotenv
 django-celery-results
 django-celery-beat

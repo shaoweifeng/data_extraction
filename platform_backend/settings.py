@@ -24,7 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_71g+1zhg!ka)5fm(r$54+8q167!!67w%uqc(tg2ut1(gb^9yh'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# 默认 True（本地开发）；生产部署时设环境变量 DJANGO_DEBUG=False 关闭。
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() not in ('false', '0', 'no')
 
 ALLOWED_HOSTS = ['*']
 
@@ -46,6 +47,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise：生产环境(DEBUG=False)下托管前端静态资源，紧跟 SecurityMiddleware 之后
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -140,6 +143,27 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'web', 'dist', 'assets'),
 ] if os.path.isdir(os.path.join(BASE_DIR, 'web', 'dist', 'assets')) else []
+
+# ---------------------------------------------------------------------------
+# WhiteNoise：让 Django 在生产环境(DEBUG=False)下也能直接托管前端静态资源，
+# 无需 nginx / Node。前端 index.html 引用的是 /assets/*.js、/favicon.svg 等根路径资源，
+# 通过 WHITENOISE_ROOT 把整个 web/dist 挂到根 URL 上即可命中。
+# ---------------------------------------------------------------------------
+_WHITENOISE_DIST = os.path.join(BASE_DIR, 'web', 'dist')
+if os.path.isdir(_WHITENOISE_DIST):
+    WHITENOISE_ROOT = _WHITENOISE_DIST
+# 用带压缩+缓存清单的存储后端（collectstatic 时生成 .gz/.br 与带哈希文件名）
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
+# index.html 不做长缓存，保证前端更新后能及时刷新
+WHITENOISE_INDEX_FILE = False
+WHITENOISE_MAX_AGE = 3600
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

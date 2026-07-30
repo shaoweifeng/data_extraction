@@ -20,13 +20,20 @@ urlpatterns = [
     re_path(r'^(?!api/|admin/|media/|static/|assets/).*$', SPAView.as_view()),
 ]
 
-if settings.DEBUG:
-    from django.views.static import serve as _serve
+from django.views.static import serve as _serve
 
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# media（任务日志、用户上传等动态文件）：无论 DEBUG 与否都需可访问。
+# 前端会通过 /media/ 读取任务日志等，生产环境(DEBUG=False)下同样要托管。
+# 注：media 是运行时动态生成的文件，不适合走 whitenoise 静态清单，用 Django serve 即可（个人项目足够）。
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', _serve, {'document_root': settings.MEDIA_ROOT}),
+]
+
+if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-    # Vite 构建产物的 assets 目录（前端路由非 /static/ 前缀）
+    # 开发环境下由 Django 直接 serve Vite 产物；
+    # 生产环境(DEBUG=False)下这些资源由 WhiteNoise(WHITENOISE_ROOT=web/dist) 接管。
     _vite_assets = os.path.join(settings.BASE_DIR, 'web', 'dist', 'assets')
     if os.path.isdir(_vite_assets):
         urlpatterns += [
