@@ -24,6 +24,45 @@
 
 ---
 
+## 一·补 、数据表设计说明（是否新建表）
+
+**结论：复用 Django 自带 `auth_user` + 扩展/新建 `plat_*` 业务表。不修改 auth 系列表。**
+
+### 为什么不直接改 auth_user
+Django 自带的 `auth_user` 表只负责**认证核心**（`username / password / email / is_staff / is_superuser / is_active / date_joined / last_login`）。角色、封禁、并发档位、积分余额、交易流水、token 明细、兑换码、注册防刷等都是**业务数据**，Django 官方明确不推荐直接修改 User 表；标准做法是用 `OneToOne / ForeignKey` 关联 User 的扩展表。本项目现有 `plat_userprofile` 已是这种模式。
+
+### 全量改造涉及的表
+
+| 表 | 归属 | 本次处理 | 所属阶段 |
+|----|------|----------|----------|
+| `auth_user` | Django 自带 | ✅ 复用，不改 | — |
+| `auth_group` / `auth_permission` 等 | Django 自带 | ✅ 不动（项目用自研 RBAC） | — |
+| `plat_userprofile` | **已存在** | 🔧 **加字段**：`is_banned`、`concurrency_limit`；改 `role` 默认值 | **阶段一** |
+| `plat_permission` / `plat_userpermission` / `plat_roletemplate*` | **已存在** | ✅ 保留兼容 | — |
+| `plat_creditaccount` | 🆕 新建 | 积分账户（余额） | 阶段二 |
+| `plat_credittransaction` | 🆕 新建 | 积分流水（充值/消费/退款/赠送/调额） | 阶段二 |
+| `plat_tokenusagelog` | 🆕 新建 | token 消耗明细 | 阶段二 |
+| `plat_registrationlog` | 🆕 新建 | 注册防刷记录（IP/邮箱） | 阶段五 |
+| `plat_rechargecode` | 🆕 新建 | 兑换码 | 阶段六 |
+
+### 关系示意
+
+```
+auth_user ──1:1── plat_userprofile      (已存在, 阶段一加字段)
+auth_user ──1:1── plat_creditaccount     (新建, 阶段二)
+auth_user ──1:*── plat_registrationlog   (新建, 阶段五)
+auth_user ──1:*── plat_rechargecode      (used_by, 新建, 阶段六)
+auth_user ──1:*── plat_tokenusagelog     (新建, 阶段二)
+plat_creditaccount ──1:*── plat_credittransaction  (新建, 阶段二)
+plat_task ──1:*── plat_tokenusagelog     (新建, 阶段二)
+```
+
+### 与本阶段（阶段一）的关系
+- **阶段一只涉及 `plat_userprofile` 的字段扩展**（`is_banned`、`concurrency_limit`，`role` 默认值调整），不新建任何表。
+- 上表中所有 🆕 新建表在后续阶段（二/五/六）落地，全部通过 `FK/OneToOne` 关联 `auth_user`，**不侵入 auth 系列表**，且命名沿用项目现有 `plat_*` 风格。
+
+---
+
 ## 二、改造目标
 
 1. 注册后自动建 `UserProfile(role='user', is_approved=True)`，**注册即可登录**。

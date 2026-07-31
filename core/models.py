@@ -18,15 +18,20 @@ class UserProfile(models.Model):
     """用户配置文件"""
     ROLE_CHOICES = [
         ('admin', '管理员'),
+        ('user', '普通用户'),
+        # 以下为旧值，保留仅为兼容历史数据迁移，不再新用
         ('researcher', '研究者'),
         ('viewer', '访客'),
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="用户")
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='researcher', verbose_name="角色")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user', verbose_name="角色")
     quota_projects = models.IntegerField(default=10, verbose_name="项目配额")
     quota_storage_mb = models.IntegerField(default=5120, verbose_name="存储配额(MB)")
-    is_approved = models.BooleanField(default=False, verbose_name="是否已审核")
+    # 免审核后 is_approved 语义弱化（默认 True），封禁统一走 is_banned
+    is_approved = models.BooleanField(default=True, verbose_name="是否已审核")
+    is_banned = models.BooleanField(default=False, verbose_name="是否被封禁")
+    concurrency_limit = models.IntegerField(default=2, verbose_name="AI筛选并发档位")
     approved_at = models.DateTimeField(null=True, blank=True, verbose_name="审核时间")
     approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, 
                                      related_name='approved_users', verbose_name="审核人")
@@ -37,6 +42,11 @@ class UserProfile(models.Model):
         db_table = 'plat_userprofile'
         verbose_name = "用户配置"
         verbose_name_plural = "用户配置"
+
+    @property
+    def is_admin(self):
+        """是否管理员：role=admin 或 Django 超级用户"""
+        return self.role == 'admin' or self.user.is_superuser
     
     def __str__(self):
         return f"{self.user.username} ({self.get_role_display()})"
@@ -128,8 +138,13 @@ class ProjectQuerySet(models.QuerySet):
         """返回用户有权访问的项目"""
         if user.is_superuser:
             return self
-        
-        # 检查是否有 view_all 权限
+
+        # 管理员角色可查看全部项目
+        profile = getattr(user, 'profile', None)
+        if profile and profile.role == 'admin':
+            return self
+
+        # 兼容旧 RBAC：拥有 project.view_all 权限也可查看全部
         if UserPermission.objects.filter(
             user=user,
             permission__code='project.view_all'
@@ -428,6 +443,27 @@ class ActivityLog(models.Model):
         verbose_name = "操作日志"
         verbose_name_plural = "操作日志"
         ordering = ['-created_at']
+
+
+# ============================================================================
+# 信号：User 创建时自动创建 UserProfile（免审核，注册即可用）
+# ============================================================================
+
+@receiver(post_save, sender=User)
+def ensure_user_profile(sender, instance, created, **kwargs):
+    """
+    User 创建时自动建立 UserProfile 兜底，避免注册/创建用户时遗漏。
+    - 超级用户默认 role=admin，其余默认 role=user。
+    - is_approved=True（免审核），封禁统一走 is_banned。
+    """
+    if created:
+        UserProfile.objects.get_or_create(
+            user=instance,
+            defaults={
+                'role': 'admin' if instance.is_superuser else 'user',
+                'is_approved': True,
+            },
+        )
 
     def __str__(self):
         return f"{self.get_operation_type_display()} - {self.created_at}"

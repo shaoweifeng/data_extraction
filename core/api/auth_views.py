@@ -27,10 +27,11 @@ def register(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # 创建用户；UserProfile 由 post_save 信号自动创建（role=user, is_approved=True），免审核
     user = User.objects.create_user(username=username, password=password, email=email)
 
     return Response(
-        {"message": "注册成功，请等待管理员审核", "user": UserSerializer(user).data},
+        {"message": "注册成功，请登录", "user": UserSerializer(user).data},
         status=status.HTTP_201_CREATED,
     )
 
@@ -44,9 +45,10 @@ def login_view(request):
     user = authenticate(request, username=username, password=password)
 
     if user is not None:
-        if hasattr(user, 'profile') and not user.profile.is_approved and not user.is_superuser:
+        # 免审核；被管理员封禁的账号禁止登录（超级用户不受封禁限制）
+        if hasattr(user, 'profile') and user.profile.is_banned and not user.is_superuser:
             return Response(
-                {"error": "账号尚未通过审核，请联系管理员"},
+                {"error": "账号已被封禁，请联系管理员"},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
