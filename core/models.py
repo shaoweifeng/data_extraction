@@ -455,6 +455,7 @@ def ensure_user_profile(sender, instance, created, **kwargs):
     User 创建时自动建立 UserProfile 兜底，避免注册/创建用户时遗漏。
     - 超级用户默认 role=admin，其余默认 role=user。
     - is_approved=True（免审核），封禁统一走 is_banned。
+    - 用 get_or_create 防止重复创建导致 IntegrityError。
     """
     if created:
         UserProfile.objects.get_or_create(
@@ -464,27 +465,6 @@ def ensure_user_profile(sender, instance, created, **kwargs):
                 'is_approved': True,
             },
         )
-
-    def __str__(self):
-        return f"{self.get_operation_type_display()} - {self.created_at}"
-
-
-# ============================================================================
-# 信号处理
-# ============================================================================
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """创建用户时自动创建 Profile"""
-    if created:
-        UserProfile.objects.create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """保存 User 时同步保存 Profile"""
-    if hasattr(instance, 'profile'):
-        instance.profile.save()
 
 
 @receiver(post_delete, sender=DataFile)
