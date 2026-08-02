@@ -29,6 +29,8 @@ def register(request):
 
     # 创建用户；UserProfile 由 post_save 信号自动创建（role=user, is_approved=True），免审核
     user = User.objects.create_user(username=username, password=password, email=email)
+    # 重新查询确保 profile 反向关系完整加载后再序列化（避免信号建 Profile 后缓存未刷新报 500）
+    user = User.objects.select_related('profile').get(pk=user.pk)
 
     return Response(
         {"message": "注册成功，请登录", "user": UserSerializer(user).data},
