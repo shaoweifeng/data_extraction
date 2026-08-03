@@ -17,10 +17,8 @@ import shutil
 
 from django.conf import settings
 from django.db import connection
-from django.db.models import Q
-from django.utils import timezone
 
-from core.models import ActivityLog, Project, ProjectStage, StageStep, UserPermission
+from core.models import ActivityLog, Project, ProjectStage, StageStep
 
 logger = logging.getLogger(__name__)
 
@@ -33,15 +31,9 @@ PROJECT_STAGE_KEYS = ['SEARCH', 'SCREEN_1', 'SCREEN_2', 'QUALITY', 'EXTRACT', 'M
 # ============================================================================
 
 def _check_permission(user, permission_code: str) -> bool:
-    """检查用户是否拥有指定权限，超管跳过。"""
-    if user.is_superuser:
-        return True
-    return UserPermission.objects.filter(
-        user=user,
-        permission__code=permission_code,
-    ).filter(
-        Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
-    ).exists()
+    """复用 core.api.common.check_permission 的统一逻辑（role 分级 + 旧 RBAC 兜底）。"""
+    from core.api.common import check_permission
+    return check_permission(user, permission_code)
 
 
 # ============================================================================

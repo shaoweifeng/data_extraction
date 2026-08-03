@@ -66,7 +66,7 @@ class OpenAICompatibleProvider(BaseAIProvider):
             prompt_template: prompt 模板，含 {screening_criteria} 占位符
         
         Returns:
-            ScreeningResult
+            ScreeningResult（含 token_usage 字段）
         """
         title = entry.get("title", "Unknown")
 
@@ -91,21 +91,31 @@ class OpenAICompatibleProvider(BaseAIProvider):
         
         full_prompt = f"{prompt}\n\n[文献内容]\n{content}"
 
-        # 调用 API
-        raw_response = self._call_api(full_prompt)
+        # 调用 API，同时获取 token 用量
+        raw_response, token_usage = self._call_api(full_prompt)
         if raw_response is None:
             return ScreeningResult(
                 title=title,
                 decision="error",
                 model=self.name,
-                error="API 调用失败，返回为空"
+                error="API 调用失败，返回为空",
+                token_usage=token_usage,
             )
 
-        # 解析 JSON 响应
-        return self._parse_response(title, raw_response)
+        # 解析 JSON 响应，携带 token_usage
+        result = self._parse_response(title, raw_response)
+        result.token_usage = token_usage
+        return result
 
-    def _call_api(self, full_prompt: str) -> Optional[str]:
-        """发送请求到 DeepSeek API"""
+    def _call_api(self, full_prompt: str):
+        """
+        发送请求到 OpenAI 兼容接口。
+
+        Returns:
+            (content: str | None, token_usage: dict | None)
+            token_usage 格式：{'prompt': int, 'completion': int, 'total': int}
+            API 调用失败或模型不返回 usage 时 token_usage 为 None。
+        """
         if not self.api_key:
             raise ValueError("AI_API_KEY 未配置，无法调用真实 AI API")
 
@@ -128,16 +138,25 @@ class OpenAICompatibleProvider(BaseAIProvider):
                 timeout=self.timeout,
             )
             if response.status_code == 200:
-                return response.json()["choices"][0]["message"]["content"]
+                body = response.json()
+                content = body["choices"][0]["message"]["content"]
+                # 采集 token 用量（OpenAI 兼容接口标准字段）
+                raw_usage = body.get("usage") or {}
+                token_usage = {
+                    "prompt":     raw_usage.get("prompt_tokens", 0),
+                    "completion": raw_usage.get("completion_tokens", 0),
+                    "total":      raw_usage.get("total_tokens", 0),
+                } if raw_usage else None
+                return content, token_usage
             else:
                 logger.error(f"[DeepSeek] API 返回错误: {response.status_code} {response.text[:200]}")
-                return None
+                return None, None
         except requests.Timeout:
             logger.error(f"[DeepSeek] 请求超时（{self.timeout}s）")
-            return None
+            return None, None
         except Exception as e:
             logger.error(f"[DeepSeek] 请求异常: {e}")
-            return None
+            return None, None
 
     def _parse_response(self, title: str, raw: str) -> ScreeningResult:
         """解析 AI 返回的 JSON，生成 ScreeningResult"""

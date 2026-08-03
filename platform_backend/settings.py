@@ -173,6 +173,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ============================================================================
+# 计费常量（阶段二）
+# ============================================================================
+
+# 1 credit = N tokens（可调整，历史数据按写入时的快照结算）
+BILLING_CREDIT_TOKEN_RATIO = int(os.getenv('BILLING_CREDIT_TOKEN_RATIO', '1000'))
+
+# 注册时自动赠送的初始免费额度（credits）
+BILLING_FREE_CREDITS_ON_REGISTER = int(os.getenv('BILLING_FREE_CREDITS_ON_REGISTER', '200'))
+
+# 余额不足时的预估每篇 credits（阶段三接入计费后用于预扣估算）
+BILLING_ESTIMATE_CREDITS_PER_REF = int(os.getenv('BILLING_ESTIMATE_CREDITS_PER_REF', '2'))
+
 # Django REST Framework 配置
 REST_FRAMEWORK = {
     # 认证方式

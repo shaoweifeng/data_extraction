@@ -110,6 +110,13 @@ class AIScreenHandler(BaseStepHandler):
         batch_size = self.config.get("batch_size", 16)
         concurrency = self.config.get("concurrency", 16)
         processed_count = len(processed_sources)
+        # 阶段二：全程累加 token 统计（key: prompt/completion/total/ref_count）
+        token_stats = {
+            'prompt_tokens': 0,
+            'completion_tokens': 0,
+            'total_tokens': 0,
+            'ref_count': 0,      # 实际调用过 AI API 的篇数（mock 不计）
+        }
         # 进入循环前先上报一次起点篇数（续传时 processed_count 已是断点值）
         self._send_heartbeat(processed_count, total_refs)
         self.logger.update_progress(processed_count, total_refs, "refs")
@@ -133,6 +140,13 @@ class AIScreenHandler(BaseStepHandler):
                 self._save_result(entry, result, results_dir)
                 processed_sources.add(entry["source_xml"])
                 processed_count += 1
+                # 累加 token 统计
+                usage = result.get('token_usage')
+                if usage:
+                    token_stats['prompt_tokens']     += usage.get('prompt', 0)
+                    token_stats['completion_tokens'] += usage.get('completion', 0)
+                    token_stats['total_tokens']      += usage.get('total', 0)
+                    token_stats['ref_count']         += 1
 
             # 篇数递增后立即上报心跳（放在批次结尾，确保最后一批也能上报最新篇数）
             self._send_heartbeat(processed_count, total_refs)
@@ -148,6 +162,9 @@ class AIScreenHandler(BaseStepHandler):
         self.logger.info("[保存] 将结果保存到数据库...")
         self._save_all_results(results_dir)
         self.executor.clear_checkpoint()
+
+        # 阶段二：将 token 统计写入 Task.result，并写 TokenUsageLog
+        self._save_token_stats(token_stats)
 
         from django.db import close_old_connections
         close_old_connections()
@@ -338,6 +355,7 @@ class AIScreenHandler(BaseStepHandler):
                 "error": sr.error,
                 "timestamp": datetime.now().isoformat(),
                 "extracted_fields": sr.extracted_fields or {},
+                "token_usage": sr.token_usage,   # 阶段二：透传到 handler 层汇总
             }
             if sr.is_error:
                 self.logger.warning(f"[AI] 筛选失败: {entry.get('title', '')[:40]} - {sr.error}")
@@ -479,6 +497,59 @@ class AIScreenHandler(BaseStepHandler):
 
     def _mock_extracted_fields(self) -> Dict:
         return {f["name"]: f"(模拟) {f['definition'][:30]}..." for f in self._get_extraction_fields()}
+
+    # ── Token 统计（阶段二）───────────────────────────────────────────────
+
+    def _save_token_stats(self, token_stats: Dict):
+        """
+        将 token 用量统计写入 Task.result['token_stats']，
+        并在 TokenUsageLog 中写一条任务级汇总记录（旁路，异常不影响筛选结果）。
+        """
+        if token_stats.get('total_tokens', 0) == 0:
+            return
+
+        from django.conf import settings as dj_settings
+        ratio = getattr(dj_settings, 'BILLING_CREDIT_TOKEN_RATIO', 1000)
+        credits_estimate = max(1, token_stats['total_tokens'] // ratio)
+        token_stats['credits_estimate'] = credits_estimate
+        token_stats['credit_token_ratio'] = ratio
+
+        # 1. 写入 Task.result
+        try:
+            from django.db import close_old_connections
+            from core.models import Task
+            close_old_connections()
+            row = Task.objects.filter(id=self.executor.task_id).values('result').first()
+            result_data = (row['result'] if row and row['result'] else {}) or {}
+            result_data['token_stats'] = token_stats
+            Task.objects.filter(id=self.executor.task_id).update(result=result_data)
+            self.logger.info(
+                f"[Token] 本次任务共消耗 {token_stats['total_tokens']} tokens"
+                f"（{token_stats['ref_count']} 篇，≈{credits_estimate} credits）"
+            )
+        except Exception as e:
+            self.logger.warning(f"[Token] 写入 Task.result 失败: {e}")
+
+        # 2. 旁路写 TokenUsageLog（不阻断主流程）
+        try:
+            from django.db import close_old_connections
+            from core.models_billing import TokenUsageLog
+            close_old_connections()
+            user = self.task_obj.created_by if self.task_obj else None
+            model_name = self.config.get("ai_model", "unknown")
+            if user:
+                TokenUsageLog.objects.create(
+                    task_id=self.executor.task_id,
+                    user=user,
+                    model=model_name,
+                    prompt_tokens=token_stats.get('prompt_tokens', 0),
+                    completion_tokens=token_stats.get('completion_tokens', 0),
+                    total_tokens=token_stats.get('total_tokens', 0),
+                    credits_consumed=credits_estimate,
+                    ref_count=token_stats.get('ref_count', 0),
+                )
+        except Exception as e:
+            self.logger.warning(f"[Token] 写入 TokenUsageLog 失败: {e}")
 
     # ── 工具方法 ─────────────────────────────────────────────────────────
 

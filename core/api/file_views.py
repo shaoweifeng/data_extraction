@@ -3,10 +3,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from django.db.models import Q
-from django.utils import timezone
-
-from ..models import ActivityLog, DataFile, ProjectStage, StageStep, UserPermission
+from ..models import ActivityLog, DataFile, ProjectStage, StageStep
 from ..serializers import DataFileSerializer
 
 
@@ -75,18 +72,9 @@ class DataFileViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        permission_code = 'file.upload'
-
-        if not user.is_superuser:
-            has_perm = UserPermission.objects.filter(
-                user=user,
-                permission__code=permission_code,
-            ).filter(
-                Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
-            ).exists()
-
-            if not has_perm:
-                raise PermissionDenied(f"缺少权限：{permission_code}")
+        from .common import check_permission
+        if not check_permission(user, 'file.upload'):
+            raise PermissionDenied("缺少权限：file.upload")
 
         uploaded_file = self.request.FILES.get('file')
         if uploaded_file and not serializer.validated_data.get('filename'):

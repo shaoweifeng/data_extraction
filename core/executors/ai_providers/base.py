@@ -19,6 +19,7 @@ class ScreeningResult:
     - model: 用于将来多模型对比时标识是哪个模型的结论
     - raw_response: 保留原始 AI 响应，方便审计和调试
     - confidence: 预留给将来有置信度输出的模型
+    - token_usage: 本次 API 调用的 token 用量（prompt/completion/total），采集自 API 响应
     """
     title: str
     decision: str                    # "included" | "excluded" | "error"
@@ -29,6 +30,8 @@ class ScreeningResult:
     extracted_fields: Dict = field(default_factory=dict)  # AI 提取的自定义字段
     confidence: Optional[float] = None  # 置信度（当前模型不输出，预留）
     error: str = ""                  # 出错时的错误信息
+    # token 用量：{'prompt': int, 'completion': int, 'total': int}，API 未返回时为 None
+    token_usage: Optional[Dict] = None
 
     @property
     def is_included(self) -> bool:

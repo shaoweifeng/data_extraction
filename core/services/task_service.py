@@ -16,10 +16,7 @@
 import logging
 from typing import Optional
 
-from django.db.models import Q
-from django.utils import timezone
-
-from core.models import ActivityLog, Task, UserPermission
+from core.models import ActivityLog, Task
 
 logger = logging.getLogger(__name__)
 
@@ -62,21 +59,10 @@ def get_display_name(step_key: str) -> str:
 def check_task_permission(user, permission_code: str) -> bool:
     """
     检查用户是否拥有指定任务权限。
-
-    超级管理员和 staff 跳过检查。
-
-    Returns:
-        True 表示有权限，False 表示无权限
+    复用 core.api.common.check_permission 的统一逻辑（role 分级 + 旧 RBAC 兜底）。
     """
-    if user.is_superuser or user.is_staff:
-        return True
-
-    return UserPermission.objects.filter(
-        user=user,
-        permission__code=permission_code,
-    ).filter(
-        Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
-    ).exists()
+    from core.api.common import check_permission
+    return check_permission(user, permission_code)
 
 
 # ============================================================================
