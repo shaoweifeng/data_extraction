@@ -52,6 +52,31 @@ class AIScreenHandler(BaseStepHandler):
             self.logger.error("[错误] 没有找到待筛选文献")
             return False
 
+        # ── 阶段三：余额预检 ──────────────────────────────────────────────
+        # superuser / admin 角色享受无限额度，跳过余额检查
+        user = self.task_obj.created_by if self.task_obj else None
+        if user:
+            profile = getattr(user, 'profile', None)
+            is_unlimited = user.is_superuser or (profile and profile.role == 'admin')
+            if is_unlimited:
+                self.logger.info("[计费] 管理员账户，跳过余额预检")
+            else:
+                try:
+                    from core.services.billing_service import estimate_credits, check_balance_sufficient, get_balance
+                    estimated = estimate_credits(total_refs)
+                    if not check_balance_sufficient(user, estimated):
+                        balance = get_balance(user)
+                        self.logger.error(
+                            f"[计费] 余额不足：预估需要 {estimated} credits，"
+                            f"当前余额 {balance} credits，拒绝启动"
+                        )
+                        raise ValueError(f"余额不足（预估需 {estimated} credits，当前余额 {balance} credits）")
+                    self.logger.info(f"[计费] 余额预检通过，预估消耗 {estimated} credits")
+                except ValueError:
+                    raise
+                except Exception as e:
+                    self.logger.warning(f"[计費] 余额预检异常（跳过）: {e}")
+
         # 加载断点
         checkpoint, is_resume = self._load_checkpoint_with_resume()
         processed_sources: Set[str] = set()
@@ -550,6 +575,26 @@ class AIScreenHandler(BaseStepHandler):
                 )
         except Exception as e:
             self.logger.warning(f"[Token] 写入 TokenUsageLog 失败: {e}")
+
+        # 3. 阶段三：按实际 token 用量扣费（旁路，异常不影响主流程）
+        # superuser / admin 角色无限额度，不扣费
+        try:
+            from core.models import Task
+            from core.services.billing_service import consume_credits
+            user = self.task_obj.created_by if self.task_obj else None
+            if user and credits_estimate > 0:
+                profile = getattr(user, 'profile', None)
+                is_unlimited = user.is_superuser or (profile and profile.role == 'admin')
+                if is_unlimited:
+                    self.logger.info(f"[计费] 管理员账户，跳过扣费（实际用量 {credits_estimate} credits）")
+                else:
+                    task_obj = Task.objects.filter(id=self.executor.task_id).first()
+                    consume_credits(user, credits_estimate, task=task_obj, note='AI筛选实际用量扣费')
+                    self.logger.info(f"[计费] 已扣除 {credits_estimate} credits（实际用量）")
+        except ValueError as e:
+            self.logger.warning(f"[计费] 扣费失败: {e}")
+        except Exception as e:
+            self.logger.warning(f"[计费] 扣费异常（不影响筛选结果）: {e}")
 
     # ── 工具方法 ─────────────────────────────────────────────────────────
 

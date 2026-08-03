@@ -1,16 +1,15 @@
 """
-阶段二：计费服务层（纯函数，本阶段只写不接入扣费）
+计费服务层（纯函数）
 
 提供：
-  - get_or_create_account(user)        : 获取/创建 CreditAccount
-  - get_balance(user)                  : 查询余额
-  - estimate_credits(ref_count)        : 预估所需 credits
-  - tokens_to_credits(total_tokens)    : token 折算 credits
-  - grant_credits(user, amount, note)  : 赠送/充值（管理员调额）
-  - consume_credits(user, amount, task, note) : 扣费（阶段三接入）
-  - refund_credits(user, amount, task, note)  : 退款（阶段三接入）
-
-阶段三前，consume_credits/refund_credits 均为空操作，调用方不用判断阶段。
+  - get_or_create_account(user)                : 获取/创建 CreditAccount
+  - get_balance(user)                          : 查询余额
+  - estimate_credits(ref_count)               : 预估所需 credits
+  - tokens_to_credits(total_tokens)           : token 折算 credits
+  - grant_credits(user, amount, note)          : 赠送/充值（管理员调额）
+  - check_balance_sufficient(user, amount)     : 余额是否满足预估需求
+  - consume_credits(user, amount, task, note)  : 按实际 token 扣费（原子操作）
+  - refund_credits(user, amount, task, note)   : 退款/补偿（原子操作）
 """
 
 from __future__ import annotations
@@ -125,44 +124,84 @@ def grant_credits(user, amount: int, note: str = '', operator=None) -> 'CreditTr
     return txn
 
 
+def check_balance_sufficient(user, required: int) -> bool:
+    """快速检查余额是否 >= required credits（不加锁，仅预检）。"""
+    return get_balance(user) >= required
+
+
 @transaction.atomic
 def consume_credits(user, amount: int, task=None, note: str = '') -> Optional['CreditTransaction']:
     """
-    扣费（阶段三接入，阶段二为空操作，直接返回 None）。
+    按实际 token 用量扣减 credits（原子操作，select_for_update 防并发竞态）。
 
-    阶段三开启时：取消注释并实现余额校验 + 扣减逻辑。
+    Args:
+        user:   操作用户
+        amount: 扣减 credits 数（正整数）
+        task:   关联的 Task 对象（可空）
+        note:   备注
+
+    Returns:
+        创建的 CreditTransaction，若 amount<=0 则跳过返回 None
+
+    Raises:
+        ValueError: 余额不足
     """
-    # ── 阶段三激活后在此实现 ─────────────────────────────────────────────
-    # CreditAccount, CreditTransaction, _ = _get_models()
-    # account = CreditAccount.objects.select_for_update().get(user=user)
-    # if account.balance < amount:
-    #     raise ValueError(f"余额不足（需 {amount}，现有 {account.balance}）")
-    # account.balance = F('balance') - amount
-    # account.total_consumed = F('total_consumed') + amount
-    # account.save(update_fields=['balance', 'total_consumed', 'updated_at'])
-    # account.refresh_from_db()
-    # return CreditTransaction.objects.create(
-    #     account=account, txn_type='consume', amount=-amount,
-    #     balance_after=account.balance, task=task, note=note,
-    # )
-    # ────────────────────────────────────────────────────────────────────
-    return None   # 阶段二：空操作
+    if amount <= 0:
+        return None
+
+    CreditAccount, CreditTransaction, _ = _get_models()
+    account = CreditAccount.objects.select_for_update().get(user=user)
+
+    if account.balance < amount:
+        raise ValueError(f"余额不足（需 {amount}，现有 {account.balance} credits）")
+
+    account.balance = F('balance') - amount
+    account.total_consumed = F('total_consumed') + amount
+    account.save(update_fields=['balance', 'total_consumed', 'updated_at'])
+    account.refresh_from_db()
+
+    txn = CreditTransaction.objects.create(
+        account=account,
+        txn_type='consume',
+        amount=-amount,
+        balance_after=account.balance,
+        task=task,
+        note=note or 'AI筛选扣费',
+    )
+    logger.info(f"[billing] consume {user.username} -{amount} credits → 余额 {account.balance}")
+    return txn
 
 
 @transaction.atomic
 def refund_credits(user, amount: int, task=None, note: str = '') -> Optional['CreditTransaction']:
     """
-    退款/多退少补（阶段三接入，阶段二为空操作，直接返回 None）。
+    退款/多退少补（原子操作）。
+
+    Args:
+        user:   操作用户
+        amount: 退还 credits 数（正整数）
+        task:   关联的 Task 对象（可空）
+        note:   备注
+
+    Returns:
+        创建的 CreditTransaction，若 amount<=0 则跳过返回 None
     """
-    # ── 阶段三激活后在此实现 ─────────────────────────────────────────────
-    # CreditAccount, CreditTransaction, _ = _get_models()
-    # account = CreditAccount.objects.select_for_update().get(user=user)
-    # account.balance = F('balance') + amount
-    # account.save(update_fields=['balance', 'updated_at'])
-    # account.refresh_from_db()
-    # return CreditTransaction.objects.create(
-    #     account=account, txn_type='refund', amount=amount,
-    #     balance_after=account.balance, task=task, note=note,
-    # )
-    # ────────────────────────────────────────────────────────────────────
-    return None   # 阶段二：空操作
+    if amount <= 0:
+        return None
+
+    CreditAccount, CreditTransaction, _ = _get_models()
+    account = CreditAccount.objects.select_for_update().get(user=user)
+    account.balance = F('balance') + amount
+    account.save(update_fields=['balance', 'updated_at'])
+    account.refresh_from_db()
+
+    txn = CreditTransaction.objects.create(
+        account=account,
+        txn_type='refund',
+        amount=amount,
+        balance_after=account.balance,
+        task=task,
+        note=note or 'AI筛选退款',
+    )
+    logger.info(f"[billing] refund {user.username} +{amount} credits → 余额 {account.balance}")
+    return txn

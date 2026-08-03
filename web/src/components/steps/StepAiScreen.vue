@@ -165,11 +165,25 @@
 
         <!-- 操作按钮 -->
         <div class="ai-action-area">
+          <!-- 余额信息 -->
+          <div class="billing-bar" :class="billing.sufficient === false ? 'billing-bar-danger' : 'billing-bar-ok'">
+            <span class="billing-item">
+              <i class="fas fa-coins mr-1"></i>余额：<b>{{ billing.balance ?? '...' }}</b> credits
+            </span>
+            <span class="billing-item" v-if="s.pendingTotal > 0">
+              预估：<b>{{ billing.estimated ?? '...' }}</b> credits（{{ s.pendingTotal }} 篇）
+            </span>
+            <span v-if="billing.sufficient === false" class="billing-warn">
+              <i class="fas fa-exclamation-triangle mr-0.5"></i>余额不足
+            </span>
+          </div>
+
           <template v-if="!s.latestAiScreenTask || ['completed','failed'].includes(s.latestAiScreenTask.status)">
-            <button @click="startScreening" :disabled="s.isProcessing" :class="s.latestAiScreenTask?.status === 'completed' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'" class="ai-action-btn text-white">
+            <button @click="startScreening" :disabled="s.isProcessing || billing.sufficient === false" :class="s.latestAiScreenTask?.status === 'completed' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'" class="ai-action-btn text-white">
               <i v-if="s.isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
               {{ s.isProcessing ? 'AI 正在筛选...' : s.latestAiScreenTask?.status === 'completed' ? '重新筛选' : '启动 AI 筛选' }}
             </button>
+            <p v-if="billing.sufficient === false" class="text-xs text-red-500 text-center">余额不足，请联系管理员充值</p>
           </template>
           <template v-else-if="s.latestAiScreenTask.status === 'pending'">
             <button disabled class="ai-action-btn bg-gray-400 text-white cursor-wait">
@@ -205,17 +219,20 @@ import { ref, onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
+import { useAuthStore } from '@/stores/auth'
 import http, { httpNoTimeout } from '@/api/http'
 import { extractListData } from '@/utils/format'
 
 const s = useScreeningStore()
 const project = useProjectStore()
 const taskStore = useTaskStore()
+const auth = useAuthStore()
 
 const screeningTab = ref('pending')
 const promptPanelOpen = ref(false)
 const promptSaveStatus = ref('')
 const defaultPromptPreview = ref('（加载中...）')
+const billing = ref({ balance: null, estimated: null, sufficient: null })
 
 const PAGE_SIZE = 50
 
@@ -225,7 +242,32 @@ onMounted(async () => {
   await Promise.all([loadPending(), loadScreened()])
   loadAiScreenStats()
   syncLatestAiTask()
+  loadBilling()
 })
+
+// ── 计费 ─────────────────────────────────────────────────────
+async function loadBilling() {
+  // admin 账户无限额度，直接显示∞
+  if (auth.isAdmin) {
+    billing.value = { balance: '∞', estimated: null, sufficient: true }
+    return
+  }
+  try {
+    const balRes = await http.get('/billing/balance/')
+    billing.value.balance = balRes.data.balance
+
+    if (s.pendingTotal > 0) {
+      const estRes = await http.get(`/billing/estimate/?ref_count=${s.pendingTotal}`)
+      billing.value.estimated = estRes.data.estimated_credits
+      billing.value.sufficient = estRes.data.sufficient
+    } else {
+      billing.value.estimated = null
+      billing.value.sufficient = true
+    }
+  } catch (e) {
+    console.error('加载余额失败', e)
+  }
+}
 
 // ── 模型选择 ──────────────────────────────────────────────────
 async function loadAiModels() {
@@ -345,6 +387,8 @@ async function loadPending(page) {
     s.pendingFiles = extractListData(data)
     s.pendingTotal = data.total ?? s.pendingFiles.length
     if (page !== undefined) s.pendingPage = page
+    // 待筛选数量明确后刷新预估
+    if (page === undefined || page === 0) loadBilling()
   } catch {
     s.pendingFiles = []
     s.pendingTotal = 0
@@ -687,4 +731,28 @@ async function pollAiScreening(taskId) {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* 余额信息条 */
+.billing-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  border: 1px solid #e2e8f0;
+}
+.billing-bar-ok {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+.billing-bar-danger {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+.billing-item { white-space: nowrap; }
+.billing-warn { font-weight: 600; margin-left: auto; }
 </style>
