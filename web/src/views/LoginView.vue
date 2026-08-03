@@ -18,11 +18,11 @@
       <!-- Tab 切换 -->
       <div class="tab-bar">
         <button
-          @click="tab = 'login'"
+          @click="tab = 'login'; error = ''; success = ''; registered = false"
           :class="['tab-btn', tab === 'login' ? 'tab-active' : '']"
         >登录</button>
         <button
-          @click="tab = 'register'"
+          @click="tab = 'register'; error = ''; success = ''; registered = false"
           :class="['tab-btn', tab === 'register' ? 'tab-active' : '']"
         >注册</button>
       </div>
@@ -108,7 +108,22 @@
         <p v-if="success" class="form-success">
           <i class="fas fa-check-circle mr-1"></i>{{ success }}
         </p>
-        <button type="submit" :disabled="loading" class="btn-primary w-full justify-center py-2.5 mt-2" style="background: linear-gradient(135deg,#10b981,#059669)">
+        <!-- 注册成功后按钮变为「前往登录」 -->
+        <button
+          v-if="registered"
+          type="button"
+          @click="tab = 'login'; registered = false"
+          class="btn-primary w-full justify-center py-2.5 mt-2"
+        >
+          <i class="fas fa-sign-in-alt mr-1"></i>前往登录
+        </button>
+        <button
+          v-else
+          type="submit"
+          :disabled="loading"
+          class="btn-primary w-full justify-center py-2.5 mt-2"
+          style="background: linear-gradient(135deg,#10b981,#059669)"
+        >
           <span v-if="loading"><i class="fas fa-spinner fa-spin mr-1"></i>注册中...</span>
           <span v-else><i class="fas fa-user-plus mr-1"></i>创建账号</span>
         </button>
@@ -134,6 +149,7 @@ const tab = ref('login')
 const error = ref('')
 const success = ref('')
 const loading = ref(false)
+const registered = ref(false)  // 注册成功状态，控制按钮切换
 
 const loginForm = ref({ username: '', password: '' })
 const registerForm = ref({ username: '', email: '', password: '' })
@@ -159,7 +175,7 @@ async function handleRegister() {
   try {
     const data = await auth.register(registerForm.value)
     success.value = data.message || '注册成功，请登录'
-    tab.value = 'login'
+    registered.value = true  // 停留在注册页显示成功，不自动切 tab
   } catch (e) {
     error.value = e.response?.data?.error || e.message || '注册失败'
   } finally {
