@@ -186,6 +186,25 @@ BILLING_FREE_CREDITS_ON_REGISTER = int(os.getenv('BILLING_FREE_CREDITS_ON_REGIST
 # 余额不足时的预估每篇 credits（阶段三接入计费后用于预扣估算）
 BILLING_ESTIMATE_CREDITS_PER_REF = int(os.getenv('BILLING_ESTIMATE_CREDITS_PER_REF', '2'))
 
+# ============================================================================
+# 阶段四：全局 AI 筛选并发控制
+# ============================================================================
+
+# 全局最大线程槽数（所有正在运行的 ai_screen 任务占用线程数之和上限）
+AI_SCREEN_MAX_GLOBAL_THREADS = int(os.getenv('AI_SCREEN_MAX_GLOBAL_THREADS', '64'))
+
+# 普通用户默认并发线程数（未设置 concurrency_limit 时的 fallback）
+AI_SCREEN_DEFAULT_CONCURRENCY = int(os.getenv('AI_SCREEN_DEFAULT_CONCURRENCY', '2'))
+
+# 管理员/超管并发线程数
+AI_SCREEN_ADMIN_CONCURRENCY = int(os.getenv('AI_SCREEN_ADMIN_CONCURRENCY', '16'))
+
+# 排队等待时重试间隔（秒）
+AI_SCREEN_QUEUE_RETRY_INTERVAL = int(os.getenv('AI_SCREEN_QUEUE_RETRY_INTERVAL', '30'))
+
+# 排队最大等待次数（超出则任务失败）
+AI_SCREEN_QUEUE_MAX_RETRIES = int(os.getenv('AI_SCREEN_QUEUE_MAX_RETRIES', '120'))  # 120×30s = 1 小时
+
 # Django REST Framework 配置
 REST_FRAMEWORK = {
     # 认证方式

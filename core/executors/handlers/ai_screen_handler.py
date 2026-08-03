@@ -133,7 +133,14 @@ class AIScreenHandler(BaseStepHandler):
             return True
 
         batch_size = self.config.get("batch_size", 16)
-        concurrency = self.config.get("concurrency", 16)
+        # 阶段四：从用户档位读并发线程数（config 中可显式覆盖）
+        if 'concurrency' in self.config:
+            concurrency = int(self.config['concurrency'])
+        else:
+            from core.services.concurrency_service import get_user_concurrency
+            user = self.task_obj.created_by if self.task_obj else None
+            concurrency = get_user_concurrency(user)
+        self.logger.info(f"[并发] 本次使用 {concurrency} 线程并发")
         processed_count = len(processed_sources)
         # 阶段二：全程累加 token 统计（key: prompt/completion/total/ref_count）
         token_stats = {

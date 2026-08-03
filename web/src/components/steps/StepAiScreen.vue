@@ -185,9 +185,28 @@
             </button>
             <p v-if="billing.sufficient === false" class="text-xs text-red-500 text-center">余额不足，请联系管理员充值</p>
           </template>
+          <template v-else-if="s.latestAiScreenTask.status === 'queuing'">
+            <div class="queue-status-bar">
+              <div class="flex items-center gap-2 text-amber-700">
+                <i class="fas fa-clock fa-spin"></i>
+                <span class="font-semibold">排队等待中</span>
+                <span v-if="queueInfo.position > 0" class="text-sm">
+                  — 第 <b>{{ queueInfo.position }}</b> 位
+                </span>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">
+                <span>所需线程：{{ queueInfo.slotsNeeded }}</span>
+                <span class="mx-2">·</span>
+                <span>当前剩余槽：{{ queueInfo.slotsFree }} / {{ queueInfo.slotsTotal }}</span>
+                <span v-if="queueInfo.queueLength > 1" class="mx-2">·</span>
+                <span v-if="queueInfo.queueLength > 1">队列共 {{ queueInfo.queueLength }} 个任务</span>
+              </div>
+              <p class="text-xs text-amber-600 mt-1">系统将自动为您分配资源，无需手动操作</p>
+            </div>
+          </template>
           <template v-else-if="s.latestAiScreenTask.status === 'pending'">
             <button disabled class="ai-action-btn bg-gray-400 text-white cursor-wait">
-              <i class="fas fa-hourglass-half fa-spin mr-2"></i>队列等待中...
+              <i class="fas fa-hourglass-half fa-spin mr-2"></i>初始化中...
             </button>
           </template>
           <template v-else-if="s.latestAiScreenTask.status === 'running'">
@@ -233,6 +252,7 @@ const promptPanelOpen = ref(false)
 const promptSaveStatus = ref('')
 const defaultPromptPreview = ref('（加载中...）')
 const billing = ref({ balance: null, estimated: null, sufficient: null })
+const queueInfo = ref({ position: 0, queueLength: 0, slotsNeeded: 0, slotsFree: 0, slotsTotal: 0 })
 
 const PAGE_SIZE = 50
 
@@ -437,8 +457,8 @@ function syncLatestAiTask() {
     s.processedCount = s.screenedTotal
   }
   // 若任务处于运行中/等待中，恢复轮询
-  if (['running', 'pending', 'stopping'].includes(aiTask.status)) {
-    s.isProcessing = aiTask.status !== 'stopping'
+  if (['running', 'pending', 'stopping', 'queuing'].includes(aiTask.status)) {
+    s.isProcessing = aiTask.status === 'running'
     pollAiScreening(aiTask.id)
   }
 }
@@ -545,17 +565,31 @@ async function pollAiScreening(taskId) {
         let logContent = logRes.data.log_content || logRes.data.lines?.join('\n') || ''
         if (!logContent) {
           if (status === 'pending') logContent = '正在启动任务，请稍候...'
+          else if (status === 'queuing') logContent = `排队等待资源中（当前第 ${queueInfo.value.position || '?'} 位），系统将自动为您分配线程...`
           else if (status === 'running') logContent = '任务正在运行中，正在等待日志输出...'
         }
         s.aiScreenLogContent = logContent
       } catch {}
 
-      if (['running', 'pending', 'stopping'].includes(status)) {
-        if (pollCount % 5 === 0) {
+      if (['running', 'pending', 'stopping', 'queuing'].includes(status)) {
+        // queuing 状态变化慢，每 5s 轮询一次即可；running 时 2s 轮询
+        const interval = status === 'queuing' ? 5000 : 2000
+        if (status === 'queuing') {
+          // 更新排队信息
+          const qi = task.config?.queue_info || {}
+          queueInfo.value = {
+            position: qi.position || 0,
+            queueLength: qi.queue_length || 0,
+            slotsNeeded: qi.slots_needed || 0,
+            slotsFree: qi.slots_free || 0,
+            slotsTotal: qi.slots_total || queueInfo.value.slotsTotal,
+          }
+        }
+        if (pollCount % 5 === 0 && status !== 'queuing') {
           loadPending()
           loadScreened()
         }
-        setTimeout(poll, 2000)
+        setTimeout(poll, interval)
       } else {
         s.isProcessing = false
         await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
@@ -755,4 +789,13 @@ async function pollAiScreening(taskId) {
 }
 .billing-item { white-space: nowrap; }
 .billing-warn { font-weight: 600; margin-left: auto; }
+
+/* 排队状态条 */
+.queue-status-bar {
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 6px 0;
+}
 </style>

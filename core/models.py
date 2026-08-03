@@ -368,6 +368,7 @@ class DataFileVersion(models.Model):
 class Task(models.Model):
     """后台任务"""
     STATUS_CHOICES = [
+        ('queuing', '排队等待'),
         ('pending', '等待中'),
         ('running', '运行中'),
         ('completed', '已完成'),
