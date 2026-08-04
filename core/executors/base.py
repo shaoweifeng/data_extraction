@@ -78,9 +78,9 @@ class TaskLogger:
         self.last_db_sync = datetime.now()
         self.db_sync_interval = 2      # 每2秒同步一次DB
         
-        # 【新增】进度同步控制（以16篇为最小单位对齐批次）
+        # 【新增】进度同步控制（默认16，ai_screen_handler 会在确定 concurrency 后动态覆盖）
         self._last_progress_sync = 0
-        self._progress_sync_interval = 16  # 每16篇文献同步一次（与 batch_size 对齐）
+        self._progress_sync_interval = 16  # 默认值；ai_screen 会改为 concurrency 值
         
         # 初始化
         self._init_logger()

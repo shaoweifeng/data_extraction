@@ -140,7 +140,12 @@ class AIScreenHandler(BaseStepHandler):
             from core.services.concurrency_service import get_user_concurrency
             user = self.task_obj.created_by if self.task_obj else None
             concurrency = get_user_concurrency(user)
-        self.logger.info(f"[并发] 本次使用 {concurrency} 线程并发")
+        # batch_size 对齐并发数：每批正好铺满所有线程，进度更新粒度 = 并发数
+        # 例：2并发 → 每2篇上报一次；16并发 → 每16篇上报一次（原行为）
+        batch_size = concurrency
+        # 同步 logger 的进度写库间隔，确保 Task.progress 以并发数为粒度更新
+        self.logger._progress_sync_interval = concurrency
+        self.logger.info(f"[并发] 本次使用 {concurrency} 线程并发，batch_size={batch_size}")
         processed_count = len(processed_sources)
         # 阶段二：全程累加 token 统计（key: prompt/completion/total/ref_count）
         token_stats = {
@@ -595,8 +600,11 @@ class AIScreenHandler(BaseStepHandler):
                 if is_unlimited:
                     self.logger.info(f"[计费] 管理员账户，跳过扣费（实际用量 {credits_estimate} credits）")
                 else:
-                    task_obj = Task.objects.filter(id=self.executor.task_id).first()
-                    consume_credits(user, credits_estimate, task=task_obj, note='AI筛选实际用量扣费')
+                    task_obj = Task.objects.select_related('project').filter(id=self.executor.task_id).first()
+                    project_name = task_obj.project.name if task_obj and task_obj.project else '未知项目'
+                    model_name   = self.config.get('ai_model', '未知模型')
+                    note = f"AI筛选 · {project_name} · 模型:{model_name}（{token_stats.get('ref_count', 0)}篇/{token_stats.get('total_tokens', 0)} tokens）"
+                    consume_credits(user, credits_estimate, task=task_obj, note=note)
                     self.logger.info(f"[计费] 已扣除 {credits_estimate} credits（实际用量）")
         except ValueError as e:
             self.logger.warning(f"[计费] 扣费失败: {e}")

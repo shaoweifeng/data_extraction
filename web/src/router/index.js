@@ -21,6 +21,12 @@ const routes = [
     meta: { requiresAuth: true },
     props: true,
   },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('@/views/ProfileView.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

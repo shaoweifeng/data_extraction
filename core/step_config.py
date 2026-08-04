@@ -190,7 +190,7 @@ STEP_CONFIGURATIONS = {
         "description": "调用AI接口进行文献筛选",
         "timeout": 7200,
         "batch_size": 16,
-        "concurrency": 16,
+        # concurrency 不在此预置，由 get_user_concurrency(user) 动态计算（普通用户2，管理员16）
         "resume_capability": True,
         "checkpoint_interval": 16,
         "inputs": ["dedup_xmls/*.xml", "screening_criteria.json"],

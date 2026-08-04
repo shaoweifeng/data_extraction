@@ -162,3 +162,57 @@ def ensure_credit_account(sender, instance, created, **kwargs):
             balance_after=free_credits,
             note='注册赠送',
         )
+
+
+# ============================================================================
+# 兑换码（阶段六）
+# ============================================================================
+
+class RechargeCode(models.Model):
+    """
+    充值兑换码（由管理员在 Django Admin 后台创建）。
+
+    兑换流程：
+      用户提交码 → 校验有效性（存在、未使用、未过期）
+                → 原子充值（CreditAccount.balance += credits）
+                → 写 CreditTransaction(txn_type='recharge')
+                → 标记 is_used=True
+
+    码格式建议：FREE-XXXX-XXXX（16 字符内，管理员手填或脚本生成）
+    """
+    code       = models.CharField(max_length=32, unique=True, verbose_name="兑换码")
+    credits    = models.IntegerField(verbose_name="面值(credits)")
+    is_used    = models.BooleanField(default=False, verbose_name="是否已使用")
+    used_by    = models.ForeignKey(
+        User, null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='recharge_codes_used', verbose_name="使用者",
+    )
+    used_at    = models.DateTimeField(null=True, blank=True, verbose_name="使用时间")
+    created_by = models.ForeignKey(
+        User, null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='recharge_codes_created', verbose_name="创建者",
+    )
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name="过期时间（null=永不过期）")
+    note       = models.CharField(max_length=255, blank=True, default='', verbose_name="备注")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+
+    class Meta:
+        db_table        = 'plat_rechargecode'
+        verbose_name    = "兑换码"
+        verbose_name_plural = "兑换码"
+        ordering        = ['-created_at']
+
+    def __str__(self):
+        status_str = f"已被 {self.used_by.username} 使用" if self.is_used else "未使用"
+        return f"{self.code} | {self.credits} credits | {status_str}"
+
+    def is_valid(self) -> bool:
+        """快速检查码是否可用（未使用且未过期）。"""
+        from django.utils import timezone
+        if self.is_used:
+            return False
+        if self.expires_at and self.expires_at < timezone.now():
+            return False
+        return True

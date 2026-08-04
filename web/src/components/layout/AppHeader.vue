@@ -19,13 +19,23 @@
       <span class="bc-stage">{{ currentStageName }}</span>
     </div>
 
-    <!-- 右侧：用户信息 + 退出 -->
+    <!-- 右侧：余额 + 用户信息 + 退出 -->
     <div class="header-right">
       <!-- 主页时显示新建项目按钮 -->
       <slot name="actions" />
 
-      <!-- 用户信息（预留将来可点击进个人中心） -->
-      <div class="header-user" @click="onUserClick" title="个人信息（即将上线）">
+      <!-- 余额展示（点击进个人中心充值） -->
+      <div class="header-balance" @click="onUserClick" title="查看个人中心 / 充值">
+        <i class="fas fa-coins header-balance-icon"></i>
+        <span class="header-balance-val">
+          <template v-if="balance !== null">{{ balance }}</template>
+          <i class="fas fa-spinner fa-spin" v-else style="font-size:0.65rem;"></i>
+        </span>
+        <span class="header-balance-unit">credits</span>
+      </div>
+
+      <!-- 用户信息（点击进个人中心） -->
+      <div class="header-user" @click="onUserClick" title="查看个人中心">
         <div class="header-avatar">
           {{ auth.user?.username?.charAt(0)?.toUpperCase() || 'U' }}
         </div>
@@ -43,12 +53,13 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProjectStore } from '@/stores/project'
 import { useScreeningStore } from '@/stores/screening'
 import { useTaskStore } from '@/stores/task'
+import http from '@/api/http'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -56,6 +67,30 @@ const project = useProjectStore()
 const screening = useScreeningStore()
 const taskStore = useTaskStore()
 
+// ── 余额 ────────────────────────────────────────────────────
+const balance = ref(null)
+
+async function fetchBalance() {
+  if (!auth.user) return
+  try {
+    const res = await http.get('/billing/balance/')
+    balance.value = res.data.balance
+  } catch (e) {
+    // 静默失败，不影响导航栏渲染
+    balance.value = 0  // 请求失败时显示 0，而不是一直 spinner
+  }
+}
+
+onMounted(fetchBalance)
+
+// 监听任务完成事件，自动刷新余额（如 AI 筛选扣费后同步显示）
+window.addEventListener('app:balance-changed', fetchBalance)
+onUnmounted(() => window.removeEventListener('app:balance-changed', fetchBalance))
+
+// 暴露刷新方法，供其他组件（如 AI 筛选完成后）调用
+defineExpose({ refreshBalance: fetchBalance })
+
+// ── 面包屑 ──────────────────────────────────────────────────
 const stageNames = {
   SEARCH:   '文献检索',
   SCREEN_1: '文献初筛',
@@ -66,6 +101,7 @@ const stageNames = {
 }
 const currentStageName = computed(() => stageNames[project.currentStage] || project.currentStage)
 
+// ── 事件 ────────────────────────────────────────────────────
 function goHome() {
   project.currentProject = null
   project.currentStage = 'SCREEN_1'
@@ -75,7 +111,7 @@ function goHome() {
 }
 
 function onUserClick() {
-  // 预留：将来跳转个人中心
+  router.push('/profile')
 }
 
 async function handleLogout() {
@@ -140,6 +176,20 @@ async function handleLogout() {
   display: flex; align-items: center; gap: 8px;
   margin-left: auto; flex-shrink: 0;
 }
+
+/* 余额胶囊 */
+.header-balance {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #faf5ff; border: 1px solid #e9d5ff;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.header-balance:hover { background: #f3e8ff; border-color: #c4b5fd; }
+.header-balance-icon { color: #7c3aed; font-size: 0.72rem; }
+.header-balance-val  { font-size: 0.82rem; font-weight: 700; color: #5b21b6; }
+.header-balance-unit { font-size: 0.7rem; color: #7c3aed; }
 
 /* 用户信息 */
 .header-user {

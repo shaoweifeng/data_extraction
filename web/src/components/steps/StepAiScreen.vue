@@ -258,6 +258,14 @@ const PAGE_SIZE = 50
 
 // ── 初始化 ──────────────────────────────────────────────────
 onMounted(async () => {
+  // 从 stagesData 恢复纳排标准（保证不论先进哪个 tab 都能拿到）
+  if (s.criteriaList.length === 0) {
+    const stage = project.stagesData.find((st) => st.stage_key === 'SCREEN_1')
+    const step  = stage?.steps?.find((st) => st.step_key === 'criteria')
+    if (step?.metadata?.criteria?.length) {
+      s.criteriaList = step.metadata.criteria
+    }
+  }
   await Promise.all([loadAiModels(), loadPrompt()])
   await Promise.all([loadPending(), loadScreened()])
   loadAiScreenStats()
@@ -596,6 +604,9 @@ async function pollAiScreening(taskId) {
         await project.fetchStages(project.currentProject.id)
         if (status === 'completed') {
           await Promise.all([loadPending(), loadScreened(), loadAiScreenStats()])
+          // 任务完成后刷新页面内余额条 + 通知 AppHeader 同步余额胶囊
+          loadBilling()
+          window.dispatchEvent(new CustomEvent('app:balance-changed'))
           alert('AI初筛完成！')
         } else if (status === 'stopped') {
           await Promise.all([loadScreened(), loadAiScreenStats()])

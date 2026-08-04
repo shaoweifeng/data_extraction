@@ -4,6 +4,7 @@ from .models import (
     RoleTemplatePermission, Project, ProjectStage, StageStep,
     DataFile, DataFileVersion, Task
 )
+from .models_billing import CreditAccount, CreditTransaction, TokenUsageLog, RechargeCode
 
 
 @admin.register(UserProfile)
@@ -225,3 +226,67 @@ class TaskAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+# ============================================================================
+# 计费相关 Admin（阶段二/六）
+# ============================================================================
+
+class CreditTransactionInline(admin.TabularInline):
+    model = CreditTransaction
+    extra = 0
+    readonly_fields = ['txn_type', 'amount', 'balance_after', 'note', 'created_at', 'created_by']
+    ordering = ['-created_at']
+    can_delete = False
+    max_num = 20
+
+
+@admin.register(CreditAccount)
+class CreditAccountAdmin(admin.ModelAdmin):
+    list_display  = ['user', 'balance', 'total_granted', 'total_consumed', 'updated_at']
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['total_granted', 'total_consumed', 'created_at', 'updated_at']
+    inlines = [CreditTransactionInline]
+
+    fieldsets = (
+        ('账户', {'fields': ('user', 'balance', 'total_granted', 'total_consumed')}),
+        ('时间戳', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
+    )
+
+
+@admin.register(CreditTransaction)
+class CreditTransactionAdmin(admin.ModelAdmin):
+    list_display  = ['account', 'txn_type', 'amount', 'balance_after', 'note', 'created_at', 'created_by']
+    list_filter   = ['txn_type', 'created_at']
+    search_fields = ['account__user__username', 'note']
+    readonly_fields = ['created_at']
+    raw_id_fields = ['account', 'task', 'created_by']
+
+
+@admin.register(RechargeCode)
+class RechargeCodeAdmin(admin.ModelAdmin):
+    list_display  = ['code', 'credits', 'is_used', 'used_by', 'used_at', 'expires_at', 'note', 'created_at']
+    list_filter   = ['is_used', 'created_at']
+    search_fields = ['code', 'note', 'used_by__username']
+    readonly_fields = ['is_used', 'used_by', 'used_at', 'created_at']
+
+    fieldsets = (
+        ('兑换码信息', {
+            'fields': ('code', 'credits', 'note', 'expires_at'),
+            'description': '码格式建议：FREE-XXXX-XXXX，credits 为面值（正整数）',
+        }),
+        ('使用状态（只读）', {
+            'fields': ('is_used', 'used_by', 'used_at'),
+            'classes': ('collapse',),
+        }),
+        ('时间戳', {
+            'fields': ('created_at',),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def get_readonly_fields(self, request, obj=None):
+        # 已使用的码：全部只读，防止误修改
+        if obj and obj.is_used:
+            return [f.name for f in self.model._meta.fields]
+        return self.readonly_fields
