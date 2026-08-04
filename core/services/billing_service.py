@@ -10,6 +10,7 @@
   - check_balance_sufficient(user, amount)     : 余额是否满足预估需求
   - consume_credits(user, amount, task, note)  : 按实际 token 扣费（原子操作）
   - refund_credits(user, amount, task, note)   : 退款/补偿（原子操作）
+  - log_admin_usage(user, credits_equivalent, task, note) : 管理员用量审计记录（不扣费）
 """
 
 from __future__ import annotations
@@ -205,3 +206,41 @@ def refund_credits(user, amount: int, task=None, note: str = '') -> Optional['Cr
     )
     logger.info(f"[billing] refund {user.username} +{amount} credits → 余额 {account.balance}")
     return txn
+
+
+def log_admin_usage(user, credits_equivalent: int, task=None, note: str = '') -> Optional['CreditTransaction']:
+    """
+    管理员筛选用量审计记录（不扣费，amount=0，仅写流水供统计/审计使用）。
+
+    Args:
+        user:               管理员用户
+        credits_equivalent: 折算后的 credits 等值（不实际扣除）
+        task:               关联的 Task 对象（可空）
+        note:               备注
+
+    Returns:
+        创建的 CreditTransaction（txn_type='admin_usage'，amount=0）
+        若账户不存在则静默失败返回 None
+    """
+    if credits_equivalent <= 0:
+        return None
+
+    CreditAccount, CreditTransaction, _ = _get_models()
+    try:
+        account = get_or_create_account(user)
+        txn = CreditTransaction.objects.create(
+            account=account,
+            txn_type='admin_usage',
+            amount=0,                          # 不扣费
+            balance_after=account.balance,     # 余额不变
+            task=task,
+            note=note or f'管理员用量记录（≈{credits_equivalent} credits 等值）',
+        )
+        logger.info(
+            f"[billing] admin_usage {user.username} ≈{credits_equivalent} credits"
+            f"（不扣费，余额维持 {account.balance}）"
+        )
+        return txn
+    except Exception as e:
+        logger.warning(f"[billing] log_admin_usage 写入失败: {e}")
+        return None

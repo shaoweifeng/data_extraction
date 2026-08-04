@@ -599,6 +599,13 @@ class AIScreenHandler(BaseStepHandler):
                 is_unlimited = user.is_superuser or (profile and profile.role == 'admin')
                 if is_unlimited:
                     self.logger.info(f"[计费] 管理员账户，跳过扣费（实际用量 {credits_estimate} credits）")
+                    # 写一条 amount=0 的审计流水，方便管理员在个人中心查看用量
+                    from core.services.billing_service import log_admin_usage
+                    task_obj = Task.objects.select_related('project').filter(id=self.executor.task_id).first()
+                    project_name = task_obj.project.name if task_obj and task_obj.project else '未知项目'
+                    model_name   = self.config.get('ai_model', '未知模型')
+                    admin_note = f"AI筛选(免费) · {project_name} · 模型:{model_name}（{token_stats.get('ref_count', 0)}篇/{token_stats.get('total_tokens', 0)} tokens，等值{credits_estimate} credits）"
+                    log_admin_usage(user, credits_estimate, task=task_obj, note=admin_note)
                 else:
                     task_obj = Task.objects.select_related('project').filter(id=self.executor.task_id).first()
                     project_name = task_obj.project.name if task_obj and task_obj.project else '未知项目'

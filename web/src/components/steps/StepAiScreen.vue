@@ -238,14 +238,12 @@ import { ref, onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
-import { useAuthStore } from '@/stores/auth'
 import http, { httpNoTimeout } from '@/api/http'
 import { extractListData } from '@/utils/format'
 
 const s = useScreeningStore()
 const project = useProjectStore()
 const taskStore = useTaskStore()
-const auth = useAuthStore()
 
 const screeningTab = ref('pending')
 const promptPanelOpen = ref(false)
@@ -275,14 +273,14 @@ onMounted(async () => {
 
 // ── 计费 ─────────────────────────────────────────────────────
 async function loadBilling() {
-  // admin 账户无限额度，直接显示∞
-  if (auth.isAdmin) {
-    billing.value = { balance: '∞', estimated: null, sufficient: true }
-    return
-  }
   try {
     const balRes = await http.get('/billing/balance/')
-    billing.value.balance = balRes.data.balance
+    const balData = balRes.data
+    if (balData.is_unlimited) {
+      billing.value = { balance: '∞', estimated: null, sufficient: true }
+      return
+    }
+    billing.value.balance = balData.balance
 
     if (s.pendingTotal > 0) {
       const estRes = await http.get(`/billing/estimate/?ref_count=${s.pendingTotal}`)

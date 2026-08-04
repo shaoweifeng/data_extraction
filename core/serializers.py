@@ -29,13 +29,34 @@ class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.CharField(source='user.email', read_only=True)
     is_admin = serializers.BooleanField(read_only=True)
-    
+    concurrency_limit = serializers.SerializerMethodField()
+    quota_projects    = serializers.SerializerMethodField()
+    quota_storage_mb  = serializers.SerializerMethodField()
+
     class Meta:
         model = UserProfile
         fields = ['id', 'username', 'email', 'role', 'quota_projects', 'quota_storage_mb',
                   'is_approved', 'is_banned', 'concurrency_limit', 'is_admin',
                   'approved_at', 'created_at']
         read_only_fields = ['approved_at', 'created_at']
+
+    def _is_admin(self, obj):
+        return obj.role == 'admin' or obj.user.is_superuser
+
+    def get_concurrency_limit(self, obj):
+        """admin/superuser 返回后台实际档位（AI_SCREEN_ADMIN_CONCURRENCY），普通用户返回字段值"""
+        if self._is_admin(obj):
+            from django.conf import settings
+            return getattr(settings, 'AI_SCREEN_ADMIN_CONCURRENCY', 16)
+        return obj.concurrency_limit
+
+    def get_quota_projects(self, obj):
+        """admin/superuser 项目配额，与实际限制一致（当前无硬性限制，返回原始值）"""
+        return obj.quota_projects
+
+    def get_quota_storage_mb(self, obj):
+        """admin/superuser 存储配额，与实际限制一致（当前无硬性限制，返回原始值）"""
+        return obj.quota_storage_mb
 
 
 class PermissionSerializer(serializers.ModelSerializer):

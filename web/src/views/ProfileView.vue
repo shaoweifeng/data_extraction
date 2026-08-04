@@ -19,12 +19,15 @@
         <!-- 余额概览 -->
         <div class="balance-card" v-if="billing">
           <div class="balance-main">
-            <span class="balance-num">{{ billing.balance }}</span>
+            <span class="balance-num">{{ billing.is_unlimited ? '∞' : billing.balance }}</span>
             <span class="balance-unit">credits</span>
           </div>
-          <div class="balance-sub-row">
+          <div class="balance-sub-row" v-if="!billing.is_unlimited">
             <span class="balance-sub-item"><i class="fas fa-gift"></i> 累计赠送 {{ billing.total_granted }}</span>
             <span class="balance-sub-item"><i class="fas fa-fire"></i> 累计消耗 {{ billing.total_consumed }}</span>
+          </div>
+          <div class="balance-sub-row" v-else>
+            <span class="balance-sub-item"><i class="fas fa-crown"></i> 管理员无限额度</span>
           </div>
           <div class="balance-ratio-tip">1 credit ≈ {{ billing.credit_token_ratio }} tokens</div>
         </div>
@@ -109,8 +112,8 @@
                       {{ t.txn_type_display }}
                     </span>
                   </td>
-                  <td :class="t.amount >= 0 ? 'txn-amount-pos' : 'txn-amount-neg'">
-                    {{ t.amount >= 0 ? '+' : '' }}{{ t.amount }}
+                  <td :class="t.amount === 0 ? 'txn-amount-zero' : t.amount > 0 ? 'txn-amount-pos' : 'txn-amount-neg'">
+                    {{ t.amount === 0 ? '—' : (t.amount > 0 ? '+' : '') + t.amount }}
                   </td>
                   <td class="txn-balance-after">{{ t.balance_after }}</td>
                   <td class="txn-note">{{ t.note || '—' }}</td>
@@ -440,14 +443,16 @@ onMounted(async () => {
   padding: 2px 8px; border-radius: 999px;
   font-size: 0.72rem; font-weight: 600;
 }
-.txn-grant    { background: #ecfdf5; color: #065f46; }
-.txn-recharge { background: #eff6ff; color: #1d4ed8; }
-.txn-consume  { background: #fff7ed; color: #9a3412; }
-.txn-refund   { background: #fdf4ff; color: #6b21a8; }
-.txn-adjust   { background: #fafafa; color: #374151; border: 1px solid #e5e7eb; }
+.txn-grant       { background: #ecfdf5; color: #065f46; }
+.txn-recharge    { background: #eff6ff; color: #1d4ed8; }
+.txn-consume     { background: #fff7ed; color: #9a3412; }
+.txn-refund      { background: #fdf4ff; color: #6b21a8; }
+.txn-adjust      { background: #fafafa; color: #374151; border: 1px solid #e5e7eb; }
+.txn-admin_usage { background: #f0f9ff; color: #0369a1; border: 1px dashed #7dd3fc; }
 
-.txn-amount-pos { color: #16a34a; font-weight: 600; }
-.txn-amount-neg { color: #dc2626; font-weight: 600; }
+.txn-amount-pos  { color: #16a34a; font-weight: 600; }
+.txn-amount-neg  { color: #dc2626; font-weight: 600; }
+.txn-amount-zero { color: #94a3b8; font-weight: 500; }
 .txn-balance-after { color: #6366f1; font-weight: 600; }
 .txn-note { color: #94a3b8; font-size: 0.8rem; max-width: 180px; }
 .txn-time { color: #94a3b8; font-size: 0.78rem; white-space: nowrap; }

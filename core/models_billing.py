@@ -49,11 +49,12 @@ class CreditTransaction(models.Model):
     """额度流水（每次充值/赠送/扣费/退款各一条）"""
 
     TXN_TYPE_CHOICES = [
-        ('grant',    '赠送'),        # 注册赠送 / 管理员充值
-        ('recharge', '充值'),        # 兑换码充值（阶段六）
-        ('consume',  '消耗'),        # AI 筛选预扣（阶段三）
-        ('refund',   '退款'),        # 多退少补退差额（阶段三）
-        ('adjust',   '管理员调整'),  # 管理员手动加减
+        ('grant',       '赠送'),         # 注册赠送 / 管理员充值
+        ('recharge',    '充值'),         # 兑换码充值
+        ('consume',     '消耗'),         # AI 筛选实际用量扣费
+        ('refund',      '退款'),         # 多退少补退差额
+        ('adjust',      '管理员调整'),   # 管理员手动加减
+        ('admin_usage', '管理员用量'),   # 管理员筛选用量记录（不扣费，仅审计）
     ]
 
     account = models.ForeignKey(

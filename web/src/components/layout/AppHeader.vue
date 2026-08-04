@@ -74,7 +74,8 @@ async function fetchBalance() {
   if (!auth.user) return
   try {
     const res = await http.get('/billing/balance/')
-    balance.value = res.data.balance
+    const data = res.data
+    balance.value = data.is_unlimited ? '\u221e' : data.balance
   } catch (e) {
     // 静默失败，不影响导航栏渲染
     balance.value = 0  // 请求失败时显示 0，而不是一直 spinner

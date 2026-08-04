@@ -33,12 +33,26 @@ def balance(request):
     from core.services.billing_service import get_or_create_account
     from django.conf import settings
 
-    acct = get_or_create_account(request.user)
+    user = request.user
+    profile = getattr(user, 'profile', None)
+    is_unlimited = user.is_superuser or (profile and profile.role == 'admin')
+
+    if is_unlimited:
+        return Response({
+            "balance": None,          # None 表示无限额度，前端显示 ∞
+            "total_granted": None,
+            "total_consumed": None,
+            "credit_token_ratio": getattr(settings, 'BILLING_CREDIT_TOKEN_RATIO', 1000),
+            "is_unlimited": True,
+        })
+
+    acct = get_or_create_account(user)
     return Response({
         "balance": acct.balance,
         "total_granted": acct.total_granted,
         "total_consumed": acct.total_consumed,
         "credit_token_ratio": getattr(settings, 'BILLING_CREDIT_TOKEN_RATIO', 1000),
+        "is_unlimited": False,
     })
 
 
@@ -70,13 +84,26 @@ def estimate(request):
         return Response({"error": "ref_count 必须为正整数"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     estimated = estimate_credits(ref_count)
-    bal = get_balance(request.user)
+    user = request.user
+    profile = getattr(user, 'profile', None)
+    is_unlimited = user.is_superuser or (profile and profile.role == 'admin')
 
+    if is_unlimited:
+        return Response({
+            "ref_count": ref_count,
+            "estimated_credits": estimated,
+            "balance": None,
+            "sufficient": True,
+            "is_unlimited": True,
+        })
+
+    bal = get_balance(user)
     return Response({
         "ref_count": ref_count,
         "estimated_credits": estimated,
         "balance": bal,
         "sufficient": bal >= estimated,
+        "is_unlimited": False,
     })
 
 
