@@ -54,6 +54,26 @@ export DB_PORT=${DB_PORT:-3306}
 # AI 筛选配置
 export AI_TIMEOUT=${AI_TIMEOUT:-120}
 
+# ── 阶段四：全局并发控制 ──────────────────────────────────────
+# 全局最大线程槽数（所有 ai_screen 任务占用线程数之和上限）
+export AI_SCREEN_MAX_GLOBAL_THREADS=${AI_SCREEN_MAX_GLOBAL_THREADS:-64}
+# 普通用户默认并发线程数（未设置 concurrency_limit 时的 fallback）
+export AI_SCREEN_DEFAULT_CONCURRENCY=${AI_SCREEN_DEFAULT_CONCURRENCY:-2}
+# 管理员/超管并发线程数
+export AI_SCREEN_ADMIN_CONCURRENCY=${AI_SCREEN_ADMIN_CONCURRENCY:-16}
+# 排队重试间隔（秒）
+export AI_SCREEN_QUEUE_RETRY_INTERVAL=${AI_SCREEN_QUEUE_RETRY_INTERVAL:-30}
+# 最大排队等待次数（120 × 30s = 1 小时）
+export AI_SCREEN_QUEUE_MAX_RETRIES=${AI_SCREEN_QUEUE_MAX_RETRIES:-120}
+
+# ── 阶段五：注册防刷 ─────────────────────────────────────────
+# 同一 IP 在窗口期内最多允许成功注册的账号数（超出返回 429）
+export REGISTER_IP_LIMIT=${REGISTER_IP_LIMIT:-3}
+# 限流窗口（小时）
+export REGISTER_IP_WINDOW_HOURS=${REGISTER_IP_WINDOW_HOURS:-24}
+# 邮箱验证开关（false=关闭，注册时邮箱选填；true=开启，需配置 SMTP）
+export REQUIRE_EMAIL_VERIFICATION=${REQUIRE_EMAIL_VERIFICATION:-false}
+
 # DeepSeek 配置
 export DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-sk-dcc67593b429483daf0be1d45a7c0290}
 export DEEPSEEK_API_URL=${DEEPSEEK_API_URL:-https://api.deepseek.com/v1}

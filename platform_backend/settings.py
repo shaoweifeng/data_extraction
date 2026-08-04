@@ -187,6 +187,20 @@ BILLING_FREE_CREDITS_ON_REGISTER = int(os.getenv('BILLING_FREE_CREDITS_ON_REGIST
 BILLING_ESTIMATE_CREDITS_PER_REF = int(os.getenv('BILLING_ESTIMATE_CREDITS_PER_REF', '2'))
 
 # ============================================================================
+# 阶段五：注册防刷配置
+# ============================================================================
+
+# 同一 IP 在窗口期内最多允许成功注册的账号数（超出返回 429）
+REGISTER_IP_LIMIT = int(os.getenv('REGISTER_IP_LIMIT', '3'))
+
+# 限流窗口（小时），默认 24 小时
+REGISTER_IP_WINDOW_HOURS = int(os.getenv('REGISTER_IP_WINDOW_HOURS', '24'))
+
+# 邮箱验证开关（True=注册时必须填写并发送验证邮件，False=邮箱选填跳过验证）
+# 当前默认关闭，后续接入 SMTP 后再开启
+REQUIRE_EMAIL_VERIFICATION = os.getenv('REQUIRE_EMAIL_VERIFICATION', 'false').lower() == 'true'
+
+# ============================================================================
 # 阶段四：全局 AI 筛选并发控制
 # ============================================================================
 

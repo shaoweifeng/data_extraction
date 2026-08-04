@@ -482,3 +482,42 @@ def delete_project_directory(sender, instance, **kwargs):
     project_dir = os.path.join(settings.MEDIA_ROOT, f"projects/project_{instance.id}")
     if os.path.isdir(project_dir):
         shutil.rmtree(project_dir, ignore_errors=True)
+
+
+# ============================================================================
+# 注册防刷日志（阶段五）
+# ============================================================================
+
+class RegistrationLog(models.Model):
+    """
+    记录每次注册请求（成功与失败均记录）。
+
+    用途：
+      - 同 IP 24h 内注册次数限流（REGISTER_IP_LIMIT 可配）
+      - 运营排查异常注册行为
+      - 预留：邮箱验证关联（email_verified 字段，当前默认 False）
+
+    注意：IP 地址取自 X-Forwarded-For 或 REMOTE_ADDR，
+          部署在反向代理后需确保 TRUSTED_PROXY_IPS 配置正确。
+    """
+    ip_address     = models.GenericIPAddressField(verbose_name="注册IP")
+    username       = models.CharField(max_length=150, verbose_name="用户名")
+    email          = models.EmailField(blank=True, default='', verbose_name="邮箱")
+    success        = models.BooleanField(default=True, verbose_name="是否注册成功")
+    fail_reason    = models.CharField(max_length=200, blank=True, default='', verbose_name="失败原因")
+    # 预留字段：邮箱验证开关启用后使用
+    email_verified = models.BooleanField(default=False, verbose_name="邮箱已验证")
+    created_at     = models.DateTimeField(auto_now_add=True, verbose_name="记录时间")
+
+    class Meta:
+        db_table        = 'plat_registrationlog'
+        verbose_name    = "注册日志"
+        verbose_name_plural = "注册日志"
+        indexes         = [
+            models.Index(fields=['ip_address', 'created_at'], name='idx_reg_ip_time'),
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        status = '成功' if self.success else f'失败({self.fail_reason})'
+        return f"{self.ip_address} → {self.username} [{status}] {self.created_at:%Y-%m-%d %H:%M}"
