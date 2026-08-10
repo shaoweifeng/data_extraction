@@ -10,6 +10,39 @@
       </div>
     </div>
 
+    <!-- 去重进度区域（参照 StepParse 进度条风格） -->
+    <div
+      v-if="s.isDeduplicating"
+      class="mb-4"
+      style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:12px;padding:12px 16px"
+    >
+      <div class="flex items-center gap-2 mb-2">
+        <i class="fas fa-spinner fa-spin text-purple-500"></i>
+        <span class="font-medium text-sm text-purple-700">
+          {{ s.dedupProgressMsg || '正在启动去重...' }}
+        </span>
+      </div>
+      <!-- 进度条 -->
+      <div class="progress-bar-track" style="height:6px">
+        <div
+          v-if="s.dedupProgressCurrent > 0 && s.dedupProgressCurrent < 100"
+          class="progress-bar-fill"
+          :style="{ width: s.dedupProgressCurrent + '%', background: '#8b5cf6' }"
+        ></div>
+        <div
+          v-else-if="s.dedupProgressCurrent >= 100"
+          class="progress-bar-fill animate-pulse"
+          style="width:100%;background:#8b5cf6"
+        ></div>
+        <div v-else class="progress-bar-fill animate-pulse" style="width:30%;background:#8b5cf6"></div>
+      </div>
+      <div class="flex justify-between text-xs mt-1 text-purple-500">
+        <span v-if="s.dedupProgressCurrent > 0 && s.dedupProgressCurrent < 100">{{ s.dedupProgressCurrent }}%</span>
+        <span v-else-if="s.dedupProgressCurrent >= 100">100% · 收尾中</span>
+        <span v-else>处理中...</span>
+      </div>
+    </div>
+
     <!-- 文件数量与状态 -->
     <div class="step-list-box mb-6 max-w-2xl mx-auto" style="padding:20px 24px">
       <div class="flex justify-between items-center text-sm text-gray-600 mb-3">
@@ -148,7 +181,7 @@ import { onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
-import http, { httpNoTimeout } from '@/api/http'
+import http from '@/api/http'
 
 const s = useScreeningStore()
 const project = useProjectStore()
@@ -160,13 +193,15 @@ async function handleDeduplication() {
     return
   }
   s.isDeduplicating = true
+  s.dedupProgressCurrent = 0
+  s.dedupProgressMsg = '正在启动去重任务...'
   try {
-    const res = await httpNoTimeout.post('/tasks/', {
+    const res = await http.post('/tasks/', {
       project: project.currentProject.id,
       task_type: 'deduplication',
-      config: { ai_model: s.selectedAiModel },
     })
     const task = res.data
+    await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
     pollDedupStatus(task.id)
   } catch (err) {
     alert(`去重启动失败: ${err.response?.data?.error || err.message}`)
@@ -175,29 +210,46 @@ async function handleDeduplication() {
 }
 
 async function pollDedupStatus(taskId) {
+  let errorCount = 0
   const poll = async () => {
     try {
       const res = await http.get(`/tasks/${taskId}/`)
       const task = res.data
       const status = task.status
 
+      // 更新进度
+      if (task.progress_percentage != null) {
+        s.dedupProgressCurrent = Math.round(task.progress_percentage)
+        if (s.dedupProgressCurrent >= 100) {
+          s.dedupProgressMsg = '正在保存结果...'
+        } else {
+          s.dedupProgressMsg = `已扫描 ${s.dedupProgressCurrent}%`
+        }
+      }
+
       if (status === 'running' || status === 'pending') {
-        setTimeout(poll, 2000)
+        setTimeout(poll, 500)
       } else if (status === 'completed') {
         s.dedupCompleted = true
         s.isDeduplicating = false
+        s.dedupProgressCurrent = 100
+        s.dedupProgressMsg = '去重完成'
         await project.fetchStages(project.currentProject.id)
         await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
         loadDedupStats()
-        alert('去重完成！')
       } else {
         s.isDeduplicating = false
         await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
         alert(`去重失败: ${task.error_message || '任务执行失败'}`)
       }
     } catch (err) {
-      console.error('轮询任务状态失败', err)
-      s.isDeduplicating = false
+      errorCount++
+      if (errorCount < 5) {
+        setTimeout(poll, 1000)
+      } else {
+        s.isDeduplicating = false
+        console.error('轮询任务状态失败', err)
+      }
     }
   }
   await poll()

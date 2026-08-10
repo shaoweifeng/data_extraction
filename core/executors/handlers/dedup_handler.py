@@ -22,9 +22,7 @@ from core.executors.handlers.base_handler import BaseStepHandler
 
 @register("dedup")
 class DedupHandler(BaseStepHandler):
-    """自动去重步骤 Handler（同步执行）"""
-
-    execution_mode = "sync"
+    """自动去重步骤 Handler（async 执行，Celery Worker 后台运行）"""
 
     def execute(self) -> bool:
         """
@@ -60,6 +58,8 @@ class DedupHandler(BaseStepHandler):
             return False
 
         total_files = len(input_files)
+        # async 模式：每篇都同步一次进度到 DB，保证前端轮询看到实时进度
+        self.logger._progress_sync_interval = 1
         self.logger.update_progress(0, total_files, "refs")
 
         # 复制文件到工作区

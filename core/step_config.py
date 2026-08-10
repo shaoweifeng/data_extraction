@@ -104,7 +104,7 @@ STEP_CONFIGURATIONS = {
     "dedup": {
         "name": "自动去重",
         "stage_key": "SCREEN_1",
-        "execution_mode": "sync",
+        "execution_mode": "async",
         "description": "基于标题/DOI自动去重",
         "timeout": 180,
         "can_skip": True,

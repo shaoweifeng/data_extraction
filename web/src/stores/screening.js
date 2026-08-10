@@ -29,6 +29,8 @@ export const useScreeningStore = defineStore('screening', () => {
   const dedupStats = ref(null)
   const showDuplicateDetails = ref(false)
   const showSkipDedupModal = ref(false)
+  const dedupProgressCurrent = ref(0)   // 0~100 百分比
+  const dedupProgressMsg = ref('')
 
   // 纳排标准（步骤3）
   const newCriteria = ref('')
@@ -124,6 +126,8 @@ export const useScreeningStore = defineStore('screening', () => {
     dedupStats.value = null
     showDuplicateDetails.value = false
     showSkipDedupModal.value = false
+    dedupProgressCurrent.value = 0
+    dedupProgressMsg.value = ''
     newCriteria.value = ''
     criteriaList.value = []
     newExtractionFieldName.value = ''
@@ -169,6 +173,7 @@ export const useScreeningStore = defineStore('screening', () => {
     uploadPhase, uploadProgress, uploadCurrentFile, uploadFileIndex,
     uploadTotalFiles, parseProgressCurrent, parseProgressTotal, parseProgressMsg,
     isDeduplicating, dedupCompleted, dedupStats, showDuplicateDetails, showSkipDedupModal,
+    dedupProgressCurrent, dedupProgressMsg,
     newCriteria, criteriaList, showCriteriaGuide,
     newExtractionFieldName, newExtractionFieldDef, extractionFields,
     screeningTab, pendingFiles, screenedFiles, pendingPage, screenedPage,
