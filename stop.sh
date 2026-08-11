@@ -40,8 +40,14 @@ stop_process() {
 # 停止 Vite dev server（开发模式启动时存在）
 stop_process "vite"
 
-# 停止 Django
+# 停止 Django / Gunicorn（PID 文件由 --pid 参数写入，stop_process 通用处理）
 stop_process "django"
+# 兜底：按进程名清理残余 Gunicorn 主进程（worker 子进程会随 master 一起退出）
+OLD_GUNICORN=$(pgrep -f "gunicorn.*platform_backend.wsgi" 2>/dev/null)
+if [ -n "$OLD_GUNICORN" ]; then
+    echo "⚠️  发现残余 Gunicorn 进程 (PID: $OLD_GUNICORN)，正在清理..."
+    kill $OLD_GUNICORN 2>/dev/null
+fi
 
 # 停止 Celery（同时兜底用 pgrep 清理残余）
 stop_process "celery"
