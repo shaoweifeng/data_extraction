@@ -3,11 +3,11 @@
 # 启动脚本：支持后台守护模式 + 集中日志 + PID 管理
 #
 # 用法：
-#   ./start.sh              # 前台模式（构建前端后启动，Ctrl+C 停止）
-#   ./start.sh -d           # 后台守护模式（日志写文件，进程常驻）
-#   ./start.sh --dev        # 开发模式（前台，跳过构建，启动 Vite dev server）
-#   ./start.sh --dev -d     # 开发模式守护（Vite + Django 均后台）
-#   ./start.sh --no-build   # 跳过前端构建（前台）
+#   ./start.sh              # 前台模式（构建前端后用 Gunicorn 启动）
+#   ./start.sh -d           # 后台守护模式（Gunicorn daemon，日志写文件）
+#   ./start.sh --dev        # 开发模式（runserver 前台 + Vite dev server）
+#   ./start.sh --dev -d     # 开发模式守护（runserver + Vite 均后台）
+#   ./start.sh --no-build   # 跳过前端构建（前台，Gunicorn）
 #   ./stop.sh               # 停止所有后台进程（守护模式配套）
 # ============================================================
 echo "🚀 正在启动自动化数据提取平台 (Django + Celery + Vue)..."
@@ -39,8 +39,8 @@ PID_DIR="$SCRIPT_DIR/pids"
 mkdir -p "$LOG_DIR" "$PID_DIR"
 
 # ── 日志文件路径 ──────────────────────────────────────────
-DJANGO_LOG="$LOG_DIR/django.log"
-DJANGO_ERR="$LOG_DIR/error.log"
+DJANGO_LOG="$LOG_DIR/gunicorn_access.log"
+DJANGO_ERR="$LOG_DIR/gunicorn_error.log"
 CELERY_LOG="$LOG_DIR/celery.log"
 VITE_LOG="$LOG_DIR/vite.log"
 
@@ -182,7 +182,7 @@ if [ "$DEV_MODE" = true ]; then
     fi
 fi
 
-# 4. 启动 Django Server
+# 4. 启动 Django Server（开发模式用 runserver，生产/守护模式用 Gunicorn）
 if [ "$DEV_MODE" = true ]; then
     echo "✅ Django 服务即将启动，请访问 http://127.0.0.1:8000 (API)"
 else
@@ -190,12 +190,28 @@ else
 fi
 
 if [ "$DAEMON_MODE" = true ]; then
-    # ── 守护模式：Django 也后台运行，日志写文件 ──────────
-    nohup python3 manage.py runserver 0.0.0.0:8000 \
-        >> "$DJANGO_LOG" 2>> "$DJANGO_ERR" &
-    DJANGO_PID=$!
-    echo $DJANGO_PID > "$PID_DIR/django.pid"
-    echo "✅ Django 已在后台启动 (PID: $DJANGO_PID)"
+    if [ "$DEV_MODE" = true ]; then
+        # ── 守护模式 + 开发模式：仍用 runserver ──────────────
+        nohup python3 manage.py runserver 0.0.0.0:8000 \
+            >> "$DJANGO_LOG" 2>> "$DJANGO_ERR" &
+        DJANGO_PID=$!
+        echo $DJANGO_PID > "$PID_DIR/django.pid"
+        echo "✅ Django (runserver) 已在后台启动 (PID: $DJANGO_PID)"
+    else
+        # ── 守护模式：Gunicorn 后台运行，自行写 PID 文件 ──────
+        gunicorn platform_backend.wsgi:application \
+            --bind 0.0.0.0:8000 \
+            --workers 4 \
+            --threads 2 \
+            --timeout 300 \
+            --daemon \
+            --pid "$PID_DIR/django.pid" \
+            --access-logfile "$DJANGO_LOG" \
+            --error-logfile "$DJANGO_ERR"
+        sleep 1
+        DJANGO_PID=$(cat "$PID_DIR/django.pid" 2>/dev/null)
+        echo "✅ Gunicorn 已在后台启动 (PID: $DJANGO_PID, workers: 4×2线程)"
+    fi
     echo "   访问日志 : $DJANGO_LOG"
     echo "   错误日志 : $DJANGO_ERR"
     echo ""
@@ -206,8 +222,21 @@ if [ "$DAEMON_MODE" = true ]; then
         echo "👉 前端日志  : tail -f $VITE_LOG"
     fi
 else
-    # ── 前台模式：Django 前台阻塞，方便开发调试 ──────────
-    echo "   (前台模式，Ctrl+C 可停止；Celery 仍在后台运行)"
-    echo "   如需后台常驻，请使用: ./start.sh -d"
-    python3 manage.py runserver 0.0.0.0:8000
+    if [ "$DEV_MODE" = true ]; then
+        # ── 前台开发模式：runserver 前台阻塞 ─────────────────
+        echo "   (前台模式，Ctrl+C 可停止；Celery 仍在后台运行)"
+        echo "   如需后台常驻，请使用: ./start.sh --dev -d"
+        python3 manage.py runserver 0.0.0.0:8000
+    else
+        # ── 前台生产模式：Gunicorn 前台阻塞 ──────────────────
+        echo "   (前台模式，Ctrl+C 可停止；Celery 仍在后台运行)"
+        echo "   如需后台常驻，请使用: ./start.sh -d"
+        gunicorn platform_backend.wsgi:application \
+            --bind 0.0.0.0:8000 \
+            --workers 4 \
+            --threads 2 \
+            --timeout 300 \
+            --access-logfile "$DJANGO_LOG" \
+            --error-logfile "$DJANGO_ERR"
+    fi
 fi
