@@ -27,14 +27,19 @@
             </div>
             <!-- 步骤内容 + 右侧任务栏 -->
             <div class="ws-body">
-              <div class="ws-step-content">
-                <StepParse    v-if="screening.currentStep === 1" />
-                <StepDedup    v-else-if="screening.currentStep === 2" />
-                <StepCriteria v-else-if="screening.currentStep === 3" />
-                <StepFields   v-else-if="screening.currentStep === 4" />
-                <StepAiScreen v-else-if="screening.currentStep === 5" />
-                <StepExport   v-else-if="screening.currentStep === 6" />
-                <StepNav class="step-nav-bar" />
+              <div class="ws-step-wrap">
+                <div class="ws-step-content" :class="{ 'review-mode': screening.currentStep === 6 }">
+                  <StepParse    v-if="screening.currentStep === 1" />
+                  <StepDedup    v-else-if="screening.currentStep === 2" />
+                  <StepCriteria v-else-if="screening.currentStep === 3" />
+                  <StepFields   v-else-if="screening.currentStep === 4" />
+                  <StepAiScreen v-else-if="screening.currentStep === 5" />
+                  <StepReview   v-else-if="screening.currentStep === 6" />
+                  <StepExport   v-else-if="screening.currentStep === 7" />
+                </div>
+                <div class="ws-step-footer">
+                  <StepNav />
+                </div>
               </div>
               <TaskSidebar class="ws-task-sidebar" />
             </div>
@@ -73,6 +78,7 @@ import StepDedup from '@/components/steps/StepDedup.vue'
 import StepCriteria from '@/components/steps/StepCriteria.vue'
 import StepFields from '@/components/steps/StepFields.vue'
 import StepAiScreen from '@/components/steps/StepAiScreen.vue'
+import StepReview from '@/components/steps/StepReview.vue'
 import StepExport from '@/components/steps/StepExport.vue'
 
 const route = useRoute()
@@ -89,7 +95,8 @@ const screen1Steps = [
   { id: 3, name: '纳排标准',  stepKey: 'criteria' },
   { id: 4, name: '提取字段',  stepKey: 'field_extraction' },
   { id: 5, name: 'AI 初筛',   stepKey: 'ai_screen' },
-  { id: 6, name: '结果导出',  stepKey: 'export' },
+  { id: 6, name: '人工审阅',  stepKey: 'review' },
+  { id: 7, name: '结果导出',  stepKey: 'export' },
 ]
 
 const stageMeta = {
@@ -149,11 +156,26 @@ onMounted(async () => {
 .ws-body {
   flex: 1; display: flex; overflow: hidden; min-height: 0;
 }
+/* step 内容区外层：上方可滚动内容区 + 下方固定页脚 */
+.ws-step-wrap {
+  flex: 1; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
 .ws-step-content {
   flex: 1; overflow-y: auto; padding: 20px 24px;
   min-width: 0; min-height: 0; display: flex; flex-direction: column;
 }
-.step-nav-bar { margin-top: auto; padding-top: 12px; }
+/* step 6 (人工审阅) 不用 padding，让 StepReview 自己擑满 */
+.ws-step-content.review-mode {
+  padding: 0;
+  overflow: hidden;
+}
+.ws-step-footer {
+  flex-shrink: 0;
+  padding: 0 24px;
+  border-top: 1px solid #f1f5f9;
+  background: #fff;
+}
 
 .ws-task-sidebar {
   width: 280px; min-width: 280px;

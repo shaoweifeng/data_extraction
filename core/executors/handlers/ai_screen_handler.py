@@ -114,6 +114,11 @@ class AIScreenHandler(BaseStepHandler):
             if old_count > 0:
                 old_qs.delete()
                 self.logger.info(f"[清理] 已清除 {old_count} 条历史筛选结果")
+            # 同步清理该项目的人工审阅记录，避免重跑后残留旧数据
+            from core.models import ManualReview
+            mr_count, _ = ManualReview.objects.filter(project=self.project_obj).delete()
+            if mr_count > 0:
+                self.logger.info(f"[清理] 已清除 {mr_count} 条历史人工审阅记录")
         else:
             self.logger.info("[断点] 续传模式：保留已有结果，追加新结果")
 

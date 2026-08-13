@@ -49,7 +49,7 @@ STEP_CONFIGURATIONS = {
         "description": "文献自动解析、去重、AI筛选、结果归纳",
         "auto_trigger": True,
         "dependencies": ["SEARCH"],
-        "sub_steps": ["parse", "dedup", "criteria", "field_extraction", "ai_screen", "export"],
+        "sub_steps": ["parse", "dedup", "criteria", "field_extraction", "ai_screen", "review", "export"],
         "monitoring": {
             "progress_type": "aggregate",
             "weight_distribution": {
@@ -225,6 +225,32 @@ STEP_CONFIGURATIONS = {
     },
     
     # ------------------------------------------------------------------------
+    # 子步骤: 人工审阅（纯交互，order=45）
+    # ------------------------------------------------------------------------
+    "review": {
+        "name": "人工审阅",
+        "stage_key": "SCREEN_1",
+        "execution_mode": "manual",   # 纯前端交互，不触发后台任务
+        "description": "对 AI 筛选结果进行人工复核，可覆写 AI 判断（纳入/排除/待定）",
+        "can_skip": True,             # 可跳过直接进 export
+        "timeout": None,
+        "inputs": ["results/*/*.json"],
+        "outputs": [],                # 无产物文件，结果存 ManualReview 表
+        "monitoring": {
+            "progress_type": "manual_count",
+            "progress_unit": "refs"
+        },
+        "metadata_template": {
+            "total": 0,
+            "reviewed": 0,
+            "included": 0,
+            "excluded": 0,
+            "pending": 0,
+            "completed_at": None
+        }
+    },
+
+    # ------------------------------------------------------------------------
     # 子步骤: 结果归纳（同步）
     # ------------------------------------------------------------------------
     "export": {
@@ -379,6 +405,7 @@ STAGE_DEFINITIONS = [
             {"step_key": "criteria", "name": "纳排标准", "order": 30, "can_skip": False},
             {"step_key": "field_extraction", "name": "提取字段", "order": 35, "can_skip": True},
             {"step_key": "ai_screen", "name": "AI初筛", "order": 40, "can_skip": False},
+            {"step_key": "review", "name": "人工审阅", "order": 45, "can_skip": True},
             {"step_key": "export", "name": "结果归纳", "order": 50, "can_skip": False}
         ]
     },

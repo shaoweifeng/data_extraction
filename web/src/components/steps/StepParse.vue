@@ -6,7 +6,7 @@
       </div>
       <div>
         <h3 class="step-title">导入文献索引</h3>
-        <p class="step-subtitle">上传 RIS / BibTeX / NBIB / TXT 格式的文献文件</p>
+        <p class="step-subtitle">支持 RIS / BibTeX / NBIB / XML / CIW / ENW / DOCX / TXT 格式的文献索引文件</p>
       </div>
     </div>
 
@@ -84,7 +84,18 @@
         <i v-else class="fas fa-upload"></i>
         {{ s.uploadPhase === 'uploading' ? '上传中...' : s.isParsing ? '正在解析...' : '上传 Reference 文件' }}
       </button>
-      <p class="mt-3 text-sm text-gray-400">点击或拖拽文件到此处（支持 .ris .bib .nbib .txt 等）</p>
+      <p class="mt-3 text-sm text-gray-400">点击或拖拽文件到此处</p>
+      <p class="mt-1 text-xs text-gray-300">支持格式：</p>
+      <div class="fmt-list">
+        <span class="fmt-tag"><b>.ris</b><em>RIS &mdash; EndNote、Zotero、万方等</em></span>
+        <span class="fmt-tag"><b>.bib / .bibtex</b><em>BibTeX &mdash; LaTeX 工具链</em></span>
+        <span class="fmt-tag"><b>.nbib / .medline</b><em>NBIB/Medline &mdash; PubMed</em></span>
+        <span class="fmt-tag"><b>.xml</b><em>XML &mdash; Web of Science 等</em></span>
+        <span class="fmt-tag"><b>.ciw</b><em>CIW &mdash; Web of Science 早期格式</em></span>
+        <span class="fmt-tag"><b>.enw</b><em>ENW &mdash; EndNote Web</em></span>
+        <span class="fmt-tag"><b>.docx / .doc</b><em>DOCX &mdash; Word 文档手动整理</em></span>
+        <span class="fmt-tag"><b>.txt</b><em>TXT &mdash; CNKI、维普等纯文本导出</em></span>
+      </div>
     </div>
 
     <!-- 已导入文件列表 -->
@@ -288,3 +299,32 @@ async function handleDeleteFile(fileId) {
   }
 }
 </script>
+
+<style scoped>
+.fmt-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.fmt-tag {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 4px 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+.fmt-tag b {
+  color: #2563eb;
+  font-family: monospace;
+  font-weight: 700;
+}
+.fmt-tag em {
+  color: #94a3b8;
+  font-style: normal;
+  font-size: 0.68rem;
+}
+</style>

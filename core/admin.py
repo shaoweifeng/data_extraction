@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     UserProfile, Permission, UserPermission, RoleTemplate,
     RoleTemplatePermission, Project, ProjectStage, StageStep,
-    DataFile, DataFileVersion, Task
+    DataFile, DataFileVersion, Task, ManualReview
 )
 from .models_billing import CreditAccount, CreditTransaction, TokenUsageLog, RechargeCode
 
@@ -290,3 +290,40 @@ class RechargeCodeAdmin(admin.ModelAdmin):
         if obj and obj.is_used:
             return [f.name for f in self.model._meta.fields]
         return self.readonly_fields
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 人工审阅
+# ─────────────────────────────────────────────────────────────────────────────
+
+@admin.register(ManualReview)
+class ManualReviewAdmin(admin.ModelAdmin):
+    list_display  = [
+        'project', 'source_xml_short', 'ai_decision', 'decision',
+        'is_override', 'reviewer', 'reviewed_at'
+    ]
+    list_filter   = ['decision', 'ai_decision', 'is_override', 'project']
+    search_fields = ['source_xml', 'reason', 'ai_reason', 'project__name', 'reviewer__username']
+    readonly_fields = ['ai_decision', 'ai_reason', 'is_override', 'reviewed_at', 'created_at']
+
+    fieldsets = (
+        ('文献信息', {
+            'fields': ('project', 'step', 'source_xml'),
+        }),
+        ('AI 判断（只读）', {
+            'fields': ('ai_decision', 'ai_reason'),
+            'classes': ('collapse',),
+        }),
+        ('人工决定', {
+            'fields': ('decision', 'reason', 'reviewer', 'is_override'),
+        }),
+        ('时间戳', {
+            'fields': ('reviewed_at', 'created_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    @admin.display(description='XML 文件名')
+    def source_xml_short(self, obj):
+        name = obj.source_xml.split('/')[-1]
+        return name[:60] + '…' if len(name) > 60 else name

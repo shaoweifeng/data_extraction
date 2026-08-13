@@ -7,6 +7,13 @@ from .api.billing_views import (
     redeem as billing_redeem,
     transactions as billing_transactions,
 )
+from .api.review_views import (
+    review_list,
+    review_submit,
+    review_item,
+    review_stats,
+    review_complete,
+)
 
 # 注册 ViewSets
 router = DefaultRouter()
@@ -29,8 +36,15 @@ urlpatterns = [
     # 计费 API
     path('billing/balance/',      billing_balance,      name='billing_balance'),
     path('billing/estimate/',     billing_estimate,     name='billing_estimate'),
-    path('billing/redeem/',       billing_redeem,       name='billing_redeem'),       # 兑换码充值
-    path('billing/transactions/', billing_transactions, name='billing_transactions'), # 流水分页
+    path('billing/redeem/',       billing_redeem,       name='billing_redeem'),
+    path('billing/transactions/', billing_transactions, name='billing_transactions'),
+
+    # 人工审阅 API
+    path('review/list/',          review_list,    name='review_list'),
+    path('review/submit/',        review_submit,  name='review_submit'),
+    path('review/item/<path:source_xml>/', review_item, name='review_item'),
+    path('review/stats/',         review_stats,   name='review_stats'),
+    path('review/complete/',      review_complete, name='review_complete'),
 
     # RESTful API
     path('', include(router.urls)),

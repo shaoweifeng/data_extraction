@@ -70,10 +70,10 @@ class OpenAICompatibleProvider(BaseAIProvider):
         """
         title = entry.get("title", "Unknown")
 
-        # 构建文献内容（Title + Abstract，截断到合理长度以控制 token）
+        # 构建文献内容（Title + Abstract）
+        # 摘要不截断：让 AI 读完整摘要，避免因截断导致错误排除
+        # （总 prompt 超 100000 字符时会在 _call_api 里整体截断）
         abstract = entry.get("abstract", "")
-        if len(abstract) > 8000:
-            abstract = abstract[:8000] + "\n[摘要过长，已截断]"
         
         content = f"Title: {title}\n"
         if abstract:
@@ -129,6 +129,10 @@ class OpenAICompatibleProvider(BaseAIProvider):
             "temperature": 0.1,
             "max_tokens": 4000,
         }
+        # deepseek-v4-flash 等推理模型默认启用 CoT，导致 content 为空。
+        # 用 thinking.disabled 禁用推理，使其直接输出结构化 JSON。
+        if "flash" in self.model.lower() or "reasoner" in self.model.lower() or "think" in self.model.lower():
+            payload["thinking"] = {"type": "disabled"}
 
         try:
             response = requests.post(
@@ -139,7 +143,12 @@ class OpenAICompatibleProvider(BaseAIProvider):
             )
             if response.status_code == 200:
                 body = response.json()
-                content = body["choices"][0]["message"]["content"]
+                msg = body["choices"][0]["message"]
+                content = msg.get("content") or ""
+                # 推理模型（如 deepseek-v4-flash）content 可能为空，
+                # 真正的回答在 reasoning_content 里
+                if not content.strip():
+                    content = msg.get("reasoning_content") or ""
                 # 采集 token 用量（OpenAI 兼容接口标准字段）
                 raw_usage = body.get("usage") or {}
                 token_usage = {
@@ -147,6 +156,9 @@ class OpenAICompatibleProvider(BaseAIProvider):
                     "completion": raw_usage.get("completion_tokens", 0),
                     "total":      raw_usage.get("total_tokens", 0),
                 } if raw_usage else None
+                if not content.strip():
+                    logger.warning("[DeepSeek] 模型返回内容为空（content 和 reasoning_content 均空）")
+                    return None, token_usage
                 return content, token_usage
             else:
                 logger.error(f"[DeepSeek] API 返回错误: {response.status_code} {response.text[:200]}")

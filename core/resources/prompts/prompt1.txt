@@ -19,10 +19,11 @@
   "include_or_not": "string, 这里只能填写yes或no，只要符合<exclusion_criteria>中的一条就写no，否则就写yes"
 }]
 -   请确保JSON字符串是有效的，无需任何额外的Markdown格式化（如不使用 ```json ```）。
+-   **所有文字输出（包括 exclusion_reason 字段）必须使用中文**，无论文献原文是何种语言。
 </output_format>
 <important_notes>
 -   你的判断必须严格基于上述标准，避免主观臆断。
 -   JSON输出是唯一可接受的格式。
--   请判断摘要字数是否超过500字，若超过，则只提取前500字即可。
 -   "number_exclusion_reason"是"exclusion_reason"的简化版，只用阿拉伯数字表示符合哪条纳排标准即可。如"number_exclusion_reason":"1"
+-   exclusion_reason 字段必须用中文书写，即使文献标题和摘要是英文。
 </important_notes>

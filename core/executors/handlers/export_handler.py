@@ -68,11 +68,29 @@ class ExportHandler(BaseStepHandler):
 
         self.logger.info(f"[聚合] 有效结果: {len(final_results)} 个")
 
+        # 加载人工审阅覆写记录（source_xml → ManualReview）
+        from core.models import ManualReview
+        manual_reviews = {
+            mr.source_xml: mr
+            for mr in ManualReview.objects.filter(project=self.project_obj)
+        }
+        self.logger.info(f"[人工审阅] 覆写记录: {len(manual_reviews)} 条")
+
         def _is_included(r):
-            v = r.get("include_or_not", "")
+            """判断最终纳入状态：优先使用人工决定，无覆写则用 AI 原始结果。"""
+            source_xml = r.get('source_xml', '')
+            mr = manual_reviews.get(source_xml)
+            if mr:
+                # pending 视为 AI 原始判断（人工未最终确认）
+                if mr.decision == 'included':
+                    return True
+                if mr.decision == 'excluded':
+                    return False
+            # fallback: AI 判断
+            v = r.get('include_or_not', '')
             if v:
-                return v.lower() == "yes"
-            return r.get("decision", "") == "included"
+                return v.lower() == 'yes'
+            return r.get('decision', '') == 'included'
 
         if export_type == "included":
             filtered = [r for r in final_results if _is_included(r)]
@@ -139,7 +157,7 @@ class ExportHandler(BaseStepHandler):
             import pandas as pd
 
             headers = [
-                "id", "include_or_not", "exclusion_reason_id", "exclusion_reason",
+                "id", "include_or_not", "manual_override", "exclusion_reason_id", "exclusion_reason",
                 "ReferenceType", "Title", "Author", "Year", "Journal",
                 "Volume", "Issue", "Page", "Date", "Doi", "PMCID", "Abstract", "URL", "Address",
                 "source_xml",
@@ -154,6 +172,15 @@ class ExportHandler(BaseStepHandler):
                 if not include_or_not:
                     include_or_not = "yes" if result.get("decision") == "included" else "no"
 
+                # 人工覆写标识
+                source_xml = result.get("source_xml", "")
+                mr = manual_reviews.get(source_xml) if 'manual_reviews' in dir() else None
+                if mr and mr.decision in ('included', 'excluded'):
+                    include_or_not = 'yes' if mr.decision == 'included' else 'no'
+                    manual_override_val = 'yes' if mr.is_override else 'no'
+                else:
+                    manual_override_val = 'no'
+
                 exclusion_reason = result.get("exclusion_reason", "")
                 if not exclusion_reason and include_or_not == "no":
                     exclusion_reason = result.get("reasoning", "")
@@ -165,6 +192,7 @@ class ExportHandler(BaseStepHandler):
                 row = {
                     "id": idx,
                     "include_or_not": include_or_not,
+                    "manual_override": manual_override_val,
                     "exclusion_reason_id": exclusion_reason_id,
                     "exclusion_reason": exclusion_reason,
                     "ReferenceType": xml_fields.get("ReferenceType", result.get("reference_type", "")),

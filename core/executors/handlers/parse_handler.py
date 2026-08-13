@@ -163,7 +163,9 @@ class ParseHandler(BaseStepHandler):
         return count
 
     def _clear_old_intermediate(self) -> None:
-        """清除本步骤旧的 intermediate DataFile 记录，避免重复运行时累加。"""
+        """清除本步骤旧的 intermediate DataFile 记录，避免重复运行时累加。
+        同时清除项目级的人工审阅和 AI 筛选结果（重新上传意味着文献集完全更换）。
+        """
         old_qs = DataFile.objects.filter(
             project=self.project_obj,
             step=self.step_obj,
@@ -173,6 +175,29 @@ class ParseHandler(BaseStepHandler):
         if old_count > 0:
             old_qs.delete()
             self.logger.info(f"[清理] 已清除 {old_count} 条旧的 intermediate 记录")
+
+        # 重新解析意味着文献集完全更换，后续所有流程数据均无效，一并清除
+        from core.models import ManualReview
+        mr_count, _ = ManualReview.objects.filter(project=self.project_obj).delete()
+        if mr_count > 0:
+            self.logger.info(f"[清理] 已清除 {mr_count} 条人工审阅记录")
+
+        # 清除 AI 筛选结果（ai_screen 步骤的 output DataFile）
+        from core.models import StageStep
+        ai_screen_steps = StageStep.objects.filter(
+            stage__project=self.project_obj,
+            step_key='ai_screen',
+        )
+        for step in ai_screen_steps:
+            ai_qs = DataFile.objects.filter(
+                project=self.project_obj,
+                step=step,
+                data_category='output',
+                description='AI筛选结果',
+            )
+            ai_cnt, _ = ai_qs.delete()
+            if ai_cnt > 0:
+                self.logger.info(f"[清理] 已清除 {ai_cnt} 条 AI 筛选结果")
 
     def _save_outputs(self, merged_xml: Path, split_dir: Path) -> int:
         """保存合并 XML 和单篇 XML 到 DataFile，返回保存数量。"""

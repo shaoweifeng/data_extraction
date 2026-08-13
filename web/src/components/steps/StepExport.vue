@@ -11,21 +11,92 @@
     </div>
 
     <!-- 统计数据 -->
-    <div v-if="s.screeningResults" class="step-list-box mb-6 max-w-md mx-auto" style="padding:20px 24px">
-      <div class="grid grid-cols-3 gap-4">
-        <div class="step-stat-card text-center">
-          <div class="text-3xl font-bold text-green-600">{{ s.screeningResults.included }}</div>
-          <div class="text-sm text-gray-500 mt-1">已纳入</div>
+    <div v-if="displayStats" class="stat-section">
+
+      <!-- AI 初筛结果 -->
+      <div class="stat-block">
+        <div class="stat-block-title">
+          <i class="fas fa-robot"></i> AI 初筛结果
         </div>
-        <div class="step-stat-card text-center">
-          <div class="text-3xl font-bold text-red-500">{{ s.screeningResults.excluded }}</div>
-          <div class="text-sm text-gray-500 mt-1">已排除</div>
-        </div>
-        <div class="step-stat-card text-center">
-          <div class="text-3xl font-bold text-gray-700">{{ s.screeningResults.total }}</div>
-          <div class="text-sm text-gray-500 mt-1">总计</div>
+        <div class="stat-row">
+          <div class="stat-card green">
+            <div class="stat-num">{{ displayStats.ai_included ?? displayStats.included }}</div>
+            <div class="stat-lbl">AI 纳入</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-num">{{ displayStats.ai_excluded ?? displayStats.excluded }}</div>
+            <div class="stat-lbl">AI 排除</div>
+          </div>
+          <div class="stat-card gray">
+            <div class="stat-num">{{ displayStats.total }}</div>
+            <div class="stat-lbl">总计</div>
+          </div>
         </div>
       </div>
+
+      <!-- 人工审阅修正（只有参与了人工审阅才显示） -->
+      <template v-if="displayStats.reviewed > 0">
+        <div class="stat-block">
+          <div class="stat-block-title">
+            <i class="fas fa-user-edit"></i> 人工审阅修正
+            <span class="stat-block-sub">（已审 {{ displayStats.reviewed }} / {{ displayStats.total }} 篇）</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-card green">
+              <div class="stat-num">{{ displayStats.included }}</div>
+              <div class="stat-lbl">最终纳入</div>
+            </div>
+            <div class="stat-card red">
+              <div class="stat-num">{{ displayStats.excluded }}</div>
+              <div class="stat-lbl">最终排除</div>
+            </div>
+            <div v-if="displayStats.pending" class="stat-card yellow">
+              <div class="stat-num">{{ displayStats.pending }}</div>
+              <div class="stat-lbl">待定</div>
+            </div>
+            <div class="stat-card purple">
+              <div class="stat-num">{{ displayStats.overridden }}</div>
+              <div class="stat-lbl">覆写了 AI</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 准确率 -->
+        <div class="stat-block" v-if="displayStats.ai_accuracy !== null && displayStats.ai_accuracy !== undefined">
+          <div class="stat-block-title">
+            <i class="fas fa-bullseye"></i> AI 初筛准确率
+            <span class="stat-block-sub">（以人工审阅为标准，未参与人工审阅的文献默认正确）</span>
+          </div>
+          <div class="accuracy-row">
+            <div class="accuracy-gauge">
+              <svg viewBox="0 0 36 36" class="gauge-svg">
+                <path class="gauge-bg" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831" />
+                <path class="gauge-fill"
+                  :stroke="displayStats.ai_accuracy >= 80 ? '#16a34a' : displayStats.ai_accuracy >= 60 ? '#ca8a04' : '#dc2626'"
+                  :stroke-dasharray="`${displayStats.ai_accuracy}, 100`"
+                  d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831" />
+              </svg>
+              <div class="gauge-val" :class="displayStats.ai_accuracy >= 80 ? 'good' : displayStats.ai_accuracy >= 60 ? 'mid' : 'bad'">
+                {{ displayStats.ai_accuracy }}%
+              </div>
+            </div>
+            <div class="accuracy-detail">
+              <div class="acc-item">
+                <span class="acc-dot correct"></span>
+                已审 AI 正确：{{ displayStats.ai_correct_in_reviewed }} 篇
+              </div>
+              <div class="acc-item">
+                <span class="acc-dot wrong"></span>
+                已审 AI 误判：{{ displayStats.ai_wrong_in_reviewed }} 篇
+              </div>
+              <div class="acc-item">
+                <span class="acc-dot default"></span>
+                未审 默认正确：{{ displayStats.total - displayStats.reviewed - (displayStats.pending || 0) }} 篇
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- 导出按钮区域 -->
@@ -147,7 +218,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
@@ -162,6 +233,32 @@ const selectedAllVer = ref(0)
 const selectedIncluVer = ref(0)
 const selectedExcluVer = ref(0)
 const selectedRisVer = ref(0)
+
+// 本地统计（脱离 screening store，直接从 review/stats 接口读）
+const exportStats = ref(null)
+
+// 优先展示 exportStats（含人工审阅结果），降级展示 screening store 里的 AI 结果
+const displayStats = computed(() => {
+  if (exportStats.value) return exportStats.value
+  return s.screeningResults
+})
+
+// ── 加载统计（从 review/stats 读取完整数据）──
+async function loadStats() {
+  if (!project.currentProject) return
+  try {
+    const res = await http.get('/review/stats/', {
+      params: { project: project.currentProject.id }
+    })
+    const d = res.data
+    if (d.total > 0) {
+      // 保存完整 stats 对象，模板直接使用 ai_included/ai_excluded/ai_accuracy 等字段
+      exportStats.value = d
+    }
+  } catch (e) {
+    console.error('[StepExport] loadStats 失败', e)
+  }
+}
 
 // ── 下载文件 ──
 function downloadFile(f) {
@@ -248,5 +345,57 @@ async function exportResults(exportType) {
   }
 }
 
-onMounted(loadExportFiles)
+onMounted(async () => {
+  await Promise.all([loadStats(), loadExportFiles()])
+})
 </script>
+
+<style scoped>
+/* 统计区域 */
+.stat-section { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: .9rem; }
+.stat-block {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: .85rem 1rem;
+}
+.stat-block-title {
+  font-size: .8rem; font-weight: 600; color: #475569;
+  display: flex; align-items: center; gap: .4rem; margin-bottom: .7rem;
+}
+.stat-block-title i { color: #6366f1; }
+.stat-block-sub { font-weight: 400; color: #94a3b8; font-size: .75rem; }
+.stat-row { display: flex; gap: .65rem; flex-wrap: wrap; }
+.stat-card {
+  flex: 1; min-width: 70px; text-align: center;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: .55rem .4rem;
+}
+.stat-card.green { border-top: 3px solid #16a34a; }
+.stat-card.red   { border-top: 3px solid #dc2626; }
+.stat-card.gray  { border-top: 3px solid #94a3b8; }
+.stat-card.yellow{ border-top: 3px solid #ca8a04; }
+.stat-card.purple{ border-top: 3px solid #7c3aed; }
+.stat-num { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
+.stat-lbl { font-size: .72rem; color: #94a3b8; margin-top: .1rem; }
+
+/* 准确率 */
+.accuracy-row { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.accuracy-gauge { position: relative; width: 76px; height: 76px; flex-shrink: 0; }
+.gauge-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.gauge-bg {
+  fill: none; stroke: #e2e8f0; stroke-width: 3.5;
+  stroke-linecap: round; stroke-dasharray: 100, 100;
+}
+.gauge-fill { fill: none; stroke-width: 3.5; stroke-linecap: round; transition: stroke-dasharray .6s ease; }
+.gauge-val {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; font-weight: 700;
+}
+.gauge-val.good  { color: #16a34a; }
+.gauge-val.mid   { color: #ca8a04; }
+.gauge-val.bad   { color: #dc2626; }
+.accuracy-detail { display: flex; flex-direction: column; gap: .3rem; }
+.acc-item { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: #475569; }
+.acc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.acc-dot.correct { background: #16a34a; }
+.acc-dot.wrong   { background: #dc2626; }
+.acc-dot.default { background: #94a3b8; }
+</style>

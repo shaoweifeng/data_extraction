@@ -521,3 +521,81 @@ class RegistrationLog(models.Model):
     def __str__(self):
         status = '成功' if self.success else f'失败({self.fail_reason})'
         return f"{self.ip_address} → {self.username} [{status}] {self.created_at:%Y-%m-%d %H:%M}"
+
+
+# ============================================================================
+# 人工检查（ManualReview）
+# ============================================================================
+
+class ManualReview(models.Model):
+    """
+    人工审阅覆写记录。
+
+    AI 初筛完成后，研究者可对每篇文献的纳排决定进行人工复核并覆写。
+    Export 步骤优先使用人工决定；未覆写的文献保留 AI 原始判断。
+
+    关键设计：
+    - ai_decision / ai_reason 冗余存储 AI 原始判断，人工决定单独存 decision 列，两者独立
+    - decision 支持三态：included / excluded / pending（待定）
+    - unique_together(project, source_xml) 保证每篇文献只有一条覆写记录（upsert 语义）
+    - 重新 AI 筛选后不清空本表，前端展示时标注"AI已重新筛选"提示
+    """
+
+    DECISION_CHOICES = [
+        ('included', '纳入'),
+        ('excluded', '排除'),
+        ('pending',  '待定'),
+    ]
+
+    project     = models.ForeignKey(
+        Project, on_delete=models.CASCADE,
+        related_name='manual_reviews', verbose_name="所属项目"
+    )
+    step        = models.ForeignKey(
+        StageStep, on_delete=models.CASCADE,
+        related_name='manual_reviews', verbose_name="所属步骤（review）"
+    )
+    source_xml  = models.CharField(max_length=500, verbose_name="对应 XML 文件名")
+
+    # AI 原始判断（冗余，独立列）
+    ai_decision = models.CharField(
+        max_length=20, blank=True, default='',
+        verbose_name="AI 原始决定 (included/excluded/error)"
+    )
+    ai_reason   = models.TextField(
+        blank=True, default='',
+        verbose_name="AI 排除理由（原文）"
+    )
+
+    # 人工决定（独立列）
+    decision    = models.CharField(
+        max_length=20, choices=DECISION_CHOICES,
+        verbose_name="人工最终决定"
+    )
+    reason      = models.TextField(blank=True, default='', verbose_name="人工标注理由")
+
+    # 是否覆写了 AI 判断
+    is_override = models.BooleanField(
+        default=False,
+        verbose_name="是否与 AI 判断不同（人工覆写）"
+    )
+
+    reviewer    = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='manual_reviews', verbose_name="审阅人"
+    )
+    reviewed_at = models.DateTimeField(auto_now=True, verbose_name="最后审阅时间")
+    created_at  = models.DateTimeField(auto_now_add=True, verbose_name="首次创建时间")
+
+    class Meta:
+        db_table        = 'plat_manualreview'
+        verbose_name    = "人工审阅记录"
+        verbose_name_plural = "人工审阅记录"
+        unique_together = ('project', 'source_xml')
+        ordering        = ['-reviewed_at']
+        indexes         = [
+            models.Index(fields=['project', 'decision'], name='idx_mr_project_decision'),
+        ]
+
+    def __str__(self):
+        return f"{self.project.name} | {self.source_xml} | {self.get_decision_display()}"
