@@ -93,14 +93,17 @@
           <!-- 文献基本信息（固定，不滚动）-->
           <div class="detail-meta">
             <h3 class="detail-title">{{ selected.title }}</h3>
+            <!-- URL 行 -->
+            <div class="detail-url">
+              <i class="fas fa-external-link-alt"></i>
+              <a v-if="selected.doi" :href="'https://doi.org/' + selected.doi" target="_blank">https://doi.org/{{ selected.doi }}</a>
+              <a v-else-if="selected.url" :href="selected.url" target="_blank">{{ selected.url }}</a>
+              <span v-else class="url-none">无法获取 URL</span>
+            </div>
             <div class="detail-info-row">
               <span v-if="selected.authors" class="info-chip"><i class="fas fa-users"></i> {{ selected.authors }}</span>
               <span v-if="selected.year"    class="info-chip"><i class="fas fa-calendar"></i> {{ selected.year }}</span>
               <span v-if="selected.journal" class="info-chip"><i class="fas fa-book"></i> {{ selected.journal }}</span>
-              <span v-if="selected.doi"     class="info-chip">
-                <i class="fas fa-link"></i>
-                <a :href="'https://doi.org/' + selected.doi" target="_blank">{{ selected.doi }}</a>
-              </span>
             </div>
           </div>
 
@@ -168,8 +171,34 @@
               </div>
               <div v-if="saveStatus" class="save-status" :class="saveStatusType">{{ saveStatus }}</div>
             </div>
-            <div class="reason-wrap" v-if="localDecision">
-              <textarea v-model="localReason" placeholder="输入排除/纳入理由（可选，失焦自动保存）…" rows="2" @blur="autoSave" />
+            <!-- 排除模式：快捷理由 + 自定义输入 -->
+            <div class="reason-wrap" v-if="localDecision === 'excluded'">
+              <!-- 快捷标准选项 -->
+              <div v-if="criteriaList.length" class="quick-criteria">
+                <div class="quick-criteria-label">快捷选择排除标准：</div>
+                <div class="quick-criteria-tags">
+                  <button
+                    v-for="(c, i) in criteriaList" :key="i"
+                    class="criteria-tag"
+                    :class="{ active: localReason === c }"
+                    @click="pickCriteria(c)"
+                    :title="c"
+                  >
+                    <span class="criteria-tag-num">标准 {{ i + 1 }}</span>
+                    <span class="criteria-tag-text">{{ c }}</span>
+                  </button>
+                </div>
+              </div>
+              <textarea
+                v-model="localReason"
+                placeholder="输入排除理由（可选，失焦自动保存）…"
+                rows="2"
+                @blur="autoSave"
+              />
+            </div>
+            <!-- 其他操作（纳入/待定）的自定义理由 -->
+            <div class="reason-wrap" v-else-if="localDecision">
+              <textarea v-model="localReason" placeholder="输入理由（可选，失焦自动保存）…" rows="2" @blur="autoSave" />
             </div>
           </div>
         </template>
@@ -349,6 +378,12 @@ function setDecision(value) {
 
 function autoSave() {
   if (localDecision.value) saveDecision(localDecision.value, localReason.value)
+}
+
+// 快捷标准：点击即填入理由并立即保存
+function pickCriteria(criteriaText) {
+  localReason.value = criteriaText
+  saveDecision('excluded', criteriaText)
 }
 
 onMounted(async () => {
@@ -611,4 +646,52 @@ onMounted(async () => {
 .save-status { font-size: .73rem; white-space: nowrap; }
 .save-status.success { color: #16a34a; }
 .save-status.error   { color: #dc2626; }
+
+/* 文献 URL 行 */
+.detail-url {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .78rem; margin: 3px 0 6px;
+  color: #64748b;
+}
+.detail-url i { font-size: .72rem; color: #94a3b8; flex-shrink: 0; }
+.detail-url a { color: #3b82f6; text-decoration: none; word-break: break-all; }
+.detail-url a:hover { text-decoration: underline; }
+.url-none { color: #94a3b8; font-style: italic; }
+
+/* 排除快捷标准 */
+.quick-criteria {
+  margin-bottom: 6px;
+}
+.quick-criteria-label {
+  font-size: .74rem; color: #64748b; margin-bottom: 4px;
+}
+.quick-criteria-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.criteria-tag {
+  display: flex; flex-direction: column; align-items: flex-start;
+  max-width: 220px;
+  padding: 5px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .15s;
+}
+.criteria-tag:hover {
+  background: #fef3c7; border-color: #f59e0b;
+}
+.criteria-tag.active {
+  background: #fee2e2; border-color: #f87171;
+}
+.criteria-tag-num {
+  font-size: .68rem; font-weight: 700; color: #ef4444;
+  line-height: 1.2;
+}
+.criteria-tag-text {
+  font-size: .72rem; color: #475569; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 </style>

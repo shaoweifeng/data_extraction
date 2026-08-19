@@ -641,6 +641,7 @@ class AIScreenHandler(BaseStepHandler):
                 "journal": get_text("Journal"),
                 "abstract": get_text("Abstract"),
                 "doi": get_text("DOI"),
+                "url": get_text("URL") or get_text("Url") or get_text("url"),
             }
         except Exception as e:
             self.logger.warning(f"[警告] 解析XML失败 {xml_path}: {e}")

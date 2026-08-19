@@ -10,20 +10,15 @@
       </div>
     </div>
 
-    <!-- 去重进度区域（参照 StepParse 进度条风格） -->
-    <div
-      v-if="s.isDeduplicating"
-      class="mb-4"
-      style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:12px;padding:12px 16px"
-    >
+    <!-- 去重进度条 -->
+    <div v-if="s.isDeduplicating" class="dedup-progress-banner mb-5">
       <div class="flex items-center gap-2 mb-2">
         <i class="fas fa-spinner fa-spin text-purple-500"></i>
         <span class="font-medium text-sm text-purple-700">
           {{ s.dedupProgressMsg || '正在启动去重...' }}
         </span>
       </div>
-      <!-- 进度条 -->
-      <div class="progress-bar-track" style="height:6px">
+      <div class="progress-bar-track" style="height:5px">
         <div
           v-if="s.dedupProgressCurrent > 0 && s.dedupProgressCurrent < 100"
           class="progress-bar-fill"
@@ -31,141 +26,185 @@
         ></div>
         <div
           v-else-if="s.dedupProgressCurrent >= 100"
-          class="progress-bar-fill animate-pulse"
+          class="progress-bar-fill"
           style="width:100%;background:#8b5cf6"
         ></div>
         <div v-else class="progress-bar-fill animate-pulse" style="width:30%;background:#8b5cf6"></div>
       </div>
-      <div class="flex justify-between text-xs mt-1 text-purple-500">
+      <div class="text-xs mt-1 text-purple-400">
         <span v-if="s.dedupProgressCurrent > 0 && s.dedupProgressCurrent < 100">{{ s.dedupProgressCurrent }}%</span>
-        <span v-else-if="s.dedupProgressCurrent >= 100">100% · 收尾中</span>
+        <span v-else-if="s.dedupProgressCurrent >= 100">100% · 收尾中...</span>
         <span v-else>处理中...</span>
       </div>
     </div>
 
-    <!-- 文件数量与状态 -->
-    <div class="step-list-box mb-6 max-w-2xl mx-auto" style="padding:20px 24px">
-      <div class="flex justify-between items-center text-sm text-gray-600 mb-3">
-        <span class="text-gray-500"><i class="fas fa-file-alt mr-1.5 text-purple-400"></i>当前 Reference 文件:</span>
-        <span class="font-bold text-base text-gray-800">{{ s.referenceFiles.length }} 个</span>
+    <!-- 状态卡片 + 操作区 -->
+    <div class="dedup-action-card">
+      <!-- 左：状态信息 -->
+      <div class="dedup-status-grid">
+        <div class="dedup-status-item">
+          <div class="dedup-status-icon" style="background:#eff6ff;color:#3b82f6">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="dedup-status-body">
+            <div class="dedup-status-value">{{ s.referenceFiles.length }}</div>
+            <div class="dedup-status-label">已导入索引文件</div>
+          </div>
+        </div>
+        <div class="dedup-status-item">
+          <div
+            class="dedup-status-icon"
+            :style="s.dedupCompleted
+              ? 'background:#dcfce7;color:#16a34a'
+              : 'background:#faf5ff;color:#8b5cf6'"
+          >
+            <i :class="s.dedupCompleted ? 'fas fa-check-circle' : 'fas fa-hourglass-half'"></i>
+          </div>
+          <div class="dedup-status-body">
+            <div
+              class="dedup-status-value"
+              :style="s.dedupCompleted ? 'color:#16a34a' : 'color:#8b5cf6'"
+            >
+              {{ s.dedupCompleted ? '已完成' : '待处理' }}
+            </div>
+            <div class="dedup-status-label">去重状态</div>
+          </div>
+        </div>
+        <template v-if="s.dedupStats">
+          <div class="dedup-status-item">
+            <div class="dedup-status-icon" style="background:#fee2e2;color:#dc2626">
+              <i class="fas fa-copy"></i>
+            </div>
+            <div class="dedup-status-body">
+              <div class="dedup-status-value" style="color:#dc2626">{{ s.dedupStats.duplicates }}</div>
+              <div class="dedup-status-label">发现重复</div>
+            </div>
+          </div>
+          <div class="dedup-status-item">
+            <div class="dedup-status-icon" style="background:#dcfce7;color:#16a34a">
+              <i class="fas fa-bookmark"></i>
+            </div>
+            <div class="dedup-status-body">
+              <div class="dedup-status-value" style="color:#16a34a">{{ s.dedupStats.kept_files }}</div>
+              <div class="dedup-status-label">保留文献</div>
+            </div>
+          </div>
+        </template>
       </div>
-      <div class="flex justify-between items-center text-sm text-gray-600">
-        <span class="text-gray-500"><i class="fas fa-check-circle mr-1.5 text-purple-400"></i>去重状态:</span>
-        <span :class="s.dedupCompleted ? 'badge badge-green' : 'badge badge-gray'">{{ s.dedupCompleted ? '已完成' : '待处理' }}</span>
+
+      <!-- 右：操作按钮 -->
+      <div class="dedup-action-btn-wrap">
+        <button
+          @click="handleDeduplication"
+          :disabled="s.isDeduplicating"
+          class="dedup-btn"
+          :class="s.dedupCompleted ? 'dedup-btn--redo' : 'dedup-btn--start'"
+        >
+          <i v-if="s.isDeduplicating" class="fas fa-spinner fa-spin"></i>
+          <i v-else :class="s.dedupCompleted ? 'fas fa-redo' : 'fas fa-magic'"></i>
+          {{ s.isDeduplicating ? '正在去重…' : s.dedupCompleted ? '重新去重' : '开始去重' }}
+        </button>
+        <p v-if="!s.dedupCompleted && !s.isDeduplicating" class="dedup-btn-hint">
+          将自动检测重复文献并合并
+        </p>
+        <p v-if="s.dedupStats?.completion_time" class="dedup-btn-hint">
+          <i class="fas fa-clock mr-1"></i>
+          {{ new Date(s.dedupStats.completion_time).toLocaleString() }}
+        </p>
       </div>
     </div>
 
-    <!-- 操作按钮 -->
-    <div class="text-center">
-      <button
-        @click="handleDeduplication"
-        :disabled="s.isDeduplicating"
-        :class="s.dedupCompleted ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'"
-        class="text-white px-8 py-3 rounded-lg font-medium shadow-lg disabled:opacity-50 transition"
-      >
-        <i v-if="s.isDeduplicating" class="fas fa-spinner fa-spin mr-2"></i>
-        <i v-else :class="s.dedupCompleted ? 'fas fa-redo' : 'fas fa-magic'" class="mr-2"></i>
-        {{ s.isDeduplicating ? '正在去重…' : s.dedupCompleted ? '重新去重' : '开始去重' }}
-      </button>
-    </div>
+    <!-- 去重结果统计 -->
+    <div v-if="s.dedupStats" class="dedup-result-section">
 
-    <!-- 去重统计信息 -->
-    <div
-      v-if="s.dedupStats"
-      class="mt-8 rounded-xl p-6" style="background:linear-gradient(135deg,#faf5ff,#eef2ff);border:1px solid #ddd6fe"
-    >
-      <h4 class="text-lg font-bold text-purple-800 mb-4 flex items-center">
-        <i class="fas fa-chart-pie mr-2"></i>
-        去重统计报告
-      </h4>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div class="step-stat-card">
-          <div class="text-3xl font-bold text-gray-800">{{ s.dedupStats.total_files }}</div>
-          <div class="text-sm text-gray-500 mt-1">原始文献</div>
+      <!-- 摘要柱图 -->
+      <div class="dedup-bar-summary">
+        <div class="dedup-bar-row">
+          <span class="dedup-bar-label">原始文献</span>
+          <div class="dedup-bar-track">
+            <div class="dedup-bar-fill" style="width:100%;background:#c7d2fe"></div>
+          </div>
+          <span class="dedup-bar-num">{{ s.dedupStats.total_files }}</span>
         </div>
-        <div class="step-stat-card">
-          <div class="text-3xl font-bold text-green-600">{{ s.dedupStats.kept_files }}</div>
-          <div class="text-sm text-gray-500 mt-1">保留文献</div>
+        <div class="dedup-bar-row">
+          <span class="dedup-bar-label">保留</span>
+          <div class="dedup-bar-track">
+            <div
+              class="dedup-bar-fill"
+              :style="{ width: keptPct + '%', background: '#86efac' }"
+            ></div>
+          </div>
+          <span class="dedup-bar-num" style="color:#16a34a">{{ s.dedupStats.kept_files }}</span>
         </div>
-        <div class="step-stat-card">
-          <div class="text-3xl font-bold text-red-500">{{ s.dedupStats.duplicates }}</div>
-          <div class="text-sm text-gray-500 mt-1">重复文献</div>
-        </div>
-        <div class="step-stat-card">
-          <div class="text-3xl font-bold text-purple-600">{{ s.dedupStats.duplicate_rate }}</div>
-          <div class="text-sm text-gray-500 mt-1">重复率</div>
+        <div class="dedup-bar-row">
+          <span class="dedup-bar-label">重复去除</span>
+          <div class="dedup-bar-track">
+            <div
+              class="dedup-bar-fill"
+              :style="{ width: dupPct + '%', background: '#fca5a5' }"
+            ></div>
+          </div>
+          <span class="dedup-bar-num" style="color:#dc2626">{{ s.dedupStats.duplicates }}</span>
         </div>
       </div>
-      <div v-if="s.dedupStats.completion_time" class="text-xs text-gray-400 mt-2">
-        <i class="fas fa-clock mr-1"></i>
-        完成时间: {{ new Date(s.dedupStats.completion_time).toLocaleString() }}
+
+      <!-- 重复率徽章 -->
+      <div class="dedup-rate-badge">
+        重复率 <strong>{{ s.dedupStats.duplicate_rate }}</strong>
       </div>
 
       <!-- 重复文献详细列表 -->
-      <div
-        v-if="s.dedupStats.duplicate_details?.length > 0"
-        class="mt-6"
-      >
-        <div class="flex items-center justify-between mb-3">
-          <h5 class="font-bold text-purple-700">
-            <i class="fas fa-list-alt mr-2"></i>
-            重复文献列表 (共{{ s.dedupStats.duplicate_groups || 0 }}组)
-          </h5>
+      <div v-if="s.dedupStats.duplicate_details?.length > 0" class="mt-4">
+        <div class="dedup-detail-header">
+          <span class="font-semibold text-gray-700 text-sm">
+            <i class="fas fa-list-ul mr-1.5 text-purple-400"></i>
+            重复文献详情（共 {{ s.dedupStats.duplicate_groups || 0 }} 组）
+          </span>
           <button
             @click="s.showDuplicateDetails = !s.showDuplicateDetails"
-            class="text-sm text-purple-600 hover:text-purple-800 underline"
+            class="dedup-detail-toggle"
           >
-            {{ s.showDuplicateDetails ? '收起详情' : '展开详情' }}
+            <i :class="s.showDuplicateDetails ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+            {{ s.showDuplicateDetails ? '收起' : '展开' }}
           </button>
         </div>
 
-        <div v-show="s.showDuplicateDetails" class="step-list-box" style="max-height:24rem;padding:8px">
+        <div v-show="s.showDuplicateDetails" class="dedup-detail-list">
           <div
             v-for="(dup, idx) in s.dedupStats.duplicate_details"
             :key="idx"
-            class="p-3 rounded-lg hover:bg-white mb-1 transition"
-            style="border-bottom:1px solid #f8fafc"
+            class="dedup-detail-item"
           >
-            <div class="font-medium text-gray-800 mb-2">{{ idx + 1 }}. {{ dup.title || '(无标题)' }}</div>
+            <div class="dedup-detail-title">{{ idx + 1 }}. {{ dup.title || '(无标题)' }}</div>
 
-            <!-- 保留的文章 -->
-            <div class="text-sm text-gray-600 mb-2">
-              <div class="flex items-start">
-                <span class="text-green-600 font-medium mr-2 whitespace-nowrap">✓ 保留:</span>
-                <span class="flex-1">
-                  <span class="font-medium">{{ dup.kept.source_file || dup.kept.filename }}</span>
-                  <span v-if="dup.kept.source_position" class="text-blue-600 ml-1">#{{ dup.kept.source_position }}</span>
-                  <span v-if="dup.kept.year" class="text-gray-400 ml-2">({{ dup.kept.year }})</span>
-                </span>
-              </div>
-              <div v-if="dup.kept.journal" class="ml-8 text-gray-500">期刊: {{ dup.kept.journal }}</div>
-              <div v-if="dup.kept.doi" class="ml-8">
-                DOI:
-                <a :href="'https://doi.org/' + dup.kept.doi" target="_blank" class="text-blue-600 hover:underline">
-                  {{ dup.kept.doi }}
+            <!-- 保留的 -->
+            <div class="dedup-ref kept">
+              <span class="dedup-ref-badge kept-badge">保留</span>
+              <div class="dedup-ref-info">
+                <span class="font-medium text-gray-700">{{ dup.kept.source_file || dup.kept.filename }}</span>
+                <span v-if="dup.kept.source_position" class="text-blue-500 ml-1">#{{ dup.kept.source_position }}</span>
+                <span v-if="dup.kept.year" class="text-gray-400 ml-2">{{ dup.kept.year }}</span>
+                <span v-if="dup.kept.journal" class="text-gray-400 ml-2">· {{ dup.kept.journal }}</span>
+                <a v-if="dup.kept.doi" :href="'https://doi.org/' + dup.kept.doi" target="_blank" class="dedup-doi-link ml-2">
+                  DOI
                 </a>
               </div>
             </div>
 
-            <!-- 重复的文章 -->
+            <!-- 重复的 -->
             <div
               v-for="(dup_item, di) in dup.duplicates"
               :key="di"
-              class="text-sm text-gray-600 mt-2 pl-4" style="border-left:2px solid #fca5a5"
+              class="dedup-ref dup"
             >
-              <div class="flex items-start">
-                <span class="text-red-500 font-medium mr-2 whitespace-nowrap">✗ 重复:</span>
-                <span class="flex-1">
-                  <span class="font-medium">{{ dup_item.source_file || dup_item.filename }}</span>
-                  <span v-if="dup_item.source_position" class="text-blue-600 ml-1">#{{ dup_item.source_position }}</span>
-                  <span v-if="dup_item.year" class="text-gray-400 ml-2">({{ dup_item.year }})</span>
-                </span>
-              </div>
-              <div v-if="dup_item.journal" class="ml-8 text-gray-500">期刊: {{ dup_item.journal }}</div>
-              <div v-if="dup_item.doi" class="ml-8">
-                DOI:
-                <a :href="'https://doi.org/' + dup_item.doi" target="_blank" class="text-blue-600 hover:underline">
-                  {{ dup_item.doi }}
+              <span class="dedup-ref-badge dup-badge">重复</span>
+              <div class="dedup-ref-info">
+                <span class="font-medium text-gray-600">{{ dup_item.source_file || dup_item.filename }}</span>
+                <span v-if="dup_item.source_position" class="text-blue-500 ml-1">#{{ dup_item.source_position }}</span>
+                <span v-if="dup_item.year" class="text-gray-400 ml-2">{{ dup_item.year }}</span>
+                <span v-if="dup_item.journal" class="text-gray-400 ml-2">· {{ dup_item.journal }}</span>
+                <a v-if="dup_item.doi" :href="'https://doi.org/' + dup_item.doi" target="_blank" class="dedup-doi-link ml-2">
+                  DOI
                 </a>
               </div>
             </div>
@@ -177,7 +216,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
@@ -186,6 +225,15 @@ import http from '@/api/http'
 const s = useScreeningStore()
 const project = useProjectStore()
 const taskStore = useTaskStore()
+
+const keptPct = computed(() => {
+  if (!s.dedupStats?.total_files) return 0
+  return Math.round((s.dedupStats.kept_files / s.dedupStats.total_files) * 100)
+})
+const dupPct = computed(() => {
+  if (!s.dedupStats?.total_files) return 0
+  return Math.round((s.dedupStats.duplicates / s.dedupStats.total_files) * 100)
+})
 
 async function handleDeduplication() {
   if (s.referenceFiles.length === 0) {
@@ -216,17 +264,12 @@ async function pollDedupStatus(taskId) {
       const res = await http.get(`/tasks/${taskId}/`)
       const task = res.data
       const status = task.status
-
-      // 更新进度
       if (task.progress_percentage != null) {
         s.dedupProgressCurrent = Math.round(task.progress_percentage)
-        if (s.dedupProgressCurrent >= 100) {
-          s.dedupProgressMsg = '正在保存结果...'
-        } else {
-          s.dedupProgressMsg = `已扫描 ${s.dedupProgressCurrent}%`
-        }
+        s.dedupProgressMsg = s.dedupProgressCurrent >= 100
+          ? '正在保存结果...'
+          : `已扫描 ${s.dedupProgressCurrent}%`
       }
-
       if (status === 'running' || status === 'pending') {
         setTimeout(poll, 500)
       } else if (status === 'completed') {
@@ -260,16 +303,231 @@ function loadDedupStats() {
   if (!screen1Stage) return
   const dedupStep = screen1Stage.steps.find((st) => st.step_key === 'dedup')
   if (!dedupStep) return
-
-  if (dedupStep.metadata && dedupStep.metadata.total_files !== undefined) {
-    s.dedupStats = dedupStep.metadata
-  } else {
-    s.dedupStats = null
-  }
-  if (dedupStep.status === 'completed') {
-    s.dedupCompleted = true
-  }
+  s.dedupStats = (dedupStep.metadata?.total_files !== undefined) ? dedupStep.metadata : null
+  if (dedupStep.status === 'completed') s.dedupCompleted = true
 }
 
 onMounted(loadDedupStats)
 </script>
+
+<style scoped>
+/* ── 进度横幅 ── */
+.dedup-progress-banner {
+  background: #faf5ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+/* ── 状态卡片 ── */
+.dedup-action-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: #fafbff;
+  border: 1px solid #e0e7ff;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.dedup-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  flex: 1;
+  min-width: 260px;
+}
+.dedup-status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dedup-status-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .9rem;
+  flex-shrink: 0;
+}
+.dedup-status-body {}
+.dedup-status-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+.dedup-status-label {
+  font-size: .72rem;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+/* ── 操作按钮 ── */
+.dedup-action-btn-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.dedup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 28px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: .88rem;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: opacity .2s, transform .1s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+.dedup-btn:disabled { opacity: .55; cursor: not-allowed; }
+.dedup-btn:not(:disabled):hover { opacity: .9; transform: translateY(-1px); }
+.dedup-btn--start { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+.dedup-btn--redo  { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.dedup-btn-hint {
+  font-size: .72rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0;
+}
+
+/* ── 结果区域 ── */
+.dedup-result-section {
+  background: linear-gradient(135deg, #faf5ff, #eef2ff);
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  padding: 20px 24px;
+}
+
+/* 柱图 */
+.dedup-bar-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.dedup-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dedup-bar-label {
+  width: 60px;
+  font-size: .75rem;
+  color: #64748b;
+  flex-shrink: 0;
+  text-align: right;
+}
+.dedup-bar-track {
+  flex: 1;
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.dedup-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .5s ease;
+}
+.dedup-bar-num {
+  width: 36px;
+  text-align: right;
+  font-size: .8rem;
+  font-weight: 700;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+/* 重复率 */
+.dedup-rate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ede9fe;
+  color: #6d28d9;
+  border-radius: 20px;
+  padding: 3px 14px;
+  font-size: .78rem;
+  margin-bottom: 4px;
+}
+.dedup-rate-badge strong { font-size: .88rem; }
+
+/* 详情 */
+.dedup-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.dedup-detail-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .75rem;
+  color: #8b5cf6;
+  background: none;
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.dedup-detail-toggle:hover { background: #f5f3ff; }
+
+.dedup-detail-list {
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 10px;
+  max-height: 24rem;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.dedup-detail-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f8fafc;
+}
+.dedup-detail-item:last-child { border-bottom: none; }
+.dedup-detail-title {
+  font-size: .82rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+.dedup-ref {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: .78rem;
+}
+.dedup-ref-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: .68rem;
+  font-weight: 700;
+  margin-top: 1px;
+}
+.kept-badge { background: #dcfce7; color: #15803d; }
+.dup-badge  { background: #fee2e2; color: #b91c1c; }
+.dedup-ref-info { flex: 1; color: #64748b; line-height: 1.5; }
+.dedup-doi-link {
+  display: inline-block;
+  padding: 0 6px;
+  background: #eff6ff;
+  color: #3b82f6;
+  border-radius: 4px;
+  font-size: .68rem;
+  text-decoration: none;
+}
+.dedup-doi-link:hover { text-decoration: underline; }
+</style>

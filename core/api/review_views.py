@@ -39,37 +39,40 @@ def _get_step(project_id, step_id):
     ).first()
 
 
-def _load_abstract(source_xml: str, project_id) -> str:
+def _load_xml_fields(source_xml: str, project_id) -> dict:
     """
-    从原始 XML 文件中读取 abstract。
+    从原始 XML 文件中读取 abstract、url、doi 等字段，一次读取，避免重复 IO。
 
     背景：AI 筛选结果 JSON 中的 source_xml 存的是文件名（如 00006_xxx_d698f2b6.xml），
     而实际 XML 文件在 intermediate/ 目录下的随机后缀不同（如 00006_xxx_Q7QCqN2.xml）。
     因此不能精确匹配文件名，需用数字编号前缀（如 "00006_"）模糊匹配。
     """
     if not source_xml:
-        return ''
+        return {}
     try:
         import re
         from django.conf import settings as django_settings
 
-        def _parse_abstract(path: Path) -> str:
+        def _parse_fields(path: Path) -> dict:
             root = ET.parse(path).getroot()
             ref = root
             if root.tag not in ("Reference", "reference"):
                 ref = root.find(".//Reference") or root.find(".//reference") or root
-            el = ref.find('Abstract')
-            if el is None:
-                return ''
-            return ''.join(el.itertext()).strip()
+            def _t(tag):
+                el = ref.find(tag)
+                return ''.join(el.itertext()).strip() if el is not None else ''
+            return {
+                'abstract': _t('Abstract'),
+                'url':      _t('Url') or _t('URL') or _t('url'),
+                'doi':      _t('Doi') or _t('DOI'),
+            }
 
         # 1. 直接尝试绝对路径（_load_refs_from_xml 降级路径存的是绝对路径）
         p = Path(source_xml)
         if p.exists():
-            return _parse_abstract(p)
+            return _parse_fields(p)
 
         # 2. 提取编号前缀（如 "00006_"）进行模糊匹配
-        #    AI 结果 JSON 里的 source_xml 是文件名，随机后缀与实际文件不同
         xml_name = p.name
         num_prefix_match = re.match(r'^(\d+_)', xml_name)
 
@@ -77,22 +80,21 @@ def _load_abstract(source_xml: str, project_id) -> str:
 
         if num_prefix_match and project_dir.exists():
             num_prefix = num_prefix_match.group(1)
-            # 在项目目录下按编号前缀 glob，取第一个匹配的文件
             for candidate in project_dir.rglob(num_prefix + '*.xml'):
                 if candidate.is_file():
-                    return _parse_abstract(candidate)  # 有文件就返回（abstract 可能为空）
+                    return _parse_fields(candidate)
 
         # 3. 无数字前缀则精确文件名查找（兜底）
         if project_dir.exists():
             for candidate in project_dir.rglob(xml_name):
                 if candidate.is_file():
-                    return _parse_abstract(candidate)
+                    return _parse_fields(candidate)
 
         logger.debug(f"[review] 未找到 XML 文件: {source_xml} (project_id={project_id}, project_dir={project_dir})")
-        return ''
+        return {}
     except Exception as e:
-        logger.debug(f"[review] 读取 abstract 失败 {source_xml}: {e}")
-        return ''
+        logger.debug(f"[review] 读取 XML 字段失败 {source_xml}: {e}")
+        return {}
 
 
 def _ai_result_files(project_id, ai_step):
@@ -176,6 +178,7 @@ def _load_refs_from_xml(project_id):
                 'year':            _t('Year'),
                 'journal':         _t('Journal'),
                 'doi':             _t('Doi') or _t('DOI'),
+                'url':             _t('URL') or _t('Url') or _t('url'),
                 'decision':        '',        # 无 AI 判断
                 'include_or_not':  '',
                 'exclusion_reason': '',
@@ -246,6 +249,7 @@ def review_list(request):
             'year':           r.get('year', ''),
             'journal':        r.get('journal', ''),
             'doi':            r.get('doi', ''),
+            'url':            r.get('url', ''),
             'ai_decision':    ai_decision,
             'ai_reason':      ai_reason,
             'human_decision': human_decision,
@@ -261,9 +265,13 @@ def review_list(request):
     start = (page - 1) * page_size
     page_items = items[start: start + page_size]
 
-    # 按需加载 abstract（仅当前页，避免全量 IO）
+    # 按需加载 abstract 和 url（仅当前页，避免全量 IO）
     for item in page_items:
-        item['abstract'] = _load_abstract(item['source_xml'], project_id)
+        xml_data = _load_xml_fields(item['source_xml'], project_id)
+        item['abstract'] = xml_data.get('abstract', '')
+        # url 优先用 JSON 里的值，为空则从 XML 补充
+        if not item.get('url'):
+            item['url'] = xml_data.get('url', '')
 
     return JsonResponse({
         'total':    total,

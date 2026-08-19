@@ -6,27 +6,19 @@
       </div>
       <div>
         <h3 class="step-title">导入文献索引</h3>
-        <p class="step-subtitle">支持 RIS / BibTeX / NBIB / XML / CIW / ENW / DOCX / TXT 格式的文献索引文件</p>
+        <p class="step-subtitle">支持主流数据库导出格式，自动解析文献元数据</p>
       </div>
     </div>
 
     <!-- 上传/解析进度区域 -->
     <div
       v-if="s.uploadPhase !== 'idle'"
-      class="mb-4"
-      :style="s.uploadPhase === 'uploading'
-        ? 'background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px 16px'
-        : 'background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:12px 16px'"
+      class="progress-banner mb-4"
+      :class="s.uploadPhase === 'uploading' ? 'upload-banner' : 'parse-banner'"
     >
       <div class="flex items-center gap-2 mb-2">
-        <i
-          class="fas fa-spinner fa-spin"
-          :class="s.uploadPhase === 'uploading' ? 'text-blue-500' : 'text-indigo-500'"
-        ></i>
-        <span
-          class="font-medium text-sm"
-          :class="s.uploadPhase === 'uploading' ? 'text-blue-700' : 'text-indigo-700'"
-        >
+        <i class="fas fa-spinner fa-spin"></i>
+        <span class="font-medium text-sm">
           <template v-if="s.uploadPhase === 'uploading'">
             正在上传文件 ({{ s.uploadFileIndex }}/{{ s.uploadTotalFiles }})：{{ s.uploadCurrentFile }}
           </template>
@@ -35,8 +27,7 @@
           </template>
         </span>
       </div>
-      <!-- 进度条 -->
-      <div class="progress-bar-track" style="height:6px">
+      <div class="progress-bar-track" style="height:5px">
         <div
           v-if="s.uploadPhase === 'uploading'"
           class="progress-bar-fill"
@@ -49,10 +40,7 @@
         ></div>
         <div v-else class="progress-bar-fill animate-pulse" style="width:40%"></div>
       </div>
-      <div
-        class="flex justify-between text-xs mt-1"
-        :class="s.uploadPhase === 'uploading' ? 'text-blue-500' : 'text-indigo-500'"
-      >
+      <div class="flex text-xs mt-1 opacity-70">
         <span v-if="s.uploadPhase === 'uploading'">{{ s.uploadProgress }}%</span>
         <span v-else-if="s.parseProgressTotal > 0">{{ s.parseProgressCurrent }}%</span>
         <span v-else>解析中...</span>
@@ -61,7 +49,8 @@
 
     <!-- 上传区域 -->
     <div
-      class="step-upload-zone"
+      class="upload-zone"
+      :class="{ 'upload-zone--disabled': s.isParsing || s.uploadPhase !== 'idle' }"
       @click="s.isParsing || s.uploadPhase !== 'idle' ? null : fileInput?.click()"
     >
       <input
@@ -72,29 +61,49 @@
         accept=".ris,.bib,.nbib,.xml,.ciw,.enw,.txt,.doc,.docx"
         @change="handleUpload"
       />
-      <div class="mb-3 text-blue-400" style="font-size:2rem">
-        <i class="fas fa-cloud-upload-alt"></i>
-      </div>
-      <button
-        :disabled="s.isParsing || s.uploadPhase !== 'idle'"
-        class="btn-primary"
-        style="background:linear-gradient(135deg,#3b82f6,#6366f1)"
-      >
-        <i v-if="s.isParsing || s.uploadPhase !== 'idle'" class="fas fa-spinner fa-spin"></i>
-        <i v-else class="fas fa-upload"></i>
-        {{ s.uploadPhase === 'uploading' ? '上传中...' : s.isParsing ? '正在解析...' : '上传 Reference 文件' }}
-      </button>
-      <p class="mt-3 text-sm text-gray-400">点击或拖拽文件到此处</p>
-      <p class="mt-1 text-xs text-gray-300">支持格式：</p>
-      <div class="fmt-list">
-        <span class="fmt-tag"><b>.ris</b><em>RIS &mdash; EndNote、Zotero、万方等</em></span>
-        <span class="fmt-tag"><b>.bib / .bibtex</b><em>BibTeX &mdash; LaTeX 工具链</em></span>
-        <span class="fmt-tag"><b>.nbib / .medline</b><em>NBIB/Medline &mdash; PubMed</em></span>
-        <span class="fmt-tag"><b>.xml</b><em>XML &mdash; Web of Science 等</em></span>
-        <span class="fmt-tag"><b>.ciw</b><em>CIW &mdash; Web of Science 早期格式</em></span>
-        <span class="fmt-tag"><b>.enw</b><em>ENW &mdash; EndNote Web</em></span>
-        <span class="fmt-tag"><b>.docx / .doc</b><em>DOCX &mdash; Word 文档手动整理</em></span>
-        <span class="fmt-tag"><b>.txt</b><em>TXT &mdash; CNKI、维普等纯文本导出</em></span>
+
+      <!-- 上传图标 + 按钮 -->
+      <div class="upload-zone__top">
+        <div class="upload-zone__icon">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <button
+          :disabled="s.isParsing || s.uploadPhase !== 'idle'"
+          class="btn-primary upload-btn"
+        >
+          <i v-if="s.isParsing || s.uploadPhase !== 'idle'" class="fas fa-spinner fa-spin"></i>
+          <i v-else class="fas fa-upload"></i>
+          {{ s.uploadPhase === 'uploading' ? '上传中...' : s.isParsing ? '正在解析...' : '上传 Reference 文件' }}
+        </button>
+        <p class="upload-hint">点击选择或将文件拖拽到此处</p>
+        <!-- 紧凑格式行 -->
+        <div class="fmt-inline">
+          <span class="fmt-inline-label">支持格式：</span>
+          <code>.ris</code><code>.bib</code><code>.nbib</code><code>.xml</code>
+          <code>.ciw</code><code>.enw</code><code>.docx</code><code>.txt</code>
+          <button class="fmt-help-btn" @click.stop="showFmtDetail = !showFmtDetail" :title="showFmtDetail ? '收起' : '查看格式说明'">
+            <i class="fas" :class="showFmtDetail ? 'fa-times' : 'fa-question-circle'"></i>
+          </button>
+        </div>
+
+        <!-- 展开的格式详情 -->
+        <transition name="fmt-slide">
+          <div v-if="showFmtDetail" class="fmt-detail-panel" @click.stop>
+            <table class="fmt-table">
+              <thead><tr><th>扩展名</th><th>格式</th><th>常见来源</th></tr></thead>
+              <tbody>
+                <tr><td><code>.ris</code></td><td>RIS</td><td>EndNote · Zotero · 万方</td></tr>
+                <tr><td><code>.bib</code> <code>.bibtex</code></td><td>BibTeX</td><td>LaTeX 工具链</td></tr>
+                <tr><td><code>.nbib</code> <code>.medline</code></td><td>NBIB / Medline</td><td>PubMed</td></tr>
+                <tr><td><code>.xml</code></td><td>XML</td><td>Web of Science · Cochrane</td></tr>
+                <tr><td><code>.ciw</code></td><td>CIW</td><td>Web of Science（早期）</td></tr>
+                <tr><td><code>.enw</code></td><td>ENW</td><td>EndNote Web</td></tr>
+                <tr><td><code>.docx</code> <code>.doc</code></td><td>Word 文档</td><td>手动整理</td></tr>
+                <tr><td><code>.txt</code></td><td>纯文本</td><td>CNKI · 维普</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </transition>
       </div>
     </div>
 
@@ -138,6 +147,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
@@ -149,6 +159,7 @@ const s = useScreeningStore()
 const project = useProjectStore()
 const taskStore = useTaskStore()
 const fileInput = ref(null)
+const showFmtDetail = ref(false)
 function getCsrf() {
   return document.cookie.split('; ').find((r) => r.startsWith('csrftoken='))?.split('=')[1]
 }
@@ -301,30 +312,150 @@ async function handleDeleteFile(fileId) {
 </script>
 
 <style scoped>
-.fmt-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+/* ── 进度横幅 ── */
+.progress-banner {
+  border-radius: 10px;
+  padding: 12px 16px;
 }
-.fmt-tag {
-  display: inline-flex;
-  flex-direction: column;
-  padding: 4px 10px;
+.upload-banner {
   background: #eff6ff;
   border: 1px solid #bfdbfe;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  line-height: 1.5;
+  color: #1d4ed8;
 }
-.fmt-tag b {
-  color: #2563eb;
-  font-family: monospace;
-  font-weight: 700;
+.parse-banner {
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  color: #6d28d9;
 }
-.fmt-tag em {
+
+/* ── 上传区域 ── */
+.upload-zone {
+  border: 2px dashed #c7d2fe;
+  border-radius: 14px;
+  background: #fafbff;
+  padding: 24px 20px 16px;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.upload-zone:hover:not(.upload-zone--disabled) {
+  border-color: #818cf8;
+  background: #f5f3ff;
+}
+.upload-zone--disabled {
+  cursor: not-allowed;
+  opacity: .75;
+}
+
+.upload-zone__top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.upload-zone__icon {
+  font-size: 2rem;
+  color: #818cf8;
+  line-height: 1;
+}
+.upload-btn {
+  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+  pointer-events: none;
+}
+.upload-hint {
+  font-size: .8rem;
   color: #94a3b8;
-  font-style: normal;
-  font-size: 0.68rem;
+  margin: 0;
+}
+
+/* 紧凑格式行 */
+.fmt-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  padding: 8px 0 4px;
+}
+.fmt-inline-label {
+  font-size: .72rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.fmt-inline code {
+  display: inline-block;
+  padding: 2px 7px;
+  background: #eff6ff;
+  color: #3b82f6;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: .72rem;
+  border: 1px solid #dbeafe;
+}
+.fmt-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  color: #6366f1;
+  border: none;
+  cursor: pointer;
+  font-size: .7rem;
+  transition: background .15s;
+  pointer-events: auto;
+  flex-shrink: 0;
+}
+.fmt-help-btn:hover { background: #c7d2fe; }
+
+/* 展开的格式详情面板 */
+.fmt-detail-panel {
+  margin-top: 8px;
+  border-top: 1px solid #e0e7ff;
+  padding-top: 10px;
+  overflow: hidden;
+}
+.fmt-slide-enter-active,
+.fmt-slide-leave-active {
+  transition: max-height .25s ease, opacity .2s;
+  max-height: 300px;
+}
+.fmt-slide-enter-from,
+.fmt-slide-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* 格式表格 */
+.fmt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .76rem;
+}
+.fmt-table thead tr { background: #eef2ff; }
+.fmt-table th {
+  padding: 5px 10px;
+  text-align: left;
+  color: #4338ca;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.fmt-table td {
+  padding: 4px 10px;
+  color: #475569;
+  border-top: 1px solid #f1f5f9;
+}
+.fmt-table tr:hover td { background: #f8faff; }
+.fmt-table code {
+  display: inline-block;
+  padding: 1px 5px;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: .72rem;
+  margin-right: 2px;
 }
 </style>
