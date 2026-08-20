@@ -65,6 +65,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             os.path.join(BASE_DIR, 'web', 'dist'),   # Vite 构建产物
+            os.path.join(BASE_DIR, 'templates'),      # 自定义 Admin 模板
         ],
         'APP_DIRS': True,
         'OPTIONS': {

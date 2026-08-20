@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}批量生成结果{% endblock %}
+
+{% block content %}
+<h1>批量生成完成 — {{ codes|length }} 张 × {{ credits }} credits</h1>
+
+<div style="margin:16px 0">
+  <a href="../" style="background:#417690;color:#fff;padding:8px 18px;border-radius:4px;text-decoration:none;font-size:13px">
+    返回兑换码列表
+  </a>
+  <a href="." style="margin-left:10px;background:#79aec8;color:#fff;padding:8px 18px;border-radius:4px;text-decoration:none;font-size:13px">
+    继续生成
+  </a>
+</div>
+
+<div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:16px;max-width:680px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <strong>兑换码列表（可全选复制）</strong>
+    <button onclick="copyAll()" style="background:#417690;color:#fff;border:none;padding:5px 14px;border-radius:4px;cursor:pointer;font-size:12px">
+      复制全部
+    </button>
+  </div>
+  <textarea id="codesArea" readonly rows="12"
+            style="width:100%;font-family:monospace;font-size:13px;padding:10px;border:1px solid #eee;border-radius:4px;box-sizing:border-box;background:#f9f9f9;resize:vertical">{{ codes_text }}</textarea>
+</div>
+
+<script>
+function copyAll() {
+  var ta = document.getElementById('codesArea');
+  ta.select();
+  document.execCommand('copy');
+  var btn = event.target;
+  btn.textContent = '已复制 ✓';
+  setTimeout(function(){ btn.textContent = '复制全部'; }, 2000);
+}
+</script>
+{% endblock %}

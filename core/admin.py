@@ -291,6 +291,67 @@ class RechargeCodeAdmin(admin.ModelAdmin):
             return [f.name for f in self.model._meta.fields]
         return self.readonly_fields
 
+    # ── 批量生成兑换码 ──────────────────────────────────────────
+    def get_urls(self):
+        from django.urls import path
+        urls = super().get_urls()
+        custom = [
+            path('batch-generate/', self.admin_site.admin_view(self.batch_generate_view), name='rechargecode_batch_generate'),
+        ]
+        return custom + urls
+
+    def batch_generate_view(self, request):
+        import random, string
+        from django.shortcuts import render
+        from django.contrib import messages
+        from core.models_billing import RechargeCode
+
+        def _gen(prefix):
+            chars = string.ascii_uppercase + string.digits
+            return f"{prefix}-{''.join(random.choices(chars,k=4))}-{''.join(random.choices(chars,k=4))}"
+
+        if request.method == 'POST':
+            try:
+                count   = max(1, min(500, int(request.POST.get('count', 10))))
+                credits = max(1, int(request.POST.get('credits', 100)))
+                prefix  = (request.POST.get('prefix') or 'FREE').strip().upper()[:10]
+                note    = request.POST.get('note', '').strip()
+                expires = request.POST.get('expires_at', '').strip() or None
+
+                created = []
+                for _ in range(count):
+                    for _retry in range(10):
+                        code = _gen(prefix)
+                        if not RechargeCode.objects.filter(code=code).exists():
+                            break
+                    obj = RechargeCode(code=code, credits=credits, note=note)
+                    if expires:
+                        from django.utils.dateparse import parse_datetime
+                        obj.expires_at = parse_datetime(expires + ':00') if len(expires) == 16 else parse_datetime(expires)
+                    obj.save()
+                    created.append(code)
+
+                messages.success(request, f'成功生成 {len(created)} 张兑换码（{credits} credits/张）')
+                return render(request, 'admin/rechargecode_batch_result.html', {
+                    'title': '批量生成兑换码',
+                    'codes': created,
+                    'codes_text': '\n'.join(created),
+                    'credits': credits,
+                    'opts': self.model._meta,
+                })
+            except Exception as e:
+                messages.error(request, f'生成失败：{e}')
+
+        return render(request, 'admin/rechargecode_batch_generate.html', {
+            'title': '批量生成兑换码',
+            'opts': self.model._meta,
+        })
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['batch_generate_url'] = 'batch-generate/'
+        return super().changelist_view(request, extra_context=extra_context)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 人工审阅

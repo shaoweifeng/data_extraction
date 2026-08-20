@@ -1,0 +1,61 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}批量生成兑换码{% endblock %}
+
+{% block content %}
+<h1>批量生成兑换码</h1>
+
+{% if messages %}
+<ul class="messagelist">
+  {% for message in messages %}
+  <li class="{{ message.tags }}">{{ message }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<div style="background:#fff;padding:20px 24px;border:1px solid #ddd;border-radius:6px;max-width:520px;margin-top:16px">
+  <form method="post">
+    {% csrf_token %}
+
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-weight:bold;margin-bottom:4px">生成数量（1 ~ 500）</label>
+      <input type="number" name="count" value="10" min="1" max="500"
+             style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box">
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-weight:bold;margin-bottom:4px">每张面值（credits）</label>
+      <input type="number" name="credits" value="100" min="1"
+             style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box">
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-weight:bold;margin-bottom:4px">码前缀（最多10字符，仅大写字母）</label>
+      <input type="text" name="prefix" value="FREE" maxlength="10"
+             style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box"
+             placeholder="FREE">
+      <p style="color:#888;font-size:12px;margin-top:4px">最终格式：PREFIX-XXXX-XXXX</p>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-weight:bold;margin-bottom:4px">备注（可选）</label>
+      <input type="text" name="note" maxlength="100"
+             style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box"
+             placeholder="如：内测用户赠送">
+    </div>
+
+    <div style="margin-bottom:24px">
+      <label style="display:block;font-weight:bold;margin-bottom:4px">过期时间（可选，留空永不过期）</label>
+      <input type="datetime-local" name="expires_at"
+             style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box">
+    </div>
+
+    <button type="submit"
+            style="background:#417690;color:#fff;padding:10px 24px;border:none;border-radius:4px;font-size:14px;cursor:pointer;font-weight:bold">
+      生成兑换码
+    </button>
+    <a href="../" style="margin-left:12px;color:#888;font-size:13px">返回列表</a>
+  </form>
+</div>
+{% endblock %}
