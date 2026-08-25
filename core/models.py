@@ -545,6 +545,14 @@ class ManualReview(models.Model):
         ('included', '纳入'),
         ('excluded', '排除'),
         ('pending',  '待定'),
+        ('conflict', '分歧（待人工定夺）'),
+    ]
+
+    CONSENSUS_CHOICES = [
+        ('included', '一致纳入'),
+        ('excluded', '一致排除'),
+        ('conflict', '存在分歧'),
+        ('pending',  '待处理'),
     ]
 
     project     = models.ForeignKey(
@@ -560,11 +568,25 @@ class ManualReview(models.Model):
     # AI 原始判断（冗余，独立列）
     ai_decision = models.CharField(
         max_length=20, blank=True, default='',
-        verbose_name="AI 原始决定 (included/excluded/error)"
+        verbose_name="AI 原始决定 (included/excluded/conflict/error)"
     )
     ai_reason   = models.TextField(
         blank=True, default='',
         verbose_name="AI 排除理由（原文）"
+    )
+
+    # 多模型交叉验证结果（单模型时为空列表，向后兼容）
+    multi_model_results = models.JSONField(
+        default=list, blank=True,
+        verbose_name="多模型筛选结果",
+        help_text='[{"model_id": "gpt-4o", "model_name": "GPT-4o", "decision": "included", "reason": "", "tokens": {}}]'
+    )
+    # 共识结论（单模型时 = ai_decision；多模型时为合并后结论）
+    consensus = models.CharField(
+        max_length=20,
+        choices=CONSENSUS_CHOICES,
+        default='pending',
+        verbose_name="多模型共识结论",
     )
 
     # 人工决定（独立列）
@@ -594,7 +616,8 @@ class ManualReview(models.Model):
         unique_together = ('project', 'source_xml')
         ordering        = ['-reviewed_at']
         indexes         = [
-            models.Index(fields=['project', 'decision'], name='idx_mr_project_decision'),
+            models.Index(fields=['project', 'decision'],   name='idx_mr_project_decision'),
+            models.Index(fields=['project', 'consensus'],  name='idx_mr_project_consensus'),
         ]
 
     def __str__(self):

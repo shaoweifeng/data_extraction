@@ -114,6 +114,12 @@ onMounted(async () => {
     await project.fetchProjects()
     const found = project.projects.find((p) => p.id === projectId)
     if (!found) { router.push('/'); return }
+    // 只有在切换到【不同项目】时才重置 screening store，刷新同一项目不重置
+    const isProjectSwitch = project.currentProject && project.currentProject.id !== projectId
+    if (isProjectSwitch) {
+      screening.reset()
+      taskStore.reset()
+    }
     await project.selectProject(found)
   }
 

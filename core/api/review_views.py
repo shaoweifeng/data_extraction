@@ -232,10 +232,21 @@ def review_list(request):
         is_override    = mr.is_override if mr else False
         reviewed_at    = mr.reviewed_at.isoformat() if mr else None
 
-        # Tab 过滤
+        # Tab 过滤（按「最终决定」口径：人工有则用人工，否则用AI；conflict = 有歧义且未人工定夺）
+        # 计算本条文献的最终决定
+        consensus_val = r.get('consensus', ai_decision)
+        if human_decision is not None:
+            final_dec = human_decision          # 人工已审 → 以人工为准
+        elif consensus_val == 'conflict':
+            final_dec = 'conflict'              # 未审且有歧义
+        elif ai_decision in ('included', 'excluded'):
+            final_dec = ai_decision             # 未审且 AI 有明确结论
+        else:
+            final_dec = 'pending'               # 未审且 AI 无明确结论
+
         if decision == 'unreviewed' and human_decision is not None:
             continue
-        elif decision in ('included', 'excluded', 'pending') and human_decision != decision:
+        elif decision in ('included', 'excluded', 'pending', 'conflict') and final_dec != decision:
             continue
 
         # 标题搜索
@@ -243,19 +254,21 @@ def review_list(request):
             continue
 
         items.append({
-            'source_xml':     source_xml,
-            'title':          title,
-            'authors':        r.get('authors', ''),
-            'year':           r.get('year', ''),
-            'journal':        r.get('journal', ''),
-            'doi':            r.get('doi', ''),
-            'url':            r.get('url', ''),
-            'ai_decision':    ai_decision,
-            'ai_reason':      ai_reason,
-            'human_decision': human_decision,
-            'human_reason':   human_reason,
-            'is_override':    is_override,
-            'reviewed_at':    reviewed_at,
+            'source_xml':          source_xml,
+            'title':               title,
+            'authors':             r.get('authors', ''),
+            'year':                r.get('year', ''),
+            'journal':             r.get('journal', ''),
+            'doi':                 r.get('doi', ''),
+            'url':                 r.get('url', ''),
+            'ai_decision':         ai_decision,
+            'ai_reason':           ai_reason,
+            'consensus':           r.get('consensus', ai_decision),  # 多模型共识结论
+            'multi_model_results': r.get('multi_model_results', []), # 各模型子结果
+            'human_decision':      human_decision,
+            'human_reason':        human_reason,
+            'is_override':         is_override,
+            'reviewed_at':         reviewed_at,
         })
 
     # 排序：AI excluded 优先（方便人工找被误排的文献）
@@ -437,9 +450,15 @@ def review_stats(request):
         1 for r in all_results
         if (r.get('decision') == 'included') or (r.get('include_or_not', '').lower() == 'yes')
     )
+    # ai_excluded：仅统计明确排除且无歧义的文献（歧义文献单独计入 conflict）
+    ai_conflict = sum(
+        1 for r in all_results
+        if r.get('consensus') == 'conflict'
+    )
     ai_excluded = sum(
         1 for r in all_results
-        if (r.get('decision') == 'excluded') or (r.get('include_or_not', '').lower() == 'no')
+        if ((r.get('decision') == 'excluded') or (r.get('include_or_not', '').lower() == 'no'))
+        and r.get('consensus') != 'conflict'
     )
 
     # AI 准确率：以人工审阅结果为标准
@@ -458,18 +477,87 @@ def review_stats(request):
     accuracy_numerator   = ai_correct_in_reviewed + unreviewed_count
     ai_accuracy = round(accuracy_numerator / accuracy_denominator * 100, 1) if accuracy_denominator > 0 else None
 
+    # 分歧数： consensus = conflict 且未人工定夺
+    conflict_count = sum(
+        1 for r in all_results
+        if r.get('consensus') == 'conflict' and
+           not ManualReview.objects.filter(project_id=project_id, source_xml=r.get('source_xml', '')).exists()
+    )
+
+    # ── 最终决定口径统计（用于左侧 Tab 计数，保证各分类之和 = total）──
+    # 规则：人工有则用人工，无则用AI；conflict = 有歧义且未人工定夺
+    tab_included = 0
+    tab_excluded = 0
+    tab_pending  = 0
+    tab_conflict = 0
+    reviewed_xml_map = {
+        mr.source_xml: mr.decision
+        for mr in ManualReview.objects.filter(project_id=project_id)
+    }
+    for r in all_results:
+        xml = r.get('source_xml', '')
+        ai_dec = r.get('decision', '') or ('included' if r.get('include_or_not', '').lower() == 'yes' else
+                                           'excluded' if r.get('include_or_not', '').lower() == 'no' else '')
+        consensus = r.get('consensus', ai_dec)
+        if xml in reviewed_xml_map:
+            human_dec = reviewed_xml_map[xml]
+            if human_dec == 'included':  tab_included += 1
+            elif human_dec == 'excluded': tab_excluded += 1
+            else:                         tab_pending  += 1
+        elif consensus == 'conflict':
+            tab_conflict += 1
+        elif ai_dec == 'included':
+            tab_included += 1
+        elif ai_dec == 'excluded':
+            tab_excluded += 1
+        else:
+            tab_pending += 1
+
+    # 最终筛选结果 = 人工审阅结果 + 未审文献的 AI 结果
+    reviewed_xml_set = set(ManualReview.objects.filter(project_id=project_id).values_list('source_xml', flat=True))
+    final_included = included  # 人工标记纳入
+    final_excluded = excluded  # 人工标记排除
+    final_conflict_pending = 0  # 未被人工定夺的分歧文献 + 人工标记待定
+    for r in all_results:
+        xml = r.get('source_xml', '')
+        if xml in reviewed_xml_set:
+            continue  # 已人工审阅，已计入上面
+        ai_dec = r.get('decision', '') or ('included' if r.get('include_or_not', '').lower() == 'yes' else
+                                           'excluded' if r.get('include_or_not', '').lower() == 'no' else '')
+        consensus = r.get('consensus', ai_dec)
+        if ai_dec == 'included' and consensus != 'conflict':
+            final_included += 1
+        elif ai_dec == 'excluded' and consensus != 'conflict':
+            final_excluded += 1
+        else:
+            # 未审的分歧文献或无明确结论的文献
+            final_conflict_pending += 1
+
+    # 人工标记待定也归入 final_conflict_pending（分歧+待定合并展示）
+    final_conflict_pending += pending
+
     return JsonResponse({
         'total':       total,
         'reviewed':    reviewed,
         'unreviewed':  total - reviewed,
-        'included':    included,
-        'excluded':    excluded,
+        'included':    included,    # 人工审阅标记纳入
+        'excluded':    excluded,    # 人工审阅标记排除
         'pending':     pending,
+        'conflict':    conflict_count,
         'overridden':  overridden,
         'ai_included': ai_included,
-        'ai_excluded': ai_excluded,
+        'ai_excluded': ai_excluded,  # 不含歧义文献
+        'ai_conflict': ai_conflict,  # 歧义（模型结论分歧）文献数
+        # ── 最终决定口径（Tab 计数用，加起来 = total）──
+        'tab_included': tab_included,
+        'tab_excluded': tab_excluded,
+        'tab_pending':  tab_pending,
+        'tab_conflict': tab_conflict,
+        'final_included': final_included,       # 最终纳入（人工覆写 + 未审的AI结论）
+        'final_excluded': final_excluded,       # 最终排除
+        'final_conflict_pending': final_conflict_pending,  # 分歧+待定（未解决）
         # 准确率相关
-        'ai_accuracy':            ai_accuracy,         # 百分比浮点，如 87.5
+        'ai_accuracy':            ai_accuracy,
         'ai_correct_in_reviewed': ai_correct_in_reviewed,
         'ai_wrong_in_reviewed':   ai_wrong_in_reviewed,
         'decisive_reviewed':      decisive_reviewed_count,

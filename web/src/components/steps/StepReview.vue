@@ -65,6 +65,9 @@
                   <i v-else class="fas fa-check" title="已人工确认"></i>
                   {{ decisionLabel(item.human_decision) }}
                 </span>
+                <span v-else-if="item.consensus === 'conflict'" class="badge conflict">
+                  <i class="fas fa-exclamation-triangle"></i> 分歧
+                </span>
                 <span v-else-if="item.ai_decision" class="badge ai" :class="item.ai_decision">
                   AI · {{ decisionLabel(item.ai_decision) }}
                 </span>
@@ -92,8 +95,19 @@
         <template v-if="selected">
           <!-- 文献基本信息（固定，不滚动）-->
           <div class="detail-meta">
-            <h3 class="detail-title">{{ selected.title }}</h3>
-            <!-- URL 行 -->
+            <div class="detail-title-row">
+              <h3 class="detail-title">{{ selected.title }}</h3>
+              <div class="detail-title-actions">
+                <button @click="criteriaPopup = true" class="icon-action-btn" title="查看纳排标准">
+                  <i class="fas fa-clipboard-list"></i>
+                  <span>纳排标准</span>
+                </button>
+                <button v-if="extractionFields.length" @click="fieldsPopup = true" class="icon-action-btn" title="查看提取字段">
+                  <i class="fas fa-tags"></i>
+                  <span>提取字段</span>
+                </button>
+              </div>
+            </div>
             <div class="detail-url">
               <i class="fas fa-external-link-alt"></i>
               <a v-if="selected.doi" :href="'https://doi.org/' + selected.doi" target="_blank">https://doi.org/{{ selected.doi }}</a>
@@ -118,38 +132,36 @@
             </div>
           </div>
 
-          <!-- 纳排标准 + 自定义字段（折叠面板，固定高度） -->
-          <div class="ref-panels">
-            <div class="ref-panel">
-              <div class="ref-panel-header" @click="showCriteria = !showCriteria">
-                <i class="fas fa-clipboard-list"></i> 纳排标准
-                <i class="fas" :class="showCriteria ? 'fa-chevron-up' : 'fa-chevron-down'" style="margin-left:auto"></i>
-              </div>
-              <div class="ref-panel-body" v-if="showCriteria">
-                <ul v-if="criteriaList.length" class="criteria-list">
-                  <li v-for="(c, i) in criteriaList" :key="i">{{ c }}</li>
-                </ul>
-                <div v-else class="ref-panel-empty">尚未设置纳排标准</div>
-              </div>
-            </div>
-            <div class="ref-panel" v-if="extractionFields.length">
-              <div class="ref-panel-header" @click="showFields = !showFields">
-                <i class="fas fa-tags"></i> 自定义提取字段
-                <i class="fas" :class="showFields ? 'fa-chevron-up' : 'fa-chevron-down'" style="margin-left:auto"></i>
-              </div>
-              <div class="ref-panel-body" v-if="showFields">
-                <div v-for="f in extractionFields" :key="f.name" class="field-item">
-                  <span class="field-name">{{ f.name }}</span>
-                  <span class="field-def">{{ f.definition }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- AI 判断 -->
           <div class="detail-ai" v-if="selected.ai_decision">
-            <div class="section-label">AI 判断</div>
-            <div class="ai-result-row">
+            <div v-if="selected.consensus === 'conflict'" class="conflict-alert">
+              <i class="fas fa-exclamation-triangle mr-1"></i>
+              <span><b>模型结论分歧</b> — 各模型判断不一致，请人工裁定</span>
+            </div>
+            <div v-if="selected.multi_model_results && selected.multi_model_results.length > 1" class="multi-model-results">
+              <button class="multi-model-toggle" @click="multiModelOpen = !multiModelOpen">
+                <i class="fas fa-layer-group mr-1"></i>
+                多模型判断明细
+                <span class="toggle-count">（{{ selected.multi_model_results.length }} 个模型）</span>
+                <i :class="multiModelOpen ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="ml-auto"></i>
+              </button>
+              <template v-if="multiModelOpen">
+                <div v-for="(mr, mi) in selected.multi_model_results" :key="mi" class="model-result-row">
+                  <div class="model-result-header">
+                    <span class="model-result-name">
+                      <span v-if="mr.model_name?.includes('Doubao')">🫘</span>
+                      <span v-else-if="mr.model_name?.includes('DeepSeek')">🤖</span>
+                      <span v-else-if="mr.model_name?.includes('Qwen')">🌙</span>
+                      <span v-else>🧠</span>
+                      {{ mr.model_name || mr.model_id }}
+                    </span>
+                    <span class="badge ai" :class="mr.decision">{{ decisionLabel(mr.decision) }}</span>
+                  </div>
+                  <div v-if="mr.reason" class="model-result-reason">{{ mr.reason }}</div>
+                </div>
+              </template>
+            </div>
+            <div v-else class="ai-result-row">
               <span class="badge ai" :class="selected.ai_decision">
                 AI: {{ decisionLabel(selected.ai_decision) }}
               </span>
@@ -171,11 +183,14 @@
               </div>
               <div v-if="saveStatus" class="save-status" :class="saveStatusType">{{ saveStatus }}</div>
             </div>
-            <!-- 排除模式：快捷理由 + 自定义输入 -->
+
+            <!-- 排除模式：排除理由区（必须先填/选，再点确认排除才跳转） -->
             <div class="reason-wrap" v-if="localDecision === 'excluded'">
-              <!-- 快捷标准选项 -->
+              <div class="reason-wrap-label">
+                <i class="fas fa-ban mr-1 text-red-400"></i>排除理由
+                <span class="text-xs text-gray-400 ml-1">（选择或输入后点"确认排除"）</span>
+              </div>
               <div v-if="criteriaList.length" class="quick-criteria">
-                <div class="quick-criteria-label">快捷选择排除标准：</div>
                 <div class="quick-criteria-tags">
                   <button
                     v-for="(c, i) in criteriaList" :key="i"
@@ -191,14 +206,30 @@
               </div>
               <textarea
                 v-model="localReason"
-                placeholder="输入排除理由（可选，失焦自动保存）…"
+                placeholder="或手动输入排除理由…"
                 rows="2"
-                @blur="autoSave"
+                @keydown.enter.exact.prevent="confirmExclude"
               />
+              <div class="note-save-row">
+                <button class="note-save-btn confirm-exclude-btn" @click="confirmExclude" :disabled="saving">
+                  <i class="fas fa-check mr-1"></i>确认排除 → 下一篇
+                </button>
+              </div>
             </div>
-            <!-- 其他操作（纳入/待定）的自定义理由 -->
-            <div class="reason-wrap" v-else-if="localDecision">
-              <textarea v-model="localReason" placeholder="输入理由（可选，失焦自动保存）…" rows="2" @blur="autoSave" />
+
+            <!-- 备注区（所有决定通用，独立于排除理由） -->
+            <div class="note-wrap">
+              <div class="reason-wrap-label">
+                <i class="fas fa-sticky-note mr-1 text-gray-400"></i>备注
+                <span class="text-xs text-gray-400 ml-1">（可选，按回车或点按钮保存）</span>
+              </div>
+              <textarea v-model="localNote" placeholder="添加备注…" rows="1"
+                @keydown.enter.exact.prevent="saveNote" />
+              <div class="note-save-row">
+                <button class="note-save-btn" @click="saveNote" :disabled="saving || !localDecision">
+                  <i class="fas fa-save mr-1"></i>保存备注
+                </button>
+              </div>
             </div>
           </div>
         </template>
@@ -206,6 +237,38 @@
         <div v-else class="detail-empty">
           <i class="fas fa-hand-pointer"></i>
           <p>从左侧列表选择一篇文献开始审阅</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 纳排标准弹窗 ── -->
+    <div v-if="criteriaPopup" class="popup-overlay" @click.self="criteriaPopup = false">
+      <div class="popup-box">
+        <div class="popup-header">
+          <span><i class="fas fa-clipboard-list mr-2 text-indigo-500"></i>纳排标准</span>
+          <button @click="criteriaPopup = false" class="popup-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="popup-body">
+          <ol v-if="criteriaList.length" class="criteria-popup-list">
+            <li v-for="(c, i) in criteriaList" :key="i">{{ c }}</li>
+          </ol>
+          <div v-else class="popup-empty">尚未设置纳排标准</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 提取字段弹窗 ── -->
+    <div v-if="fieldsPopup" class="popup-overlay" @click.self="fieldsPopup = false">
+      <div class="popup-box">
+        <div class="popup-header">
+          <span><i class="fas fa-tags mr-2 text-indigo-500"></i>自定义提取字段</span>
+          <button @click="fieldsPopup = false" class="popup-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="popup-body">
+          <div v-for="f in extractionFields" :key="f.name" class="field-popup-item">
+            <span class="field-name">{{ f.name }}</span>
+            <span class="field-def">{{ f.definition }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -234,14 +297,16 @@ const totalCount   = ref(0)
 
 const selected      = ref(null)
 const localDecision = ref('')
-const localReason   = ref('')
+const localReason   = ref('')   // 排除理由（仅排除时使用）
+const localNote     = ref('')   // 备注（所有决定通用）
 const saving        = ref(false)
 const saveStatus    = ref('')
 const saveStatusType = ref('')
 
-// 折叠面板
-const showCriteria = ref(false)
-const showFields   = ref(false)
+// 弹窗状态
+const criteriaPopup   = ref(false)
+const fieldsPopup     = ref(false)
+const multiModelOpen  = ref(false)   // 多模型明细折叠开关（默认收起）
 
 // 纳排标准 + 提取字段（从 stagesData 读）
 const criteriaList = computed(() => {
@@ -267,6 +332,7 @@ const progressPct = computed(() => stats.value.total ? Math.round((stats.value.r
 const tabs = [
   { key: '',           label: '全部' },
   { key: 'unreviewed', label: '待审' },
+  { key: 'conflict',   label: '⚠️ 分歧', tip: '模型结论不一致，需人工裁定' },
   { key: 'included',   label: '纳入' },
   { key: 'excluded',   label: '排除' },
   { key: 'pending',    label: '待定' },
@@ -276,9 +342,11 @@ function tabCount(key) {
   const s = stats.value
   if (key === '')           return s.total || ''
   if (key === 'unreviewed') return Math.max(0, (s.total - s.reviewed)) || ''
-  if (key === 'included')   return s.included || ''
-  if (key === 'excluded')   return s.excluded || ''
-  if (key === 'pending')    return s.pending  || ''
+  // 最终决定口径（人工有则用人工，否则用AI，不重不漏）：加起来 = total
+  if (key === 'included')   return s.tab_included ?? ''
+  if (key === 'excluded')   return s.tab_excluded ?? ''
+  if (key === 'pending')    return s.tab_pending  ?? ''
+  if (key === 'conflict')   return s.tab_conflict ?? ''
   return ''
 }
 
@@ -289,7 +357,7 @@ const decisionOpts = [
 ]
 
 function decisionLabel(v) {
-  return { included: '纳入', excluded: '排除', pending: '待定', error: '错误' }[v] || v || '—'
+  return { included: '纳入', excluded: '排除', pending: '待定', conflict: '分歧', error: '错误' }[v] || v || '—'
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -321,7 +389,7 @@ async function loadItems(targetPage = 1) {
   finally { loading.value = false }
 }
 
-async function saveDecision(decision, reason) {
+async function saveDecision(decision, reason, autoNext = false) {
   if (!selected.value || !reviewStepId.value) return
   saving.value = true
   saveStatus.value = '保存中…'
@@ -334,19 +402,63 @@ async function saveDecision(decision, reason) {
       decision,
       reason:  reason || '',
     })
-    // 更新本地列表
+    // 更新本地列表显示
     const item = displayItems.value.find(i => i.source_xml === selected.value.source_xml)
+    const prevDecision = item?.human_decision ?? null   // 保存前的人工决定（null = 未审阅）
+    // 保存前该文献的「最终决定」（用于从 tab_* 中扣减）
+    const prevFinalDec = prevDecision !== null
+      ? prevDecision
+      : (item?.consensus === 'conflict' ? 'conflict' : (item?.ai_decision || 'pending'))
+
     if (item) { item.human_decision = decision; item.human_reason = reason; item.is_override = item.ai_decision !== decision }
     selected.value.human_decision = decision
+    selected.value.human_reason   = reason
     selected.value.is_override    = selected.value.ai_decision !== decision
+
+    // ── 立即本地更新 Tab 计数（最终决定口径）──────────────────────
+    const s = stats.value
+    if (prevDecision === null) {
+      s.reviewed = (s.reviewed ?? 0) + 1  // 首次审阅
+    }
+    // 从之前的最终分类扣减
+    if (prevFinalDec === 'included')  s.tab_included = Math.max(0, (s.tab_included ?? 0) - 1)
+    else if (prevFinalDec === 'excluded') s.tab_excluded = Math.max(0, (s.tab_excluded ?? 0) - 1)
+    else if (prevFinalDec === 'pending')  s.tab_pending  = Math.max(0, (s.tab_pending  ?? 0) - 1)
+    else if (prevFinalDec === 'conflict') s.tab_conflict = Math.max(0, (s.tab_conflict ?? 0) - 1)
+    // 加入新的人工决定分类
+    if (decision === 'included')      s.tab_included = (s.tab_included ?? 0) + 1
+    else if (decision === 'excluded') s.tab_excluded = (s.tab_excluded ?? 0) + 1
+    else if (decision === 'pending')  s.tab_pending  = (s.tab_pending  ?? 0) + 1
+
     saveStatus.value     = '已保存 ✓'
     saveStatusType.value = 'success'
-    await loadStats()
+    // 后台静默刷新，确保最终数据精准（不阻塞 UI）
+    loadStats()
     setTimeout(() => { saveStatus.value = '' }, 2000)
+
+    // 保存后自动跳转下一篇（仅主决策按钮触发时）
+    if (autoNext) {
+      goNextItem()
+    }
   } catch (e) {
     saveStatus.value     = '保存失败，请重试'
     saveStatusType.value = 'error'
   } finally { saving.value = false }
+}
+
+/** 根据当前过滤 Tab，跳转到列表中的下一篇文献 */
+function goNextItem() {
+  if (!selected.value || !displayItems.value.length) return
+  const curIdx = displayItems.value.findIndex(i => i.source_xml === selected.value.source_xml)
+  const nextIdx = curIdx + 1
+  if (nextIdx < displayItems.value.length) {
+    selectItem(displayItems.value[nextIdx])
+  } else if (page.value < totalPages.value) {
+    // 当前页末尾，加载下一页后选第一篇
+    loadItems(page.value + 1).then(() => {
+      if (displayItems.value.length) selectItem(displayItems.value[0])
+    })
+  }
 }
 
 // ── 交互 ──────────────────────────────────────────────────────────────────────
@@ -367,23 +479,45 @@ function goPage(p) {
 function selectItem(item) {
   selected.value      = { ...item }
   localDecision.value = item.human_decision || ''
-  localReason.value   = item.human_reason   || ''
+  // 若之前是排除，reason 是排除理由；否则是备注
+  if (item.human_decision === 'excluded') {
+    localReason.value = item.human_reason || ''
+    localNote.value   = ''
+  } else {
+    localReason.value = ''
+    localNote.value   = item.human_reason || ''
+  }
   saveStatus.value    = ''
+  // 有分歧时自动展开多模型明细，否则收起
+  multiModelOpen.value = item.consensus === 'conflict'
 }
 
 function setDecision(value) {
+  if (value === 'excluded') {
+    // 排除：只切换状态，展示理由区，不立即保存
+    localDecision.value = value
+    return
+  }
+  // 纳入/待定：立即保存并跳转下一篇
   localDecision.value = value
-  saveDecision(value, localReason.value)
+  saveDecision(value, localNote.value, true)
 }
 
-function autoSave() {
-  if (localDecision.value) saveDecision(localDecision.value, localReason.value)
+/** 确认排除：选好理由后点击，保存并跳转 */
+function confirmExclude() {
+  saveDecision('excluded', localReason.value, true)
 }
 
-// 快捷标准：点击即填入理由并立即保存
+/** 保存备注（不跳转） */
+function saveNote() {
+  if (!localDecision.value) return
+  const reason = localDecision.value === 'excluded' ? localReason.value : localNote.value
+  saveDecision(localDecision.value, reason, false)
+}
+
+// 快捷标准：点击即选中理由，不自动跳转（需用户点确认排除按钮）
 function pickCriteria(criteriaText) {
   localReason.value = criteriaText
-  saveDecision('excluded', criteriaText)
 }
 
 onMounted(async () => {
@@ -540,7 +674,10 @@ onMounted(async () => {
 /* 覆写AI判断：额外加橙色边框以示区别 */
 .badge.human.is-override { outline: 1.5px solid #f97316; }
 .badge.ai    { background: #f1f5f9; color: #64748b; }
+.badge.ai.included { background: #dcfce7; color: #16a34a; }
+.badge.ai.excluded { background: #fee2e2; color: #dc2626; }
 .badge.pending  { background: #fef9c3; color: #ca8a04; }
+.badge.conflict { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
 
 /* ── 右栏 ── */
 .detail-panel {
@@ -556,7 +693,7 @@ onMounted(async () => {
 
 /* 文献元信息（固定，不参与 flex 伸缩）*/
 .detail-meta { flex-shrink: 0; padding: .8rem 1.1rem .5rem; }
-.detail-title { font-size: .93rem; font-weight: 600; color: #1e293b; line-height: 1.4; margin-bottom: .45rem; }
+/* .detail-title is now defined below in the title-row section */
 .detail-info-row { display: flex; flex-wrap: wrap; gap: .35rem; }
 .info-chip {
   display: inline-flex; align-items: center; gap: .28rem;
@@ -588,28 +725,20 @@ onMounted(async () => {
   flex: 1; overflow-y: auto;
   padding: .6rem .65rem;
 }
-.abstract-body { font-size: .82rem; color: #475569; line-height: 1.68; word-break: break-word; white-space: pre-wrap; }
+.abstract-body { font-size: .9rem; color: #334155; line-height: 1.75; word-break: break-word; white-space: pre-wrap; }
 .abstract-empty { color: #cbd5e1; font-size: .8rem; font-style: italic; }
 
-/* 折叠面板（固定高度，不参与 flex 伸缩）*/
-.ref-panels { flex-shrink: 0; padding: 0 1.1rem .5rem; }
-.ref-panel { border: 1px solid #e2e8f0; border-radius: 7px; margin-bottom: .45rem; overflow: hidden; }
-.ref-panel-header {
-  display: flex; align-items: center; gap: .5rem;
-  padding: .45rem .7rem; background: #f8fafc; cursor: pointer;
-  font-size: .78rem; font-weight: 600; color: #475569;
-}
-.ref-panel-header:hover { background: #f1f5f9; }
-.ref-panel-body { padding: .6rem .7rem; font-size: .78rem; color: #475569; }
-.ref-panel-empty { color: #94a3b8; font-style: italic; }
-.criteria-list { margin: 0; padding-left: 1.2rem; }
-.criteria-list li { margin-bottom: .28rem; line-height: 1.5; }
-.field-item { display: flex; gap: .5rem; margin-bottom: .38rem; }
+/* 弹窗内字段样式（复用旧 field-item） */
 .field-name { font-weight: 600; color: #334155; min-width: 80px; flex-shrink: 0; }
-.field-def  { color: #64748b; }
+.field-def  { color: #64748b; font-size: .83rem; }
 
-/* AI 判断（固定）*/
-.detail-ai { flex-shrink: 0; padding: 0 1.1rem .5rem; }
+/* AI 判断（固定，但内部可滚动以防理由超长）*/
+.detail-ai {
+  flex-shrink: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 0 1.1rem .5rem;
+}
 .ai-result-row { display: flex; align-items: flex-start; gap: .6rem; flex-wrap: wrap; }
 .ai-reason { font-size: .78rem; color: #64748b; flex: 1; line-height: 1.5; }
 
@@ -643,7 +772,38 @@ onMounted(async () => {
   background: #fafafa;
 }
 .reason-wrap textarea:focus { border-color: #6366f1; background: #fff; }
+.note-save-row { display: flex; justify-content: flex-end; margin-top: 4px; }
+.note-save-btn {
+  padding: 4px 12px; border-radius: 6px; border: 1px solid #6366f1;
+  background: #eef2ff; color: #6366f1; font-size: .78rem; cursor: pointer;
+  transition: all .15s;
+}
+.note-save-btn:hover:not(:disabled) { background: #6366f1; color: #fff; }
+.note-save-btn:disabled { opacity: .5; cursor: not-allowed; }
+.confirm-exclude-btn {
+  border-color: #dc2626; background: #fef2f2; color: #dc2626;
+}
+.confirm-exclude-btn:hover:not(:disabled) { background: #dc2626; color: #fff; }
 .save-status { font-size: .73rem; white-space: nowrap; }
+
+/* 排除理由区 + 备注区标题 */
+.reason-wrap-label {
+  font-size: .74rem; color: #64748b; font-weight: 600; margin-bottom: 5px;
+  display: flex; align-items: center;
+}
+
+/* 备注区独立样式（始终显示） */
+.note-wrap {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+}
+.note-wrap textarea {
+  width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: .4rem .5rem;
+  font-size: .81rem; color: #334155; resize: none; outline: none; box-sizing: border-box;
+  background: #fafafa;
+}
+.note-wrap textarea:focus { border-color: #6366f1; background: #fff; }
 .save-status.success { color: #16a34a; }
 .save-status.error   { color: #dc2626; }
 
@@ -694,4 +854,118 @@ onMounted(async () => {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ── 分歧标识条 ── */
+.conflict-alert {
+  display: flex; align-items: center; gap: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: .8rem;
+  color: #c2410c;
+  margin-bottom: 8px;
+}
+.conflict-alert i { flex-shrink: 0; }
+
+/* ── 多模型判断明细 ── */
+.multi-model-results {
+  margin-top: 6px;
+}
+.multi-model-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: background .12s;
+  text-align: left;
+}
+.multi-model-toggle:hover { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+.toggle-count { font-weight: 400; color: #94a3b8; }
+.model-result-row {
+  background: #fafafa;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+.model-result-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.model-result-name {
+  font-size: .82rem; font-weight: 600; color: #334155;
+  display: flex; align-items: center; gap: 4px;
+}
+.model-result-reason {
+  font-size: .76rem; color: #64748b; line-height: 1.5;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+/* ── 标题行（标题 + 图标操作按钮）── */
+.detail-title-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: .6rem;
+  margin-bottom: .3rem;
+}
+.detail-title { flex: 1; margin: 0; font-size: .95rem; font-weight: 700; color: #1e293b; line-height: 1.4; }
+.detail-title-actions {
+  display: flex; gap: .4rem; flex-shrink: 0; margin-top: 2px;
+}
+.icon-action-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;
+  background: #f8fafc; color: #6366f1; font-size: .72rem; cursor: pointer;
+  transition: all .15s; white-space: nowrap;
+}
+.icon-action-btn:hover { background: #eef2ff; border-color: #6366f1; }
+.icon-action-btn i { font-size: .7rem; }
+
+/* ── 弹窗 ── */
+.popup-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+}
+.popup-box {
+  background: #fff; border-radius: 12px;
+  width: min(520px, 90vw); max-height: 75vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  overflow: hidden;
+}
+.popup-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .75rem 1.1rem; border-bottom: 1px solid #e2e8f0;
+  font-size: .88rem; font-weight: 700; color: #1e293b;
+}
+.popup-close {
+  background: none; border: none; cursor: pointer;
+  color: #94a3b8; font-size: .85rem; padding: 2px 6px;
+  border-radius: 4px; transition: background .12s;
+}
+.popup-close:hover { background: #f1f5f9; color: #475569; }
+.popup-body {
+  flex: 1; overflow-y: auto; padding: .9rem 1.1rem;
+}
+.popup-empty { color: #94a3b8; font-style: italic; font-size: .82rem; }
+.criteria-popup-list {
+  margin: 0; padding-left: 1.4rem;
+}
+.criteria-popup-list li {
+  font-size: .85rem; color: #334155; margin-bottom: .6rem; line-height: 1.6;
+}
+.field-popup-item {
+  display: flex; gap: .6rem; padding: .4rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.field-popup-item:last-child { border-bottom: none; }
+
 </style>

@@ -23,10 +23,7 @@ from core.models import ActivityLog, DataFile, StageStep
 
 def get_ai_screen_stats(project) -> Dict:
     """
-    获取 AI 初筛统计数据（included / excluded / total）。
-
-    Returns:
-        {included, excluded, total}
+    获取 AI 初筛统计数据（included / excluded / conflict / pending / total）。
     """
     ai_step = StageStep.objects.filter(
         stage__project=project,
@@ -34,14 +31,25 @@ def get_ai_screen_stats(project) -> Dict:
     ).first()
 
     if not ai_step:
-        return {'included': 0, 'excluded': 0, 'total': 0}
+        return {'included': 0, 'excluded': 0, 'conflict': 0, 'pending': 0, 'total': 0}
 
     qs = DataFile.objects.filter(project=project, step=ai_step, data_category='output')
-    total = qs.count()
+    total    = qs.count()
     included = qs.filter(metadata__decision='included').count()
     excluded = qs.filter(metadata__decision='excluded').count()
+    conflict = qs.filter(metadata__consensus='conflict').count()
+    pending  = total - included - excluded - conflict
 
-    return {'included': included, 'excluded': excluded, 'total': total}
+    return {
+        'included':       included,
+        'excluded':       excluded,
+        'conflict':       conflict,
+        'pending_count':  max(0, pending),
+        'total':          total,
+        'included_count': included,
+        'excluded_count': excluded,
+        'conflict_count': conflict,
+    }
 
 
 def clear_ai_screen_outputs(project, user) -> Dict:

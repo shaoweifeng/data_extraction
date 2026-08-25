@@ -55,6 +55,13 @@ class AIScreenHandler(BaseStepHandler):
         # ── 阶段三：余额预检 ──────────────────────────────────────────────
         # superuser / admin 角色享受无限额度，跳过余额检查
         user = self.task_obj.created_by if self.task_obj else None
+        # 多模型支持：读 ai_models 列表，单模型时降级为 ai_model
+        model_ids = self.config.get('ai_models') or []
+        if not model_ids:
+            single = self.config.get('ai_model') or ''
+            if single:
+                model_ids = [single]
+        model_count = max(1, len(model_ids))
         if user:
             profile = getattr(user, 'profile', None)
             is_unlimited = user.is_superuser or (profile and profile.role == 'admin')
@@ -63,7 +70,7 @@ class AIScreenHandler(BaseStepHandler):
             else:
                 try:
                     from core.services.billing_service import estimate_credits, check_balance_sufficient, get_balance
-                    estimated = estimate_credits(total_refs)
+                    estimated = estimate_credits(total_refs) * model_count
                     if not check_balance_sufficient(user, estimated):
                         balance = get_balance(user)
                         self.logger.error(
@@ -351,7 +358,7 @@ class AIScreenHandler(BaseStepHandler):
     def _process_batch(self, batch: List[Dict], criteria: List[str],
                        results_dir: Path, concurrency: int = 16) -> List[Dict]:
         try:
-            results = self._call_ai_api(batch, criteria, concurrency=concurrency)
+            results = self._call_multi_model_api(batch, criteria, concurrency=concurrency)
         except Exception as e:
             self.logger.warning(f"[API] 调用失败: {e}，使用模拟结果")
             results = self._mock_api_call(batch, criteria)
@@ -361,48 +368,126 @@ class AIScreenHandler(BaseStepHandler):
             result["source_xml"] = batch[i].get("source_xml", "unknown")
         return results
 
-    def _call_ai_api(self, batch: List[Dict], criteria: List[str], concurrency: int = 16) -> List[Dict]:
+    def _call_multi_model_api(self, batch: List[Dict], criteria: List[str], concurrency: int = 16) -> List[Dict]:
+        """
+        支持单/多模型筛选。
+        单模型时行为与废弃的 _call_ai_api 完全一致。
+        多模型时依次调用各模型，汇总结果并计算 consensus。
+        """
         import os
         from core.executors.ai_providers import get_provider
+        from core.services.consensus_service import resolve_consensus, build_summary_reason, get_model_display_name
 
-        model_id = self.config.get("ai_model") or os.environ.get("AI_PROVIDER", "deepseek")
-        from core.services.ai_models_config import get_model_config
-        model_cfg = get_model_config(model_id)
-        has_key = bool(model_cfg and model_cfg.get("api_key")) or bool(os.environ.get("AI_API_KEY"))
-        if not has_key:
-            self.logger.warning(f"[AI] 模型 {model_id} 未配置 API Key，使用 mock")
+        # 读取多模型列表，向后兼容单模型配置
+        model_ids = self.config.get('ai_models') or []
+        if not model_ids:
+            single = self.config.get('ai_model') or os.environ.get('AI_PROVIDER', 'deepseek')
+            model_ids = [single]
+
+        prompt_template = self._get_prompt_template()
+
+        # key: 条目索引 -> [{模型结果}, ...]
+        per_entry_model_results: List[List[dict]] = [[] for _ in batch]
+
+        for model_id in model_ids:
+            from core.services.ai_models_config import get_model_config
+            model_cfg = get_model_config(model_id)
+            has_key = bool(model_cfg and model_cfg.get('api_key')) or bool(os.environ.get('AI_API_KEY'))
+            if not has_key:
+                self.logger.warning(f"[AI] 模型 {model_id} 未配置 API Key，跳过该模型")
+                continue
+
+            provider = get_provider(model_id)
+            model_display = get_model_display_name(model_id)
+            self.logger.info(f"[AI] 模型 {model_display} 开始筛选，批次: {len(batch)} 篇，并发: {concurrency}")
+            try:
+                screening_results = provider.screen_batch(batch, criteria, prompt_template, concurrency=concurrency)
+            except Exception as e:
+                self.logger.warning(f"[AI] 模型 {model_display} 调用失败: {e}")
+                continue
+
+            for idx, (entry, sr) in enumerate(zip(batch, screening_results)):
+                per_entry_model_results[idx].append({
+                    'model_id':        model_id,
+                    'model_name':      model_display,
+                    'decision':        sr.decision,
+                    'reason':          sr.exclusion_reason or '',
+                    'reason_id':       sr.exclusion_criterion_no or '',  # 排除标准编号
+                    'tokens':          sr.token_usage or {},
+                    'error':           sr.error or '',
+                    'extracted_fields': sr.extracted_fields or {},       # 自定义提取字段
+                })
+                # 计费统计：累加到 token_stats（通过返回对象透传）
+                if sr.token_usage:
+                    pass  # token_usage 随 result 返回，在 execute() 里汇总
+
+        # 所有模型均无 API Key 时退化为 mock
+        if all(len(r) == 0 for r in per_entry_model_results):
+            self.logger.warning("[AI] 所有模型均无效，使用 mock")
             return self._mock_api_call(batch, criteria)
 
-        provider = get_provider(model_id)
-        prompt_template = self._get_prompt_template()
-        self.logger.info(f"[AI] Provider: {provider.name}，批次: {len(batch)} 篇，并发: {concurrency}")
-        screening_results = provider.screen_batch(batch, criteria, prompt_template, concurrency=concurrency)
-
+        # 构建最终返回结果（与旧接口兼容）
         results = []
-        for entry, sr in zip(batch, screening_results):
-            result = {
-                "title": entry.get("title", ""),
-                "authors": entry.get("authors", ""),
-                "year": entry.get("year", ""),
-                "journal": entry.get("journal", ""),
-                "doi": entry.get("doi", ""),
-                "url": entry.get("url", ""),
-                "source_xml": entry.get("source_xml", ""),
-                "decision": sr.decision,
-                "include_or_not": "yes" if sr.is_included else "no",
-                "exclusion_reason": sr.exclusion_reason,
-                "number_exclusion_reason": sr.exclusion_criterion_no,
-                "model": sr.model,
-                "raw_ai_response": sr.raw_response,
-                "error": sr.error,
-                "timestamp": datetime.now().isoformat(),
-                "extracted_fields": sr.extracted_fields or {},
-                "token_usage": sr.token_usage,   # 阶段二：透传到 handler 层汇总
+        for idx, (entry, model_results) in enumerate(zip(batch, per_entry_model_results)):
+            consensus = resolve_consensus(model_results)
+            summary_reason = build_summary_reason(model_results)
+
+            # 计费：各模型 token 累加
+            total_token_usage = {
+                'prompt': sum(r['tokens'].get('prompt', 0) for r in model_results),
+                'completion': sum(r['tokens'].get('completion', 0) for r in model_results),
+                'total': sum(r['tokens'].get('total', 0) for r in model_results),
             }
-            if sr.is_error:
-                self.logger.warning(f"[AI] 筛选失败: {entry.get('title', '')[:40]} - {sr.error}")
-            results.append(result)
+
+            # 主模型（单模型时第一个就是它；多模型取 consensus 一致的第一个，否则第一个）
+            primary = model_results[0] if model_results else {}
+            # 合并 extracted_fields：优先用 included 模型的结果，其次取第一个非空的
+            merged_extracted: Dict = {}
+            for mr in model_results:
+                ef = mr.get('extracted_fields') or {}
+                if ef and not merged_extracted:
+                    merged_extracted = dict(ef)
+                elif ef:
+                    # 用后续模型补充空字段
+                    for k, v in ef.items():
+                        if not merged_extracted.get(k) and v:
+                            merged_extracted[k] = v
+            # exclusion_reason_id：共识排除时取主模型；多模型冲突时取所有非空编号的第一个
+            primary_reason_id = primary.get('reason_id', '')
+            if not primary_reason_id:
+                for mr in model_results:
+                    if mr.get('reason_id'):
+                        primary_reason_id = mr['reason_id']
+                        break
+
+            results.append({
+                'title':    entry.get('title', ''),
+                'authors':  entry.get('authors', ''),
+                'year':     entry.get('year', ''),
+                'journal':  entry.get('journal', ''),
+                'doi':      entry.get('doi', ''),
+                'url':      entry.get('url', ''),
+                'source_xml': entry.get('source_xml', ''),
+                # 展示对外的主字段（单模型时直接用主模型结果，多模型时用 consensus）
+                'decision':  consensus,
+                'include_or_not': 'yes' if consensus == 'included' else 'no',
+                'exclusion_reason': summary_reason,
+                'number_exclusion_reason': primary_reason_id,
+                'model':    ', '.join(r['model_id'] for r in model_results),
+                'raw_ai_response': '',
+                'error':    primary.get('error', ''),
+                'extracted_fields': merged_extracted,
+                'timestamp': datetime.now().isoformat(),
+                'token_usage': total_token_usage if total_token_usage['total'] > 0 else None,
+                # 多模型扩展字段
+                'multi_model_results': model_results,
+                'consensus': consensus,
+            })
         return results
+
+    def _call_ai_api(self, batch: List[Dict], criteria: List[str], concurrency: int = 16) -> List[Dict]:
+        """@deprecated: 请使用 _call_multi_model_api。保留为兼容，内部转发。"""
+        return self._call_multi_model_api(batch, criteria, concurrency=concurrency)
 
     def _mock_api_call(self, batch: List[Dict], criteria: List[str]) -> List[Dict]:
         import random
@@ -437,8 +522,12 @@ class AIScreenHandler(BaseStepHandler):
         result_dir = results_dir / safe_dir
         result_dir.mkdir(exist_ok=True)
         result_file = result_dir / f"screening_result_{entry['source_xml'].replace('.xml', '.json')}"
+        # 将多模型字段一并写入 JSON
+        save_data = dict(result)
+        save_data.setdefault('multi_model_results', [])
+        save_data.setdefault('consensus', result.get('decision', 'excluded'))
         with open(result_file, 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
+            json.dump(save_data, f, ensure_ascii=False, indent=2)
 
     def _save_batch_results_to_db(self, batch: List[Dict], results: List[Dict]):
         from django.db import close_old_connections
@@ -459,7 +548,12 @@ class AIScreenHandler(BaseStepHandler):
                     filename=filename, file=ContentFile(content, name=filename),
                     data_category='output', source='tool_generated',
                     description='AI筛选结果',
-                    metadata={'decision': result.get('decision', 'excluded'), 'source_xml': entry.get("source_xml", "")},
+                    metadata={
+                        'decision':            result.get('decision', 'excluded'),
+                        'consensus':           result.get('consensus', result.get('decision', 'excluded')),
+                        'source_xml':          entry.get('source_xml', ''),
+                        'multi_model_results': result.get('multi_model_results', []),
+                    },
                     created_by=self.task_obj.created_by,
                 )
 
@@ -578,7 +672,12 @@ class AIScreenHandler(BaseStepHandler):
             from core.models_billing import TokenUsageLog
             close_old_connections()
             user = self.task_obj.created_by if self.task_obj else None
-            model_name = self.config.get("ai_model", "unknown")
+            # 多模型时取 ai_models 列表合并；单模型取 ai_model
+            model_ids = self.config.get('ai_models') or []
+            if not model_ids:
+                single = self.config.get('ai_model', 'unknown')
+                model_ids = [single] if single else ['unknown']
+            model_name = ', '.join(model_ids)
             if user:
                 TokenUsageLog.objects.create(
                     task_id=self.executor.task_id,
@@ -608,13 +707,15 @@ class AIScreenHandler(BaseStepHandler):
                     from core.services.billing_service import log_admin_usage
                     task_obj = Task.objects.select_related('project').filter(id=self.executor.task_id).first()
                     project_name = task_obj.project.name if task_obj and task_obj.project else '未知项目'
-                    model_name   = self.config.get('ai_model', '未知模型')
+                    model_ids_disp = self.config.get('ai_models') or [self.config.get('ai_model', '未知模型')]
+                    model_name   = ', '.join(model_ids_disp)
                     admin_note = f"AI筛选(免费) · {project_name} · 模型:{model_name}（{token_stats.get('ref_count', 0)}篇/{token_stats.get('total_tokens', 0)} tokens，等值{credits_estimate} credits）"
                     log_admin_usage(user, credits_estimate, task=task_obj, note=admin_note)
                 else:
                     task_obj = Task.objects.select_related('project').filter(id=self.executor.task_id).first()
                     project_name = task_obj.project.name if task_obj and task_obj.project else '未知项目'
-                    model_name   = self.config.get('ai_model', '未知模型')
+                    model_ids_disp = self.config.get('ai_models') or [self.config.get('ai_model', '未知模型')]
+                    model_name   = ', '.join(model_ids_disp)
                     note = f"AI筛选 · {project_name} · 模型:{model_name}（{token_stats.get('ref_count', 0)}篇/{token_stats.get('total_tokens', 0)} tokens）"
                     consume_credits(user, credits_estimate, task=task_obj, note=note)
                     self.logger.info(f"[计费] 已扣除 {credits_estimate} credits（实际用量）")

@@ -82,7 +82,8 @@ export const useScreeningStore = defineStore('screening', () => {
   // AI 模型选择
   const aiModelsList = ref([])
   const aiModelsLoading = ref(false)
-  const selectedAiModel = ref(null)
+  const selectedAiModel  = ref(null)    // 兼容旧单选
+  const selectedAiModels = ref([])       // 多选列表（新）
 
   // Prompt
   const promptPanelOpen = ref(false)
@@ -180,7 +181,7 @@ export const useScreeningStore = defineStore('screening', () => {
     pendingTotal, screenedTotal, PAGE_SIZE, latestTask, latestAiScreenTask, isProcessing,
     aiScreenStats, screeningResults, screeningProgress, aiScreenLogContent, processedCount,
     screeningProgressValue, totalRefs,
-    aiModelsList, aiModelsLoading, selectedAiModel,
+    aiModelsList, aiModelsLoading, selectedAiModel, selectedAiModels,
     promptPanelOpen, useCustomPrompt, customPromptText, promptSaveStatus, defaultPromptPreview,
     exportFiles, exportStepId, isExporting, exportingType,
     selectedExcelVersion, selectedRisVersion, selectedExcelAllVersion,

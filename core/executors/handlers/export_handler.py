@@ -3,9 +3,18 @@
 
 负责：
 - 获取 ai_screen 步骤输出的 JSON 结果
+- 合并人工审阅（ManualReview）覆写 —— 人工决定 > AI 共识
 - 按 export_type（all/included/excluded）过滤
 - 生成 Excel 和 RIS 文件
 - 保存产物到 DataFile
+
+多模型说明：
+- 文件命名：使用所有参与模型的简称拼接，单模型保留原来的模型名
+- exclusion_reason_id / exclusion_reason：
+    1. 人工审阅过 → 使用 ManualReview.reason（纯文本，reason_id 置空）
+    2. AI 共识排除 → 使用 number_exclusion_reason / exclusion_reason（JSON 里的合并结果）
+- manual_override：ManualReview.is_override=True 时填 'yes'，否则 'no'
+- extracted_fields：从 JSON 的 extracted_fields 读取（ai_screen_handler 在多模型时已合并）
 """
 
 import json
@@ -20,6 +29,27 @@ logger = logging.getLogger(__name__)
 from core.models import DataFile
 from core.executors.registry import register
 from core.executors.handlers.base_handler import BaseStepHandler
+
+
+def _lookup_criteria_id(reason_text: str, criteria_list: List[str]) -> str:
+    """
+    通过理由文本在纳排标准列表中查找对应编号（1-based）。
+    - 精确匹配优先
+    - 其次检查是否包含关系（reason 包含 criteria 文本，或反之）
+    - 找不到返回空字符串
+    """
+    if not reason_text or not criteria_list:
+        return ''
+    text = reason_text.strip()
+    for i, c in enumerate(criteria_list, 1):
+        if c.strip() == text:
+            return str(i)
+    # 模糊匹配：理由文本包含某条标准的内容（或反之）
+    for i, c in enumerate(criteria_list, 1):
+        c_stripped = c.strip()
+        if c_stripped and (c_stripped in text or text in c_stripped):
+            return str(i)
+    return ''
 
 
 @register("export")
@@ -68,7 +98,7 @@ class ExportHandler(BaseStepHandler):
 
         self.logger.info(f"[聚合] 有效结果: {len(final_results)} 个")
 
-        # 加载人工审阅覆写记录（source_xml → ManualReview）
+        # 3. 加载人工审阅覆写记录（source_xml → ManualReview）
         from core.models import ManualReview
         manual_reviews = {
             mr.source_xml: mr
@@ -76,21 +106,27 @@ class ExportHandler(BaseStepHandler):
         }
         self.logger.info(f"[人工审阅] 覆写记录: {len(manual_reviews)} 条")
 
-        def _is_included(r):
-            """判断最终纳入状态：优先使用人工决定，无覆写则用 AI 原始结果。"""
+        # 加载 criteria 列表，用于人工审阅时反查排除标准编号
+        criteria_list = self._load_criteria_list()
+        self.logger.info(f"[导出] 纳排标准条数: {len(criteria_list)}")
+
+        def _final_decision(r: Dict) -> str:
+            """返回最终决定：人工决定（included/excluded）优先于 AI 共识。"""
             source_xml = r.get('source_xml', '')
             mr = manual_reviews.get(source_xml)
-            if mr:
-                # pending 视为 AI 原始判断（人工未最终确认）
-                if mr.decision == 'included':
-                    return True
-                if mr.decision == 'excluded':
-                    return False
-            # fallback: AI 判断
+            if mr and mr.decision in ('included', 'excluded'):
+                return mr.decision
+            # fallback: AI 共识
+            consensus = r.get('consensus') or r.get('decision', '')
+            if consensus in ('included', 'excluded', 'conflict'):
+                return consensus
             v = r.get('include_or_not', '')
             if v:
-                return v.lower() == 'yes'
-            return r.get('decision', '') == 'included'
+                return 'included' if v.lower() == 'yes' else 'excluded'
+            return 'pending'
+
+        def _is_included(r: Dict) -> bool:
+            return _final_decision(r) == 'included'
 
         if export_type == "included":
             filtered = [r for r in final_results if _is_included(r)]
@@ -103,25 +139,26 @@ class ExportHandler(BaseStepHandler):
         model_suffix = self._get_model_suffix()
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # 3. 生成 Excel
-        excel_path = self._generate_excel(filtered, export_type, model_suffix, ts)
+        # 5. 生成 Excel（将 manual_reviews + criteria_list 显式传入，避免闭包问题）
+        excel_path = self._generate_excel(filtered, export_type, model_suffix, ts, manual_reviews, criteria_list)
 
-        # 4. 生成 RIS（只含 included）
+        # 5. 生成 RIS（只含 included）
         included = [r for r in filtered if _is_included(r)]
         ris_path = self._generate_ris(included, model_suffix, ts) if included else None
 
-        # 5. 保存产物
+        # 6. 保存产物
         if excel_path and excel_path.exists():
             self.save_output_file(excel_path, excel_path.name, "初筛结果Excel", "output")
         if ris_path and ris_path.exists():
             self.save_output_file(ris_path, ris_path.name, "初筛结果RIS", "output")
 
-        # 6. 更新步骤元数据
+        # 7. 更新步骤元数据
         included_count = len([r for r in final_results if _is_included(r)])
         self.step_obj.metadata = {
             "total_results": len(final_results),
             "included_count": included_count,
             "excluded_count": len(final_results) - included_count,
+            "manual_override_count": sum(1 for mr in manual_reviews.values() if mr.is_override),
             "completion_time": datetime.now().isoformat(),
         }
         return True
@@ -129,30 +166,73 @@ class ExportHandler(BaseStepHandler):
     # ── 私有方法 ─────────────────────────────────────────────────────────
 
     def _get_model_suffix(self) -> str:
-        """读取 ai_model 配置，返回文件名后缀；兜底：查最近 ai_screening 任务。"""
-        model_id = self.config.get("ai_model", "")
-        if not model_id:
+        """
+        读取本次 ai_screen 任务使用的模型列表，返回文件名后缀。
+        - 单模型 → 模型显示名称（如 deepseek-chat）
+        - 多模型 → 各模型名简写拼接（如 ds-chat+gpt4o），超过 40 字符则用 "Nmodels"
+        - 兜底   → 'default'
+        """
+        # 优先从 export 任务自带 config 中读
+        model_ids: List[str] = self.config.get("ai_models") or []
+        if not model_ids:
+            single = self.config.get("ai_model", "")
+            if single:
+                model_ids = [single]
+
+        # 其次从最近的 ai_screen 任务配置读（注意 DB 存储的是 'ai_screen'，非 'ai_screening'）
+        if not model_ids:
             from core.models import Task
             ai_task = Task.objects.filter(
                 project=self.project_obj,
-                task_type='ai_screening',
+                task_type='ai_screen',
             ).order_by('-created_at').first()
             if ai_task and ai_task.config:
-                model_id = ai_task.config.get("ai_model", "")
-        if not model_id:
+                model_ids = ai_task.config.get("ai_models") or []
+                if not model_ids:
+                    single = ai_task.config.get("ai_model", "")
+                    if single:
+                        model_ids = [single]
+
+        if not model_ids:
             return "default"
+
+        # 将 model_id 转换为显示名
         try:
             from core.services.ai_models_config import get_models_for_frontend
-            for m in get_models_for_frontend():
-                if m["id"] == model_id:
-                    return m["name"]
+            id_to_name = {m["id"]: m["name"] for m in get_models_for_frontend()}
         except Exception:
-            pass
-        return model_id
+            id_to_name = {}
+
+        display_names = []
+        for mid in model_ids:
+            name = id_to_name.get(mid, mid)
+            # 简化：去掉常见冗余前缀/后缀
+            short = (name.replace("deepseek-", "ds-")
+                        .replace("gpt-", "gpt")
+                        .replace("-preview", "")
+                        .replace(" ", "_"))
+            display_names.append(short)
+
+        if len(display_names) == 1:
+            return display_names[0]
+
+        joined = "+".join(display_names)
+        if len(joined) > 40:
+            joined = f"{len(display_names)}models"
+        return joined
 
     def _generate_excel(self, results: List[Dict], export_type: str,
-                        model_suffix: str, ts: str) -> Optional[Path]:
-        """生成 Excel 文件，返回文件路径；失败返回 None。"""
+                        model_suffix: str, ts: str,
+                        manual_reviews: Dict,
+                        criteria_list: List[str] = None) -> Optional[Path]:
+        """生成 Excel 文件，返回文件路径；失败返回 None。
+
+        Args:
+            manual_reviews:  source_xml → ManualReview 对象的映射，显式传入避免闭包问题。
+            criteria_list:   纳排标准文本列表（按序），用于人工理由反查编号。
+        """
+        if criteria_list is None:
+            criteria_list = []
         try:
             import pandas as pd
 
@@ -168,26 +248,42 @@ class ExportHandler(BaseStepHandler):
 
             rows = []
             for idx, result in enumerate(results, 1):
-                include_or_not = result.get("include_or_not", "")
-                if not include_or_not:
-                    include_or_not = "yes" if result.get("decision") == "included" else "no"
-
-                # 人工覆写标识
                 source_xml = result.get("source_xml", "")
-                mr = manual_reviews.get(source_xml) if 'manual_reviews' in dir() else None
+                mr = manual_reviews.get(source_xml)
+
+                # ── 最终纳排决定（人工 > AI）──────────────────────────────
                 if mr and mr.decision in ('included', 'excluded'):
                     include_or_not = 'yes' if mr.decision == 'included' else 'no'
                     manual_override_val = 'yes' if mr.is_override else 'no'
                 else:
+                    ai_dec = result.get('include_or_not', '')
+                    if not ai_dec:
+                        ai_dec = 'yes' if result.get('decision') == 'included' else 'no'
+                    include_or_not = ai_dec
                     manual_override_val = 'no'
 
-                exclusion_reason = result.get("exclusion_reason", "")
-                if not exclusion_reason and include_or_not == "no":
-                    exclusion_reason = result.get("reasoning", "")
+                # ── 排除理由（人工 > AI）──────────────────────────────────
+                if mr and mr.decision == 'excluded' and mr.reason:
+                    # 人工审阅有明确排除理由，直接使用
+                    exclusion_reason = mr.reason
+                    # 通过文本反查 criteria 编号（1-based），找不到则留空
+                    exclusion_reason_id = _lookup_criteria_id(mr.reason, criteria_list)
+                else:
+                    # 使用 AI 返回的合并理由（多模型时 ai_screen_handler 已合并）
+                    exclusion_reason = result.get("exclusion_reason", "")
+                    if not exclusion_reason and include_or_not == "no":
+                        exclusion_reason = result.get("reasoning", "")
+                    exclusion_reason_id = (
+                        result.get("number_exclusion_reason", "")
+                        or result.get("exclusion_reason_id", "")
+                    )
 
-                exclusion_reason_id = result.get("number_exclusion_reason", "") or result.get("exclusion_reason_id", "")
-                source_xml = result.get("source_xml", "")
                 xml_fields = self._load_xml_fields(source_xml) if source_xml else {}
+
+                # ── 自定义提取字段（从 JSON extracted_fields 读取）──────────
+                extracted = result.get("extracted_fields", {})
+                if not isinstance(extracted, dict):
+                    extracted = {}
 
                 row = {
                     "id": idx,
@@ -211,10 +307,8 @@ class ExportHandler(BaseStepHandler):
                     "Address": xml_fields.get("Address", result.get("address", "")),
                     "source_xml": source_xml,
                 }
-                extracted = result.get("extracted_fields", {})
-                if isinstance(extracted, dict):
-                    for fn in extraction_field_names:
-                        row[fn] = extracted.get(fn, "")
+                for fn in extraction_field_names:
+                    row[fn] = extracted.get(fn, "")
                 rows.append(row)
 
             df = pd.DataFrame(rows)
@@ -310,8 +404,24 @@ class ExportHandler(BaseStepHandler):
             self.logger.error(f"[错误] 生成 RIS 失败: {e}")
             return None
 
+    def _load_criteria_list(self) -> List[str]:
+        """从 criteria 步骤元数据中加载纳排标准列表（按序），供导出时反查编号。"""
+        try:
+            from core.models import StageStep
+            criteria_step = StageStep.objects.filter(
+                stage__project_id=self.project_id,
+                stage__stage_key='SCREEN_1',
+                step_key='criteria',
+            ).first()
+            if criteria_step and criteria_step.metadata:
+                criteria = criteria_step.metadata.get('criteria', [])
+                if criteria:
+                    return [str(c) for c in criteria]
+        except Exception as e:
+            logger.warning(f"[导出] 加载纳排标准失败: {e}")
+        return []
+
     def _load_extraction_field_names(self) -> List[str]:
-        """从 field_extraction 步骤元数据中读取自定义提取字段名。"""
         try:
             from core.models import StageStep
             fe_step = StageStep.objects.filter(

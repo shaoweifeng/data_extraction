@@ -77,13 +77,14 @@ def estimate(request):
 
     try:
         ref_count = int(request.query_params.get('ref_count', 0))
+        model_count = max(1, int(request.query_params.get('model_count', 1)))
     except (ValueError, TypeError):
         return Response({"error": "ref_count 必须为正整数"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     if ref_count <= 0:
         return Response({"error": "ref_count 必须为正整数"}, status=http_status.HTTP_400_BAD_REQUEST)
 
-    estimated = estimate_credits(ref_count)
+    estimated = estimate_credits(ref_count) * model_count
     user = request.user
     profile = getattr(user, 'profile', None)
     is_unlimited = user.is_superuser or (profile and profile.role == 'admin')

@@ -27,6 +27,10 @@
             <div class="stat-num">{{ displayStats.ai_excluded ?? displayStats.excluded }}</div>
             <div class="stat-lbl">AI 排除</div>
           </div>
+          <div v-if="(displayStats.ai_conflict ?? 0) > 0" class="stat-card yellow">
+            <div class="stat-num">{{ displayStats.ai_conflict }}</div>
+            <div class="stat-lbl">模型歧义</div>
+          </div>
           <div class="stat-card gray">
             <div class="stat-num">{{ displayStats.total }}</div>
             <div class="stat-lbl">总计</div>
@@ -38,64 +42,61 @@
       <template v-if="displayStats.reviewed > 0">
         <div class="stat-block">
           <div class="stat-block-title">
-            <i class="fas fa-user-edit"></i> 人工审阅修正
-            <span class="stat-block-sub">（已审 {{ displayStats.reviewed }} / {{ displayStats.total }} 篇）</span>
+            <i class="fas fa-user-edit"></i> 人工审阅情况
+            <span class="stat-block-sub">（已审阅 {{ displayStats.reviewed }} / {{ displayStats.total }} 篇，其中 {{ displayStats.overridden }} 篇覆写了 AI 判断）</span>
           </div>
           <div class="stat-row">
             <div class="stat-card green">
               <div class="stat-num">{{ displayStats.included }}</div>
-              <div class="stat-lbl">最终纳入</div>
+              <div class="stat-lbl">人工纳入</div>
             </div>
             <div class="stat-card red">
               <div class="stat-num">{{ displayStats.excluded }}</div>
-              <div class="stat-lbl">最终排除</div>
+              <div class="stat-lbl">人工排除</div>
             </div>
-            <div v-if="displayStats.pending" class="stat-card yellow">
-              <div class="stat-num">{{ displayStats.pending }}</div>
+            <div class="stat-card yellow">
+              <div class="stat-num">{{ displayStats.pending ?? 0 }}</div>
               <div class="stat-lbl">待定</div>
             </div>
-            <div class="stat-card purple">
-              <div class="stat-num">{{ displayStats.overridden }}</div>
-              <div class="stat-lbl">覆写了 AI</div>
+            <div class="stat-card gray">
+              <div class="stat-num">{{ displayStats.unreviewed }}</div>
+              <div class="stat-lbl">未审阅</div>
             </div>
           </div>
         </div>
 
-        <!-- AI 准确率 -->
-        <div class="stat-block" v-if="displayStats.ai_accuracy !== null && displayStats.ai_accuracy !== undefined">
+        <!-- 最终筛选结果（人工 + 未审AI的综合） -->
+        <div class="stat-block stat-block-final">
           <div class="stat-block-title">
-            <i class="fas fa-bullseye"></i> AI 初筛准确率
-            <span class="stat-block-sub">（以人工审阅为标准，未参与人工审阅的文献默认正确）</span>
+            <i class="fas fa-check-double text-teal-600"></i> 最终筛选结果
+            <span class="stat-block-sub">（已审阅文献取人工结论，未审阅文献取 AI 结论）</span>
+            <span v-if="displayStats.ai_accuracy !== null && displayStats.ai_accuracy !== undefined"
+                  class="ml-auto text-xs font-semibold"
+                  :class="displayStats.ai_accuracy >= 80 ? 'text-green-600' : displayStats.ai_accuracy >= 60 ? 'text-amber-600' : 'text-red-600'">
+              AI 准确率 {{ displayStats.ai_accuracy }}%
+            </span>
           </div>
-          <div class="accuracy-row">
-            <div class="accuracy-gauge">
-              <svg viewBox="0 0 36 36" class="gauge-svg">
-                <path class="gauge-bg" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831" />
-                <path class="gauge-fill"
-                  :stroke="displayStats.ai_accuracy >= 80 ? '#16a34a' : displayStats.ai_accuracy >= 60 ? '#ca8a04' : '#dc2626'"
-                  :stroke-dasharray="`${displayStats.ai_accuracy}, 100`"
-                  d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831" />
-              </svg>
-              <div class="gauge-val" :class="displayStats.ai_accuracy >= 80 ? 'good' : displayStats.ai_accuracy >= 60 ? 'mid' : 'bad'">
-                {{ displayStats.ai_accuracy }}%
-              </div>
+          <div class="stat-row">
+            <div class="stat-card green">
+              <div class="stat-num">{{ displayStats.final_included ?? displayStats.included }}</div>
+              <div class="stat-lbl">最终纳入</div>
             </div>
-            <div class="accuracy-detail">
-              <div class="acc-item">
-                <span class="acc-dot correct"></span>
-                已审 AI 正确：{{ displayStats.ai_correct_in_reviewed }} 篇
-              </div>
-              <div class="acc-item">
-                <span class="acc-dot wrong"></span>
-                已审 AI 误判：{{ displayStats.ai_wrong_in_reviewed }} 篇
-              </div>
-              <div class="acc-item">
-                <span class="acc-dot default"></span>
-                未审 默认正确：{{ displayStats.total - displayStats.reviewed - (displayStats.pending || 0) }} 篇
-              </div>
+            <div class="stat-card red">
+              <div class="stat-num">{{ displayStats.final_excluded ?? displayStats.excluded }}</div>
+              <div class="stat-lbl">最终排除</div>
+            </div>
+            <div class="stat-card yellow">
+              <div class="stat-num">{{ displayStats.final_conflict_pending ?? displayStats.pending ?? 0 }}</div>
+              <div class="stat-lbl">分歧+待定</div>
+            </div>
+            <div class="stat-card gray">
+              <div class="stat-num">{{ displayStats.total }}</div>
+              <div class="stat-lbl">总计</div>
             </div>
           </div>
         </div>
+
+        <!-- AI 准确率模块已移除，准确率数字展示在"最终筛选结果"标题行右侧 -->
       </template>
     </div>
 
@@ -309,7 +310,12 @@ async function exportResults(exportType) {
     const res = await httpNoTimeout.post('/tasks/', {
       project: project.currentProject.id,
       task_type: 'result_aggregation',
-      config: { ai_model: s.selectedAiModel, export_type: exportType },
+      config: {
+        ai_model: s.selectedAiModel,
+        // 多模型时一并传入，供后端生成正确的文件名
+        ai_models: s.selectedAiModels?.length ? s.selectedAiModels : (s.selectedAiModel ? [s.selectedAiModel] : []),
+        export_type: exportType,
+      },
     })
     const task = res.data
     // export 是同步步骤，POST 返回时任务已完成；用轮询作兜底
@@ -355,6 +361,11 @@ onMounted(async () => {
 .stat-section { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: .9rem; }
 .stat-block {
   background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: .85rem 1rem;
+}
+/* 最终筛选结果突出显示 */
+.stat-block-final {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border-color: #6ee7b7;
 }
 .stat-block-title {
   font-size: .8rem; font-weight: 600; color: #475569;
