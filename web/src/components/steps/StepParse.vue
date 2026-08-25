@@ -50,8 +50,14 @@
     <!-- 上传区域 -->
     <div
       class="upload-zone"
-      :class="{ 'upload-zone--disabled': s.isParsing || s.uploadPhase !== 'idle' }"
+      :class="{
+        'upload-zone--disabled': s.isParsing || s.uploadPhase !== 'idle',
+        'upload-zone--dragover': isDragOver,
+      }"
       @click="s.isParsing || s.uploadPhase !== 'idle' ? null : fileInput?.click()"
+      @dragover.prevent="onDragOver"
+      @dragleave.prevent="onDragLeave"
+      @drop.prevent="onDrop"
     >
       <input
         ref="fileInput"
@@ -160,6 +166,22 @@ const project = useProjectStore()
 const taskStore = useTaskStore()
 const fileInput = ref(null)
 const showFmtDetail = ref(false)
+const isDragOver = ref(false)
+
+function onDragOver() {
+  if (s.isParsing || s.uploadPhase !== 'idle') return
+  isDragOver.value = true
+}
+function onDragLeave() {
+  isDragOver.value = false
+}
+function onDrop(event) {
+  isDragOver.value = false
+  if (s.isParsing || s.uploadPhase !== 'idle') return
+  const files = Array.from(event.dataTransfer?.files || [])
+  if (!files.length) return
+  handleFiles(files)
+}
 function getCsrf() {
   return document.cookie.split('; ').find((r) => r.startsWith('csrftoken='))?.split('=')[1]
 }
@@ -200,6 +222,11 @@ function uploadFileXHR(file, index) {
 async function handleUpload(event) {
   const files = Array.from(event.target.files)
   if (!files.length) return
+  event.target.value = ''
+  handleFiles(files)
+}
+
+async function handleFiles(files) {
   s.uploadPhase = 'uploading'
   s.uploadTotalFiles = files.length
   const uploadedFileIds = []
@@ -211,7 +238,6 @@ async function handleUpload(event) {
       alert(`上传 ${files[i].name} 失败: ${err.message}`)
     }
   }
-  event.target.value = ''
   if (uploadedFileIds.length > 0) {
     s.uploadPhase = 'parsing'
     s.uploadProgress = 100
@@ -340,6 +366,11 @@ async function handleDeleteFile(fileId) {
 .upload-zone:hover:not(.upload-zone--disabled) {
   border-color: #818cf8;
   background: #f5f3ff;
+}
+.upload-zone--dragover {
+  border-color: #6366f1 !important;
+  background: #eef2ff !important;
+  box-shadow: inset 0 0 0 3px #c7d2fe;
 }
 .upload-zone--disabled {
   cursor: not-allowed;

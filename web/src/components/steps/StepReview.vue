@@ -184,39 +184,6 @@
               <div v-if="saveStatus" class="save-status" :class="saveStatusType">{{ saveStatus }}</div>
             </div>
 
-            <!-- 排除模式：排除理由区（必须先填/选，再点确认排除才跳转） -->
-            <div class="reason-wrap" v-if="localDecision === 'excluded'">
-              <div class="reason-wrap-label">
-                <i class="fas fa-ban mr-1 text-red-400"></i>排除理由
-                <span class="text-xs text-gray-400 ml-1">（选择或输入后点"确认排除"）</span>
-              </div>
-              <div v-if="criteriaList.length" class="quick-criteria">
-                <div class="quick-criteria-tags">
-                  <button
-                    v-for="(c, i) in criteriaList" :key="i"
-                    class="criteria-tag"
-                    :class="{ active: localReason === c }"
-                    @click="pickCriteria(c)"
-                    :title="c"
-                  >
-                    <span class="criteria-tag-num">标准 {{ i + 1 }}</span>
-                    <span class="criteria-tag-text">{{ c }}</span>
-                  </button>
-                </div>
-              </div>
-              <textarea
-                v-model="localReason"
-                placeholder="或手动输入排除理由…"
-                rows="2"
-                @keydown.enter.exact.prevent="confirmExclude"
-              />
-              <div class="note-save-row">
-                <button class="note-save-btn confirm-exclude-btn" @click="confirmExclude" :disabled="saving">
-                  <i class="fas fa-check mr-1"></i>确认排除 → 下一篇
-                </button>
-              </div>
-            </div>
-
             <!-- 备注区（所有决定通用，独立于排除理由） -->
             <div class="note-wrap">
               <div class="reason-wrap-label">
@@ -232,6 +199,53 @@
               </div>
             </div>
           </div>
+
+          <!-- ── 排除理由侧边栏（从排除按钮弹出，浮于右侧）── -->
+          <transition name="reason-panel-slide">
+            <div v-if="reasonPanelOpen" class="reason-side-panel" @keydown.esc="closeReasonPanel">
+              <div class="reason-panel-header">
+                <span><i class="fas fa-ban mr-1.5 text-red-400"></i>排除理由</span>
+                <button class="reason-panel-close" @click="closeReasonPanel" title="取消排除">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="reason-panel-body">
+                <!-- 快捷标准 -->
+                <div v-if="criteriaList.length" class="reason-criteria-list">
+                  <div class="reason-criteria-label">快速选择排除标准：</div>
+                  <button
+                    v-for="(c, i) in criteriaList" :key="i"
+                    class="reason-criteria-item"
+                    :class="{ active: localReason === c }"
+                    @click="pickCriteria(c)"
+                    :title="c"
+                  >
+                    <span class="rci-num">{{ i + 1 }}</span>
+                    <span class="rci-text">{{ c }}</span>
+                  </button>
+                </div>
+                <!-- 分隔线 -->
+                <div v-if="criteriaList.length" class="reason-panel-divider">
+                  <span>或自定义理由</span>
+                </div>
+                <!-- 自定义输入 -->
+                <textarea
+                  ref="reasonTextarea"
+                  v-model="localReason"
+                  class="reason-panel-input"
+                  placeholder="输入自定义排除理由，按 Enter 确认…"
+                  rows="3"
+                  @keydown.enter.exact.prevent="confirmExclude"
+                />
+              </div>
+              <div class="reason-panel-footer">
+                <button class="reason-cancel-btn" @click="closeReasonPanel">取消</button>
+                <button class="reason-confirm-btn" @click="confirmExclude" :disabled="saving">
+                  <i class="fas fa-check mr-1"></i>确认排除 → 下一篇
+                </button>
+              </div>
+            </div>
+          </transition>
         </template>
 
         <div v-else class="detail-empty">
@@ -276,7 +290,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import { useScreeningStore } from '@/stores/screening'
 import http from '@/api/http'
@@ -307,6 +321,8 @@ const saveStatusType = ref('')
 const criteriaPopup   = ref(false)
 const fieldsPopup     = ref(false)
 const multiModelOpen  = ref(false)   // 多模型明细折叠开关（默认收起）
+const reasonPanelOpen = ref(false)   // 排除理由侧边栏
+const reasonTextarea  = ref(null)    // 侧边栏 textarea ref
 
 // 纳排标准 + 提取字段（从 stagesData 读）
 const criteriaList = computed(() => {
@@ -479,6 +495,7 @@ function goPage(p) {
 function selectItem(item) {
   selected.value      = { ...item }
   localDecision.value = item.human_decision || ''
+  reasonPanelOpen.value = false   // 切换文献时关闭侧边栏
   // 若之前是排除，reason 是排除理由；否则是备注
   if (item.human_decision === 'excluded') {
     localReason.value = item.human_reason || ''
@@ -494,17 +511,34 @@ function selectItem(item) {
 
 function setDecision(value) {
   if (value === 'excluded') {
-    // 排除：只切换状态，展示理由区，不立即保存
+    // 排除：弹出侧边栏，不立即保存
     localDecision.value = value
+    reasonPanelOpen.value = true
+    nextTick(() => {
+      // 若已有快捷标准则不自动聚焦 textarea，让用户先看标准
+      if (!criteriaList.value.length) {
+        reasonTextarea.value?.focus()
+      }
+    })
     return
   }
   // 纳入/待定：立即保存并跳转下一篇
+  reasonPanelOpen.value = false
   localDecision.value = value
   saveDecision(value, localNote.value, true)
 }
 
+function closeReasonPanel() {
+  reasonPanelOpen.value = false
+  // 如果尚未保存过排除决定，还原 localDecision
+  if (selected.value && selected.value.human_decision !== 'excluded') {
+    localDecision.value = selected.value.human_decision || ''
+  }
+}
+
 /** 确认排除：选好理由后点击，保存并跳转 */
 function confirmExclude() {
+  reasonPanelOpen.value = false
   saveDecision('excluded', localReason.value, true)
 }
 
@@ -772,7 +806,6 @@ onMounted(async () => {
   background: #fafafa;
 }
 .reason-wrap textarea:focus { border-color: #6366f1; background: #fff; }
-.note-save-row { display: flex; justify-content: flex-end; margin-top: 4px; }
 .note-save-btn {
   padding: 4px 12px; border-radius: 6px; border: 1px solid #6366f1;
   background: #eef2ff; color: #6366f1; font-size: .78rem; cursor: pointer;
@@ -780,10 +813,6 @@ onMounted(async () => {
 }
 .note-save-btn:hover:not(:disabled) { background: #6366f1; color: #fff; }
 .note-save-btn:disabled { opacity: .5; cursor: not-allowed; }
-.confirm-exclude-btn {
-  border-color: #dc2626; background: #fef2f2; color: #dc2626;
-}
-.confirm-exclude-btn:hover:not(:disabled) { background: #dc2626; color: #fff; }
 .save-status { font-size: .73rem; white-space: nowrap; }
 
 /* 排除理由区 + 备注区标题 */
@@ -817,43 +846,6 @@ onMounted(async () => {
 .detail-url a { color: #3b82f6; text-decoration: none; word-break: break-all; }
 .detail-url a:hover { text-decoration: underline; }
 .url-none { color: #94a3b8; font-style: italic; }
-
-/* 排除快捷标准 */
-.quick-criteria {
-  margin-bottom: 6px;
-}
-.quick-criteria-label {
-  font-size: .74rem; color: #64748b; margin-bottom: 4px;
-}
-.quick-criteria-tags {
-  display: flex; flex-wrap: wrap; gap: 6px;
-}
-.criteria-tag {
-  display: flex; flex-direction: column; align-items: flex-start;
-  max-width: 220px;
-  padding: 5px 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: left;
-  transition: all .15s;
-}
-.criteria-tag:hover {
-  background: #fef3c7; border-color: #f59e0b;
-}
-.criteria-tag.active {
-  background: #fee2e2; border-color: #f87171;
-}
-.criteria-tag-num {
-  font-size: .68rem; font-weight: 700; color: #ef4444;
-  line-height: 1.2;
-}
-.criteria-tag-text {
-  font-size: .72rem; color: #475569; line-height: 1.4;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 
 /* ── 分歧标识条 ── */
 .conflict-alert {
@@ -967,5 +959,133 @@ onMounted(async () => {
   border-bottom: 1px solid #f1f5f9;
 }
 .field-popup-item:last-child { border-bottom: none; }
+
+/* ── 排除理由侧边栏 ── */
+.reason-side-panel {
+  position: absolute;
+  /* 从底部 action 栏上方弹出，紧贴右侧 */
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  max-height: calc(100% - 48px);  /* 不超出 detail-panel */
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #fca5a5;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  box-shadow: -4px -4px 20px rgba(220,38,38,.12), -2px 0 12px rgba(0,0,0,.06);
+  z-index: 100;
+  overflow: hidden;
+}
+/* 让 detail-panel 成为定位容器 */
+.detail-panel { position: relative; }
+
+.reason-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .7rem 1rem .6rem;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  font-size: .85rem; font-weight: 700; color: #dc2626;
+  flex-shrink: 0;
+}
+.reason-panel-close {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: none; background: transparent;
+  color: #ef4444; cursor: pointer; font-size: .8rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s;
+}
+.reason-panel-close:hover { background: #fee2e2; }
+
+.reason-panel-body {
+  flex: 1; overflow-y: auto;
+  padding: .75rem .9rem .5rem;
+}
+
+.reason-criteria-label {
+  font-size: .73rem; color: #94a3b8; font-weight: 600;
+  margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em;
+}
+.reason-criteria-list { margin-bottom: 4px; }
+.reason-criteria-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  width: 100%; text-align: left;
+  padding: 7px 10px; margin-bottom: 5px;
+  background: #fafafa; border: 1.5px solid #e2e8f0;
+  border-radius: 8px; cursor: pointer;
+  transition: all .15s;
+}
+.reason-criteria-item:hover {
+  background: #fff7ed; border-color: #f97316;
+}
+.reason-criteria-item.active {
+  background: #fee2e2; border-color: #ef4444;
+}
+.rci-num {
+  flex-shrink: 0;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fee2e2; color: #dc2626;
+  font-size: .68rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.reason-criteria-item.active .rci-num { background: #dc2626; color: #fff; }
+.rci-text {
+  font-size: .78rem; color: #475569; line-height: 1.45; flex: 1;
+}
+
+.reason-panel-divider {
+  display: flex; align-items: center; gap: 6px;
+  margin: 8px 0 10px; color: #cbd5e1; font-size: .72rem;
+}
+.reason-panel-divider::before,
+.reason-panel-divider::after {
+  content: ''; flex: 1; height: 1px; background: #e2e8f0;
+}
+
+.reason-panel-input {
+  width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  padding: .45rem .6rem; font-size: .82rem; color: #334155;
+  resize: none; outline: none; box-sizing: border-box;
+  background: #fafafa; line-height: 1.5;
+  transition: border-color .15s, background .15s;
+}
+.reason-panel-input:focus { border-color: #ef4444; background: #fff; }
+
+.reason-panel-footer {
+  display: flex; gap: .5rem; justify-content: flex-end;
+  padding: .6rem .9rem;
+  border-top: 1px solid #fecaca;
+  background: #fef2f2;
+  flex-shrink: 0;
+}
+.reason-cancel-btn {
+  padding: .38rem .85rem; border-radius: 7px;
+  border: 1px solid #e2e8f0; background: #fff;
+  color: #64748b; font-size: .8rem; cursor: pointer;
+  transition: all .15s;
+}
+.reason-cancel-btn:hover { background: #f1f5f9; }
+.reason-confirm-btn {
+  padding: .38rem 1rem; border-radius: 7px;
+  border: none; background: #dc2626;
+  color: #fff; font-size: .8rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center;
+  transition: background .15s;
+}
+.reason-confirm-btn:hover:not(:disabled) { background: #b91c1c; }
+.reason-confirm-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* 侧边栏出入动画 */
+.reason-panel-slide-enter-active,
+.reason-panel-slide-leave-active {
+  transition: transform .22s cubic-bezier(.4,0,.2,1), opacity .18s;
+}
+.reason-panel-slide-enter-from,
+.reason-panel-slide-leave-to {
+  transform: translateY(16px);
+  opacity: 0;
+}
 
 </style>
