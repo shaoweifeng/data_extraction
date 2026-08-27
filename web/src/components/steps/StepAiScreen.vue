@@ -1,68 +1,139 @@
 <template>
   <div class="ai-screen-layout">
 
-    <!-- ── 顶部：标题 + 多模型选择 + Prompt 开关 ── -->
-    <div class="ai-screen-top">
-      <div class="ai-top-title">
-        <div class="step-head-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);width:32px;height:32px;border-radius:9px">
-          <i class="fas fa-robot" style="font-size:0.85rem"></i>
+    <!-- ── 左栏：待筛/已筛文献列表 (40%) ── -->
+    <div class="ai-left-panel">
+      <div class="ai-left-header">
+        <div class="step-head-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);width:28px;height:28px;border-radius:8px;flex-shrink:0">
+          <i class="fas fa-robot" style="font-size:0.75rem"></i>
         </div>
         <div>
-          <h3 class="step-title" style="font-size:1rem;margin:0">AI 智能初筛</h3>
-          <p class="step-subtitle" style="font-size:0.72rem;margin:0">基于纳排标准，大模型自动判断文献是否纳入</p>
+          <h3 class="step-title" style="font-size:0.92rem;margin:0">AI 智能初筛</h3>
+          <p class="step-subtitle" style="font-size:0.7rem;margin:0">基于纳排标准，大模型自动筛选</p>
         </div>
       </div>
 
-      <!-- 多模型选择（多选 chip） -->
-      <div class="ai-model-chips">
-        <span class="text-xs text-gray-500 font-medium mr-2 whitespace-nowrap">选择模型：</span>
-        <div v-if="s.aiModelsLoading" class="text-xs text-gray-400"><i class="fas fa-spinner fa-spin mr-1"></i>加载中...</div>
-        <div v-else class="flex flex-wrap gap-1.5">
-          <button
-            v-for="m in s.aiModelsList"
-            :key="m.id"
-            @click="!s.isProcessing && m.configured && toggleModel(m)"
-            :class="[
-              'model-chip',
-              isModelSelected(m.id) ? 'model-chip-active' : '',
-              !m.configured ? 'model-chip-disabled' : '',
-            ]"
-          >
-            <span>
-              <span v-if="m.logo === 'deepseek'">🤖</span>
-              <span v-else-if="m.logo === 'doubao'">🫘</span>
-              <span v-else-if="m.logo === 'qwen'">🌙</span>
-              <span v-else>🧠</span>
-            </span>
-            {{ m.name }}
-            <i v-if="isModelSelected(m.id)" class="fas fa-check ml-1 text-indigo-500" style="font-size:0.65rem"></i>
-            <span v-if="!m.configured" class="text-[10px] text-gray-400 ml-1">（未配置）</span>
-          </button>
-        </div>
-        <span v-if="selectedModels.length > 1" class="ml-2 text-xs text-amber-600 whitespace-nowrap">
-          <i class="fas fa-info-circle mr-0.5"></i>已选 {{ selectedModels.length }} 个模型，预估消耗 ×{{ selectedModels.length }}
-        </span>
-      </div>
-
-      <!-- Prompt 折叠开关（暂时隐藏）-->
-      <!-- <div class="ai-prompt-toggle">
-        <button @click="promptPanelOpen = !promptPanelOpen" class="prompt-toggle-btn">
-          <i class="fas fa-sliders-h mr-1"></i>Prompt
-          <span v-if="s.useCustomPrompt" class="badge badge-purple ml-1" style="font-size:0.65rem;padding:1px 6px">自定义</span>
-          <i :class="promptPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas ml-1 text-xs text-gray-400"></i>
+      <!-- Tab 切换（同时作统计展示） -->
+      <div class="ai-list-tabs">
+        <button
+          class="ai-list-tab"
+          :class="{ active: listTab === 'pending' }"
+          @click="switchListTab('pending')"
+        >
+          <i class="fas fa-hourglass-half"></i>
+          待筛选
+          <span class="ai-list-tab-count">{{ s.pendingTotal }}</span>
         </button>
-      </div> -->
+        <button
+          class="ai-list-tab"
+          :class="{ active: listTab === 'screened' }"
+          @click="switchListTab('screened')"
+        >
+          <i class="fas fa-check-circle"></i>
+          已筛选
+          <span class="ai-list-tab-count">{{ screenedCount }}</span>
+        </button>
+        <div class="ai-list-tab-total">共 {{ totalRefCount }} 篇</div>
+      </div>
+
+      <!-- 文献列表 -->
+      <div class="ai-refs-list">
+        <div v-if="s.pendingTotal === 0 && screenedCount === 0" class="ai-refs-empty">
+          <i class="fas fa-inbox"></i>
+          <span>暂无文献，请先完成文献解析步骤</span>
+        </div>
+        <template v-else>
+          <!-- 待筛 tab -->
+          <template v-if="listTab === 'pending'">
+            <div v-if="s.pendingFiles.length === 0" class="ai-refs-group-empty">已全部筛完 🎉</div>
+            <div v-for="f in s.pendingFiles" :key="f.id" class="ai-ref-item">
+              <div class="ai-ref-name">{{ f.filename }}</div>
+            </div>
+            <div class="ai-refs-pagination" v-if="pendingTotalPages > 1">
+              <button class="ai-pg-btn" :disabled="pendingListPage <= 1" @click="goPendingPage(pendingListPage - 1)">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="ai-pg-info">{{ pendingListPage }} / {{ pendingTotalPages }}</span>
+              <button class="ai-pg-btn" :disabled="pendingListPage >= pendingTotalPages" @click="goPendingPage(pendingListPage + 1)">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </template>
+
+          <!-- 已筛 tab -->
+          <template v-if="listTab === 'screened'">
+            <div v-if="screenedCount === 0" class="ai-refs-group-empty">暂无已筛文献</div>
+            <div v-for="f in pagedScreenedFiles" :key="f.source_xml || f.id" class="ai-ref-item ai-ref-item-done">
+              <div class="ai-ref-name">{{ f.title || f.filename || f.source_xml }}</div>
+              <span class="ai-ref-decision" :class="decisionClass(f)">{{ decisionShort(f) }}</span>
+            </div>
+            <div class="ai-refs-pagination" v-if="screenedTotalPages > 1">
+              <button class="ai-pg-btn" :disabled="screenedListPage <= 1" @click="screenedListPage--">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="ai-pg-info">{{ screenedListPage }} / {{ screenedTotalPages }}</span>
+              <button class="ai-pg-btn" :disabled="screenedListPage >= screenedTotalPages" @click="screenedListPage++">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </template>
+        </template>
+      </div>
     </div>
 
-    <!-- Prompt 展开区（暂时隐藏，功能保留待后续开放）-->
-    <!-- <div v-show="promptPanelOpen" class="ai-prompt-panel step-collapse-body space-y-2">
-      ...
-    </div> -->
+    <!-- ── 右栏：模型选择 + 进度 + 操作 (60%) ── -->
+    <div class="ai-right-panel">
 
-    <!-- ── 主体：三段式垂直布局 ── -->
-    <div class="ai-screen-body">
+      <!-- 模型选择区 -->
+      <div class="ai-model-section">
+        <div class="ai-section-label">
+          <i class="fas fa-brain text-indigo-400 mr-1.5"></i>选择模型
+          <span v-if="selectedModels.length > 1" class="ml-2 text-xs text-amber-600">
+            <i class="fas fa-info-circle mr-0.5"></i>已选 {{ selectedModels.length }} 个，预估消耗 ×{{ selectedModels.length }}
+          </span>
+        </div>
 
-      <!-- 段一：进度 / 模型状态区 -->
+        <div v-if="s.aiModelsLoading" class="text-xs text-gray-400 py-2">
+          <i class="fas fa-spinner fa-spin mr-1"></i>加载中...
+        </div>
+
+        <!-- 按厂家分组展示 -->
+        <div v-else class="ai-provider-list">
+          <div v-for="provider in s.aiModelsList" :key="provider.id" class="ai-provider-group">
+            <!-- 厂家标题行 -->
+            <div class="ai-provider-header">
+              <span class="ai-provider-logo">
+                <span v-if="provider.logo === 'deepseek'">🤖</span>
+                <span v-else-if="provider.logo === 'doubao'">🫘</span>
+                <span v-else-if="provider.logo === 'qwen'">🌙</span>
+                <span v-else>🧠</span>
+              </span>
+              <span class="ai-provider-name">{{ provider.name }}</span>
+              <span v-if="!provider.configured" class="ai-provider-unconfigured">未配置</span>
+            </div>
+            <!-- 子模型列表 -->
+            <div class="ai-submodel-list">
+              <button
+                v-for="sm in provider.sub_models"
+                :key="sm.id"
+                @click="!s.isProcessing && sm.configured && toggleModel(sm)"
+                :class="[
+                  'ai-submodel-btn',
+                  isModelSelected(sm.id) ? 'ai-submodel-btn-active' : '',
+                  !sm.configured ? 'ai-submodel-btn-disabled' : '',
+                ]"
+                :title="sm.description"
+              >
+                <span class="ai-submodel-name">{{ sm.name }}</span>
+                <span class="ai-submodel-desc">{{ sm.description }}</span>
+                <i v-if="isModelSelected(sm.id)" class="fas fa-check ai-submodel-check"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 进度区 -->
       <div v-if="s.isProcessing || (s.latestAiScreenTask && ['completed','stopped','running','pending','stopping','queuing'].includes(s.latestAiScreenTask.status))" class="ai-progress-section">
         <div class="ai-progress-header">
           <span class="font-semibold text-sm text-gray-700">
@@ -74,7 +145,6 @@
           </span>
         </div>
 
-        <!-- 单模型：简洁进度条 -->
         <div v-if="selectedModels.length <= 1" class="model-progress-row">
           <span class="model-progress-label text-xs text-gray-500 truncate">
             {{ selectedModels[0]?.name || '当前模型' }}
@@ -94,14 +164,9 @@
           </span>
         </div>
 
-        <!-- 多模型：每个模型一行 -->
         <template v-else>
           <div v-for="m in selectedModels" :key="m.id" class="model-progress-row">
             <span class="model-progress-label text-xs text-gray-600 truncate font-medium">
-              <span v-if="m.logo === 'deepseek'">🤖</span>
-              <span v-else-if="m.logo === 'doubao'">🫘</span>
-              <span v-else-if="m.logo === 'qwen'">🌙</span>
-              <span v-else>🧠</span>
               {{ m.name }}
             </span>
             <div class="model-progress-track">
@@ -117,7 +182,6 @@
           </div>
         </template>
 
-        <!-- 排队中 -->
         <div v-if="s.latestAiScreenTask?.status === 'queuing'" class="queue-status-bar mt-2">
           <div class="flex items-center gap-2 text-amber-700">
             <i class="fas fa-clock fa-spin"></i>
@@ -128,8 +192,8 @@
         </div>
       </div>
 
-      <!-- 段二：结果统计卡片 -->
-      <div v-if="s.aiScreenStats || s.latestAiScreenTask?.status === 'completed'" class="ai-stats-section">
+      <!-- 结果统计（仅完成后显示） -->
+      <div v-if="s.latestAiScreenTask?.status === 'completed' && s.aiScreenStats" class="ai-stats-section">
         <div class="ai-stats-grid" :class="hasConflict ? 'ai-stats-grid-4' : 'ai-stats-grid-3'">
           <div class="ai-stat-card ai-stat-included">
             <div class="ai-stat-icon"><i class="fas fa-check-circle"></i></div>
@@ -157,23 +221,15 @@
           本次共消耗 <b>{{ s.latestAiScreenTask.result.token_stats.total_tokens?.toLocaleString() }}</b> tokens
           ≈ <b>{{ s.latestAiScreenTask.result.token_stats.credits_estimate }}</b> credits
         </div>
-        <!-- 展示本次筛选使用的模型 -->
         <div class="ai-used-models" v-if="usedModels.length">
           <i class="fas fa-layer-group mr-1 text-indigo-400"></i>
           本次使用模型：
-          <span v-for="m in usedModels" :key="m.id" class="used-model-chip">
-            <span v-if="m.logo === 'deepseek'">🤖</span>
-            <span v-else-if="m.logo === 'doubao'">🫘</span>
-            <span v-else-if="m.logo === 'qwen'">🌙</span>
-            <span v-else>🧠</span>
-            {{ m.name }}
-          </span>
+          <span v-for="m in usedModels" :key="m.id" class="used-model-chip">{{ m.name }}</span>
         </div>
       </div>
 
-      <!-- 段三：操作区 -->
+      <!-- 操作区 -->
       <div class="ai-action-area">
-        <!-- 余额信息条 -->
         <div class="billing-bar" :class="billing.sufficient === false ? 'billing-bar-danger' : 'billing-bar-ok'">
           <span class="billing-item">
             <i class="fas fa-coins mr-1"></i>余额：<b>{{ billing.balance ?? '...' }}</b> credits
@@ -186,7 +242,6 @@
           </span>
         </div>
 
-        <!-- 按钮区 -->
         <template v-if="!s.latestAiScreenTask || ['completed','failed'].includes(s.latestAiScreenTask.status)">
           <button @click="startScreening"
                   :disabled="s.isProcessing || billing.sufficient === false || selectedModels.length === 0"
@@ -243,16 +298,85 @@ const s = useScreeningStore()
 const project = useProjectStore()
 const taskStore = useTaskStore()
 
-const promptPanelOpen = ref(false)
-const promptSaveStatus = ref('')
-const defaultPromptPreview = ref('（加载中...）')
 const billing = ref({ balance: null, estimated: null, sufficient: null })
 const queueInfo = ref({ position: 0, queueLength: 0, slotsNeeded: 0, slotsFree: 0, slotsTotal: 0 })
 
-// 多模型选择（多选，兼容旧的单选 selectedAiModel）
+// ── 文献计数 ──────────────────────────────────────────────────
+// 后端 aiModelsList 现在是分组结构，展平为子模型列表供选择
+const flatModels = computed(() => {
+  const list = []
+  for (const provider of (s.aiModelsList || [])) {
+    for (const sm of (provider.sub_models || [])) {
+      list.push({ ...sm, logo: provider.logo, providerName: provider.name })
+    }
+  }
+  return list
+})
+
+const totalRefCount = computed(() => {
+  const screened = s.aiScreenStats
+    ? (s.aiScreenStats.included_count ?? 0) + (s.aiScreenStats.excluded_count ?? 0) + (s.aiScreenStats.conflict_count ?? 0)
+    : 0
+  return (s.pendingTotal || 0) + screened
+})
+const LIST_PAGE_SIZE = 50
+
+// 左栏 Tab：pending | screened
+const listTab = ref('pending')
+function switchListTab(tab) {
+  listTab.value = tab
+}
+
+// ── 待筛分页（后端分页，每页 50 条）──
+const pendingListPage = ref(1)
+const pendingTotalPages = computed(() => Math.max(1, Math.ceil(s.pendingTotal / LIST_PAGE_SIZE)))
+
+function goPendingPage(p) {
+  if (p < 1 || p > pendingTotalPages.value) return
+  pendingListPage.value = p
+  loadPending(p - 1)   // loadPending 的 page 参数是 0-indexed offset page
+}
+
+// ── 已筛分页（本地分页，数据一次性加载）──
+const screenedListPage = ref(1)
+const screenedTotalPages = computed(() => Math.max(1, Math.ceil(screenedCount.value / LIST_PAGE_SIZE)))
+const pagedScreenedFiles = computed(() => {
+  const all = s.screenedFiles || []
+  const start = (screenedListPage.value - 1) * LIST_PAGE_SIZE
+  return all.slice(start, start + LIST_PAGE_SIZE)
+})
+
+const screenedCount = computed(() => {
+  if (s.aiScreenStats) {
+    return (s.aiScreenStats.included_count ?? 0) + (s.aiScreenStats.excluded_count ?? 0) + (s.aiScreenStats.conflict_count ?? 0)
+  }
+  return s.screenedFiles?.length ?? 0
+})
+
+function decisionClass(f) {
+  const consensus = f.consensus
+  if (consensus === 'conflict') return 'conflict'
+  // review/list 返回 ai_decision；兼容旧字段 decision / include_or_not
+  const d = f.ai_decision || f.decision
+    || (f.include_or_not === 'yes' ? 'included' : f.include_or_not === 'no' ? 'excluded' : '')
+  return d || ''
+}
+
+function decisionShort(f) {
+  const consensus = f.consensus
+  if (consensus === 'conflict') return '⚠'
+  const d = f.ai_decision || f.decision
+    || (f.include_or_not === 'yes' ? 'included' : f.include_or_not === 'no' ? 'excluded' : '')
+  if (d === 'included') return '✓'
+  if (d === 'excluded') return '✗'
+  if (d === 'pending')  return '…'
+  return '?'
+}
+
+// ── 模型选择 ──────────────────────────────────────────────────
 const selectedModels = computed(() => {
   const ids = s.selectedAiModels?.length ? s.selectedAiModels : (s.selectedAiModel ? [s.selectedAiModel] : [])
-  return ids.map(id => s.aiModelsList.find(m => m.id === id)).filter(Boolean)
+  return ids.map(id => flatModels.value.find(m => m.id === id)).filter(Boolean)
 })
 
 function isModelSelected(id) {
@@ -260,38 +384,34 @@ function isModelSelected(id) {
   return s.selectedAiModel === id
 }
 
-function toggleModel(m) {
+function toggleModel(sm) {
   if (s.isProcessing) return
   if (!s.selectedAiModels) s.selectedAiModels = []
-  const idx = s.selectedAiModels.indexOf(m.id)
+  const idx = s.selectedAiModels.indexOf(sm.id)
   if (idx >= 0) {
-    // 至少保留 1 个
     if (s.selectedAiModels.length === 1) return
-    s.selectedAiModels = s.selectedAiModels.filter(id => id !== m.id)
+    s.selectedAiModels = s.selectedAiModels.filter(id => id !== sm.id)
   } else {
-    s.selectedAiModels = [...s.selectedAiModels, m.id]
+    s.selectedAiModels = [...s.selectedAiModels, sm.id]
   }
   s.selectedAiModel = s.selectedAiModels[0] || ''
   loadBilling()
 }
 
-// 是否有分歧文献（多模型时才显示）
 const hasConflict = computed(() => {
   return (s.aiScreenStats?.conflict_count ?? 0) > 0 || selectedModels.value.length > 1
 })
 
-// 已完成任务实际使用的模型列表（从任务 config 读，不依赖当前选择状态）
 const usedModels = computed(() => {
   const task = s.latestAiScreenTask
   if (!task || task.status !== 'completed') return []
   const ids = task.config?.ai_models || (task.config?.ai_model ? [task.config.ai_model] : [])
   return ids.map(id => {
-    const found = s.aiModelsList.find(m => m.id === id)
+    const found = flatModels.value.find(m => m.id === id)
     return found || { id, name: id, logo: '' }
   })
 })
 
-// 多模型进度（单模型时使用整体进度）
 function getModelProgress(modelId) {
   const modelProgress = s.latestAiScreenTask?.config?.model_progress
   if (modelProgress && modelProgress[modelId]) {
@@ -305,7 +425,6 @@ function getModelProgress(modelId) {
     }
     return { pct, color: (statusMap[mp.status] || statusMap.waiting).color, ...(statusMap[mp.status] || statusMap.waiting) }
   }
-  // 降级：使用整体进度
   const pct = Math.round(s.screeningProgress.percent || 0)
   const isRunning = s.isProcessing
   const isCompleted = s.latestAiScreenTask?.status === 'completed'
@@ -326,15 +445,13 @@ onMounted(async () => {
     const step  = stage?.steps?.find((st) => st.step_key === 'criteria')
     if (step?.metadata?.criteria?.length) s.criteriaList = step.metadata.criteria
   }
-  // 先并行加载模型 + 刷新最近任务（刷新页面后恢复状态用）
   await Promise.all([
     loadAiModels(),
-    loadPrompt(),
     taskStore.fetchRecentTasks(project.currentProject?.id, project.stagesData),
   ])
-  // syncLatestAiTask 依赖 aiModelsList 和 recentTasks，必须在二者都加载完后调用
   await loadPending()
   await loadAiScreenStats()
+  await loadScreenedFiles()
   syncLatestAiTask()
   loadBilling()
 })
@@ -363,18 +480,23 @@ async function loadBilling() {
   }
 }
 
-// ── 模型加载 ──────────────────────────────────────────────────
+// ── 模型加载（现在返回分组结构）────────────────────────────────
 async function loadAiModels() {
   s.aiModelsLoading = true
   try {
     const res = await http.get('/ai-models/')
+    // res.data 是分组结构 [{id, name, logo, sub_models:[...]}, ...]
     s.aiModelsList = res.data
-    const def = s.aiModelsList.find((m) => m.is_default && m.configured) || s.aiModelsList.find((m) => m.configured)
-    // 仅在尚未有选中模型时才初始化默认值
+    // 找默认子模型
     if (!s.selectedAiModels || s.selectedAiModels.length === 0) {
-      if (def) {
-        s.selectedAiModels = [def.id]
-        s.selectedAiModel = def.id
+      for (const provider of s.aiModelsList) {
+        const def = provider.sub_models?.find(sm => sm.is_default && sm.configured)
+          || provider.sub_models?.find(sm => sm.configured)
+        if (def) {
+          s.selectedAiModels = [def.id]
+          s.selectedAiModel = def.id
+          break
+        }
       }
     }
   } catch (e) {
@@ -384,50 +506,13 @@ async function loadAiModels() {
   }
 }
 
-// ── Prompt ──────────────────────────────────────────────────
-async function loadPrompt() {
-  if (!project.currentProject) return
-  try {
-    const res = await http.get(`/projects/${project.currentProject.id}/get_prompt/`)
-    s.useCustomPrompt = res.data.use_custom_prompt || false
-    s.customPromptText = res.data.custom_prompt || ''
-    if (res.data.default_prompt) defaultPromptPreview.value = res.data.default_prompt
-  } catch {}
-}
-
-async function savePrompt() {
-  if (!project.currentProject) return
-  if (s.useCustomPrompt && !s.customPromptText.includes('{screening_criteria}')) return
-  promptSaveStatus.value = ''
-  try {
-    await http.post(`/projects/${project.currentProject.id}/save_prompt/`, {
-      custom_prompt: s.customPromptText,
-      use_custom_prompt: s.useCustomPrompt,
-    })
-    promptSaveStatus.value = 'ok'
-    await taskStore.fetchActivityLogs(project.currentProject.id)
-  } catch { promptSaveStatus.value = 'error' }
-  setTimeout(() => { promptSaveStatus.value = '' }, 3000)
-}
-
-async function resetPrompt() {
-  if (!project.currentProject) return
-  try {
-    await http.post(`/projects/${project.currentProject.id}/reset_prompt/`)
-    s.useCustomPrompt = false
-    s.customPromptText = ''
-    promptSaveStatus.value = 'ok'
-    setTimeout(() => { promptSaveStatus.value = '' }, 2000)
-  } catch { promptSaveStatus.value = 'error' }
-}
-
 // ── 文件 + 统计 ───────────────────────────────────────────────
 async function loadPending(page) {
   if (!project.currentProject) return
   const stage = project.stagesData.find((st) => st.stage_key === 'SCREEN_1')
   if (!stage) return
-  const pageNum = page ?? s.pendingPage
-  const offset = pageNum * PAGE_SIZE
+  const pageNum = page ?? 0
+  const offset = pageNum * LIST_PAGE_SIZE
   const pid = project.currentProject.id
 
   let sourceStep = null
@@ -441,7 +526,7 @@ async function loadPending(page) {
   }
   if (!sourceStep) { s.pendingTotal = 0; return }
   try {
-    const res = await http.get(`/files/?project=${pid}&step=${sourceStep.id}&data_category=intermediate&exclude_screened=1&limit=${PAGE_SIZE}&offset=${offset}`)
+    const res = await http.get(`/files/?project=${pid}&step=${sourceStep.id}&data_category=intermediate&exclude_screened=1&limit=${LIST_PAGE_SIZE}&offset=${offset}`)
     const data = res.data
     s.pendingFiles = extractListData(data)
     s.pendingTotal = data.total ?? s.pendingFiles.length
@@ -458,46 +543,114 @@ async function loadAiScreenStats() {
   } catch {}
 }
 
+async function loadScreenedFiles() {
+  if (!project.currentProject) return
+  const stage = project.stagesData.find(st => st.stage_key === 'SCREEN_1')
+  const reviewStepId = stage?.steps?.find(st => st.step_key === 'review')?.id
+  try {
+    // 第一页先取，再看总数决定是否继续取
+    const first = await http.get('/review/list/', {
+      params: { project: project.currentProject.id, step: reviewStepId, decision: '', page: 1, page_size: 200 }
+    })
+    const total = first.data.total || 0
+    let all = (first.data.results || []).filter(r => r.ai_decision)
+
+    // 如果超过 200 条，继续加载（最多到 1000 条）
+    if (total > 200) {
+      const pages = Math.min(Math.ceil(total / 200), 5)   // 最多 5 页 × 200 = 1000
+      const rest = await Promise.all(
+        Array.from({ length: pages - 1 }, (_, i) =>
+          http.get('/review/list/', {
+            params: { project: project.currentProject.id, step: reviewStepId, decision: '', page: i + 2, page_size: 200 }
+          })
+        )
+      )
+      for (const r of rest) {
+        all = all.concat((r.data.results || []).filter(f => f.ai_decision))
+      }
+    }
+
+    s.screenedFiles = all
+    s.screenedTotal = all.length
+    // 翻回第一页
+    screenedListPage.value = 1
+  } catch (e) {
+    // 静默失败：不影响主流程
+  }
+}
+
+/**
+ * 轮询期间同步刷新左栏：
+ * - 重新请求待筛第 1 页（不重置 pendingListPage，保留用户当前翻页位置）
+ * - 重新加载已筛列表
+ * 由于筛选过程中文献会从待筛移到已筛，UI 应自动反映变化。
+ */
+async function refreshLeftPanel() {
+  // 更新当前页的待筛（保持用户所在页面，只刷新当前页数据）
+  await loadPending(pendingListPage.value - 1)
+  // 已筛列表全量刷新（不切回第 1 页，让用户继续浏览当前页）
+  if (!project.currentProject) return
+  const stage = project.stagesData.find(st => st.stage_key === 'SCREEN_1')
+  const reviewStepId = stage?.steps?.find(st => st.step_key === 'review')?.id
+  try {
+    const first = await http.get('/review/list/', {
+      params: { project: project.currentProject.id, step: reviewStepId, decision: '', page: 1, page_size: 200 }
+    })
+    const total = first.data.total || 0
+    let all = (first.data.results || []).filter(r => r.ai_decision)
+    if (total > 200) {
+      const pages = Math.min(Math.ceil(total / 200), 5)
+      const rest = await Promise.all(
+        Array.from({ length: pages - 1 }, (_, i) =>
+          http.get('/review/list/', {
+            params: { project: project.currentProject.id, step: reviewStepId, decision: '', page: i + 2, page_size: 200 }
+          })
+        )
+      )
+      for (const r of rest) all = all.concat((r.data.results || []).filter(f => f.ai_decision))
+    }
+    s.screenedFiles = all
+    s.screenedTotal = all.length
+    // 若当前页已超出新总页数，退回最后一页
+    const newTotalPages = Math.max(1, Math.ceil(all.length / LIST_PAGE_SIZE))
+    if (screenedListPage.value > newTotalPages) screenedListPage.value = newTotalPages
+  } catch {}
+}
+
 function syncLatestAiTask() {
   const aiTask = taskStore.recentTasks.find((t) => t.task_type === 'ai_screen')
-
   if (!aiTask) {
-    // 当前项目没有任何 AI 初筛任务：重置模型选择到本项目的默认值，避免跨项目污染
-    const def = s.aiModelsList.find((m) => m.is_default && m.configured) || s.aiModelsList.find((m) => m.configured)
-    if (def) {
-      s.selectedAiModels = [def.id]
-      s.selectedAiModel  = def.id
-    } else {
-      s.selectedAiModels = []
-      s.selectedAiModel  = null
+    // 重置到默认模型
+    for (const provider of (s.aiModelsList || [])) {
+      const def = provider.sub_models?.find(sm => sm.is_default && sm.configured)
+        || provider.sub_models?.find(sm => sm.configured)
+      if (def) {
+        s.selectedAiModels = [def.id]
+        s.selectedAiModel  = def.id
+        break
+      }
     }
     return
   }
-
   s.latestAiScreenTask = aiTask
-
-  // ── 恢复上次多模型选择（从任务 config.ai_models 中读取）──
   const lastModels = aiTask.config?.ai_models
-  if (lastModels?.length && s.aiModelsList.length) {
-    const validIds = lastModels.filter(id => s.aiModelsList.find(m => m.id === id && m.configured))
+  if (lastModels?.length && flatModels.value.length) {
+    const validIds = lastModels.filter(id => flatModels.value.find(m => m.id === id && m.configured))
     if (validIds.length) {
       s.selectedAiModels = validIds
       s.selectedAiModel  = validIds[0]
     }
   }
-
   s.screeningProgressValue = aiTask.progress_percentage || 0
   const sp = aiTask.config?.screen_progress
   if (sp) {
     s.totalRefs = sp.total_refs || s.totalRefs
     s.processedCount = sp.processed_refs || 0
   }
-  // 任务运行中：恢复轮询
   if (['running', 'pending', 'stopping', 'queuing'].includes(aiTask.status)) {
     s.isProcessing = aiTask.status === 'running'
     pollAiScreening(aiTask.id)
   }
-  // 已完成：确保统计数据也已加载
   if (aiTask.status === 'completed' && !s.aiScreenStats) {
     loadAiScreenStats()
   }
@@ -508,6 +661,10 @@ async function startScreening() {
   if (s.criteriaList.length === 0) { alert('请先设置纳排标准'); return }
   if (selectedModels.value.length === 0) { alert('请至少选择一个已配置的模型'); return }
   s.isProcessing = true
+  // 重置左栏分页状态
+  pendingListPage.value = 1
+  screenedListPage.value = 1
+  listTab.value = 'pending'
   try {
     await clearAiScreenResults()
     const modelIds = selectedModels.value.map(m => m.id)
@@ -516,8 +673,8 @@ async function startScreening() {
       task_type: 'ai_screening',
       config: {
         criteria:  s.criteriaList,
-        ai_model:  modelIds[0],       // 向后兼容
-        ai_models: modelIds,          // 多模型列表
+        ai_model:  modelIds[0],
+        ai_models: modelIds,
       },
     })
     s.latestAiScreenTask = res.data
@@ -562,7 +719,9 @@ async function abandonTask() {
     await clearAiScreenResults()
     await http.delete(`/tasks/${s.latestAiScreenTask.id}/`)
     s.latestAiScreenTask = null
+    s.aiScreenStats = null
     await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
+    await loadPending()
     alert('任务已放弃，筛选结果已清除')
   } catch (err) { alert(`放弃失败: ${err.response?.data?.error || err.message}`) }
 }
@@ -573,9 +732,11 @@ async function clearAiScreenResults() {
 }
 
 async function pollAiScreening(taskId) {
-  let pollCount = 0
+  // 上次触发左栏刷新时的 processedCount，后端每完成一个 batch（= concurrency 篇）才更新一次
+  // 只要 processedCount 有变化说明新的一批完成了，立即同步左栏
+  let lastRefreshedCount = -1
+
   const poll = async () => {
-    pollCount++
     try {
       const res = await http.get(`/tasks/${taskId}/`)
       const task = res.data
@@ -587,7 +748,6 @@ async function pollAiScreening(taskId) {
         s.totalRefs = sp.total_refs || s.totalRefs
         s.processedCount = sp.processed_refs || 0
       }
-
       if (['running', 'pending', 'stopping', 'queuing'].includes(status)) {
         const interval = status === 'queuing' ? 5000 : 2000
         if (status === 'queuing') {
@@ -600,8 +760,12 @@ async function pollAiScreening(taskId) {
             slotsTotal: qi.slots_total || queueInfo.value.slotsTotal,
           }
         }
-        if (pollCount % 5 === 0 && status !== 'queuing') {
+        // 进度驱动刷新左栏：processedCount 有变化（即后端完成了新的一批）就同步
+        const currentCount = s.processedCount || 0
+        if (status === 'running' && currentCount !== lastRefreshedCount) {
+          lastRefreshedCount = currentCount
           loadAiScreenStats()
+          refreshLeftPanel()
         }
         setTimeout(poll, interval)
       } else {
@@ -609,12 +773,14 @@ async function pollAiScreening(taskId) {
         await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
         await project.fetchStages(project.currentProject.id)
         if (status === 'completed') {
-          await Promise.all([loadPending(), loadAiScreenStats()])
+          await Promise.all([loadPending(), loadAiScreenStats(), loadScreenedFiles()])
           loadBilling()
           window.dispatchEvent(new CustomEvent('app:balance-changed'))
+          listTab.value = 'screened'   // 完成后自动切到已筛 Tab
           alert('AI初筛完成！')
         } else if (status === 'stopped') {
           loadAiScreenStats()
+          loadScreenedFiles()
         } else {
           alert(`AI初筛失败: ${task.error_message || '任务执行失败'}`)
         }
@@ -629,75 +795,269 @@ async function pollAiScreening(taskId) {
 </script>
 
 <style scoped>
-/* ── 整体布局 ── */
+/* ── 整体左右布局 ── */
 .ai-screen-layout {
   display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── 左栏 40% ── */
+.ai-left-panel {
+  width: 40%;
+  flex-shrink: 0;
+  display: flex;
   flex-direction: column;
-  gap: 0;
+  border-right: 1px solid #e2e8f0;
+  background: #fafbff;
+  overflow: hidden;
+}
+
+.ai-left-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* Tab 切换 */
+.ai-list-tabs {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  background: #f8fafc;
+  padding: 0 4px;
+}
+.ai-list-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.ai-list-tab i { font-size: 0.7rem; }
+.ai-list-tab:hover { color: #334155; background: #f1f5f9; }
+.ai-list-tab.active {
+  color: #6366f1;
+  font-weight: 700;
+  border-bottom-color: #6366f1;
+  background: #fff;
+}
+.ai-list-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #475569;
+}
+.ai-list-tab.active .ai-list-tab-count {
+  background: #eef2ff;
+  color: #4338ca;
+}
+.ai-list-tab-total {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  padding: 0 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 文献列表 */
+.ai-refs-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.ai-refs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+}
+.ai-refs-empty i { font-size: 1.8rem; }
+.ai-refs-group-empty {
+  padding: 16px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+}
+.ai-ref-item {
+  padding: 5px 16px;
+  font-size: 0.78rem;
+  color: #475569;
+  border-bottom: 1px solid #f8fafc;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-ref-item-pending { border-left: 3px solid transparent; }
+.ai-ref-item-done { border-left: 3px solid #bbf7d0; }
+.ai-ref-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-ref-decision {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  width: 16px;
+  text-align: center;
+}
+.ai-ref-decision.included { color: #16a34a; }
+.ai-ref-decision.excluded { color: #dc2626; }
+.ai-ref-decision.conflict { color: #d97706; }
+/* 列表内分页控件 */
+.ai-refs-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 0 4px;
+  border-top: 1px solid #f1f5f9;
+  margin: 2px 0 6px;
+}
+.ai-pg-btn {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: #6366f1;
+  font-size: 0.62rem;
+  transition: all .12s;
+  flex-shrink: 0;
+}
+.ai-pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.ai-pg-btn:hover:not(:disabled) { background: #eef2ff; border-color: #6366f1; }
+.ai-pg-info { font-size: 0.72rem; color: #64748b; white-space: nowrap; }
+
+.ai-refs-more {
+  padding: 6px 16px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* ── 右栏 60% ── */
+.ai-right-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 16px;
   overflow-y: auto;
 }
 
-/* ── 顶部栏 ── */
-.ai-screen-top {
+/* 模型选择 */
+.ai-model-section {
+  background: #fafbff;
+  border: 1px solid #e0e7ff;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.ai-section-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
 }
-.ai-top-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-.ai-model-chips {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.model-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  font-size: 0.78rem;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.model-chip:hover { border-color: #a5b4fc; color: #4338ca; }
-.model-chip-active { border-color: #6366f1; background: #eef2ff; color: #4338ca; font-weight: 600; }
-.model-chip-disabled { opacity: 0.5; cursor: not-allowed; }
-.ai-prompt-toggle { flex-shrink: 0; }
-.prompt-toggle-btn {
-  display: flex; align-items: center;
-  padding: 4px 12px; border-radius: 8px;
-  border: 1px solid #e2e8f0; background: #f8fafc;
-  font-size: 0.78rem; color: #64748b; cursor: pointer;
-}
-.prompt-toggle-btn:hover { border-color: #a5b4fc; color: #4338ca; }
-
-/* Prompt 面板 */
-.ai-prompt-panel {
-  margin-bottom: 8px; padding: 12px 16px;
-  border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc;
-}
-
-/* ── 主体三段式 ── */
-.ai-screen-body {
+.ai-provider-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+.ai-provider-group { }
+.ai-provider-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.ai-provider-logo { font-size: 1rem; line-height: 1; }
+.ai-provider-name { font-size: 0.8rem; font-weight: 600; color: #334155; }
+.ai-provider-unconfigured {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 2px;
+}
+.ai-submodel-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 20px;
+}
+.ai-submodel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.78rem;
+  position: relative;
+}
+.ai-submodel-btn:hover:not(.ai-submodel-btn-disabled) {
+  border-color: #a5b4fc;
+  background: #f5f3ff;
+}
+.ai-submodel-btn-active {
+  border-color: #6366f1;
+  background: #eef2ff;
+}
+.ai-submodel-btn-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ai-submodel-name {
+  font-weight: 500;
+  color: #334155;
+}
+.ai-submodel-desc {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+.ai-submodel-btn-active .ai-submodel-name { color: #4338ca; }
+.ai-submodel-btn-active .ai-submodel-desc { color: #818cf8; }
+.ai-submodel-check {
+  font-size: 0.62rem;
+  color: #6366f1;
+  margin-left: 2px;
 }
 
 /* 进度区 */
@@ -719,7 +1079,7 @@ async function pollAiScreening(taskId) {
   gap: 10px;
   margin-bottom: 6px;
 }
-.model-progress-label { width: 120px; flex-shrink: 0; }
+.model-progress-label { width: 110px; flex-shrink: 0; }
 .model-progress-track { flex: 1; height: 8px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
 .model-progress-fill { height: 100%; border-radius: 99px; transition: width .5s ease; }
 .model-progress-pct { width: 36px; text-align: right; flex-shrink: 0; }
@@ -732,22 +1092,13 @@ async function pollAiScreening(taskId) {
   border-radius: 12px;
   padding: 14px 16px;
 }
-.ai-stats-grid {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 10px;
-}
+.ai-stats-grid { display: grid; gap: 10px; margin-bottom: 10px; }
 .ai-stats-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .ai-stats-grid-4 { grid-template-columns: repeat(4, 1fr); }
 .ai-stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 12px 8px; border-radius: 10px;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06);
 }
 .ai-stat-icon { font-size: 1.1rem; }
 .ai-stat-num { font-size: 1.4rem; font-weight: 700; line-height: 1.1; }
@@ -761,41 +1112,23 @@ async function pollAiScreening(taskId) {
 .ai-stat-pending  .ai-stat-icon { color: #94a3b8; }
 .ai-stat-pending  .ai-stat-num  { color: #64748b; }
 .ai-token-summary {
-  font-size: 0.75rem;
-  color: #7c3aed;
-  background: #ede9fe;
-  border-radius: 6px;
-  padding: 5px 10px;
-  display: inline-block;
+  font-size: 0.75rem; color: #7c3aed;
+  background: #ede9fe; border-radius: 6px;
+  padding: 5px 10px; display: inline-block;
 }
 .ai-used-models {
-  font-size: 0.75rem;
-  color: #475569;
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
+  font-size: 0.75rem; color: #475569;
+  margin-top: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
 }
 .used-model-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 8px;
-  border-radius: 99px;
-  background: #eef2ff;
-  color: #4338ca;
-  font-size: 0.72rem;
-  font-weight: 500;
-  border: 1px solid #c7d2fe;
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 99px;
+  background: #eef2ff; color: #4338ca;
+  font-size: 0.72rem; font-weight: 500; border: 1px solid #c7d2fe;
 }
 
 /* 操作区 */
-.ai-action-area {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.ai-action-area { display: flex; flex-direction: column; gap: 6px; }
 .ai-action-btn {
   width: 100%; padding: 10px 16px; border-radius: 10px;
   font-size: 0.9rem; font-weight: 600; border: none;

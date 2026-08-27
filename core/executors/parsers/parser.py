@@ -96,7 +96,12 @@ def parse_ris(file_path: str) -> List[Dict]:
         parsed_entries.append({
             'title': entry.get('title') or entry.get('primary_title'),
             'authors': entry.get('authors', []),
-            'journal': entry.get('journal_name') or entry.get('secondary_title'),
+            # JF(期刊全名) → alternate_title3；JO(期刊缩写) → journal_name；T2 → secondary_title
+            'journal': (entry.get('journal_name')
+                        or entry.get('alternate_title3')
+                        or entry.get('secondary_title')
+                        or entry.get('alternate_title1')
+                        or entry.get('alternate_title2')),
             'year': entry.get('year'),
             'volume': first_value(entry, ['volume', 'VL']),
             'issue': first_value(entry, ['number', 'issue', 'IS']),

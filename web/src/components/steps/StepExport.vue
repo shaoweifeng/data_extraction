@@ -13,8 +13,8 @@
     <!-- 统计数据 -->
     <div v-if="displayStats" class="stat-section">
 
-      <!-- AI 初筛结果 -->
-      <div class="stat-block">
+      <!-- AI 初筛结果（仅管理员可见） -->
+      <div v-if="auth.isAdmin" class="stat-block">
         <div class="stat-block-title">
           <i class="fas fa-robot"></i> AI 初筛结果
         </div>
@@ -38,8 +38,8 @@
         </div>
       </div>
 
-      <!-- 人工审阅修正（只有参与了人工审阅才显示） -->
-      <template v-if="displayStats.reviewed > 0">
+      <!-- 人工审阅修正（只有参与了人工审阅才显示；仅管理员可见） -->
+      <template v-if="auth.isAdmin && displayStats.reviewed > 0">
         <div class="stat-block">
           <div class="stat-block-title">
             <i class="fas fa-user-edit"></i> 人工审阅情况
@@ -64,13 +64,15 @@
             </div>
           </div>
         </div>
+      </template>
 
-        <!-- 最终筛选结果（人工 + 未审AI的综合） -->
+      <!-- 最终筛选结果：管理员 → 人工审阅后才显示；普通用户 → 始终显示 -->
+      <template v-if="auth.isAdmin ? displayStats.reviewed > 0 : true">
         <div class="stat-block stat-block-final">
           <div class="stat-block-title">
             <i class="fas fa-check-double text-teal-600"></i> 最终筛选结果
             <span class="stat-block-sub">（已审阅文献取人工结论，未审阅文献取 AI 结论）</span>
-            <span v-if="displayStats.ai_accuracy !== null && displayStats.ai_accuracy !== undefined"
+            <span v-if="auth.isAdmin && displayStats.ai_accuracy !== null && displayStats.ai_accuracy !== undefined"
                   class="ml-auto text-xs font-semibold"
                   :class="displayStats.ai_accuracy >= 80 ? 'text-green-600' : displayStats.ai_accuracy >= 60 ? 'text-amber-600' : 'text-red-600'">
               AI 准确率 {{ displayStats.ai_accuracy }}%
@@ -95,35 +97,44 @@
             </div>
           </div>
         </div>
-
-        <!-- AI 准确率模块已移除，准确率数字展示在"最终筛选结果"标题行右侧 -->
       </template>
+
+      <!-- AI 准确率模块已移除，准确率数字展示在"最终筛选结果"标题行右侧 -->
     </div>
 
     <!-- 导出按钮区域 -->
     <div class="space-y-3">
+
+      <!-- 有待定/分歧时的警告提示 -->
+      <div v-if="hasPendingOrConflict" class="export-block-tip">
+        <i class="fas fa-exclamation-triangle mr-1.5"></i>
+        当前仍有
+        <b v-if="(displayStats?.final_conflict_pending ?? 0) > 0">{{ displayStats.final_conflict_pending }} 篇</b>
+        分歧/待定文献尚未经人工裁定，无法导出。请先在【人工审阅】步骤处理后再导出。
+      </div>
+
       <!-- 生成按钮行 -->
       <div class="flex gap-3 justify-center flex-wrap">
         <button
           @click="exportResults('all')"
-          :disabled="s.isExporting"
-          class="bg-teal-600 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-teal-700 disabled:opacity-50 transition"
+          :disabled="s.isExporting || hasPendingOrConflict"
+          class="bg-teal-600 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <i v-if="s.exportingType === 'all'" class="fas fa-spinner fa-spin mr-1.5"></i>
           <i v-else class="fas fa-layer-group mr-1.5"></i>导出所有文献
         </button>
         <button
           @click="exportResults('included')"
-          :disabled="s.isExporting"
-          class="bg-green-600 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-green-700 disabled:opacity-50 transition"
+          :disabled="s.isExporting || hasPendingOrConflict"
+          class="bg-green-600 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <i v-if="s.exportingType === 'included'" class="fas fa-spinner fa-spin mr-1.5"></i>
           <i v-else class="fas fa-check-circle mr-1.5"></i>导出纳入文献
         </button>
         <button
           @click="exportResults('excluded')"
-          :disabled="s.isExporting"
-          class="bg-red-500 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-red-600 disabled:opacity-50 transition"
+          :disabled="s.isExporting || hasPendingOrConflict"
+          class="bg-red-500 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <i v-if="s.exportingType === 'excluded'" class="fas fa-spinner fa-spin mr-1.5"></i>
           <i v-else class="fas fa-times-circle mr-1.5"></i>导出排除文献
@@ -223,12 +234,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
+import { useAuthStore } from '@/stores/auth'
 import http, { httpNoTimeout } from '@/api/http'
 import { extractListData, exportFileLabel } from '@/utils/format'
 
 const s = useScreeningStore()
 const project = useProjectStore()
 const taskStore = useTaskStore()
+const auth = useAuthStore()
 
 const selectedAllVer = ref(0)
 const selectedIncluVer = ref(0)
@@ -243,6 +256,9 @@ const displayStats = computed(() => {
   if (exportStats.value) return exportStats.value
   return s.screeningResults
 })
+
+// 是否有待定或分歧文献（有则阻止导出）
+const hasPendingOrConflict = computed(() => (displayStats.value?.final_conflict_pending ?? 0) > 0)
 
 // ── 加载统计（从 review/stats 读取完整数据）──
 async function loadStats() {
@@ -359,6 +375,20 @@ onMounted(async () => {
 <style scoped>
 /* 统计区域 */
 .stat-section { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: .9rem; }
+
+/* 导出阻止提示 */
+.export-block-tip {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: .82rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 .stat-block {
   background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: .85rem 1rem;
 }

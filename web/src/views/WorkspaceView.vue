@@ -41,7 +41,14 @@
                   <StepNav />
                 </div>
               </div>
-              <TaskSidebar class="ws-task-sidebar" />
+              <div class="ws-task-sidebar" :class="{ 'ws-task-sidebar--collapsed': sidebarCollapsed }">
+                <!-- 收起时只显示展开按钮 -->
+                <button v-if="sidebarCollapsed" class="ws-sidebar-expand-btn" @click="sidebarCollapsed = false" title="展开任务面板">
+                  <i class="fas fa-chevron-left"></i>
+                  <span class="ws-sidebar-expand-label">任务</span>
+                </button>
+                <TaskSidebar v-else @toggle="sidebarCollapsed = true" />
+              </div>
             </div>
           </template>
 
@@ -88,6 +95,7 @@ const screening = useScreeningStore()
 const taskStore = useTaskStore()
 
 const loading = ref(true)
+const sidebarCollapsed = ref(false)
 
 const screen1Steps = [
   { id: 1, name: '文献解析',  stepKey: 'parse' },
@@ -187,6 +195,25 @@ onMounted(async () => {
   width: 280px; min-width: 280px;
   border-left: 1px solid #f1f5f9;
   background: #fff; overflow-y: auto; flex-shrink: 0;
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+.ws-task-sidebar--collapsed {
+  width: 36px; min-width: 36px;
+  overflow: hidden;
+}
+
+/* 收起时显示的展开按钮 */
+.ws-sidebar-expand-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  border: none; background: transparent; cursor: pointer;
+  color: #a5b4fc; gap: 6px;
+  transition: color 0.15s;
+}
+.ws-sidebar-expand-btn:hover { color: #6366f1; background: #f5f3ff; }
+.ws-sidebar-expand-label {
+  writing-mode: vertical-rl;
+  font-size: 0.72rem; font-weight: 600; color: inherit; letter-spacing: 0.05em;
 }
 
 /* 占位页 */

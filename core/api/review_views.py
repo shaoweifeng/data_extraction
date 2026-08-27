@@ -7,11 +7,14 @@
   PATCH /api/review/item/<source_xml>/ → 单条即时更新（source_xml URL 编码）
   GET  /api/review/stats/   → 统计（total/reviewed/pending/included/excluded）
   POST /api/review/complete/ → 标记 review 步骤为 completed
+  POST /api/review/note/<source_xml>/  → 追加备注（append）
+  GET  /api/review/notes/<source_xml>/ → 查询历史备注列表
 """
 
 import json
 import logging
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -231,6 +234,7 @@ def review_list(request):
         human_reason   = mr.reason   if mr else ''
         is_override    = mr.is_override if mr else False
         reviewed_at    = mr.reviewed_at.isoformat() if mr else None
+        has_notes      = bool(mr and mr.notes)
 
         # Tab 过滤（按「最终决定」口径：人工有则用人工，否则用AI；conflict = 有歧义且未人工定夺）
         # 计算本条文献的最终决定
@@ -269,6 +273,7 @@ def review_list(request):
             'human_reason':        human_reason,
             'is_override':         is_override,
             'reviewed_at':         reviewed_at,
+            'has_notes':           has_notes,
         })
 
     # 排序：AI excluded 优先（方便人工找被误排的文献）
@@ -603,3 +608,105 @@ def review_complete(request):
     step.save(update_fields=['status', 'metadata'])
 
     return JsonResponse({'ok': True, 'stats': stats})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# POST /api/review/note/<path:source_xml>/  → 追加备注
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def review_note_append(request, source_xml):
+    """
+    向指定文献追加一条备注。
+    请求体：{"project": <id>, "step": <id>, "content": "备注内容"}
+    备注以 JSON 数组形式保存在 ManualReview.notes 字段，每条追加不覆盖历史。
+    若该文献尚无 ManualReview 记录则先创建（decision 用 pending 占位）。
+    """
+    source_xml = unquote(source_xml)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '请求体非法 JSON'}, status=400)
+
+    project_id = data.get('project')
+    step_id    = data.get('step')
+    content    = (data.get('content') or '').strip()
+
+    if not project_id or not step_id:
+        return JsonResponse({'error': '缺少 project 或 step 参数'}, status=400)
+    if not content:
+        return JsonResponse({'error': '备注内容不能为空'}, status=400)
+
+    step = _get_step(project_id, step_id)
+    if not step:
+        return JsonResponse({'error': '未找到 review 步骤'}, status=404)
+
+    # 新备注条目
+    note_entry = {
+        'content':    content,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'user':       request.user.username,
+    }
+
+    # 查找或创建 ManualReview 记录（notes append 不依赖 decision 字段）
+    try:
+        mr = ManualReview.objects.get(project_id=project_id, source_xml=source_xml)
+        notes = list(mr.notes or [])
+        notes.append(note_entry)
+        mr.notes = notes
+        mr.save(update_fields=['notes'])
+        created = False
+    except ManualReview.DoesNotExist:
+        # 先查 AI 决定作为占位
+        ai_decision, ai_reason = '', ''
+        for r in _load_ai_results(project_id):
+            if r.get('source_xml') == source_xml:
+                ai_decision = r.get('decision') or ('included' if r.get('include_or_not', '').lower() == 'yes' else 'excluded')
+                ai_reason   = r.get('exclusion_reason', '')
+                break
+        mr = ManualReview.objects.create(
+            project_id=project_id,
+            source_xml=source_xml,
+            step=step,
+            ai_decision=ai_decision,
+            ai_reason=ai_reason,
+            decision='pending',
+            reason='',
+            is_override=False,
+            reviewer=request.user,
+            notes=[note_entry],
+        )
+        created = True
+
+    return JsonResponse({
+        'ok':      True,
+        'created': created,
+        'note':    note_entry,
+        'total':   len(mr.notes),
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GET /api/review/notes/<path:source_xml>/  → 查询历史备注
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def review_notes_list(request, source_xml):
+    """返回指定文献的所有历史备注（按时间倒序）。"""
+    source_xml = unquote(source_xml)
+    project_id = request.GET.get('project')
+    if not project_id:
+        return JsonResponse({'error': '缺少 project 参数'}, status=400)
+
+    try:
+        mr = ManualReview.objects.get(project_id=project_id, source_xml=source_xml)
+        notes = list(mr.notes or [])
+    except ManualReview.DoesNotExist:
+        notes = []
+
+    # 倒序返回（最新在前）
+    notes_desc = list(reversed(notes))
+    return JsonResponse({'notes': notes_desc, 'total': len(notes_desc)})

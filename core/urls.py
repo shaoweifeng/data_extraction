@@ -13,6 +13,8 @@ from .api.review_views import (
     review_item,
     review_stats,
     review_complete,
+    review_note_append,
+    review_notes_list,
 )
 
 # 注册 ViewSets
@@ -45,6 +47,8 @@ urlpatterns = [
     path('review/item/<path:source_xml>/', review_item, name='review_item'),
     path('review/stats/',         review_stats,   name='review_stats'),
     path('review/complete/',      review_complete, name='review_complete'),
+    path('review/note/<path:source_xml>/',  review_note_append,  name='review_note_append'),
+    path('review/notes/<path:source_xml>/', review_notes_list,   name='review_notes_list'),
 
     # RESTful API
     path('', include(router.urls)),

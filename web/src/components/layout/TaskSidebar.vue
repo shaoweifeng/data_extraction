@@ -4,6 +4,9 @@
     <div class="ts-header">
       <i class="fas fa-layer-group ts-header-icon"></i>
       <span class="ts-header-title">任务与日志</span>
+      <button class="ts-collapse-btn" @click="emit('toggle')" title="收起/展开">
+        <i class="fas fa-chevron-right"></i>
+      </button>
     </div>
 
     <div class="ts-body">
@@ -114,6 +117,8 @@ import {
   getLogTypeClass, getLogDetail, getShortError,
 } from '@/utils/format'
 
+const emit = defineEmits(['toggle'])
+
 const taskStore = useTaskStore()
 const project = useProjectStore()
 
@@ -148,7 +153,15 @@ function refreshLogs() {
   flex-shrink: 0;
 }
 .ts-header-icon { color: #a5b4fc; font-size: 0.85rem; }
-.ts-header-title { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.ts-header-title { font-size: 0.85rem; font-weight: 600; color: #374151; flex: 1; }
+.ts-collapse-btn {
+  width: 22px; height: 22px;
+  border: none; background: transparent;
+  color: #a5b4fc; cursor: pointer;
+  border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; transition: all 0.15s; flex-shrink: 0;
+}
+.ts-collapse-btn:hover { color: #6366f1; background: #ede9fe; }
 
 /* Body */
 .ts-body {

@@ -602,6 +602,14 @@ class ManualReview(models.Model):
         verbose_name="是否与 AI 判断不同（人工覆写）"
     )
 
+    # 备注列表（每次 append，保留历史）
+    # 格式：[{"content": "...", "created_at": "ISO8601", "user": "username"}, ...]
+    notes = models.JSONField(
+        default=list, blank=True,
+        verbose_name="备注列表",
+        help_text='[{"content": "备注内容", "created_at": "2024-01-01T12:00:00", "user": "admin"}]'
+    )
+
     reviewer    = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='manual_reviews', verbose_name="审阅人"

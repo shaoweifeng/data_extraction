@@ -198,8 +198,8 @@ class ExportHandler(BaseStepHandler):
 
         # 将 model_id 转换为显示名
         try:
-            from core.services.ai_models_config import get_models_for_frontend
-            id_to_name = {m["id"]: m["name"] for m in get_models_for_frontend()}
+            from core.services.ai_models_config import get_models_for_frontend_flat
+            id_to_name = {m["id"]: m["name"] for m in get_models_for_frontend_flat()}
         except Exception:
             id_to_name = {}
 
@@ -277,6 +277,11 @@ class ExportHandler(BaseStepHandler):
                         result.get("number_exclusion_reason", "")
                         or result.get("exclusion_reason_id", "")
                     )
+
+                # ── 最终纳入文献：清除排除理由字段 ──────────────────────────
+                if include_or_not == 'yes':
+                    exclusion_reason = ''
+                    exclusion_reason_id = ''
 
                 xml_fields = self._load_xml_fields(source_xml) if source_xml else {}
 

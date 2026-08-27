@@ -1,20 +1,5 @@
 <template>
   <div class="step-review">
-    <!-- 顶部进度条 -->
-    <div class="review-header">
-      <div class="review-progress">
-        <span class="progress-text">
-          已审 <strong>{{ stats.reviewed }}</strong> / 共 <strong>{{ stats.total }}</strong> 篇
-          <span v-if="stats.overridden" class="override-badge">
-            · {{ stats.overridden }} 篇覆写了 AI 判断
-          </span>
-        </span>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" :style="{ width: progressPct + '%' }"></div>
-        </div>
-      </div>
-    </div>
-
     <div class="review-body">
       <!-- ── 左栏：文献列表 ── -->
       <div class="list-panel">
@@ -72,6 +57,15 @@
                   AI · {{ decisionLabel(item.ai_decision) }}
                 </span>
                 <span v-else class="badge pending">待审</span>
+                <!-- 备注图标 -->
+                <span
+                  v-if="item.has_notes"
+                  class="ref-note-icon"
+                  title="查看备注历史"
+                  @click.stop="openNotesPanel(item)"
+                >
+                  <i class="fas fa-sticky-note"></i>
+                </span>
               </div>
             </div>
             <div v-if="!loading && displayItems.length === 0" class="list-empty">暂无文献</div>
@@ -115,7 +109,7 @@
               <span v-else class="url-none">无法获取 URL</span>
             </div>
             <div class="detail-info-row">
-              <span v-if="selected.authors" class="info-chip"><i class="fas fa-users"></i> {{ selected.authors }}</span>
+              <span v-if="selected.authors" class="info-chip info-chip-authors" :title="selected.authors"><i class="fas fa-users"></i> {{ selected.authors }}</span>
               <span v-if="selected.year"    class="info-chip"><i class="fas fa-calendar"></i> {{ selected.year }}</span>
               <span v-if="selected.journal" class="info-chip"><i class="fas fa-book"></i> {{ selected.journal }}</span>
             </div>
@@ -188,13 +182,13 @@
             <div class="note-wrap">
               <div class="reason-wrap-label">
                 <i class="fas fa-sticky-note mr-1 text-gray-400"></i>备注
-                <span class="text-xs text-gray-400 ml-1">（可选，按回车或点按钮保存）</span>
+                <span class="text-xs text-gray-400 ml-1">（可选，按回车保存）</span>
               </div>
-              <textarea v-model="localNote" placeholder="添加备注…" rows="1"
-                @keydown.enter.exact.prevent="saveNote" />
-              <div class="note-save-row">
-                <button class="note-save-btn" @click="saveNote" :disabled="saving || !localDecision">
-                  <i class="fas fa-save mr-1"></i>保存备注
+              <div class="note-input-row">
+                <textarea v-model="localNote" placeholder="添加备注…" rows="1"
+                  @keydown.enter.exact.prevent="localNote.trim() && saveNote()" />
+                <button class="note-save-btn" @click="saveNote" :disabled="saving || !localNote.trim()">
+                  <i class="fas fa-save"></i>
                 </button>
               </div>
             </div>
@@ -271,6 +265,37 @@
       </div>
     </div>
 
+    <!-- ── 备注历史弹窗 ── -->
+    <div v-if="notesPanelOpen" class="popup-overlay" @click.self="notesPanelOpen = false">
+      <div class="popup-box notes-popup-box">
+        <div class="popup-header">
+          <span><i class="fas fa-sticky-note mr-2 text-amber-500"></i>备注历史</span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-400 font-normal">{{ notesPanelTitle }}</span>
+            <button @click="notesPanelOpen = false" class="popup-close"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <div class="popup-body notes-popup-body">
+          <div v-if="notesLoading" class="notes-loading">
+            <i class="fas fa-spinner fa-spin mr-1"></i>加载中…
+          </div>
+          <div v-else-if="notesList.length === 0" class="notes-empty">
+            <i class="fas fa-comment-slash"></i>
+            <span>暂无备注记录</span>
+          </div>
+          <div v-else class="notes-list">
+            <div v-for="(note, i) in notesList" :key="i" class="note-history-item">
+              <div class="note-history-meta">
+                <span class="note-history-user"><i class="fas fa-user-circle mr-1"></i>{{ note.user }}</span>
+                <span class="note-history-time">{{ formatNoteTime(note.created_at) }}</span>
+              </div>
+              <div class="note-history-content">{{ note.content }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── 提取字段弹窗 ── -->
     <div v-if="fieldsPopup" class="popup-overlay" @click.self="fieldsPopup = false">
       <div class="popup-box">
@@ -323,6 +348,13 @@ const fieldsPopup     = ref(false)
 const multiModelOpen  = ref(false)   // 多模型明细折叠开关（默认收起）
 const reasonPanelOpen = ref(false)   // 排除理由侧边栏
 const reasonTextarea  = ref(null)    // 侧边栏 textarea ref
+
+// 备注历史面板
+const notesPanelOpen  = ref(false)
+const notesPanelTitle = ref('')
+const notesLoading    = ref(false)
+const notesList       = ref([])
+const notesPanelXml   = ref('')
 
 // 纳排标准 + 提取字段（从 stagesData 读）
 const criteriaList = computed(() => {
@@ -505,8 +537,8 @@ function selectItem(item) {
     localNote.value   = item.human_reason || ''
   }
   saveStatus.value    = ''
-  // 有分歧时自动展开多模型明细，否则收起
-  multiModelOpen.value = item.consensus === 'conflict'
+  // 多模型明细默认收起（分歧文献也不自动展开，用户按需查看）
+  multiModelOpen.value = false
 }
 
 function setDecision(value) {
@@ -542,11 +574,63 @@ function confirmExclude() {
   saveDecision('excluded', localReason.value, true)
 }
 
-/** 保存备注（不跳转） */
-function saveNote() {
-  if (!localDecision.value) return
-  const reason = localDecision.value === 'excluded' ? localReason.value : localNote.value
-  saveDecision(localDecision.value, reason, false)
+/** 保存备注（不跳转，追加到 notes 字段） */
+async function saveNote() {
+  if (!selected.value || !localNote.value.trim()) return
+  saving.value = true
+  saveStatus.value = '保存中…'
+  saveStatusType.value = ''
+  try {
+    const xmlEncoded = encodeURIComponent(selected.value.source_xml)
+    await http.post(`/review/note/${xmlEncoded}/`, {
+      project: project.currentProject?.id,
+      step:    reviewStepId.value,
+      content: localNote.value.trim(),
+    })
+    // 标记该文献已有备注
+    const item = displayItems.value.find(i => i.source_xml === selected.value.source_xml)
+    if (item) item.has_notes = true
+    selected.value.has_notes = true
+    localNote.value = ''
+    saveStatus.value = '备注已保存 ✓'
+    saveStatusType.value = 'success'
+    setTimeout(() => { saveStatus.value = '' }, 2000)
+  } catch (e) {
+    saveStatus.value = '备注保存失败，请重试'
+    saveStatusType.value = 'error'
+  } finally {
+    saving.value = false
+  }
+}
+
+/** 打开备注历史面板 */
+async function openNotesPanel(item) {
+  notesPanelXml.value   = item.source_xml
+  notesPanelTitle.value = item.title || item.source_xml
+  notesPanelOpen.value  = true
+  notesLoading.value    = true
+  notesList.value       = []
+  try {
+    const xmlEncoded = encodeURIComponent(item.source_xml)
+    const res = await http.get(`/review/notes/${xmlEncoded}/`, {
+      params: { project: project.currentProject?.id }
+    })
+    notesList.value = res.data.notes || []
+  } catch (e) {
+    console.error('[review] load notes error', e)
+  } finally {
+    notesLoading.value = false
+  }
+}
+
+/** 格式化备注时间 */
+function formatNoteTime(isoStr) {
+  if (!isoStr) return ''
+  try {
+    const d = new Date(isoStr)
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  } catch { return isoStr }
 }
 
 // 快捷标准：点击即选中理由，不自动跳转（需用户点确认排除按钮）
@@ -568,33 +652,6 @@ onMounted(async () => {
   font-size: 0.88rem;
   overflow: hidden;
 }
-
-/* ── 顶部 ── */
-.review-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.2rem;
-  padding: 0.65rem 1rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  flex-shrink: 0;
-}
-.review-progress { flex: 1; }
-.progress-text { font-size: 0.83rem; color: #64748b; display: block; margin-bottom: 0.3rem; }
-.progress-text strong { color: #334155; }
-.override-badge { color: #a855f7; font-size: 0.78rem; }
-.progress-bar-wrap { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; max-width: 260px; }
-.progress-bar-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 2px; transition: width .4s; }
-.btn-complete {
-  padding: 0.42rem 1rem;
-  background: #6366f1; color: #fff;
-  border: none; border-radius: 6px; cursor: pointer;
-  font-size: 0.83rem; display: flex; align-items: center; gap: 0.4rem;
-  white-space: nowrap; transition: background .2s;
-}
-.btn-complete:hover:not(:disabled) { background: #4f46e5; }
-.btn-complete:disabled { opacity: .6; cursor: not-allowed; }
 
 /* ── 主体 ── */
 .review-body { display: flex; flex: 1; overflow: hidden; }
@@ -734,6 +791,14 @@ onMounted(async () => {
   font-size: .73rem; color: #64748b; background: #f8fafc; border-radius: 5px; padding: .15rem .4rem;
 }
 .info-chip a { color: #6366f1; text-decoration: none; }
+/* 作者 chip：限制宽度，超出截断，hover 显示完整内容 */
+.info-chip-authors {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
 
 .section-label { font-size: .73rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem; }
 
@@ -800,20 +865,9 @@ onMounted(async () => {
 .action-btn.excluded:hover, .action-btn.excluded.active { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
 .action-btn.pending:hover,  .action-btn.pending.active  { background: #fef9c3; border-color: #ca8a04; color: #ca8a04; }
 
-.reason-wrap textarea {
-  width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: .4rem .5rem;
-  font-size: .81rem; color: #334155; resize: none; outline: none; box-sizing: border-box;
-  background: #fafafa;
-}
-.reason-wrap textarea:focus { border-color: #6366f1; background: #fff; }
-.note-save-btn {
-  padding: 4px 12px; border-radius: 6px; border: 1px solid #6366f1;
-  background: #eef2ff; color: #6366f1; font-size: .78rem; cursor: pointer;
-  transition: all .15s;
-}
-.note-save-btn:hover:not(:disabled) { background: #6366f1; color: #fff; }
-.note-save-btn:disabled { opacity: .5; cursor: not-allowed; }
 .save-status { font-size: .73rem; white-space: nowrap; }
+.save-status.success { color: #16a34a; }
+.save-status.error   { color: #dc2626; }
 
 /* 排除理由区 + 备注区标题 */
 .reason-wrap-label {
@@ -827,14 +881,26 @@ onMounted(async () => {
   padding-top: 8px;
   border-top: 1px dashed #e2e8f0;
 }
-.note-wrap textarea {
-  width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: .4rem .5rem;
+.note-input-row {
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.note-input-row textarea {
+  flex: 1;
+  border: 1px solid #e2e8f0; border-radius: 6px; padding: .4rem .5rem;
   font-size: .81rem; color: #334155; resize: none; outline: none; box-sizing: border-box;
   background: #fafafa;
 }
-.note-wrap textarea:focus { border-color: #6366f1; background: #fff; }
-.save-status.success { color: #16a34a; }
-.save-status.error   { color: #dc2626; }
+.note-input-row textarea:focus { border-color: #6366f1; background: #fff; }
+.note-save-btn {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  border-radius: 6px; border: 1px solid #6366f1;
+  background: #eef2ff; color: #6366f1; font-size: .82rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; margin-top: 1px;
+}
+.note-save-btn:hover:not(:disabled) { background: #6366f1; color: #fff; }
+.note-save-btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* 文献 URL 行 */
 .detail-url {
@@ -1086,6 +1152,71 @@ onMounted(async () => {
 .reason-panel-slide-leave-to {
   transform: translateY(16px);
   opacity: 0;
+}
+
+/* ── 备注图标（列表项右下角）── */
+.ref-status {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.ref-note-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #d97706;
+  font-size: .62rem;
+  cursor: pointer;
+  transition: all .12s;
+  flex-shrink: 0;
+}
+.ref-note-icon:hover { background: #fef3c7; border-color: #f59e0b; color: #b45309; }
+
+/* ── 备注历史弹窗 ── */
+.notes-popup-box {
+  width: min(480px, 92vw);
+  max-height: 70vh;
+}
+.notes-popup-body {
+  padding: .7rem 1rem;
+  overflow-y: auto;
+}
+.notes-loading {
+  text-align: center; padding: 1.5rem;
+  color: #94a3b8; font-size: .82rem;
+}
+.notes-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: .5rem;
+  padding: 2rem; color: #cbd5e1; font-size: .82rem;
+}
+.notes-empty i { font-size: 1.6rem; }
+.notes-list { display: flex; flex-direction: column; gap: 8px; }
+.note-history-item {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.note-history-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.note-history-user {
+  font-size: .72rem; color: #92400e; font-weight: 600;
+}
+.note-history-time {
+  font-size: .7rem; color: #a16207;
+}
+.note-history-content {
+  font-size: .82rem; color: #334155; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word;
 }
 
 </style>
