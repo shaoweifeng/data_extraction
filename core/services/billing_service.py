@@ -77,13 +77,18 @@ def tokens_to_credits(total_tokens: int) -> int:
     return max(1, total_tokens // ratio)
 
 
-def estimate_credits(ref_count: int) -> int:
+def estimate_credits(ref_count: int, model_ids: list = None) -> int:
     """
-    预估筛选 N 篇文献所需的 credits（用于阶段三余额校验）。
-    单篇均值由 settings.BILLING_ESTIMATE_CREDITS_PER_REF 控制（默认 2）。
+    预估筛选 N 篇文献所需的 credits。
+
+    所有模型吃的是相同的 prompt+abstract，token 量基本一致（~1200–1900 tokens/篇）。
+    以 settings.BILLING_ESTIMATE_CREDITS_PER_REF（默认 2，对应 2000 tokens）作为每篇上限估算。
+
+    model_ids 参数保留接口兼容，实际不影响单篇费率——多模型时等价于 per_ref × model_count。
     """
     per_ref = getattr(settings, 'BILLING_ESTIMATE_CREDITS_PER_REF', 2)
-    return max(1, ref_count * per_ref)
+    model_count = max(1, len(model_ids)) if model_ids else 1
+    return max(1, ref_count * per_ref * model_count)
 
 
 # ============================================================================

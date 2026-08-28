@@ -77,14 +77,25 @@ def estimate(request):
 
     try:
         ref_count = int(request.query_params.get('ref_count', 0))
-        model_count = max(1, int(request.query_params.get('model_count', 1)))
+        # model_ids: 逗号分隔字符串，如 "deepseek-v4-flash,doubao-seed-1.8"
+        model_ids_raw = request.query_params.get('model_ids', '')
+        model_ids = [m.strip() for m in model_ids_raw.split(',') if m.strip()] if model_ids_raw else []
+
+        # 向后兼容：若只传 model_count（旧逻辑），用默认费率 × model_count
+        if not model_ids:
+            model_count = max(1, int(request.query_params.get('model_count', 1)))
+        else:
+            model_count = len(model_ids)
     except (ValueError, TypeError):
         return Response({"error": "ref_count 必须为正整数"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     if ref_count <= 0:
         return Response({"error": "ref_count 必须为正整数"}, status=http_status.HTTP_400_BAD_REQUEST)
 
-    estimated = estimate_credits(ref_count) * model_count
+    if model_ids:
+        estimated = estimate_credits(ref_count, model_ids)
+    else:
+        estimated = estimate_credits(ref_count) * model_count
     user = request.user
     profile = getattr(user, 'profile', None)
     is_unlimited = user.is_superuser or (profile and profile.role == 'admin')

@@ -15,32 +15,33 @@ import os
 from typing import Optional, List
 
 AI_PROVIDERS = [
+    # ── DeepSeek ──────────────────────────────────────────────────────────────
     {
         "id": "deepseek",
         "name": "DeepSeek",
         "logo": "deepseek",
-        "description": "深度求索",
+        "description": "深度求索 · 均衡性价比",
         "api_url": os.environ.get("DEEPSEEK_API_URL", "https://api.deepseek.com/v1"),
         "api_key": os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("AI_API_KEY", ""),
         "timeout": int(os.environ.get("AI_TIMEOUT", "120")),
         "sub_models": [
             {
-                "id": "deepseek",
-                "name": "DeepSeek Chat",
-                "model": os.environ.get("DEEPSEEK_MODEL", "deepseek-chat"),
-                "description": "均衡型，性价比高",
+                "id": "deepseek-v4-flash",
+                "name": "DeepSeek V4 Flash",
+                "model": "deepseek-v4-flash",
+                "description": "高速版，价格极低",
+                "is_default": False,
+            },
+            {
+                "id": "deepseek-v4-pro",
+                "name": "DeepSeek V4 Pro",
+                "model": "deepseek-v4-pro",
+                "description": "旗舰版，效果最佳",
                 "is_default": True,
             },
-            # 未来可扩展，追加此处：
-            # {
-            #     "id": "deepseek-r1",
-            #     "name": "DeepSeek R1",
-            #     "model": "deepseek-reasoner",
-            #     "description": "推理增强型",
-            #     "is_default": False,
-            # },
         ],
     },
+    # ── 豆包（字节跳动 Volcengine ARK）────────────────────────────────────────
     {
         "id": "doubao",
         "name": "豆包",
@@ -51,14 +52,36 @@ AI_PROVIDERS = [
         "timeout": int(os.environ.get("AI_TIMEOUT", "120")),
         "sub_models": [
             {
-                "id": "doubao",
-                "name": "豆包 Pro",
-                "model": os.environ.get("DOUBAO_MODEL", "ep-20250509-xxxxxx"),
-                "description": "标准型",
+                "id": "doubao-seed-1.8",
+                "name": "Doubao-Seed-1.8",
+                "model": "ep-20260509162819-bvjfj",
+                "description": "旗舰版，效果最强",
+                "is_default": True,
+            },
+            {
+                "id": "doubao-seed-2.0-lite",
+                "name": "Doubao-Seed-2.0-Lite",
+                "model": "ep-20260509162644-jjj7m",
+                "description": "轻量版，速度更快",
+                "is_default": False,
+            },
+            {
+                "id": "seedance-1.6-flash",
+                "name": "Seedance-1.6-Flash",
+                "model": "ep-20260509155532-9pqjx",
+                "description": "闪速版，延迟最低",
+                "is_default": False,
+            },
+            {
+                "id": "seedance-2.0-mini",
+                "name": "Seedance-2.0-Mini",
+                "model": "ep-20260509155132-22n88",
+                "description": "迷你版，成本极低",
                 "is_default": False,
             },
         ],
     },
+    # ── 千问（阿里云 DashScope）────────────────────────────────────────────────
     {
         "id": "qwen",
         "name": "千问",
@@ -69,10 +92,31 @@ AI_PROVIDERS = [
         "timeout": int(os.environ.get("AI_TIMEOUT", "120")),
         "sub_models": [
             {
-                "id": "qwen",
-                "name": "Qwen Max",
-                "model": os.environ.get("QWEN_MODEL", "qwen-max"),
-                "description": "旗舰型",
+                "id": "qwen3-6-flash",
+                "name": "Qwen3.6-Flash",
+                "model": "qwen3.6-flash",
+                "description": "闪速版，价格极低",
+                "is_default": False,
+            },
+            {
+                "id": "qwen3-6-plus",
+                "name": "Qwen3.6-Plus",
+                "model": "qwen3.6-plus",
+                "description": "增强版，均衡性价比",
+                "is_default": False,
+            },
+            {
+                "id": "qwen3-6-max-preview",
+                "name": "Qwen3.6-Max-Preview",
+                "model": "qwen3.6-max-preview",
+                "description": "旗舰预览版，效果最强",
+                "is_default": True,
+            },
+            {
+                "id": "qwen3-coder-plus",
+                "name": "Qwen3-Coder-Plus",
+                "model": "qwen3-coder-plus",
+                "description": "代码增强版",
                 "is_default": False,
             },
         ],

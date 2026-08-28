@@ -70,7 +70,7 @@ class AIScreenHandler(BaseStepHandler):
             else:
                 try:
                     from core.services.billing_service import estimate_credits, check_balance_sufficient, get_balance
-                    estimated = estimate_credits(total_refs) * model_count
+                    estimated = estimate_credits(total_refs, model_ids)
                     if not check_balance_sufficient(user, estimated):
                         balance = get_balance(user)
                         self.logger.error(
@@ -441,6 +441,17 @@ class AIScreenHandler(BaseStepHandler):
 
             # 主模型（单模型时第一个就是它；多模型取 consensus 一致的第一个，否则第一个）
             primary = model_results[0] if model_results else {}
+            # 导出用排除理由：取与共识一致的第一个模型的 reason（简洁文本），
+            # 而非 summary_reason（多模型拼接摘要，仅供审阅界面展示用）
+            if consensus == 'excluded':
+                # 优先取与 consensus 结论一致的第一个模型的理由
+                consensus_reason = next(
+                    (r.get('reason', '') for r in model_results if r.get('decision') == 'excluded'),
+                    primary.get('reason', '')
+                )
+            else:
+                consensus_reason = primary.get('reason', '')
+
             # 合并 extracted_fields：优先用 included 模型的结果，其次取第一个非空的
             merged_extracted: Dict = {}
             for mr in model_results:
@@ -471,7 +482,10 @@ class AIScreenHandler(BaseStepHandler):
                 # 展示对外的主字段（单模型时直接用主模型结果，多模型时用 consensus）
                 'decision':  consensus,
                 'include_or_not': 'yes' if consensus == 'included' else 'no',
-                'exclusion_reason': summary_reason,
+                # 导出排除理由：用与共识一致的主模型简洁理由（非多模型拼接摘要）
+                'exclusion_reason': consensus_reason,
+                # 多模型摘要：供审阅界面展示，不写入导出列
+                'ai_summary_reason': summary_reason,
                 'number_exclusion_reason': primary_reason_id,
                 'model':    ', '.join(r['model_id'] for r in model_results),
                 'raw_ai_response': '',

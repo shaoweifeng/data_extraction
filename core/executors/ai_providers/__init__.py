@@ -15,7 +15,7 @@ def get_provider(name: str = None, config: dict = None) -> BaseAIProvider:
     Provider 工厂函数
 
     Args:
-        name: provider 名称（deepseek / doubao / qwen），None 时从环境变量 AI_PROVIDER 读取
+        name:   sub_model id（如 "deepseek-v4-pro"）或 provider id（如 "deepseek"）
         config: 额外配置，None 时从 ai_models_config 读取对应配置
     """
     import os
@@ -35,16 +35,8 @@ def get_provider(name: str = None, config: dict = None) -> BaseAIProvider:
         else:
             config = {}
 
-    # deepseek / doubao / qwen 均兼容 OpenAI 接口
-    registry = {
-        "deepseek": OpenAICompatibleProvider,
-        "doubao":   OpenAICompatibleProvider,
-        "qwen":     OpenAICompatibleProvider,
-    }
-    cls = registry.get(provider_name.lower())
-    if cls is None:
-        raise ValueError(f"未知的 AI Provider: {provider_name}，可用: {list(registry.keys())}")
-    return cls(config)
+    # 所有厂商均兼容 OpenAI 接口，不再按 provider id 匹配，直接返回 OpenAICompatibleProvider
+    return OpenAICompatibleProvider(config)
 
 
 __all__ = ["BaseAIProvider", "ScreeningResult", "OpenAICompatibleProvider", "get_provider"]

@@ -235,7 +235,7 @@
             <i class="fas fa-coins mr-1"></i>余额：<b>{{ billing.balance ?? '...' }}</b> credits
           </span>
           <span class="billing-item" v-if="s.pendingTotal > 0">
-            预估：<b>{{ billing.estimated ?? '...' }}</b> credits（{{ s.pendingTotal }} 篇 × {{ selectedModels.length }} 模型）
+            预估：<b>{{ billing.estimated ?? '...' }}</b> credits（{{ s.pendingTotal }} 篇，{{ selectedModels.length }} 个模型）
           </span>
           <span v-if="billing.sufficient === false" class="billing-warn">
             <i class="fas fa-exclamation-triangle mr-0.5"></i>余额不足
@@ -467,8 +467,8 @@ async function loadBilling() {
     }
     billing.value.balance = balData.balance
     if (s.pendingTotal > 0) {
-      const modelCount = selectedModels.value.length || 1
-      const estRes = await http.get(`/billing/estimate/?ref_count=${s.pendingTotal}&model_count=${modelCount}`)
+      const modelIds = selectedModels.value.map(m => m.id).join(',')
+      const estRes = await http.get(`/billing/estimate/?ref_count=${s.pendingTotal}&model_ids=${encodeURIComponent(modelIds)}`)
       billing.value.estimated = estRes.data.estimated_credits
       billing.value.sufficient = estRes.data.sufficient
     } else {
