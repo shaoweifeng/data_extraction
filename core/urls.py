@@ -16,6 +16,15 @@ from .api.review_views import (
     review_note_append,
     review_notes_list,
 )
+from .api.qa_views import (
+    methods_list,
+    ref_list, ref_import, ref_upload, ref_update, ref_batch_method,
+    eval_start, eval_progress,
+    signal_items_list, signal_item_confirm, signal_batch_confirm,
+    domain_results,
+    chart_generate, chart_info,
+    export_excel, export_status,
+)
 
 # 注册 ViewSets
 router = DefaultRouter()
@@ -52,4 +61,28 @@ urlpatterns = [
 
     # RESTful API
     path('', include(router.urls)),
+
+    # ── 文献质量评价 API ───────────────────────────────────────────────
+    path('qa/methods/',                        methods_list,          name='qa_methods_list'),
+    # 文献
+    path('qa/refs/',                           ref_list,              name='qa_ref_list'),
+    path('qa/refs/import/',                    ref_import,            name='qa_ref_import'),
+    path('qa/refs/upload/',                    ref_upload,            name='qa_ref_upload'),
+    path('qa/refs/batch-method/',              ref_batch_method,      name='qa_ref_batch_method'),
+    path('qa/refs/<int:ref_id>/',              ref_update,            name='qa_ref_update'),
+    # AI 评价
+    path('qa/eval/start/',                     eval_start,            name='qa_eval_start'),
+    path('qa/eval/progress/',                  eval_progress,         name='qa_eval_progress'),
+    # 信号问题
+    path('qa/signal-items/',                   signal_items_list,     name='qa_signal_items_list'),
+    path('qa/signal-items/<int:item_id>/confirm/', signal_item_confirm, name='qa_signal_item_confirm'),
+    path('qa/signal-items/batch-confirm/',     signal_batch_confirm,  name='qa_signal_batch_confirm'),
+    # 领域结果
+    path('qa/domain-results/',                 domain_results,        name='qa_domain_results'),
+    # 图表
+    path('qa/chart/',                          chart_info,            name='qa_chart_info'),
+    path('qa/chart/generate/',                 chart_generate,        name='qa_chart_generate'),
+    # 导出
+    path('qa/export/excel/',                   export_excel,          name='qa_export_excel'),
+    path('qa/export/status/',                  export_status,         name='qa_export_status'),
 ]

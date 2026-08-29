@@ -52,6 +52,13 @@
             </div>
           </template>
 
+          <!-- ── QUALITY：文献质量评价 ── -->
+          <template v-else-if="project.currentStage === 'QUALITY'">
+            <div class="ws-step-content" style="padding:20px 24px;overflow-y:auto;flex:1">
+              <QAWorkspaceView />
+            </div>
+          </template>
+
           <!-- ── 其他阶段：占位页 ── -->
           <template v-else>
             <div class="ws-placeholder">
@@ -87,12 +94,15 @@ import StepFields from '@/components/steps/StepFields.vue'
 import StepAiScreen from '@/components/steps/StepAiScreen.vue'
 import StepReview from '@/components/steps/StepReview.vue'
 import StepExport from '@/components/steps/StepExport.vue'
+import QAWorkspaceView from '@/components/qa/QAWorkspaceView.vue'
+import { useQAStore } from '@/stores/qa'
 
 const route = useRoute()
 const router = useRouter()
 const project = useProjectStore()
 const screening = useScreeningStore()
 const taskStore = useTaskStore()
+const qa = useQAStore()
 
 const loading = ref(true)
 const sidebarCollapsed = ref(false)
@@ -127,6 +137,7 @@ onMounted(async () => {
     if (isProjectSwitch) {
       screening.reset()
       taskStore.reset()
+      qa.reset()  // 切换项目时清空 QA store，防止旧项目数据串入新项目
     }
     await project.selectProject(found)
   }
