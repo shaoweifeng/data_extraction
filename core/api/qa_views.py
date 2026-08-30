@@ -25,16 +25,23 @@
 """
 
 import io
+import os
+import csv
 import base64
 import json
 import logging
+import shutil
+import subprocess
+import tempfile
 from datetime import datetime, timezone as dt_tz
 
 import matplotlib
 matplotlib.use('Agg')   # 非交互后端，避免 GUI 依赖
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from matplotlib.patches import Circle
 import numpy as np
+import pandas as pd
 
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
@@ -713,6 +720,10 @@ def chart_generate(request):
     project_id     = body.get('project_id')
     quality_method = body.get('quality_method', 'QUADAS2')
     ref_ids        = body.get('ref_ids', [])   # 空 = 全部已确认
+    # 前端用户自定义文献标签 {ref_id_str: label}
+    study_labels   = body.get('study_labels') or {}
+    # 交通灯图方向：'horizontal'（研究=列，默认）| 'vertical'（研究=行）
+    orientation    = body.get('orientation', 'horizontal')
 
     if not project_id:
         return _json_err('缺少 project_id')
@@ -790,8 +801,19 @@ def chart_generate(request):
     )
 
     # ── 生成图表图片（base64 PNG）────────────────────────────────────────────
-    traffic_b64  = _render_traffic_light(traffic_light_data, bias_domains, applic_domains, method_cfg['name'])
-    proportion_b64 = _render_proportion(proportion_data, method_cfg['name'])
+    traffic_b64  = _render_traffic_light(
+        traffic_light_data, bias_domains, applic_domains,
+        method_cfg['name'], quality_method=quality_method,
+        study_labels=study_labels, orientation=orientation,
+    )
+    proportion_b64 = _render_proportion(
+        proportion_data, method_cfg['name'],
+        quality_method=quality_method,
+        traffic_light_data=traffic_light_data,
+        bias_domains=bias_domains,
+        applic_domains=applic_domains,
+        study_labels=study_labels,
+    )
 
     return _json_ok({
         'chart_id':          chart.id,
@@ -836,7 +858,7 @@ def _fig_to_b64(fig) -> str:
     return 'data:image/png;base64,' + base64.b64encode(buf.read()).decode()
 
 
-# macOS/Linux 中文字体优先顺序
+# macOS/Linux 中文字体优先顺序（matplotlib 降级时用）
 _CJK_FONT_CANDIDATES = [
     'PingFang SC', 'PingFang HK', 'STHeiti', 'Heiti TC',
     'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'SimHei', 'Microsoft YaHei',
@@ -851,181 +873,521 @@ def _setup_cjk_font():
             plt.rcParams['font.family'] = name
             plt.rcParams['axes.unicode_minus'] = False
             return
-    # 找不到则保留默认，仅关掉 unicode_minus 警告
     plt.rcParams['axes.unicode_minus'] = False
 
 
-def _render_traffic_light(traffic_light_data, bias_domains, applic_domains, method_name) -> str:
-    """生成交通灯图（Risk of Bias Summary），返回 base64 data URL。"""
+# ── robvis 相关 ────────────────────────────────────────────────────────────────
+
+# 我们的 method key → robvis tool 参数的映射（不在此表里的方法走 matplotlib 降级）
+_ROBVIS_TOOL_MAP = {
+    'QUADAS2':  'QUADAS-2',
+    'ROB2':     'ROB2',
+    'ROBINS_I': 'ROBINS-I',
+}
+
+# 各 robvis 工具的判断值映射：我们内部 key → robvis 期望的英文字符串
+_ROBVIS_JUDGMENT_MAP = {
+    # QUADAS-2 / ROB2 / ROBINS-I 共用低/高/不清楚
+    'low':     'Low',
+    'high':    'High',
+    'unclear': 'Some concerns',
+    'pending': 'Some concerns',
+    'na':      'Low',
+    # ROBINS-I 额外值
+    'critical':  'Critical',
+    'moderate':  'Moderate',
+    'serious':   'Serious',
+}
+
+_RSCRIPT = shutil.which('Rscript') or '/opt/homebrew/bin/Rscript'
+
+
+def _robvis_render(csv_path: str, tool: str, out_png: str, chart_type: str = 'traffic_light') -> bool:
+    """
+    调用 Rscript 生成 robvis 图，写到 out_png。
+    chart_type: 'traffic_light' | 'summary'
+    返回是否成功。
+    """
+    func = 'rob_traffic_light' if chart_type == 'traffic_light' else 'rob_summary'
+    r_code = f"""
+suppressMessages({{
+  library(robvis)
+  library(ggplot2)
+  dat <- read.csv('{csv_path}', stringsAsFactors=FALSE)
+  p <- {func}(dat, tool='{tool}')
+  ggsave('{out_png}', plot=p, width=10, height=max(4, nrow(dat)*0.55 + 2), dpi=150)
+}})
+"""
+    try:
+        result = subprocess.run(
+            [_RSCRIPT, '--vanilla', '-e', r_code],
+            capture_output=True, text=True, timeout=60,
+        )
+        if result.returncode != 0:
+            logger.warning('robvis R error: %s', result.stderr[-500:])
+            return False
+        return os.path.exists(out_png) and os.path.getsize(out_png) > 0
+    except Exception as e:
+        logger.warning('robvis subprocess error: %s', e)
+        return False
+
+
+def _robvis_render_quadas_combined(
+        bias_csv: str, applic_csv: str, out_png: str,
+        n_bias: int, n_applic: int, n_refs: int) -> bool:
+    """
+    QUADAS-2 专用：用 patchwork 把 bias 图和 applicability 图横向拼合。
+    bias_csv   — 4列 bias 域的 CSV（标准 QUADAS-2 格式）
+    applic_csv — applic 域 CSV（域数 ≤4，不足4列用 Low 占位）
+    """
+    w_bias   = max(5, n_bias   * 1.2 + 3)
+    w_applic = max(3, n_applic * 1.2 + 1)
+    fig_h    = max(4, n_refs * 0.55 + 2)
+    r_code = f"""
+suppressMessages({{
+  library(robvis)
+  library(ggplot2)
+  library(patchwork)
+
+  dat_bias   <- read.csv('{bias_csv}',   stringsAsFactors=FALSE)
+  dat_applic <- read.csv('{applic_csv}', stringsAsFactors=FALSE)
+
+  p_bias   <- rob_traffic_light(dat_bias,   tool='QUADAS-2')
+  p_applic <- rob_traffic_light(dat_applic, tool='QUADAS-2')
+
+  # 去掉右侧图的 Study 轴标签（文献名已在左侧图显示）
+  p_applic2 <- p_applic +
+    ggplot2::labs(title='Applicability concerns') +
+    ggplot2::theme(
+      axis.text.y  = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_blank(),
+      plot.title   = ggplot2::element_text(size=9, hjust=0.5)
+    )
+
+  p_bias2 <- p_bias +
+    ggplot2::labs(title='Risk of Bias') +
+    ggplot2::theme(plot.title = ggplot2::element_text(size=9, hjust=0.5))
+
+  combined <- p_bias2 + p_applic2 +
+    plot_layout(widths=c({w_bias}, {w_applic}), guides='collect') &
+    ggplot2::theme(legend.position='bottom')
+
+  ggsave('{out_png}', plot=combined,
+         width={w_bias + w_applic}, height={fig_h}, dpi=150)
+}})
+"""
+    try:
+        result = subprocess.run(
+            [_RSCRIPT, '--vanilla', '-e', r_code],
+            capture_output=True, text=True, timeout=90,
+        )
+        if result.returncode != 0:
+            logger.warning('robvis combined R error: %s', result.stderr[-800:])
+            return False
+        return os.path.exists(out_png) and os.path.getsize(out_png) > 0
+    except Exception as e:
+        logger.warning('robvis combined subprocess error: %s', e)
+        return False
+
+
+def _build_robvis_csv(traffic_light_data: list, bias_domains: list, applic_domains: list,
+                      tool: str, csv_path: str, study_labels: dict = None):
+    """
+    把内部数据结构转为 robvis 期望的 CSV 格式。
+    robvis 格式：Study, D1, D2, ..., Overall, Weight
+
+    robvis 靠列数识别工具类型，列数必须严格匹配：
+      QUADAS-2 : 4 bias 域（无 applic 列）→ 共 7 列（Study + D1-D4 + Overall + Weight）
+      ROB2     : 5 bias 域                → 共 8 列
+      ROBINS-I : 7 bias 域                → 共 10 列
+
+    注意：QUADAS-2 的 applicability 域不写入 CSV，robvis 内部自己知道哪些域有适用性判断。
+
+    study_labels: {ref_id: label_str}，前端用户自定义文献名，优先级最高
+    """
+    # QUADAS-2 只传 bias 域；其他方法全传（ROB2/ROBINS-I 本来就没有 applic 域）
+    if tool == 'QUADAS-2':
+        csv_domains = [(d['key'], 'bias') for d in bias_domains]
+    else:
+        csv_domains = (
+            [(d['key'], 'bias') for d in bias_domains]
+          + [(d['key'], 'applic') for d in applic_domains]
+        )
+
+    headers = ['Study'] + [f'D{i+1}' for i in range(len(csv_domains))] + ['Overall', 'Weight']
+
+    def worst_judgment(row):
+        vals = list(row['bias_risk'].values()) + list(row['applicability'].values())
+        if 'high' in vals or 'critical' in vals:
+            return 'high'
+        if 'unclear' in vals or 'serious' in vals or 'moderate' in vals:
+            return 'unclear'
+        return 'low'
+
+    with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        for row in traffic_light_data:
+            ref_id = row['ref_id']
+            # 优先用前端自定义标签
+            if study_labels and str(ref_id) in study_labels:
+                study = study_labels[str(ref_id)][:60]
+            else:
+                study = (row.get('first_author') or row.get('title') or f"Ref {ref_id}")[:40]
+                year = row.get('year')
+                if year:
+                    study = f"{study} ({year})"
+            cells = [study]
+            for dkey, dtype in csv_domains:
+                raw = (row['bias_risk'].get(dkey) if dtype == 'bias'
+                       else row['applicability'].get(dkey)) or 'unclear'
+                cells.append(_ROBVIS_JUDGMENT_MAP.get(raw, 'Some concerns'))
+            overall_raw = worst_judgment(row)
+            cells.append(_ROBVIS_JUDGMENT_MAP.get(overall_raw, 'Some concerns'))
+            cells.append(round(100 / max(1, len(traffic_light_data)), 4))
+            writer.writerow(cells)
+
+
+def _build_robvis_applic_csv(traffic_light_data: list, applic_domains: list,
+                              csv_path: str, study_labels: dict = None):
+    """
+    为 QUADAS-2 applicability 专门构建 CSV。
+    robvis QUADAS-2 固定需要 4 列 D，不足的用 'Low' 填充。
+    """
+    n_applic = len(applic_domains)
+    # 最多 4 列，不足 4 列补 Low
+    n_cols = 4
+    headers = ['Study'] + [f'D{i+1}' for i in range(n_cols)] + ['Overall', 'Weight']
+
+    def worst_applic(row):
+        vals = list(row['applicability'].values())
+        if 'high' in vals:
+            return 'high'
+        if 'unclear' in vals:
+            return 'unclear'
+        return 'low'
+
+    with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        for row in traffic_light_data:
+            ref_id = row['ref_id']
+            if study_labels and str(ref_id) in study_labels:
+                study = study_labels[str(ref_id)][:60]
+            else:
+                study = (row.get('first_author') or row.get('title') or f"Ref {ref_id}")[:40]
+                year = row.get('year')
+                if year:
+                    study = f"{study} ({year})"
+            cells = [study]
+            for i in range(n_cols):
+                if i < n_applic:
+                    dkey = applic_domains[i]['key']
+                    raw  = row['applicability'].get(dkey) or 'unclear'
+                    cells.append(_ROBVIS_JUDGMENT_MAP.get(raw, 'Some concerns'))
+                else:
+                    cells.append('Low')   # 占位
+            overall_raw = worst_applic(row)
+            cells.append(_ROBVIS_JUDGMENT_MAP.get(overall_raw, 'Some concerns'))
+            cells.append(round(100 / max(1, len(traffic_light_data)), 4))
+            writer.writerow(cells)
+
+
+def _png_to_b64(png_path: str) -> str:
+    """把 PNG 文件读为 base64 data URL。"""
+    with open(png_path, 'rb') as f:
+        return 'data:image/png;base64,' + base64.b64encode(f.read()).decode()
+
+
+
+import matplotlib.font_manager as _fm
+
+def _init_cjk_font():
+    """用字体文件路径直接设置中文字体，绕过名称查找。
+    兼容 macOS（STHeiti/Hiragino）与 Linux（fonts-noto-cjk / wqy）。
+    服务器需提前安装：
+        apt-get install -y fonts-noto-cjk        # Debian/Ubuntu（推荐）
+      或
+        yum install -y google-noto-sans-cjk-ttc  # CentOS/RHEL
+    """
+    candidates = [
+        # macOS
+        '/System/Library/Fonts/STHeiti Light.ttc',
+        '/System/Library/Fonts/STHeiti Medium.ttc',
+        '/System/Library/Fonts/Hiragino Sans GB.ttc',
+        '/Library/Fonts/Arial Unicode.ttf',
+        '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
+        # Linux — Noto CJK（fonts-noto-cjk）
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc',
+        # Linux — WQY（wqy-microhei / wqy-zenhei）
+        '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
+        '/usr/share/fonts/wqy-microhei/wqy-microhei.ttc',
+        '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
+        # Linux — 通用备用（文泉驿 CJK）
+        '/usr/share/fonts/wenquanyi/wqy-microhei/wqy-microhei.ttc',
+    ]
+    for path in candidates:
+        import os as _os
+        if _os.path.exists(path):
+            try:
+                prop = _fm.FontProperties(fname=path)
+                name = prop.get_name()
+                if name not in plt.rcParams['font.sans-serif']:
+                    plt.rcParams['font.sans-serif'].insert(0, name)
+                    _fm.fontManager.addfont(path)
+                plt.rcParams['axes.unicode_minus'] = False
+                return name
+            except Exception:
+                continue
+    plt.rcParams['axes.unicode_minus'] = False
+    return None
+
+
+# ── 颜色/符号（直接沿用原脚本）────────────────────────────────────────────────
+_COLORS  = {"High": "#d7191c", "Unclear": "#f1e51d", "Low": "#00b83f"}
+_SYMBOLS = {"High": "×", "Unclear": "?", "Low": "+"}
+# 内部 key → 原脚本 key 的映射
+_JUDGMENT_MAP = {
+    "low":     "Low",
+    "high":    "High",
+    "unclear": "Unclear",
+    "pending": "Unclear",
+    "na":      "Low",
+}
+
+
+def _get_study_label(row: dict, study_labels: dict) -> str:
+    ref_id = row['ref_id']
+    if study_labels and str(ref_id) in study_labels:
+        return study_labels[str(ref_id)][:60]
+    author = row.get('first_author') or ''
+    year   = row.get('year') or ''
+    if author:
+        return f"{author} {year}".strip()
+    title = row.get('title') or f"Ref {ref_id}"
+    return title[:40]
+
+
+# ── 以下三个函数原封不动来自 quadas2_matplotlib_tryrun_20260830_025320.py ─────
+
+def _draw_summary_bar(ax, summary_df, title):
+    y_positions = np.arange(len(summary_df))
+    left = np.zeros(len(summary_df))
+    for status in ["High", "Unclear", "Low"]:
+        values = summary_df[status].values
+        ax.barh(y_positions, values, left=left,
+                color=_COLORS[status], edgecolor="black", height=0.65, label=status)
+        left += values
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(summary_df["domain"])
+    ax.invert_yaxis()
+    ax.set_xlim(0, 1)
+    ax.set_xticks([0, 0.25, 0.5, 0.75, 1])
+    ax.set_xticklabels(["0%", "25%", "50%", "75%", "100%"])
+    ax.set_title(title, fontsize=10, fontweight="bold")
+    ax.tick_params(axis="both", labelsize=8)
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+
+
+def _draw_traffic_light_matrix(ax, studies, rows, n_bias):
+    """
+    studies: list of str
+    rows: list of {"label": str, "values": list of "High"/"Unclear"/"Low"}
+    n_bias: int — 前几行属于 Risk of Bias（其余为 Applicability Concerns）
+    """
+    n_cols = len(studies)
+    n_rows = len(rows)
+    ax.set_xlim(-0.5, n_cols + 3.5)
+    ax.set_ylim(-1.5, n_rows + 0.6)   # 顶部多留 1 个单位给列头，底部收紧
+    ax.invert_yaxis()
+    ax.axis("off")
+
+    # 研究名（列头，旋转 90°）—— 放在 y=-0.8 位置，离第一行圆圈（y=0）有足够间距
+    for i, study in enumerate(studies):
+        ax.text(i, -0.8, study, ha="center", va="bottom",
+                rotation=90, fontsize=7)
+
+    # bias / applic 分隔线
+    split_index = n_bias
+    ax.plot([-0.5, n_cols - 0.5],
+            [split_index - 0.5, split_index - 0.5],
+            color="black", linewidth=1)
+
+    # 圆 + 符号 + 行标签
+    for row_idx, row in enumerate(rows):
+        for col_idx, value in enumerate(row["values"]):
+            circle = Circle(
+                (col_idx, row_idx), radius=0.32,
+                facecolor=_COLORS[value], edgecolor="black", linewidth=0.8,
+            )
+            ax.add_patch(circle)
+            sym_color = "black" if value == "Unclear" else "white"
+            ax.text(col_idx, row_idx, _SYMBOLS[value],
+                    ha="center", va="center",
+                    fontsize=9, fontweight="bold", color=sym_color)
+        ax.text(n_cols + 0.3, row_idx, row["label"],
+                ha="left", va="center", fontsize=8)
+
+    # 右侧竖排组名
+    ax.text(n_cols + 2.2, (n_bias - 1) / 2,
+            "Risk of Bias",
+            ha="center", va="center", rotation=270, fontsize=8)
+    ax.text(n_cols + 2.2, n_bias + (n_rows - n_bias - 1) / 2,
+            "Applicability Concerns",
+            ha="center", va="center", rotation=270, fontsize=8)
+
+
+def _draw_legend(ax):
+    """用矩形色块画图例（与原脚本对齐，避免 aspect 影响）。"""
+    ax.axis("off")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    for x, key in zip([0.1, 0.42, 0.72], ["High", "Unclear", "Low"]):
+        rect = plt.Rectangle((x, 0.25), 0.08, 0.5,
+                              facecolor=_COLORS[key], edgecolor="black", linewidth=0.8)
+        ax.add_patch(rect)
+        ax.text(x + 0.10, 0.5, key, ha="left", va="center", fontsize=9)
+    # 外框
+    border = plt.Rectangle((0.05, 0.1), 0.9, 0.8,
+                            facecolor="none", edgecolor="black", linewidth=1.0)
+    ax.add_patch(border)
+
+
+# ── 两个对外渲染接口 ───────────────────────────────────────────────────────────
+
+def _render_traffic_light(traffic_light_data, bias_domains, applic_domains,
+                          method_name, quality_method='', study_labels=None,
+                          orientation='horizontal') -> str:
+    """生成交通灯图（Panel B），返回 base64 data URL。"""
+    _init_cjk_font()
     if not traffic_light_data:
         return None
-    _setup_cjk_font()
 
-    n_bias   = len(bias_domains)
-    n_applic = len(applic_domains)
-    all_domains = (
-        [(d['key'], d['name'], 'bias')   for d in bias_domains]
-      + [(d['key'], d['name'], 'applic') for d in applic_domains]
-    )
-    n_refs    = len(traffic_light_data)
-    n_domains = len(all_domains)
+    # 非 QUADAS2 走 robvis
+    robvis_tool = _ROBVIS_TOOL_MAP.get(quality_method)
+    if robvis_tool and quality_method != 'QUADAS2':
+        tmpdir = tempfile.mkdtemp()
+        try:
+            png_path = os.path.join(tmpdir, 'tl.png')
+            csv_path = os.path.join(tmpdir, 'data.csv')
+            _build_robvis_csv(traffic_light_data, bias_domains, applic_domains,
+                              robvis_tool, csv_path, study_labels=study_labels)
+            if _robvis_render(csv_path, robvis_tool, png_path, 'traffic_light'):
+                return _png_to_b64(png_path)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
 
-    cell_w, cell_h = 0.9, 0.5
-    label_w   = 3.5
-    group_h   = 0.28   # 分组标题栏高度
-    header_h  = 1.2    # 竖排列头高度
-    legend_h  = 0.6
-    top_pad   = 0.4
-    bot_pad   = 0.2
+    # ── 组装数据（内部 key → "High"/"Unclear"/"Low"）─────────────────────────
+    studies = [_get_study_label(r, study_labels) for r in traffic_light_data]
 
-    fig_w = label_w + n_domains * cell_w + 0.5
-    fig_h = max(3.5, top_pad + group_h + 0.06 + header_h + n_refs * cell_h + legend_h + bot_pad)
+    rows = []
+    for d in bias_domains:
+        rows.append({
+            "label": d['name'],
+            "values": [
+                _JUDGMENT_MAP.get(r['bias_risk'].get(d['key'], 'pending'), 'Unclear')
+                for r in traffic_light_data
+            ],
+        })
+    for d in applic_domains:
+        rows.append({
+            "label": d['name'],
+            "values": [
+                _JUDGMENT_MAP.get(r['applicability'].get(d['key'], 'pending'), 'Unclear')
+                for r in traffic_light_data
+            ],
+        })
+
+    n_bias_rows = len(bias_domains)
+    n_rows      = len(rows)
+    n_studies   = len(studies)
+
+    # 图幅自适应（与原脚本 plot_quadas2 一致）
+    # 计算 figsize 使 data 单位近似正方形（确保圆形）
+    data_w = n_studies + 4.0   # xlim 范围：(-0.5 ~ n_studies+3.5)
+    data_h = n_rows + 2.1      # ylim 范围：(-1.5 ~ n_rows+0.6)
+    fig_w  = max(8, n_studies * 0.85 + 5)
+    fig_h  = fig_w * data_h / data_w
 
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-    ax.set_xlim(0, fig_w)
-    ax.set_ylim(0, fig_h)
-    ax.axis('off')
-
-    # ── 主标题 ────────────────────────────────────────────────────────────────
-    ax.text(fig_w / 2, fig_h - 0.15,
-            f'Risk of Bias Summary — {method_name}',
-            ha='center', va='top', fontsize=9, fontweight='bold', color='#1e293b')
-
-    # ── 分组标题栏 ────────────────────────────────────────────────────────────
-    group_top = fig_h - top_pad
-    group_y   = group_top - group_h
-    if n_bias > 0:
-        bias_x = label_w
-        bias_w = n_bias * cell_w
-        ax.add_patch(mpatches.FancyBboxPatch(
-            (bias_x, group_y), bias_w, group_h,
-            boxstyle='round,pad=0.02', linewidth=0.8,
-            facecolor='#eff6ff', edgecolor='#bfdbfe', zorder=1))
-        ax.text(bias_x + bias_w / 2, group_y + group_h / 2,
-                '偏倚风险  Risk of Bias',
-                ha='center', va='center', fontsize=6.5,
-                fontweight='bold', color='#1d4ed8', zorder=2)
-    if n_applic > 0:
-        applic_x = label_w + n_bias * cell_w + (0.06 if n_bias > 0 else 0)
-        applic_w = n_applic * cell_w
-        ax.add_patch(mpatches.FancyBboxPatch(
-            (applic_x, group_y), applic_w, group_h,
-            boxstyle='round,pad=0.02', linewidth=0.8,
-            facecolor='#f0fdf4', edgecolor='#bbf7d0', zorder=1))
-        ax.text(applic_x + applic_w / 2, group_y + group_h / 2,
-                '适用性  Applicability',
-                ha='center', va='center', fontsize=6.5,
-                fontweight='bold', color='#15803d', zorder=2)
-
-    # ── 竖排列头（从分组标题下沿向下悬挂，va='top'）────────────────────────────
-    for ci, (dkey, dname, dtype) in enumerate(all_domains):
-        x = label_w + ci * cell_w + cell_w / 2
-        color = '#1d4ed8' if dtype == 'bias' else '#15803d'
-        ax.text(x, group_y - 0.04, dname,
-                ha='center', va='top', fontsize=6, color=color, rotation=90)
-
-    # ── 数据行（列头区域下方）─────────────────────────────────────────────────
-    data_top_y = group_y - header_h
-    for ri, row in enumerate(traffic_light_data):
-        y = data_top_y - ri * cell_h
-        title = row.get('title') or f"文献 {row['ref_id']}"
-        if len(title) > 35:
-            title = title[:35] + '…'
-        ax.text(label_w - 0.1, y + cell_h / 2, title,
-                ha='right', va='center', fontsize=6, color='#475569')
-        if ri % 2 == 0:
-            rect = mpatches.FancyBboxPatch(
-                (label_w, y), n_domains * cell_w, cell_h,
-                boxstyle='square,pad=0', linewidth=0, facecolor='#f8fafc', zorder=0)
-            ax.add_patch(rect)
-
-        # 偏倚/适用性间竖线
-        if n_bias > 0 and n_applic > 0:
-            sep_x = label_w + n_bias * cell_w + 0.03
-            ax.plot([sep_x, sep_x], [y, y + cell_h],
-                    color='#e2e8f0', linewidth=0.8, zorder=1)
-
-        for ci, (dkey, dname, dtype) in enumerate(all_domains):
-            x = label_w + ci * cell_w
-            result = (row['bias_risk'].get(dkey) if dtype == 'bias'
-                      else row['applicability'].get(dkey)) or 'pending'
-            color  = _RISK_COLORS.get(result, '#e2e8f0')
-            marker = _RISK_MARKERS.get(result, '○')
-            circle = plt.Circle(
-                (x + cell_w / 2, y + cell_h / 2), radius=0.17,
-                color=color, zorder=2)
-            ax.add_patch(circle)
-            ax.text(x + cell_w / 2, y + cell_h / 2, marker,
-                    ha='center', va='center', fontsize=8,
-                    color='white', fontweight='bold', zorder=3)
-
-    # ── 图例 ──────────────────────────────────────────────────────────────────
-    legend_items = [
-        ('low', '低风险'), ('high', '高风险'),
-        ('unclear', '不清楚'), ('na', '不适用'), ('pending', '待定'),
-    ]
-    lx = 0.3
-    for key, label in legend_items:
-        c = plt.Circle((lx, 0.25), 0.1, color=_RISK_COLORS[key], zorder=2)
-        ax.add_patch(c)
-        ax.text(lx + 0.18, 0.25, label, va='center', fontsize=6.5, color='#475569')
-        lx += 1.2
-
-    plt.tight_layout(pad=0.3)
-    return _fig_to_b64(fig)
-
-
-def _render_proportion(proportion_data, method_name) -> str:
-    """生成比例图（Risk of Bias Graph），返回 base64 data URL。"""
-    if not proportion_data:
-        return None
-    _setup_cjk_font()
-
-    items = list(proportion_data.values())
-    n = len(items)
-    if n == 0:
-        return None
-
-    fig_w = 8
-    fig_h = max(3.0, n * 0.65 + 1.8)
-    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-
-    y_pos  = np.arange(n)
-    labels = [it['domain_name'] for it in items]
-
-    risk_order  = ['low', 'high', 'unclear', 'pending']
-    risk_labels_map = {'low': '低风险', 'high': '高风险', 'unclear': '不清楚', 'pending': '待定/不适用'}
-
-    lefts   = np.zeros(n)
-    handles = []
-    for rk in risk_order:
-        vals = np.array([it['percentages'].get(rk, 0) for it in items])
-        bars = ax.barh(y_pos, vals, left=lefts, height=0.55,
-                       color=_RISK_COLORS[rk], zorder=2)
-        lefts += vals
-        for bar, v in zip(bars, vals):
-            if v >= 8:
-                ax.text(bar.get_x() + bar.get_width() / 2,
-                        bar.get_y() + bar.get_height() / 2,
-                        f'{v:.0f}%', ha='center', va='center',
-                        fontsize=6.5, color='white', fontweight='bold')
-        handles.append(mpatches.Patch(color=_RISK_COLORS[rk], label=risk_labels_map[rk]))
-
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(labels, fontsize=8)
-    ax.set_xlim(0, 100)
-    ax.set_xlabel('百分比 (%)', fontsize=8)
-    ax.set_title(f'Risk of Bias Graph — {method_name}',
-                 fontsize=9, fontweight='bold', pad=8)
-    ax.spines[['top', 'right']].set_visible(False)
-    ax.tick_params(axis='x', labelsize=7)
-    ax.legend(handles=handles, loc='lower right', fontsize=7,
-              framealpha=0.9, ncol=len(risk_order))
-    ax.grid(axis='x', linestyle='--', alpha=0.3, zorder=0)
+    _draw_traffic_light_matrix(ax, studies, rows, n_bias_rows)
 
     plt.tight_layout(pad=0.5)
     return _fig_to_b64(fig)
 
+
+def _render_proportion(proportion_data, method_name, quality_method='',
+                       traffic_light_data=None, bias_domains=None, applic_domains=None,
+                       study_labels=None) -> str:
+    """生成比例图（Panel A），返回 base64 data URL。"""
+    _init_cjk_font()
+    if not proportion_data:
+        return None
+
+    # 非 QUADAS2 走 robvis
+    robvis_tool = _ROBVIS_TOOL_MAP.get(quality_method)
+    if robvis_tool and quality_method != 'QUADAS2' and traffic_light_data and bias_domains is not None:
+        tmpdir = tempfile.mkdtemp()
+        try:
+            csv_path = os.path.join(tmpdir, 'data.csv')
+            png_path = os.path.join(tmpdir, 'summary.png')
+            _build_robvis_csv(traffic_light_data, bias_domains, applic_domains or [],
+                              robvis_tool, csv_path, study_labels=study_labels)
+            if _robvis_render(csv_path, robvis_tool, png_path, 'summary'):
+                return _png_to_b64(png_path)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    # ── 用原脚本的 _draw_summary_bar + _draw_legend ───────────────────────────
+    bias_keys   = {d['key'] for d in (bias_domains   or [])}
+    applic_keys = {d['key'] for d in (applic_domains or [])}
+
+    def _make_summary_df(domain_list, key_set):
+        records = []
+        for d in (domain_list or []):
+            k = d['key']
+            item = proportion_data.get(k) or proportion_data.get('app_' + k)
+            if item is None:
+                continue
+            total = max(1, sum(item['counts'].values()))
+            records.append({
+                "domain":   d['name'],
+                "High":     item['counts'].get('high', 0)   / total,
+                "Unclear":  item['counts'].get('unclear', 0) / total,
+                "Low":      item['counts'].get('low', 0)    / total,
+            })
+        return pd.DataFrame(records) if records else pd.DataFrame(
+            columns=["domain", "High", "Unclear", "Low"])
+
+    rob_summary = _make_summary_df(bias_domains,   bias_keys)
+    app_summary = _make_summary_df(applic_domains, applic_keys)
+
+    has_applic = len(app_summary) > 0
+
+    fig = plt.figure(figsize=(11, 5.5))
+    grid = fig.add_gridspec(
+        nrows=2, ncols=2,
+        height_ratios=[1.0, 0.22],
+        width_ratios=[1, 1],
+        hspace=0.5, wspace=0.35,
+    )
+    ax_left   = fig.add_subplot(grid[0, 0])
+    ax_right  = fig.add_subplot(grid[0, 1])
+    ax_legend = fig.add_subplot(grid[1, :])
+
+    _draw_summary_bar(ax_left,  rob_summary, "Risk of Bias")
+    if has_applic:
+        _draw_summary_bar(ax_right, app_summary, "Applicability Concerns")
+    else:
+        ax_right.axis("off")
+
+    _draw_legend(ax_legend)
+
+    plt.tight_layout(pad=0.5)
+    return _fig_to_b64(fig)
 
 @login_required
 @require_http_methods(['GET'])

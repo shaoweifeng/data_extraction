@@ -1,6 +1,13 @@
 <template>
   <div class="traffic-light-chart">
     <div class="chart-title" v-if="title">{{ title }}</div>
+
+    <!-- 编辑提示 -->
+    <div class="edit-hint" v-if="editable">
+      <i class="fas fa-pencil-alt"></i>
+      点击左侧文献名可修改，修改后点击「生成图表」将使用新名称生成 PNG
+    </div>
+
     <div class="tl-wrap">
 
       <!-- 第一行：分组标题 -->
@@ -20,7 +27,7 @@
         </div>
       </div>
 
-      <!-- 第二行：领域名（旋转文字，独立高度） -->
+      <!-- 第二行：领域名（旋转文字） -->
       <div class="tl-row tl-domain-row">
         <div class="tl-label-col"></div>
         <div class="tl-cols">
@@ -45,7 +52,34 @@
           :key="ref.id"
           :class="['tl-row', 'tl-data-row', { even: ri % 2 === 0 }]"
         >
-          <div class="tl-label-col" :title="ref.title">{{ truncate(ref.title, 30) }}</div>
+          <!-- 文献名：可编辑 -->
+          <div class="tl-label-col">
+            <template v-if="editable">
+              <input
+                v-if="editingId === ref.id"
+                class="label-input"
+                :value="localLabels[ref.id] ?? ref.title"
+                @blur="e => commitEdit(ref.id, e.target.value)"
+                @keyup.enter="e => commitEdit(ref.id, e.target.value)"
+                @keyup.escape="editingId = null"
+                ref="inputRef"
+                :title="localLabels[ref.id] ?? ref.title"
+              />
+              <span
+                v-else
+                class="label-editable"
+                :title="(localLabels[ref.id] ?? ref.title) + '\n点击修改'"
+                @click="startEdit(ref.id)"
+              >
+                <span class="label-text">{{ truncate(localLabels[ref.id] ?? ref.title, 28) }}</span>
+                <i class="fas fa-pencil-alt label-edit-icon"></i>
+              </span>
+            </template>
+            <template v-else>
+              <span :title="ref.title">{{ truncate(ref.title, 30) }}</span>
+            </template>
+          </div>
+
           <div class="tl-cols">
             <div
               v-for="(result, di) in ref.bias_results"
@@ -70,17 +104,49 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, reactive, nextTick, watch } from 'vue'
 
 const props = defineProps({
-  data:  { type: Object, required: true },
-  title: { type: String, default: '' },
+  data:     { type: Object, required: true },
+  title:    { type: String, default: '' },
+  editable: { type: Boolean, default: false },
+  // 外部传入的当前标签（从父组件 v-model:studyLabels 同步）
+  studyLabels: { type: Object, default: () => ({}) },
 })
+
+const emit = defineEmits(['update:studyLabels'])
 
 const CELL_W = 56
 
 const nBias   = computed(() => props.data.n_bias   ?? props.data.domain_names?.length ?? 0)
 const nApplic = computed(() => props.data.n_applic ?? 0)
+
+// 本地编辑状态
+const localLabels = reactive({ ...props.studyLabels })
+const editingId   = ref(null)
+const inputRef    = ref(null)
+
+// 外部 studyLabels 变化时同步
+watch(() => props.studyLabels, (val) => {
+  Object.assign(localLabels, val)
+}, { deep: true })
+
+function startEdit(id) {
+  editingId.value = id
+  nextTick(() => {
+    const el = document.querySelector('.label-input')
+    if (el) { el.focus(); el.select() }
+  })
+}
+
+function commitEdit(id, val) {
+  const trimmed = val?.trim()
+  if (trimmed) {
+    localLabels[id] = trimmed
+    emit('update:studyLabels', { ...localLabels })
+  }
+  editingId.value = null
+}
 
 const legends = [
   { key: 'low',     cls: 'leg-low',     icon: 'fas fa-circle-check',    label: '低风险' },
@@ -120,34 +186,78 @@ function truncate(s, n) {
   font-size: 0.85rem;
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   text-align: center;
+}
+.edit-hint {
+  font-size: 0.72rem;
+  color: #6366f1;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .tl-wrap { overflow-x: auto; }
 
-/* 所有行的共同布局 */
 .tl-row { display: flex; align-items: center; }
 
-/* 左侧文献标签列（固定宽度） */
+/* 左侧文献标签列 */
 .tl-label-col {
-  width: 200px;
+  width: 210px;
   min-width: 160px;
   flex-shrink: 0;
   font-size: 0.75rem;
   color: #475569;
   padding-right: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* 右侧列区域 */
-.tl-cols {
+.tl-cols { display: flex; flex-shrink: 0; }
+
+/* ── 可编辑文献名 ─────────────────────────────────────── */
+.label-editable {
   display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  transition: background 0.12s;
+  overflow: hidden;
+}
+.label-editable:hover { background: #f1f5f9; }
+.label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.label-edit-icon {
+  font-size: 0.6rem;
+  color: #94a3b8;
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.label-editable:hover .label-edit-icon { opacity: 1; }
+
+.label-input {
+  width: 100%;
+  font-size: 0.75rem;
+  color: #1e293b;
+  border: 1px solid #6366f1;
+  border-radius: 4px;
+  padding: 2px 6px;
+  outline: none;
+  background: #fff;
+  box-sizing: border-box;
 }
 
-/* ── 分组标题行 ───────────────────────────────────────────── */
+/* ── 分组标题行 ───────────────────────────────────────── */
 .tl-group-label {
   height: 22px;
   display: flex;
@@ -160,29 +270,18 @@ function truncate(s, n) {
   flex-shrink: 0;
   margin-bottom: 3px;
 }
-.bias-label {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-}
-.applic-label {
-  background: #f0fdf4;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-}
+.bias-label   { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.applic-label { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
 
-/* ── 领域名行 ─────────────────────────────────────────────── */
+/* ── 领域名行 ─────────────────────────────────────────── */
 .tl-domain-row { align-items: flex-end; margin-bottom: 4px; }
-
 .tl-domain-cell {
   width: 56px;
-  height: 76px;          /* 给旋转文字充分留高，不会溢出到上方 */
+  height: 76px;
   position: relative;
   flex-shrink: 0;
   overflow: visible;
 }
-
-/* 旋转文字：锚点在单元格底部中央，向左上方展开 */
 .tl-domain-text {
   position: absolute;
   bottom: 6px;
@@ -196,14 +295,9 @@ function truncate(s, n) {
 }
 .tc-bias   { color: #1d4ed8; }
 .tc-applic { color: #15803d; }
+.sep-left  { border-left: 2px solid #cbd5e1; margin-left: 1px; }
 
-/* 偏倚/适用性分隔线（加在第一个适用性列左侧） */
-.sep-left {
-  border-left: 2px solid #cbd5e1;
-  margin-left: 1px;
-}
-
-/* ── 数据行 ───────────────────────────────────────────────── */
+/* ── 数据行 ───────────────────────────────────────────── */
 .tl-body { display: flex; flex-direction: column; gap: 2px; }
 .tl-data-row { padding: 2px 0; border-radius: 4px; }
 .tl-data-row.even { background: #f8fafc; }
@@ -219,14 +313,13 @@ function truncate(s, n) {
   flex-shrink: 0;
 }
 .tl-cell.cell-applic { background: rgba(240, 253, 244, 0.5); }
-
 .cell-low     { color: #059669; }
 .cell-high    { color: #dc2626; }
 .cell-unclear { color: #d97706; }
 .cell-pending { color: #cbd5e1; }
 .cell-na      { color: #94a3b8; }
 
-/* ── 图例 ────────────────────────────────────────────────── */
+/* ── 图例 ────────────────────────────────────────────── */
 .tl-legend {
   display: flex;
   gap: 14px;

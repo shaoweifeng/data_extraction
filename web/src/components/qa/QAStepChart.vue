@@ -28,6 +28,13 @@
             <option value="all">全部已评价</option>
           </select>
         </div>
+        <div class="ctrl-item">
+          <span class="ctrl-label">交通灯方向</span>
+          <select v-model="orientation" class="qa-select">
+            <option value="horizontal">横向（研究=列）</option>
+            <option value="vertical">纵向（研究=行）</option>
+          </select>
+        </div>
         <button
           class="btn-generate"
           @click="doGenerate"
@@ -50,12 +57,12 @@
         </span>
         <div class="chart-toolbar-actions">
           <button class="tb-btn" @click="downloadImage"
-            :disabled="downloadLoading || activeChartTab === 'table'"
-            :title="activeChartTab === 'table' ? '请切换到交通灯图或比例图后下载' : '下载当前图表为 PNG'"
+            :disabled="downloadLoading"
+            title="下载交通灯图 + 比例图（共两张 PNG）"
           >
             <i class="fas fa-spinner fa-spin" v-if="downloadLoading"></i>
-            <i class="fas fa-image" v-else></i>
-            {{ downloadLoading ? '下载中...' : '下载图片' }}
+            <i class="fas fa-download" v-else></i>
+            {{ downloadLoading ? '下载中...' : '下载图片（2张）' }}
           </button>
         </div>
       </div>
@@ -79,6 +86,8 @@
           v-if="trafficLightData"
           :data="trafficLightData"
           title="偏倚风险评估图（Risk of Bias Summary）"
+          :editable="true"
+          v-model:studyLabels="studyLabels"
         />
         <div v-else class="chart-empty">暂无交通灯图数据</div>
       </div>
@@ -123,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useQAStore } from '@/stores/qa'
 import { useProjectStore } from '@/stores/project'
 import QATrafficLight    from './QATrafficLight.vue'
@@ -135,8 +144,24 @@ const project = useProjectStore()
 
 const chartMethod    = ref('QUADAS2')
 const refScope       = ref('confirmed')
+const orientation    = ref('horizontal')
 const activeChartTab = ref('traffic')
 const downloadLoading = ref(false)
+
+// 文献名自定义标签：{ ref_id: label_str }
+// 每次 chartData 刷新时用默认值初始化，用户修改后保留到下次生成
+const studyLabels = reactive({})
+
+watch(() => qa.chartData, (d) => {
+  // 新数据加载时，把已有默认值填入（不覆盖用户已经改过的）
+  if (!d || !Array.isArray(d.traffic_light)) return
+  d.traffic_light.forEach(row => {
+    const id = String(row.ref_id)
+    if (!(id in studyLabels)) {
+      studyLabels[id] = row.title || `Ref ${row.ref_id}`
+    }
+  })
+})
 
 const chartTabs = [
   { key: 'traffic',    icon: 'fas fa-traffic-light', label: '交通灯图' },
@@ -254,26 +279,28 @@ async function doGenerate() {
   }
 
   try {
-    await qa.generateChart(project.currentProject.id, chartMethod.value, refIds)
+    // 把用户自定义的文献名一起传给后端，robvis 用这些名称生成 PNG
+    await qa.generateChart(project.currentProject.id, chartMethod.value, refIds, { ...studyLabels }, orientation.value)
   } catch (e) {
     alert(e?.response?.data?.error || '图表生成失败')
   }
 }
 
-// 下载当前图表图片（直接用后端生成的 base64）
+// 下载图表图片：同时下载交通灯图 + 比例图
 async function downloadImage() {
   downloadLoading.value = true
   try {
     const method = qa.chartData?.quality_method || ''
-    if (activeChartTab.value === 'proportion') {
-      const b64 = qa.chartData?.proportion_image
-      if (!b64) { alert('暂无比例图，请重新生成图表'); return }
-      _dl(b64, `qa_proportion_${method}.png`)
-    } else {
-      const b64 = qa.chartData?.traffic_light_image
-      if (!b64) { alert('暂无交通灯图，请重新生成图表'); return }
-      _dl(b64, `qa_traffic_light_${method}.png`)
+    const tl  = qa.chartData?.traffic_light_image
+    const sum = qa.chartData?.proportion_image
+
+    if (!tl && !sum) {
+      alert('暂无图表，请先生成图表')
+      return
     }
+    if (tl)  _dl(tl,  `qa_traffic_light_${method}.png`)
+    // 稍微延迟，避免浏览器合并两次下载
+    if (sum) setTimeout(() => _dl(sum, `qa_proportion_${method}.png`), 200)
   } finally {
     downloadLoading.value = false
   }

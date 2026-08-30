@@ -220,13 +220,15 @@ export const useQAStore = defineStore('qa', () => {
     return res.data.data
   }
 
-  async function generateChart(projectId, qualityMethod, refIds = []) {
+  async function generateChart(projectId, qualityMethod, refIds = [], studyLabels = {}, orientation = 'horizontal') {
     chartLoading.value = true
     try {
       const res = await http.post('/qa/chart/generate/', {
         project_id: projectId,
         quality_method: qualityMethod,
         ref_ids: refIds,
+        study_labels: studyLabels,
+        orientation,
       })
       chartData.value = res.data.data
       // 缓存到 sessionStorage，刷新后可恢复（key 带 projectId 隔离）

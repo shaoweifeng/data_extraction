@@ -6,138 +6,104 @@
         {{ filename }}
       </span>
       <div class="toolbar-actions">
-        <button class="tb-btn" @click="zoomOut" :disabled="scale <= 0.5"><i class="fas fa-search-minus"></i></button>
-        <span class="zoom-label">{{ Math.round(scale * 100) }}%</span>
-        <button class="tb-btn" @click="zoomIn" :disabled="scale >= 3"><i class="fas fa-search-plus"></i></button>
-        <button class="tb-btn" @click="prevPage" :disabled="currentPage <= 1"><i class="fas fa-chevron-left"></i></button>
-        <span class="page-label">{{ currentPage }} / {{ totalPages }}</span>
-        <button class="tb-btn" @click="nextPage" :disabled="currentPage >= totalPages"><i class="fas fa-chevron-right"></i></button>
         <a :href="pdfUrl" target="_blank" class="tb-btn" title="新窗口打开">
-          <i class="fas fa-external-link-alt"></i>
+          <i class="fas fa-external-link-alt"></i> 新窗口打开
+        </a>
+        <a :href="pdfUrl" download class="tb-btn" title="下载 PDF">
+          <i class="fas fa-download"></i> 下载
         </a>
       </div>
     </div>
-
-    <div class="viewer-body" ref="containerRef">
-      <div v-if="loading" class="loading-state">
-        <i class="fas fa-spinner fa-spin"></i>
-        加载中...
+    <div class="viewer-body">
+      <!-- 加载中 -->
+      <div v-if="loading" class="empty-state">
+        <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#6366f1"></i>
+        <p>加载 PDF 中…</p>
       </div>
-      <div v-else-if="error" class="error-state">
-        <i class="fas fa-exclamation-triangle"></i>
+      <!-- 加载失败 -->
+      <div v-else-if="error" class="empty-state">
+        <i class="fas fa-exclamation-circle" style="font-size:2rem;color:#dc2626"></i>
         <p>{{ error }}</p>
-        <a :href="pdfUrl" target="_blank" class="fallback-link">点此直接下载 PDF</a>
+        <a :href="pdfUrl" target="_blank" class="tb-btn" style="margin-top:8px">
+          <i class="fas fa-external-link-alt"></i> 在新窗口打开
+        </a>
       </div>
-      <div v-else class="canvas-wrap" :style="{ transform: `scale(${scale})`, transformOrigin: 'top center' }">
-        <canvas ref="canvasRef"></canvas>
+      <!-- Blob URL iframe，避免 Electron 里 Chrome PDF 插件的内部请求被拒 -->
+      <iframe
+        v-else-if="blobUrl"
+        :src="blobUrl"
+        class="pdf-iframe"
+        frameborder="0"
+      ></iframe>
+      <!-- 无文件 -->
+      <div v-else class="empty-state">
+        <i class="fas fa-file-pdf"></i>
+        <p>暂无全文文件</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
 const props = defineProps({
-  pdfUrl:   { type: String, required: true },
+  pdfUrl:   { type: String, default: '' },
   filename: { type: String, default: 'document.pdf' },
 })
 
-const containerRef = ref(null)
-const canvasRef    = ref(null)
-const loading      = ref(true)
-const error        = ref('')
-const currentPage  = ref(1)
-const totalPages   = ref(0)
-const scale        = ref(1.2)
+const blobUrl = ref('')
+const loading = ref(false)
+const error   = ref('')
 
-let pdfDoc   = null
-let renderTask = null
+let currentBlobUrl = ''
 
-watch(() => props.pdfUrl, (url) => {
-  if (url) loadPdf(url)
-})
-
-onMounted(() => {
-  if (props.pdfUrl) loadPdf(props.pdfUrl)
-})
-
-onUnmounted(() => {
-  if (renderTask) renderTask.cancel()
-})
+function revokeCurrent() {
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl)
+    currentBlobUrl = ''
+  }
+}
 
 async function loadPdf(url) {
+  if (!url) {
+    revokeCurrent()
+    blobUrl.value = ''
+    return
+  }
   loading.value = true
   error.value   = ''
-  currentPage.value = 1
+  revokeCurrent()
+  blobUrl.value = ''
 
   try {
-    // 动态加载 pdfjs-dist（如未安装则走降级）
-    const pdfjsLib = await import('pdfjs-dist/build/pdf').catch(() => null)
-    if (!pdfjsLib) {
-      throw new Error('pdfjs-dist 未安装，无法在线预览 PDF')
-    }
-    // 设置 worker
-    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
-    }
-    pdfDoc = await pdfjsLib.getDocument({ url }).promise
-    totalPages.value = pdfDoc.numPages
-    loading.value = false
-    await nextTick()
-    await renderPage(currentPage.value)
+    const resp = await fetch(url, { credentials: 'include' })
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+    const blob = await resp.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    currentBlobUrl = objectUrl
+    blobUrl.value  = objectUrl
   } catch (e) {
+    error.value = `PDF 加载失败：${e.message}，请尝试「新窗口打开」`
+  } finally {
     loading.value = false
-    error.value = e.message || 'PDF 加载失败'
   }
 }
 
-async function renderPage(pageNum) {
-  if (!pdfDoc || !canvasRef.value) return
-  if (renderTask) renderTask.cancel()
+watch(() => props.pdfUrl, (url) => loadPdf(url), { immediate: true })
 
-  const page = await pdfDoc.getPage(pageNum)
-  const viewport = page.getViewport({ scale: 1.5 })
-  const canvas   = canvasRef.value
-  const ctx      = canvas.getContext('2d')
-
-  canvas.height = viewport.height
-  canvas.width  = viewport.width
-
-  renderTask = page.render({ canvasContext: ctx, viewport })
-  await renderTask.promise.catch(() => {}) // 取消时静默
-}
-
-function prevPage() {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    renderPage(currentPage.value)
-  }
-}
-function nextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    renderPage(currentPage.value)
-  }
-}
-function zoomIn()  { scale.value = Math.min(3, +(scale.value + 0.25).toFixed(2)) }
-function zoomOut() { scale.value = Math.max(0.5, +(scale.value - 0.25).toFixed(2)) }
+onUnmounted(() => revokeCurrent())
 </script>
 
 <style scoped>
 .pdf-viewer { display: flex; flex-direction: column; height: 100%; background: #1e1e2e; border-radius: 12px; overflow: hidden; }
-.viewer-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: #2d2d44; border-bottom: 1px solid #3d3d5c; }
+.viewer-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: #2d2d44; border-bottom: 1px solid #3d3d5c; flex-shrink: 0; }
 .viewer-title { font-size: 0.78rem; color: #c4c4d4; display: flex; align-items: center; gap: 6px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.toolbar-actions { display: flex; align-items: center; gap: 4px; }
-.tb-btn { padding: 4px 8px; background: #3d3d5c; border: none; color: #c4c4d4; border-radius: 5px; cursor: pointer; font-size: 0.75rem; transition: background 0.12s; text-decoration: none; }
-.tb-btn:hover:not(:disabled) { background: #5353a0; color: #fff; }
-.tb-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.zoom-label, .page-label { font-size: 0.72rem; color: #94a3b8; padding: 0 4px; min-width: 36px; text-align: center; }
-.viewer-body { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 16px; }
-.loading-state, .error-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #94a3b8; font-size: 0.85rem; padding: 60px; }
-.error-state i { font-size: 2rem; color: #f87171; }
-.error-state p { margin: 0; }
-.fallback-link { color: #818cf8; font-size: 0.8rem; }
-.canvas-wrap { transition: transform 0.1s; }
-.canvas-wrap canvas { display: block; box-shadow: 0 4px 24px rgba(0,0,0,.5); border-radius: 4px; }
+.toolbar-actions { display: flex; align-items: center; gap: 6px; }
+.tb-btn { padding: 5px 10px; background: #3d3d5c; border: none; color: #c4c4d4; border-radius: 5px; cursor: pointer; font-size: 0.75rem; transition: background 0.12s; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+.tb-btn:hover { background: #5353a0; color: #fff; }
+.viewer-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.pdf-iframe { width: 100%; height: 100%; border: none; background: #fff; flex: 1; }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 20px; }
+.empty-state i { font-size: 2.5rem; color: #475569; }
 </style>

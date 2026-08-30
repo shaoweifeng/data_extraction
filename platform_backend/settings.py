@@ -166,8 +166,11 @@ STORAGES = {
 WHITENOISE_INDEX_FILE = False
 WHITENOISE_MAX_AGE = 3600
 
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# 允许同源 iframe 加载（PDF 在 <iframe> 中预览需要 SAMEORIGIN 而非 DENY）
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
