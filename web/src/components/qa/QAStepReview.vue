@@ -290,7 +290,12 @@ function domainConfirmedCount(domain) {
 
 async function selectRef(ref) {
   activeDomain.value = 'all'
-  await qa.selectRef(ref)
+  try {
+    await qa.selectRef(ref)
+  } catch (e) {
+    console.error('[QAStepReview] selectRef failed', e)
+    alert(`加载文献「${ref.title?.slice(0, 30)}...」时出错：${e?.response?.data?.error || e?.message || '未知错误'}`)
+  }
 }
 
 // ── 一键确认 ──────────────────────────────────────────────────────────────────

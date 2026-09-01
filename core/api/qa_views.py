@@ -102,6 +102,19 @@ def _serialize_ref(ref: QAReference) -> dict:
     }
 
 
+def _safe_list(val) -> list:
+    """确保 options 字段始终返回 list，兼容历史数据中意外存成字符串的情况。"""
+    if isinstance(val, list):
+        return val
+    if isinstance(val, str):
+        try:
+            parsed = json.loads(val)
+            return parsed if isinstance(parsed, list) else [parsed]
+        except Exception:
+            return [val] if val else []
+    return []
+
+
 def _serialize_signal(item: QASignalItem) -> dict:
     return {
         'id':               item.id,
@@ -112,7 +125,7 @@ def _serialize_signal(item: QASignalItem) -> dict:
         'signal_key':       item.signal_key,
         'signal_question':  item.signal_question,
         'signal_description': item.signal_description,
-        'options':          item.options,
+        'options':          _safe_list(item.options),
         # 单模型
         'ai_judgment':      item.ai_judgment,
         'ai_reason':        item.ai_reason,

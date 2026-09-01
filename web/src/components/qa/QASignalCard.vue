@@ -59,7 +59,7 @@
       <span class="confirm-label">最终判断</span>
       <div class="judgment-options">
         <button
-          v-for="opt in item.options"
+          v-for="opt in safeOptions"
           :key="opt"
           :class="['opt-btn', {
             active: humanJudgment === opt,
@@ -107,6 +107,16 @@ const props = defineProps({
 const qa = useQAStore()
 const humanJudgment = ref(props.item.human_judgment || props.item.pre_selected || '')
 const confirmLoading = ref(false)
+
+// 防御：options 可能是 null / 字符串，保证始终是数组
+const safeOptions = computed(() => {
+  const o = props.item.options
+  if (Array.isArray(o)) return o
+  if (typeof o === 'string' && o) {
+    try { const p = JSON.parse(o); return Array.isArray(p) ? p : [p] } catch { return [o] }
+  }
+  return []
+})
 
 watch(() => props.item, (newItem) => {
   humanJudgment.value = newItem.human_judgment || newItem.pre_selected || ''
