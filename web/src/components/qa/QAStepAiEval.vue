@@ -11,7 +11,7 @@
     </div>
 
     <!-- 评价配置卡片 -->
-    <div class="config-section" v-if="!isRunning && !isCompleted">
+    <div class="config-section" v-if="!isRunning && showConfig">
       <!-- 文献概览 -->
       <div class="overview-row">
         <div class="ov-item">
@@ -79,6 +79,13 @@
 
       <!-- 启动按钮 -->
       <div class="start-section">
+        <button v-if="isCompleted" class="btn-back-result" @click="showConfig = false">
+          <i class="fas fa-arrow-left"></i> 返回结果
+        </button>
+        <div class="reeval-hint" v-if="isCompleted && reevalScope === 'failed'">
+          <i class="fas fa-info-circle" style="color:#f59e0b"></i>
+          仅重评 {{ failedCount }} 篇失败/跳过的文献
+        </div>
         <div class="credit-hint" v-if="estimatedCredits > 0">
           <i class="fas fa-coins" style="color:#f59e0b"></i>
           预计消耗 {{ estimatedCredits }} 积分
@@ -89,13 +96,13 @@
           :disabled="!canStart"
         >
           <i class="fas fa-play"></i>
-          开始 AI 评价
+          {{ isCompleted ? (reevalScope === 'failed' ? '重新评价（失败/跳过）' : '重新评价（全部）') : '开始 AI 评价' }}
         </button>
       </div>
     </div>
 
-    <!-- 运行中 / 已完成进度面板 -->
-    <div v-if="isRunning || isCompleted" class="progress-panel">
+      <!-- 运行中 / 已完成进度面板 -->
+    <div v-if="isRunning || (isCompleted && !showConfig)" class="progress-panel">
       <div class="progress-head">
         <div class="progress-status-icon" :class="isCompleted ? 'done' : 'running'">
           <i :class="isCompleted ? 'fas fa-check' : 'fas fa-spinner fa-spin'"></i>
@@ -104,9 +111,17 @@
           <p class="progress-title">{{ isCompleted ? 'AI 评价完成' : 'AI 评价进行中...' }}</p>
           <p class="progress-subtitle">共 {{ totalCount }} 篇文献，已完成 {{ doneCount }} 篇</p>
         </div>
-        <button v-if="!isCompleted" class="btn-cancel" @click="handleCancel">
-          <i class="fas fa-stop"></i> 取消
-        </button>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button v-if="isCompleted" class="btn-reeval" @click="enterReeval('failed')">
+            <i class="fas fa-redo"></i> 重评失败/跳过
+          </button>
+          <button v-if="isCompleted" class="btn-reeval btn-reeval-all" @click="enterReeval('all')">
+            <i class="fas fa-rotate"></i> 重评全部
+          </button>
+          <button v-if="!isCompleted" class="btn-cancel" @click="handleCancel">
+            <i class="fas fa-stop"></i> 取消
+          </button>
+        </div>
       </div>
 
       <!-- 总进度条 -->
@@ -211,6 +226,8 @@ const evalMode      = ref('single')
 const selectedModels = ref(['deepseek'])
 const showConfirmModal = ref(false)
 const startLoading  = ref(false)
+const showConfig    = ref(true)   // 控制配置面板显示：未评价时/点重新评价时显示
+const reevalScope   = ref('all')  // 重评范围：'all' | 'failed'
 
 const evalModes = [
   {
@@ -242,7 +259,14 @@ const totalCount      = computed(() => qa.refs.length)
 const aiSupportedCount = computed(() => qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method)).length)
 const noMethodCount   = computed(() => qa.refs.filter(r => !r.quality_method).length)
 const noFultextCount  = computed(() => qa.refs.filter(r => r.fulltext_status !== 'available').length)
-const estimatedCredits = computed(() => aiSupportedCount.value * (evalMode.value === 'dual' ? 10 : 5))
+const failedCount     = computed(() => {
+  const failedStatuses = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
+  return qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && failedStatuses.includes(r.ai_eval_status)).length
+})
+const estimatedCredits = computed(() => {
+  const count = reevalScope.value === 'failed' ? failedCount.value : aiSupportedCount.value
+  return count * (evalMode.value === 'dual' ? 10 : 5)
+})
 
 // ── 进度 ──────────────────────────────────────────────────────────────────────
 
@@ -300,11 +324,25 @@ const canStart = computed(() => {
 async function doStartEval() {
   startLoading.value = true
   try {
-    const refIds = qa.refs
-      .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method))
-      .map(r => r.id)
+    let refIds
+    if (reevalScope.value === 'failed') {
+      // 仅重评失败/跳过的文献
+      const failedStatuses = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
+      refIds = qa.refs
+        .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && failedStatuses.includes(r.ai_eval_status))
+        .map(r => r.id)
+      if (!refIds.length) {
+        alert('没有需要重评的失败/跳过文献')
+        return
+      }
+    } else {
+      refIds = qa.refs
+        .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method))
+        .map(r => r.id)
+    }
     await qa.startEval(project.currentProject.id, refIds, evalMode.value, selectedModels.value)
     showConfirmModal.value = false
+    showConfig.value = false   // 启动后隐藏配置，显示进度
     // 开始轮询
     qa.startPollingProgress(project.currentProject.id)
     // 立即拉一次
@@ -314,6 +352,11 @@ async function doStartEval() {
   } finally {
     startLoading.value = false
   }
+}
+
+function enterReeval(scope) {
+  reevalScope.value = scope
+  showConfig.value = true   // 回到配置界面
 }
 
 function handleCancel() {
@@ -328,6 +371,9 @@ onMounted(async () => {
     await qa.fetchEvalProgress(project.currentProject.id)
     if (isRunning.value) {
       qa.startPollingProgress(project.currentProject.id)
+      showConfig.value = false
+    } else if (isCompleted.value) {
+      showConfig.value = false   // 已完成 → 默认显示结果面板，不遮住进度
     }
   }
 })
@@ -420,11 +466,17 @@ function statusBadgeClass(s) {
 .tag-amber { background: #fef3c7; color: #b45309; font-size: 0.65rem; padding: 1px 5px; border-radius: 4px; }
 
 /* 启动区 */
-.start-section { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+.start-section { display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap; }
 .credit-hint { font-size: 0.78rem; color: #94a3b8; display: flex; align-items: center; gap: 4px; }
+.reeval-hint { font-size: 0.78rem; color: #f59e0b; display: flex; align-items: center; gap: 4px; }
 .btn-start { padding: 10px 28px; background: linear-gradient(135deg, #f59e0b, #f97316); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(249,115,22,.25); }
 .btn-start:hover:not(:disabled) { opacity: 0.9; }
 .btn-start:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-back-result { padding: 8px 14px; background: #fff; border: 1px solid #e2e8f0; color: #64748b; border-radius: 8px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+.btn-back-result:hover { border-color: #6366f1; color: #6366f1; }
+.btn-reeval { padding: 7px 14px; background: #fff; border: 1px solid #e2e8f0; color: #475569; border-radius: 8px; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.btn-reeval:hover { border-color: #f59e0b; color: #f59e0b; }
+.btn-reeval-all:hover { border-color: #6366f1; color: #6366f1; }
 
 /* 进度面板 */
 .progress-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }

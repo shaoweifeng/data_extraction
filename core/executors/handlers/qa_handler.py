@@ -42,31 +42,38 @@ def extract_pdf_meta(ref_id: int):
         if not os.path.exists(file_path):
             return
 
-        # 尝试 PyPDF2
+        # 优先用 PyMuPDF，可处理 AES 加密 PDF
         try:
-            import PyPDF2
-            with open(file_path, 'rb') as f:
-                reader = PyPDF2.PdfReader(f)
-                info = reader.metadata or {}
-                title = info.get('/Title', '').strip()
-                author = info.get('/Author', '').strip()
-                # 提取摘要：取首页文本前 600 字
-                if reader.pages:
-                    text = reader.pages[0].extract_text() or ''
-                    abstract_hint = text[:600].strip()
-                else:
-                    abstract_hint = ''
-            updates = {}
-            if title and not ref.title.endswith('.pdf'):
-                updates['title'] = title
-            if author and not ref.first_author:
-                updates['first_author'] = author.split(';')[0].split(',')[0][:100]
-            if abstract_hint and not ref.abstract:
-                updates['abstract'] = abstract_hint
-            if updates:
-                QAReference.objects.filter(pk=ref_id).update(**updates)
-        except Exception as e:
-            logger.debug(f'PDF meta parse fallback: {e}')
+            import fitz  # PyMuPDF
+            doc = fitz.open(file_path)
+            meta = doc.metadata or {}
+            title = (meta.get('title') or '').strip()
+            author = (meta.get('author') or '').strip()
+            abstract_hint = doc[0].get_text()[:600].strip() if len(doc) > 0 else ''
+            doc.close()
+        except Exception:
+            # 降级到 PyPDF2
+            try:
+                import PyPDF2
+                with open(file_path, 'rb') as f:
+                    reader = PyPDF2.PdfReader(f)
+                    info = reader.metadata or {}
+                    title = info.get('/Title', '').strip()
+                    author = info.get('/Author', '').strip()
+                    abstract_hint = (reader.pages[0].extract_text() or '')[:600].strip() if reader.pages else ''
+            except Exception as e:
+                logger.debug(f'PDF meta parse fallback: {e}')
+                title = author = abstract_hint = ''
+
+        updates = {}
+        if title and not ref.title.endswith('.pdf'):
+            updates['title'] = title
+        if author and not ref.first_author:
+            updates['first_author'] = author.split(';')[0].split(',')[0][:100]
+        if abstract_hint and not ref.abstract:
+            updates['abstract'] = abstract_hint
+        if updates:
+            QAReference.objects.filter(pk=ref_id).update(**updates)
     except Exception as e:
         logger.warning(f'extract_pdf_meta ref_id={ref_id}: {e}')
 
@@ -418,13 +425,34 @@ class QAEvalHandler:
 
     @staticmethod
     def _extract_pdf_text(file_path: str) -> str:
-        """提取 PDF 文本（优先 PyPDF2，备用 pdfminer）"""
+        """提取 PDF 文本（优先 PyMuPDF，备用 PyPDF2，再备用 pdfminer）。
+        PyMuPDF 可正确处理 AES 加密 PDF 及复杂字体嵌入，推荐首选。
+        """
+        # ── 优先：PyMuPDF（fitz）────────────────────────────────────────────
+        try:
+            import fitz  # PyMuPDF
+            doc = fitz.open(file_path)
+            pages_text = []
+            for page in doc[:20]:  # 最多读前 20 页
+                t = page.get_text()
+                if t and t.strip():
+                    pages_text.append(t)
+            doc.close()
+            result = '\n'.join(pages_text)
+            if result.strip():
+                return result
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.debug(f'PyMuPDF 失败: {e}')
+
+        # ── 备用：PyPDF2 ────────────────────────────────────────────────────
         try:
             import PyPDF2
             with open(file_path, 'rb') as f:
                 reader = PyPDF2.PdfReader(f)
                 pages_text = []
-                for page in reader.pages[:20]:  # 最多读前 20 页
+                for page in reader.pages[:20]:
                     t = page.extract_text()
                     if t:
                         pages_text.append(t)
@@ -434,6 +462,7 @@ class QAEvalHandler:
         except Exception as e:
             logger.debug(f'PyPDF2 失败: {e}')
 
+        # ── 最终备用：pdfminer ───────────────────────────────────────────────
         try:
             from pdfminer.high_level import extract_text
             return extract_text(file_path)
