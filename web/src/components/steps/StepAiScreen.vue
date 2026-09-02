@@ -133,6 +133,80 @@
         </div>
       </div>
 
+      <!-- Prompt 设置区 -->
+      <div class="ai-prompt-section">
+        <button
+          @click="promptPanelOpen = !promptPanelOpen"
+          class="ai-prompt-toggle-btn"
+          :class="{ 'ai-prompt-toggle-btn-active': promptPanelOpen }"
+        >
+          <span class="flex items-center gap-1.5">
+            <i class="fas fa-sliders-h text-indigo-400"></i>
+            <span class="font-medium">Prompt 设置</span>
+            <span v-if="s.useCustomPrompt" class="ai-prompt-badge">自定义</span>
+          </span>
+          <i :class="promptPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-gray-400 text-xs"></i>
+        </button>
+
+        <div v-show="promptPanelOpen" class="ai-prompt-panel">
+          <!-- 默认/自定义 切换 -->
+          <div class="flex gap-5 text-sm mb-3">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" :value="false" v-model="s.useCustomPrompt" class="accent-indigo-600" />
+              <span :class="!s.useCustomPrompt ? 'text-indigo-700 font-semibold' : 'text-gray-500'">默认 Prompt</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" :value="true" v-model="s.useCustomPrompt" class="accent-indigo-600" />
+              <span :class="s.useCustomPrompt ? 'text-indigo-700 font-semibold' : 'text-gray-500'">自定义 Prompt</span>
+            </label>
+          </div>
+
+          <!-- 默认 Prompt 预览 -->
+          <div v-if="!s.useCustomPrompt" class="ai-prompt-preview">
+            {{ defaultPromptPreview }}
+          </div>
+
+          <!-- 自定义 Prompt 编辑区 -->
+          <div v-else class="space-y-2">
+            <div class="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <i class="fas fa-exclamation-triangle mt-0.5 flex-shrink-0"></i>
+              <span>必须包含 <code class="bg-amber-100 px-1 rounded font-mono">{screening_criteria}</code> 占位符，纳排标准将自动注入</span>
+            </div>
+            <textarea
+              v-model="s.customPromptText"
+              rows="9"
+              placeholder="在此输入自定义 Prompt，必须包含 {screening_criteria} 占位符..."
+              class="ai-prompt-textarea"
+              :class="s.customPromptText && !s.customPromptText.includes('{screening_criteria}') ? 'ai-prompt-textarea-error' : ''"
+            ></textarea>
+            <div v-if="s.customPromptText && !s.customPromptText.includes('{screening_criteria}')" class="text-xs text-red-500 flex items-center gap-1">
+              <i class="fas fa-times-circle"></i> 缺少 {screening_criteria} 占位符，无法保存
+            </div>
+          </div>
+
+          <!-- 操作行 -->
+          <div class="flex gap-2 items-center mt-3">
+            <button
+              @click="savePrompt"
+              :disabled="s.useCustomPrompt && (!s.customPromptText || !s.customPromptText.includes('{screening_criteria}'))"
+              class="ai-prompt-save-btn"
+            >
+              <i class="fas fa-save mr-1"></i>保存
+            </button>
+            <button
+              v-if="s.useCustomPrompt"
+              @click="resetPrompt"
+              class="ai-prompt-reset-btn"
+            >
+              <i class="fas fa-undo mr-1"></i>重置为默认
+            </button>
+            <span v-if="promptSaveStatus" class="text-xs" :class="promptSaveStatus === 'ok' ? 'text-green-600' : 'text-red-500'">
+              {{ promptSaveStatus === 'ok' ? '✓ 已保存' : '✗ 保存失败' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- 进度区 -->
       <div v-if="s.isProcessing || (s.latestAiScreenTask && ['completed','stopped','running','pending','stopping','queuing'].includes(s.latestAiScreenTask.status))" class="ai-progress-section">
         <div class="ai-progress-header">
@@ -300,6 +374,9 @@ const taskStore = useTaskStore()
 
 const billing = ref({ balance: null, estimated: null, sufficient: null })
 const queueInfo = ref({ position: 0, queueLength: 0, slotsNeeded: 0, slotsFree: 0, slotsTotal: 0 })
+const promptPanelOpen = ref(false)
+const promptSaveStatus = ref('')
+const defaultPromptPreview = ref('（加载中...）')
 
 // ── 文献计数 ──────────────────────────────────────────────────
 // 后端 aiModelsList 现在是分组结构，展平为子模型列表供选择
@@ -447,6 +524,7 @@ onMounted(async () => {
   }
   await Promise.all([
     loadAiModels(),
+    loadPrompt(),
     taskStore.fetchRecentTasks(project.currentProject?.id, project.stagesData),
   ])
   await loadPending()
@@ -455,6 +533,42 @@ onMounted(async () => {
   syncLatestAiTask()
   loadBilling()
 })
+
+// ── Prompt ──────────────────────────────────────────────────
+async function loadPrompt() {
+  if (!project.currentProject) return
+  try {
+    const res = await http.get(`/projects/${project.currentProject.id}/get_prompt/`)
+    s.useCustomPrompt = res.data.use_custom_prompt || false
+    s.customPromptText = res.data.custom_prompt || ''
+    if (res.data.default_prompt) defaultPromptPreview.value = res.data.default_prompt
+  } catch {}
+}
+
+async function savePrompt() {
+  if (!project.currentProject) return
+  if (s.useCustomPrompt && !s.customPromptText.includes('{screening_criteria}')) return
+  promptSaveStatus.value = ''
+  try {
+    await http.post(`/projects/${project.currentProject.id}/save_prompt/`, {
+      custom_prompt: s.customPromptText,
+      use_custom_prompt: s.useCustomPrompt,
+    })
+    promptSaveStatus.value = 'ok'
+  } catch { promptSaveStatus.value = 'error' }
+  setTimeout(() => { promptSaveStatus.value = '' }, 3000)
+}
+
+async function resetPrompt() {
+  if (!project.currentProject) return
+  try {
+    await http.post(`/projects/${project.currentProject.id}/reset_prompt/`)
+    s.useCustomPrompt = false
+    s.customPromptText = ''
+    promptSaveStatus.value = 'ok'
+    setTimeout(() => { promptSaveStatus.value = '' }, 2000)
+  } catch { promptSaveStatus.value = 'error' }
+}
 
 // ── 计费 ─────────────────────────────────────────────────────
 async function loadBilling() {
@@ -982,6 +1096,7 @@ async function pollAiScreening(taskId) {
   border: 1px solid #e0e7ff;
   border-radius: 12px;
   padding: 12px 14px;
+  flex-shrink: 0;
 }
 .ai-section-label {
   font-size: 0.82rem;
@@ -1146,6 +1261,103 @@ async function pollAiScreening(taskId) {
 .billing-bar-danger { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
 .billing-item { white-space: nowrap; }
 .billing-warn { font-weight: 600; margin-left: auto; }
+
+/* ── Prompt 设置区 ── */
+.ai-prompt-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ai-prompt-toggle-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: #374151;
+  transition: background .12s;
+}
+.ai-prompt-toggle-btn:hover,
+.ai-prompt-toggle-btn-active {
+  background: #f0f0ff;
+}
+
+.ai-prompt-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border: 1px solid #c7d2fe;
+}
+
+.ai-prompt-panel {
+  padding: 12px 14px;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ai-prompt-preview {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: #64748b;
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  border: 1px solid #e2e8f0;
+}
+
+.ai-prompt-textarea {
+  width: 100%;
+  font-size: 0.72rem;
+  font-family: monospace;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  resize: vertical;
+  outline: none;
+  transition: border-color .15s;
+  line-height: 1.5;
+}
+.ai-prompt-textarea:focus { border-color: #a5b4fc; }
+.ai-prompt-textarea-error { border-color: #f87171 !important; background: #fff5f5; }
+
+.ai-prompt-save-btn {
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.ai-prompt-save-btn:hover:not(:disabled) { background: #4f46e5; }
+.ai-prompt-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ai-prompt-reset-btn {
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all .12s;
+}
+.ai-prompt-reset-btn:hover { border-color: #a5b4fc; color: #4338ca; }
 
 /* 排队状态 */
 .queue-status-bar {
