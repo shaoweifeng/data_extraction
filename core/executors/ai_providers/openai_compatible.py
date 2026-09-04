@@ -51,6 +51,9 @@ class OpenAICompatibleProvider(BaseAIProvider):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
+        # 是否为推理模型（思维链模型）：完全依赖配置文件中的 is_reasoning 字段。
+        # 不再用模型名关键词猜测，避免误判非 DeepSeek 的 flash/think 命名模型。
+        self.is_reasoning: bool = bool(self.config.get("is_reasoning", False))
 
     @property
     def name(self) -> str:
@@ -129,9 +132,9 @@ class OpenAICompatibleProvider(BaseAIProvider):
             "temperature": 0.1,
             "max_tokens": 4000,
         }
-        # deepseek-v4-flash 等推理模型默认启用 CoT，导致 content 为空。
-        # 用 thinking.disabled 禁用推理，使其直接输出结构化 JSON。
-        if "flash" in self.model.lower() or "reasoner" in self.model.lower() or "think" in self.model.lower():
+        # 推理模型（思维链模型）默认在 content 里混入推理过程，
+        # 用 thinking.disabled 禁用，使其直接输出结构化 JSON。
+        if self.is_reasoning:
             payload["thinking"] = {"type": "disabled"}
 
         try:

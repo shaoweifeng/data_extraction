@@ -27,10 +27,11 @@ def get_provider(name: str = None, config: dict = None) -> BaseAIProvider:
         model_cfg = get_model_config(provider_name)
         if model_cfg:
             config = {
-                "api_url": model_cfg["api_url"],
-                "api_key": model_cfg["api_key"],
-                "model":   model_cfg["model"],
-                "timeout": model_cfg["timeout"],
+                "api_url":      model_cfg["api_url"],
+                "api_key":      model_cfg["api_key"],
+                "model":        model_cfg["model"],
+                "timeout":      model_cfg["timeout"],
+                "is_reasoning": model_cfg.get("is_reasoning", False),  # 推理模型标志
             }
         else:
             config = {}

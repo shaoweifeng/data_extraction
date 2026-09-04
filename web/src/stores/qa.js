@@ -8,7 +8,8 @@ import http from '@/api/http'
 
 export const useQAStore = defineStore('qa', () => {
   // ── 步骤导航 ─────────────────────────────────────────────
-  const currentStep = ref(1)  // 1~6
+  const currentStep    = ref(1)  // 1~6
+  const maxReachedStep = ref(1)  // 高水位，已解锁的最大步骤
 
   // ── 文献列表（Step1/2/3共用）────────────────────────────
   const refs = ref([])
@@ -27,6 +28,7 @@ export const useQAStore = defineStore('qa', () => {
   // ── 图表数据（Step5）───────────────────────────────────
   const chartData = ref(null)
   const chartLoading = ref(false)
+  const chartPreviewLoading = ref(false)
 
   // ── 导出状态（Step6）───────────────────────────────────
   const exportStatus = ref(null)
@@ -220,6 +222,22 @@ export const useQAStore = defineStore('qa', () => {
     return res.data.data
   }
 
+  async function previewChart(projectId, qualityMethod, refIds = []) {
+    chartPreviewLoading.value = true
+    try {
+      const res = await http.post('/qa/chart/preview/', {
+        project_id: projectId,
+        quality_method: qualityMethod,
+        ref_ids: refIds,
+      })
+      // preview 不含图片，但结构与 chartData 兼容
+      chartData.value = res.data.data
+      return chartData.value
+    } finally {
+      chartPreviewLoading.value = false
+    }
+  }
+
   async function generateChart(projectId, qualityMethod, refIds = [], studyLabels = {}, orientation = 'horizontal') {
     chartLoading.value = true
     try {
@@ -286,6 +304,7 @@ export const useQAStore = defineStore('qa', () => {
 
   function reset() {
     currentStep.value = 1
+    maxReachedStep.value = 1
     refs.value = []
     refsLoading.value = false
     currentRef.value = null
@@ -301,9 +320,9 @@ export const useQAStore = defineStore('qa', () => {
 
   return {
     // state
-    currentStep, refs, refsLoading,
+    currentStep, maxReachedStep, refs, refsLoading,
     currentRef, signalItems, domainResults, signalLoading,
-    evalProgress, chartData, chartLoading, exportStatus, methods,
+    evalProgress, chartData, chartLoading, chartPreviewLoading, exportStatus, methods,
     // computed
     confirmedRefs, pendingRefs, totalRefs, evalCompleted,
     // actions
@@ -312,7 +331,7 @@ export const useQAStore = defineStore('qa', () => {
     startEval, fetchEvalProgress, startPollingProgress, stopPolling,
     selectRef, fetchSignalItems, fetchDomainResults,
     confirmSignalItem, batchConfirm,
-    generateChart, fetchChartInfo, exportExcel,
+    previewChart, generateChart, fetchChartInfo, exportExcel,
     reset,
   }
 })

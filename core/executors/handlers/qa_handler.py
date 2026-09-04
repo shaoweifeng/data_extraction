@@ -165,14 +165,34 @@ def _call_model_for_ref(model_id: str, prompt: str, signal_items: list) -> List[
 
     # 解析 JSON
     try:
-        # 提取 JSON 数组（处理模型可能输出多余文本）
+        # 提取 JSON 数组（处理推理模型思维链、多余文本等情况）
         text = response_text.strip()
-        # 找到 [ 和 ] 的最外层
-        start = text.find('[')
-        end   = text.rfind(']')
-        if start == -1 or end == -1:
-            raise ValueError('响应中未找到 JSON 数组')
-        json_str = text[start:end+1]
+
+        # 策略1：优先从 ```json ... ``` 代码块中提取
+        import re as _re
+        code_block = _re.search(r'```(?:json)?\s*(\[[\s\S]*?\])\s*```', text)
+        if code_block:
+            json_str = code_block.group(1)
+        else:
+            # 策略2：从最后一个 ] 向前找匹配的 [（取最末尾的完整数组，跳过思维链中的片段）
+            end = text.rfind(']')
+            if end == -1:
+                raise ValueError('响应中未找到 JSON 数组')
+            # 向前扫描，找括号平衡的起始 [
+            depth = 0
+            start = -1
+            for i in range(end, -1, -1):
+                if text[i] == ']':
+                    depth += 1
+                elif text[i] == '[':
+                    depth -= 1
+                    if depth == 0:
+                        start = i
+                        break
+            if start == -1:
+                raise ValueError('响应中未找到 JSON 数组')
+            json_str = text[start:end+1]
+
         parsed = json.loads(json_str)
         if not isinstance(parsed, list):
             raise ValueError('JSON 不是数组')
@@ -194,28 +214,44 @@ def _call_model_for_ref(model_id: str, prompt: str, signal_items: list) -> List[
         return []
 
 
-def _determine_consistency(r1: dict, r2: dict) -> tuple:
+def _determine_consistency(model_results: list) -> tuple:
     """
-    比较双模型结果，返回 (consistency, system_recommendation)
+    根据 N 个模型的结果计算一致性状态和系统推荐值。
+    返回 (consistency, system_recommendation)
+
+    规则：
+    - 0 个有效结果  → 'failed', ''
+    - 1 个有效结果  → 'single', 该结果
+    - N≥2 全部一致  → 'consistent', 共同值
+    - N≥3 多数一致  → 'majority', 多数值
+    - 完全分歧      → 'divergent', 保守值
+    - 部分失败      → 'partial', 成功的那个
     """
-    if not r1 and not r2:
+    valid = [r for r in model_results if r.get('judgment')]
+    if not valid:
         return 'failed', ''
-    if not r1:
-        return 'partial', r2.get('judgment', '')
-    if not r2:
-        return 'partial', r1.get('judgment', '')
-    if r1['judgment'] == r2['judgment']:
-        return 'consistent', r1['judgment']
-    else:
-        # 分歧：推荐更"保守"的判断（倾向于 unclear/否/高风险）
-        conservative_priority = ['否', '高', '不清楚', '是', '低']
-        j1, j2 = r1['judgment'], r2['judgment']
-        for safe_answer in conservative_priority:
-            if j1 == safe_answer:
-                return 'divergent', j1
-            if j2 == safe_answer:
-                return 'divergent', j2
-        return 'divergent', j1  # fallback 取第一个
+    if len(valid) == 1:
+        return 'single', valid[0]['judgment']
+
+    judgments = [r['judgment'] for r in valid]
+    # 统计各判断出现次数
+    from collections import Counter
+    counts = Counter(judgments)
+    most_common_val, most_common_cnt = counts.most_common(1)[0]
+
+    if most_common_cnt == len(valid):
+        # 全部一致
+        return 'consistent', most_common_val
+    if most_common_cnt > len(valid) / 2:
+        # 多数一致（严格过半）
+        return 'majority', most_common_val
+
+    # 分歧：取保守值（倾向否/高风险/不清楚）
+    conservative_priority = ['否', '高', '不清楚', '是', '低']
+    for safe in conservative_priority:
+        if safe in judgments:
+            return 'divergent', safe
+    return 'divergent', judgments[0]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -233,15 +269,16 @@ class QAEvalHandler:
         self,
         project_id: int,
         ref_ids: List[int],
-        eval_mode: str,            # 'single' | 'dual'
-        model_ids: List[str],      # 选择的模型 ID 列表
+        eval_mode: str,            # 兼容旧参数，实际由 model_ids 长度决定
+        model_ids: List[str],      # 选择的模型 ID 列表（1 个=单模型，2+ 个=多模型校验）
         user_id: Optional[int] = None,
     ):
         self.project_id = project_id
         self.ref_ids    = ref_ids
-        self.eval_mode  = eval_mode
-        self.model_ids  = model_ids
+        self.model_ids  = model_ids if model_ids else ['deepseek-v4-pro']
         self.user_id    = user_id
+        # eval_mode 由模型数量决定，不依赖前端传入
+        self.eval_mode  = 'single' if len(self.model_ids) <= 1 else 'multi'
 
     def execute(self):
         from core.models import QAReference
@@ -311,80 +348,98 @@ class QAEvalHandler:
         # 构建 prompt
         prompt = _build_qa_prompt(ref_info, signal_items_cfg, method_cfg['name'])
 
-        # ── 单模型评价 ──────────────────────────────────────────
-        if self.eval_mode == 'single':
-            model_id = self.model_ids[0] if self.model_ids else 'deepseek'
-            model_results = _call_model_for_ref(model_id, prompt, signal_items_cfg)
-            result_map = {r['signal_key']: r for r in model_results}
+        # ── N 模型评价（统一逻辑：1 个=单模型，2+=多模型校验）────────────────
+        logger.info(f'[QA] 文献 {ref.id} 使用 {len(self.model_ids)} 个模型: {self.model_ids}')
 
-            # 先删除已有条目（重新生成场景）
-            QASignalItem.objects.filter(qa_ref=ref).delete()
-
-            for cfg_item in signal_items_cfg:
-                r = result_map.get(cfg_item['signal_key'], {})
-                judgment = r.get('judgment', '')
-                QASignalItem.objects.create(
-                    qa_ref=ref,
-                    quality_method=method_key,
-                    domain=cfg_item['domain'],
-                    result_type=cfg_item['result_type'],
-                    signal_key=cfg_item['signal_key'],
-                    signal_question=cfg_item['signal_question'],
-                    signal_description=cfg_item['signal_description'],
-                    options=cfg_item['options'],
-                    ai_judgment=judgment,
-                    ai_reason=r.get('reason', ''),
-                    ai_evidence=r.get('evidence', ''),
-                    ai_evidence_page=r.get('evidence_page', ''),
-                    consistency='single',
-                    system_recommendation=judgment,
-                    pre_selected=judgment,
-                )
-
-        # ── 双模型校验 ──────────────────────────────────────────
+        # 并发调用所有模型（最多同时 4 个，避免占用过多连接）
+        all_model_raw = {}   # model_id -> List[dict]
+        if len(self.model_ids) == 1:
+            all_model_raw[self.model_ids[0]] = _call_model_for_ref(
+                self.model_ids[0], prompt, signal_items_cfg)
         else:
-            model1_id = self.model_ids[0] if len(self.model_ids) > 0 else 'deepseek'
-            model2_id = self.model_ids[1] if len(self.model_ids) > 1 else model1_id
+            max_workers = min(len(self.model_ids), 4)
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                futures = {
+                    pool.submit(_call_model_for_ref, mid, prompt, signal_items_cfg): mid
+                    for mid in self.model_ids
+                }
+                for fut in as_completed(futures):
+                    mid = futures[fut]
+                    try:
+                        all_model_raw[mid] = fut.result()
+                    except Exception as e:
+                        logger.warning(f'[QA] 模型 {mid} 并发调用异常: {e}')
+                        all_model_raw[mid] = []
 
-            logger.info(f'[QA] 文献 {ref.id} 双模型: model1={model1_id}, model2={model2_id}')
-            results1 = _call_model_for_ref(model1_id, prompt, signal_items_cfg)
-            results2 = _call_model_for_ref(model2_id, prompt, signal_items_cfg)
-            map1 = {r['signal_key']: r for r in results1}
-            map2 = {r['signal_key']: r for r in results2}
+        # 先删除已有条目（重新生成场景）
+        QASignalItem.objects.filter(qa_ref=ref).delete()
 
-            QASignalItem.objects.filter(qa_ref=ref).delete()
+        # 获取模型名称映射
+        from core.services.ai_models_config import get_model_config
+        model_name_map = {}
+        for mid in self.model_ids:
+            cfg = get_model_config(mid)
+            model_name_map[mid] = cfg['name'] if cfg else mid
 
-            for cfg_item in signal_items_cfg:
-                sk = cfg_item['signal_key']
-                r1 = map1.get(sk, {})
-                r2 = map2.get(sk, {})
-                consistency, recommendation = _determine_consistency(r1, r2)
+        for cfg_item in signal_items_cfg:
+            sk = cfg_item['signal_key']
 
-                QASignalItem.objects.create(
-                    qa_ref=ref,
-                    quality_method=method_key,
-                    domain=cfg_item['domain'],
-                    result_type=cfg_item['result_type'],
-                    signal_key=sk,
-                    signal_question=cfg_item['signal_question'],
-                    signal_description=cfg_item['signal_description'],
-                    options=cfg_item['options'],
-                    # 双模型字段
-                    model1_id=model1_id,
-                    model1_judgment=r1.get('judgment', ''),
-                    model1_reason=r1.get('reason', ''),
-                    model2_id=model2_id,
-                    model2_judgment=r2.get('judgment', ''),
-                    model2_reason=r2.get('reason', ''),
-                    consistency=consistency,
-                    system_recommendation=recommendation,
-                    pre_selected=recommendation,
-                    # 兼容单模型字段（用 model1 结果填充，便于界面显示）
-                    ai_judgment=r1.get('judgment', '') or r2.get('judgment', ''),
-                    ai_reason=r1.get('reason', '') or r2.get('reason', ''),
-                    ai_evidence=r1.get('evidence', '') or r2.get('evidence', ''),
-                    ai_evidence_page=r1.get('evidence_page', '') or r2.get('evidence_page', ''),
-                )
+            # 构建 model_results 列表
+            model_results = []
+            for mid in self.model_ids:
+                raw_list = all_model_raw.get(mid, [])
+                raw_map  = {r['signal_key']: r for r in raw_list}
+                r = raw_map.get(sk, {})
+                model_results.append({
+                    'model_id':     mid,
+                    'model_name':   model_name_map.get(mid, mid),
+                    'judgment':     r.get('judgment', ''),
+                    'reason':       r.get('reason', ''),
+                    'evidence':     r.get('evidence', ''),
+                    'evidence_page':r.get('evidence_page', ''),
+                })
+
+            # 计算一致性和推荐值
+            consistency, recommendation = _determine_consistency(model_results)
+
+            # 汇总字段：取推荐值；理由/证据取第一个有效模型的
+            first_valid = next((m for m in model_results if m.get('judgment')), {})
+            ai_judgment  = recommendation
+            ai_reason    = first_valid.get('reason', '')
+            ai_evidence  = first_valid.get('evidence', '')
+            ai_evidence_page = first_valid.get('evidence_page', '')
+
+            # 向后兼容双模型字段（取前两个模型）
+            m1 = model_results[0] if len(model_results) > 0 else {}
+            m2 = model_results[1] if len(model_results) > 1 else {}
+
+            QASignalItem.objects.create(
+                qa_ref=ref,
+                quality_method=method_key,
+                domain=cfg_item['domain'],
+                result_type=cfg_item['result_type'],
+                signal_key=sk,
+                signal_question=cfg_item['signal_question'],
+                signal_description=cfg_item['signal_description'],
+                options=cfg_item['options'],
+                # 汇总字段
+                ai_judgment=ai_judgment,
+                ai_reason=ai_reason,
+                ai_evidence=ai_evidence,
+                ai_evidence_page=ai_evidence_page,
+                # N 模型原始结果
+                model_results=model_results,
+                # 向后兼容双模型字段
+                model1_id=m1.get('model_id', ''),
+                model1_judgment=m1.get('judgment', ''),
+                model1_reason=m1.get('reason', ''),
+                model2_id=m2.get('model_id', ''),
+                model2_judgment=m2.get('judgment', ''),
+                model2_reason=m2.get('reason', ''),
+                consistency=consistency,
+                system_recommendation=recommendation,
+                pre_selected=recommendation,
+            )
 
         # 更新文献状态
         QAReference.objects.filter(pk=ref.id).update(ai_eval_status=ai_status)
@@ -472,3 +527,93 @@ class QAEvalHandler:
             logger.debug(f'pdfminer 失败: {e}')
 
         return ''
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# QAEvalStepHandler — 接入 BaseStepHandler / TaskScheduler 体系
+# ─────────────────────────────────────────────────────────────────────────────
+
+from core.executors.registry import register
+from core.executors.handlers.base_handler import BaseStepHandler
+
+
+@register("qa_eval")
+class QAEvalStepHandler(BaseStepHandler):
+    """
+    AI 质量评价步骤 Handler（异步执行，接入统一 Task/ActivityLog 体系）
+
+    executor.config 中预期字段：
+        ref_ids    : list[int]  待评价文献 ID（空 = 全部）
+        model_ids  : list[str]  选择的模型 ID 列表（1 个=单模型，2+=多模型校验）
+        eval_mode  : str        已废弃（由 model_ids 长度自动推断），保留向后兼容
+    """
+
+    execution_mode = "async"
+
+    def execute(self) -> bool:
+        from core.models import QAReference
+        from core.services.quality_methods import AI_SUPPORTED_METHODS
+
+        cfg        = self.executor.config or {}
+        ref_ids    = cfg.get('ref_ids', [])
+        model_ids  = cfg.get('model_ids', [])
+        user_id    = self.task_obj.created_by_id if self.task_obj else None
+
+        # eval_mode 由模型数量推断
+        eval_mode = 'single' if len(model_ids) <= 1 else 'multi'
+
+        # 确定待评价文献
+        qs = QAReference.objects.filter(
+            project_id=self.project_id,
+            quality_method__in=AI_SUPPORTED_METHODS,
+        ).exclude(quality_method='')
+        if ref_ids:
+            qs = qs.filter(pk__in=ref_ids)
+
+        ref_ids_to_eval = list(qs.values_list('pk', flat=True))
+        total = len(ref_ids_to_eval)
+
+        if total == 0:
+            self.logger.warning('[QA] 没有可评价的文献，跳过')
+            return True
+
+        self.logger.info(f'[QA] 开始评价 {total} 篇，模式={eval_mode}，模型={model_ids}')
+        self.logger.update_progress(0, total, '篇')
+
+        # 将文献状态置为 running
+        QAReference.objects.filter(pk__in=ref_ids_to_eval).update(
+            ai_eval_status='running',
+            eval_mode=eval_mode,
+            selected_models=model_ids,
+        )
+
+        # 调用评价引擎（逐篇评价，内部已处理异常）
+        engine = QAEvalHandler(
+            project_id=self.project_id,
+            ref_ids=ref_ids_to_eval,
+            eval_mode=eval_mode,
+            model_ids=model_ids,
+            user_id=user_id,
+        )
+
+        # 逐篇评价，同时更新进度到 Task
+        completed = 0
+        refs = list(QAReference.objects.filter(
+            pk__in=ref_ids_to_eval,
+            quality_method__in=AI_SUPPORTED_METHODS,
+        ).select_related('fulltext_file'))
+
+        for ref in refs:
+            if self.executor.check_stop_signal():
+                self.logger.warning('[QA] 检测到停止信号，中断评价')
+                break
+            try:
+                engine._eval_one_ref(ref)
+            except Exception as e:
+                logger.exception(f'[QA] 文献 {ref.id} 评价失败: {e}')
+                QAReference.objects.filter(pk=ref.id).update(ai_eval_status='failed')
+            completed += 1
+            self.logger.update_progress(completed, total, '篇')
+
+        self.logger.info(f'[QA] 评价完成，共处理 {completed}/{total} 篇')
+        return True

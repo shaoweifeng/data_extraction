@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <!-- 主体：左侧文献列表 + 右侧内容 -->
+    <!-- 主体：左侧文献列表 + 中间 PDF + 右侧评价问题 -->
     <div class="review-layout">
       <!-- 左侧文献列表 -->
       <div class="ref-panel">
@@ -24,6 +24,18 @@
               @click="refFilter = f.key"
             >{{ f.label }}</button>
           </div>
+        </div>
+        <!-- 全部批量确认 -->
+        <div class="batch-all-bar">
+          <button
+            class="btn-batch-all"
+            :disabled="allRefsConfirmed || batchAllLoading"
+            @click="doBatchAllRefs"
+          >
+            <i class="fas fa-spinner fa-spin" v-if="batchAllLoading"></i>
+            <i class="fas fa-check-double" v-else></i>
+            {{ batchAllLoading ? `处理中 ${batchAllProgress}/${batchAllTotal}…` : '全部一键确认' }}
+          </button>
         </div>
         <div class="ref-list">
           <div
@@ -42,169 +54,107 @@
         </div>
       </div>
 
-      <!-- 右侧内容区 -->
-      <div class="review-main" v-if="qa.currentRef">
+      <!-- 中间 PDF 预览 -->
+      <div class="pdf-panel" v-if="qa.currentRef">
+        <div class="pdf-panel-head">
+          <span class="pdf-title-text">{{ qa.currentRef.title }}</span>
+        </div>
+        <div class="pdf-body">
+          <QAPdfViewer
+            v-if="qa.currentRef.fulltext_url"
+            :pdfUrl="qa.currentRef.fulltext_url"
+            :filename="qa.currentRef.title"
+          />
+          <div v-else class="pdf-no-fulltext">
+            <i class="fas fa-file-pdf" style="font-size:2rem;color:#e2e8f0"></i>
+            <p>暂无全文</p>
+          </div>
+        </div>
+      </div>
+      <div class="pdf-panel pdf-placeholder" v-else>
+        <i class="fas fa-arrow-left" style="font-size:1.5rem;color:#cbd5e1"></i>
+        <p>请从左侧选择文献</p>
+      </div>
+
+      <!-- 右侧评价问题 -->
+      <div class="signals-panel" v-if="qa.currentRef">
         <!-- 文献信息栏 -->
         <div class="ref-info-bar">
-          <div class="ref-info-left">
-            <p class="curr-ref-title">{{ qa.currentRef.title }}</p>
-            <div class="curr-ref-meta">
-              <span v-if="qa.currentRef.first_author" class="meta-item">{{ qa.currentRef.first_author }}</span>
-              <span v-if="qa.currentRef.year" class="meta-item">{{ qa.currentRef.year }}</span>
-              <span class="meta-item method-chip">{{ qa.currentRef.quality_method }}</span>
-              <span :class="['meta-item', 'eval-status-chip', `chip-${qa.currentRef.ai_eval_status}`]">
-                {{ evalStatusLabel(qa.currentRef.ai_eval_status) }}
-              </span>
-            </div>
+          <div class="ref-info-top">
+            <span :class="['meta-item', 'eval-status-chip', `chip-${qa.currentRef.ai_eval_status}`]">
+              {{ evalStatusLabel(qa.currentRef.ai_eval_status) }}
+            </span>
+            <span v-if="qa.currentRef.quality_method" class="meta-item method-chip">{{ qa.currentRef.quality_method }}</span>
           </div>
-          <div class="ref-info-actions">
-            <button
-              class="btn-batch-confirm"
-              @click="showBatchConfirmModal = true"
-              :disabled="allConfirmed"
-            >
-              <i class="fas fa-check-double"></i>
-              一键确认
-            </button>
+          <button
+            class="btn-batch-confirm"
+            @click="doBatchConfirm"
+            :disabled="allConfirmed || batchConfirmLoading"
+          >
+            <i class="fas fa-spinner fa-spin" v-if="batchConfirmLoading"></i>
+            <i class="fas fa-check-double" v-else></i>
+            {{ batchConfirmLoading ? '确认中...' : '一键确认' }}
+          </button>
+        </div>
+
+        <!-- 领域过滤 tabs -->
+        <div class="domain-tabs-row" v-if="domains.length">
+          <button
+            v-for="d in [{ key: 'all', label: '全部' }, ...domains]"
+            :key="d.key"
+            :class="['domain-tab', { active: activeDomain === d.key }]"
+            @click="activeDomain = d.key"
+          >
+            {{ d.label }}
+            <span class="domain-count" v-if="d.key !== 'all'">
+              {{ domainConfirmedCount(d.key) }}/{{ domainSignalCount(d.key) }}
+            </span>
+          </button>
+        </div>
+
+        <!-- 加载中 -->
+        <div v-if="qa.signalLoading" class="loading-signals">
+          <i class="fas fa-spinner fa-spin"></i> 加载中...
+        </div>
+
+        <!-- 信号卡片列表 -->
+        <div v-else class="signal-list">
+          <QASignalCard
+            v-for="(item, idx) in filteredSignalItems"
+            :key="item.id"
+            :item="item"
+            :index="idx"
+          />
+          <div v-if="!filteredSignalItems.length" class="empty-signals">
+            暂无信号问题数据
           </div>
         </div>
 
-        <!-- 内容区：分栏 PDF 预览 + 信号问题 -->
-        <div class="content-split" :class="{ 'has-pdf': showPdfPanel }">
-          <!-- 信号问题列表 -->
-          <div class="signals-panel">
-            <!-- 领域过滤 -->
-            <div class="domain-tabs" v-if="domains.length">
-              <button
-                v-for="d in [{ key: 'all', label: '全部' }, ...domains]"
-                :key="d.key"
-                :class="['domain-tab', { active: activeDomain === d.key }]"
-                @click="activeDomain = d.key"
-              >
-                {{ d.label }}
-                <span class="domain-count" v-if="d.key !== 'all'">
-                  {{ domainConfirmedCount(d.key) }}/{{ domainSignalCount(d.key) }}
+        <!-- 领域结果摘要 -->
+        <div v-if="qa.domainResults.length" class="domain-results-summary">
+          <h4 class="summary-title">领域评估结果</h4>
+          <div class="domain-result-grid">
+            <div v-for="dr in qa.domainResults" :key="dr.id" class="domain-result-card">
+              <p class="dr-domain-name">{{ dr.domain_name }}</p>
+              <div class="dr-row">
+                <span class="dr-label">偏倚风险</span>
+                <span :class="['risk-badge', riskClass(dr.bias_risk_result)]">
+                  {{ riskLabel(dr.bias_risk_result) }}
+                  <i class="fas fa-lock" v-if="dr.bias_all_confirmed" style="font-size:0.6rem"></i>
                 </span>
-              </button>
-            </div>
-
-            <!-- 加载中 -->
-            <div v-if="qa.signalLoading" class="loading-signals">
-              <i class="fas fa-spinner fa-spin"></i> 加载信号问题...
-            </div>
-
-            <!-- 信号卡片列表 -->
-            <div v-else class="signal-list">
-              <QASignalCard
-                v-for="(item, idx) in filteredSignalItems"
-                :key="item.id"
-                :item="item"
-                :index="idx"
-              />
-              <div v-if="!filteredSignalItems.length" class="empty-signals">
-                暂无信号问题数据
+              </div>
+              <div class="dr-row" v-if="dr.applicability_result !== 'na'">
+                <span class="dr-label">适用性</span>
+                <span :class="['risk-badge', riskClass(dr.applicability_result)]">
+                  {{ riskLabel(dr.applicability_result) }}
+                </span>
               </div>
             </div>
-
-            <!-- 领域结果摘要 -->
-            <div v-if="qa.domainResults.length" class="domain-results-summary">
-              <h4 class="summary-title">领域评估结果</h4>
-              <div class="domain-result-grid">
-                <div v-for="dr in qa.domainResults" :key="dr.id" class="domain-result-card">
-                  <p class="dr-domain-name">{{ dr.domain_name }}</p>
-                  <div class="dr-row">
-                    <span class="dr-label">偏倚风险</span>
-                    <span :class="['risk-badge', riskClass(dr.bias_risk_result)]">
-                      {{ riskLabel(dr.bias_risk_result) }}
-                      <i class="fas fa-lock" v-if="dr.bias_all_confirmed" style="font-size:0.6rem"></i>
-                    </span>
-                  </div>
-                  <div class="dr-row" v-if="dr.applicability_result !== 'na'">
-                    <span class="dr-label">适用性</span>
-                    <span :class="['risk-badge', riskClass(dr.applicability_result)]">
-                      {{ riskLabel(dr.applicability_result) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- PDF 预览面板 -->
-          <div class="pdf-panel" v-if="showPdfPanel">
-            <QAPdfViewer
-              :pdfUrl="qa.currentRef.fulltext_url"
-              :filename="qa.currentRef.title"
-            />
-          </div>
-        </div>
-
-        <!-- PDF 预览开关 -->
-        <button
-          class="toggle-pdf-btn"
-          :class="{ active: showPdfPanel }"
-          @click="showPdfPanel = !showPdfPanel"
-          v-if="qa.currentRef.fulltext_url"
-        >
-          <i :class="showPdfPanel ? 'fas fa-compress-alt' : 'fas fa-file-pdf'"></i>
-          {{ showPdfPanel ? '收起全文' : '查看全文' }}
-        </button>
-      </div>
-
-      <!-- 未选文献时的占位 -->
-      <div class="review-placeholder" v-else>
-        <i class="fas fa-arrow-left" style="font-size:1.5rem;color:#cbd5e1"></i>
-        <p>请从左侧选择文献开始审核</p>
-      </div>
-    </div>
-
-    <!-- 底部操作 -->
-    <div class="step-footer-actions">
-      <button class="btn-secondary" @click="qa.currentStep = 3">
-        <i class="fas fa-arrow-left"></i> 上一步
-      </button>
-      <span class="footer-tip">{{ confirmedCount }} / {{ qa.refs.length }} 篇已确认</span>
-      <button class="btn-primary" :disabled="!confirmedCount" @click="qa.currentStep = 5">
-        下一步：结果可视化 <i class="fas fa-arrow-right"></i>
-      </button>
-    </div>
-
-    <!-- 一键确认弹窗 -->
-    <Teleport to="body">
-      <div v-if="showBatchConfirmModal" class="modal-mask" @click.self="showBatchConfirmModal = false">
-        <div class="modal-box">
-          <div class="modal-head">
-            <i class="fas fa-check-double" style="color:#6366f1"></i>
-            一键确认
-          </div>
-          <div class="modal-body">
-            <p>选择确认方式，系统将自动设置所有未确认的信号问题：</p>
-            <div class="confirm-mode-options">
-              <div
-                v-for="m in confirmModes"
-                :key="m.key"
-                :class="['confirm-mode-opt', { active: batchConfirmMode === m.key }]"
-                @click="batchConfirmMode = m.key"
-              >
-                <div class="cmo-check"><i class="fas fa-check" v-if="batchConfirmMode === m.key"></i></div>
-                <div>
-                  <p class="cmo-name">{{ m.name }}</p>
-                  <p class="cmo-desc">{{ m.desc }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-secondary" @click="showBatchConfirmModal = false">取消</button>
-            <button class="btn-primary" @click="doBatchConfirm" :disabled="batchConfirmLoading">
-              <i class="fas fa-spinner fa-spin" v-if="batchConfirmLoading"></i>
-              <i class="fas fa-check" v-else></i>
-              {{ batchConfirmLoading ? '确认中...' : '确认执行' }}
-            </button>
           </div>
         </div>
       </div>
-    </Teleport>
+    </div>
+
   </div>
 </template>
 
@@ -220,28 +170,15 @@ const project = useProjectStore()
 
 const refFilter     = ref('all')
 const activeDomain  = ref('all')
-const showPdfPanel  = ref(false)
-const showBatchConfirmModal = ref(false)
-const batchConfirmMode = ref('adopt_preselected')
 const batchConfirmLoading = ref(false)
+const batchAllLoading  = ref(false)
+const batchAllProgress = ref(0)
+const batchAllTotal    = ref(0)
 
 const refFilters = [
   { key: 'all',       label: '全部' },
   { key: 'pending',   label: '待审核' },
   { key: 'confirmed', label: '已完成' },
-]
-
-const confirmModes = [
-  {
-    key: 'adopt_preselected',
-    name: '采纳预选结果',
-    desc: '使用 AI 推荐的系统预选答案作为最终判断',
-  },
-  {
-    key: 'adopt_ai',
-    name: '采纳 AI 判断',
-    desc: '直接使用 AI 原始评价答案（单模型：ai_judgment；双模型：model1 结果）',
-  },
 ]
 
 // ── 文献列表过滤 ────────────────────────────────────────────────────────────
@@ -253,7 +190,8 @@ const filteredRefList = computed(() => {
   return list
 })
 
-const confirmedCount = computed(() => qa.refs.filter(r => r.review_status === 'confirmed').length)
+const confirmedCount   = computed(() => qa.refs.filter(r => r.review_status === 'confirmed').length)
+const allRefsConfirmed = computed(() => qa.refs.length > 0 && qa.refs.every(r => r.review_status === 'confirmed'))
 
 // ── 领域 & 信号过滤 ──────────────────────────────────────────────────────────
 
@@ -298,18 +236,39 @@ async function selectRef(ref) {
   }
 }
 
-// ── 一键确认 ──────────────────────────────────────────────────────────────────
+// ── 当前文献一键确认（无弹窗，直接执行）──────────────────────────────────────
 
 async function doBatchConfirm() {
   if (!qa.currentRef) return
   batchConfirmLoading.value = true
   try {
-    await qa.batchConfirm(qa.currentRef.id, batchConfirmMode.value)
-    showBatchConfirmModal.value = false
+    await qa.batchConfirm(qa.currentRef.id, 'adopt_preselected')
   } catch (e) {
     alert(e?.response?.data?.error || '批量确认失败')
   } finally {
     batchConfirmLoading.value = false
+  }
+}
+
+// ── 全部文献批量确认（逐篇循环）──────────────────────────────────────────────
+
+async function doBatchAllRefs() {
+  const pending = qa.refs.filter(r => r.review_status !== 'confirmed')
+  if (!pending.length) return
+  batchAllLoading.value  = true
+  batchAllProgress.value = 0
+  batchAllTotal.value    = pending.length
+  try {
+    for (const ref of pending) {
+      await qa.batchConfirm(ref.id, 'adopt_preselected')
+      batchAllProgress.value++
+    }
+    // 刷新当前文献的信号问题
+    if (qa.currentRef) await qa.selectRef(qa.currentRef)
+  } catch (e) {
+    alert(e?.response?.data?.error || '批量确认失败')
+  } finally {
+    batchAllLoading.value = false
   }
 }
 
@@ -344,18 +303,24 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.qa-review { display: flex; flex-direction: column; gap: 14px; }
-.step-header { display: flex; align-items: center; gap: 12px; }
+.qa-review { display: flex; flex-direction: column; gap: 10px; height: 100%; min-height: 0; }
+.step-header { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .step-icon-wrap { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
 .step-title { font-size: 1rem; font-weight: 600; color: #1e293b; margin: 0; }
 .step-subtitle { font-size: 0.75rem; color: #64748b; margin: 0; }
 
-/* 主体布局 */
-.review-layout { display: flex; gap: 12px; min-height: 560px; }
+/* 三栏主体布局：左列表 + 中PDF + 右评价问题 */
+.review-layout {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 
 /* 左侧文献列表 */
-.ref-panel { width: 220px; flex-shrink: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
-.ref-panel-header { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
+.ref-panel { width: 200px; flex-shrink: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.ref-panel-header { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; }
 .ref-count { font-size: 0.72rem; color: #94a3b8; display: block; margin-bottom: 6px; }
 .filter-tabs { display: flex; gap: 2px; }
 .filter-btn { flex: 1; padding: 4px 0; font-size: 0.7rem; background: none; border: 1px solid #e2e8f0; border-radius: 5px; cursor: pointer; color: #64748b; }
@@ -373,15 +338,92 @@ onMounted(async () => {
 .dot-pending   { background: #e2e8f0; }
 .ref-list-empty { padding: 20px; text-align: center; font-size: 0.78rem; color: #94a3b8; }
 
-/* 右侧主体 */
-.review-main { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.review-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #94a3b8; font-size: 0.85rem; }
+/* 全量批量确认条 */
+.batch-all-bar { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; }
+.btn-batch-all {
+  width: 100%; padding: 6px 10px;
+  background: #f5f3ff; color: #6366f1;
+  border: 1px dashed #a5b4fc; border-radius: 7px;
+  font-size: 0.75rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: all 0.15s;
+}
+.btn-batch-all:hover:not(:disabled) { background: #eef2ff; border-color: #6366f1; }
+.btn-batch-all:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* 文献信息栏 */
-.ref-info-bar { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.ref-info-left { flex: 1; min-width: 0; }
-.curr-ref-title { margin: 0 0 6px; font-size: 0.88rem; font-weight: 600; color: #1e293b; }
-.curr-ref-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* 中间 PDF 面板 */
+.pdf-panel {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pdf-panel-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+.pdf-title-text {
+  font-size: 0.78rem;
+  color: #475569;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pdf-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.pdf-no-fulltext {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+.pdf-placeholder {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+/* 右侧评价问题面板 */
+.signals-panel {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+/* 文献信息栏（右侧顶部） */
+.ref-info-bar {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ref-info-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: 1; min-width: 0; }
 .meta-item { font-size: 0.72rem; color: #64748b; }
 .method-chip { background: #ede9fe; color: #5b21b6; padding: 2px 6px; border-radius: 4px; }
 .eval-status-chip { padding: 2px 6px; border-radius: 4px; }
@@ -389,20 +431,15 @@ onMounted(async () => {
 .chip-abstract_only { background: #ffedd5; color: #9a3412; }
 .chip-failed        { background: #fee2e2; color: #991b1b; }
 .chip-skipped_no_fulltext, .chip-skipped_no_method { background: #f1f5f9; color: #64748b; }
-.btn-batch-confirm { padding: 7px 14px; background: #6366f1; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.btn-batch-confirm { padding: 6px 12px; background: #6366f1; color: #fff; border: none; border-radius: 7px; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; flex-shrink: 0; white-space: nowrap; }
 .btn-batch-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* 内容分栏 */
-.content-split { display: flex; gap: 12px; flex: 1; min-height: 0; }
-.signals-panel { flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-.pdf-panel { width: 460px; flex-shrink: 0; }
-
 /* 领域 tabs */
-.domain-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
-.domain-tab { padding: 5px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 7px; cursor: pointer; font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 5px; }
+.domain-tabs-row { display: flex; gap: 4px; flex-wrap: wrap; flex-shrink: 0; }
+.domain-tab { padding: 5px 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 7px; cursor: pointer; font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 4px; }
 .domain-tab:hover { border-color: #6366f1; color: #6366f1; }
 .domain-tab.active { background: #eef2ff; border-color: #6366f1; color: #4f46e5; font-weight: 500; }
-.domain-count { font-size: 0.66rem; background: #e0e7ff; color: #4f46e5; padding: 0 5px; border-radius: 9999px; }
+.domain-count { font-size: 0.64rem; background: #e0e7ff; color: #4f46e5; padding: 0 5px; border-radius: 9999px; }
 
 /* 加载 & 空 */
 .loading-signals { display: flex; align-items: center; gap: 8px; color: #94a3b8; font-size: 0.82rem; padding: 20px; }
@@ -410,9 +447,9 @@ onMounted(async () => {
 .empty-signals { text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 30px; }
 
 /* 领域结果摘要 */
-.domain-results-summary { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+.domain-results-summary { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; flex-shrink: 0; }
 .summary-title { font-size: 0.82rem; font-weight: 600; color: #1e293b; margin: 0 0 10px; }
-.domain-result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.domain-result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .domain-result-card { background: #f8fafc; border-radius: 8px; padding: 10px; }
 .dr-domain-name { font-size: 0.72rem; font-weight: 500; color: #475569; margin: 0 0 6px; }
 .dr-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 3px; }
@@ -423,20 +460,6 @@ onMounted(async () => {
 .risk-unclear { background: #ffedd5; color: #9a3412; }
 .risk-pending { background: #f1f5f9; color: #94a3b8; }
 .risk-na      { background: #f1f5f9; color: #94a3b8; }
-
-/* 底部 */
-.step-footer-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
-.footer-tip { font-size: 0.78rem; color: #94a3b8; }
-.btn-primary { padding: 8px 18px; background: #6366f1; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
-.btn-primary:hover:not(:disabled) { background: #4f46e5; }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-secondary { padding: 8px 16px; background: #fff; color: #6366f1; border: 1px solid #6366f1; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
-.btn-secondary:hover { background: #f5f3ff; }
-
-/* PDF 开关按钮 */
-.toggle-pdf-btn { align-self: flex-start; padding: 5px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 7px; cursor: pointer; font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 5px; }
-.toggle-pdf-btn:hover { border-color: #6366f1; color: #6366f1; }
-.toggle-pdf-btn.active { border-color: #6366f1; background: #eef2ff; color: #6366f1; }
 
 /* 确认弹窗 */
 .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 9999; }
@@ -453,4 +476,9 @@ onMounted(async () => {
 .cmo-name { font-size: 0.85rem; font-weight: 600; color: #1e293b; margin: 0 0 3px; }
 .cmo-desc { font-size: 0.75rem; color: #64748b; margin: 0; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid #f1f5f9; }
+.btn-primary { padding: 8px 18px; background: #6366f1; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+.btn-primary:hover:not(:disabled) { background: #4f46e5; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { padding: 8px 16px; background: #fff; color: #6366f1; border: 1px solid #6366f1; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+.btn-secondary:hover { background: #f5f3ff; }
 </style>

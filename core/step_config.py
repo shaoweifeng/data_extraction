@@ -304,27 +304,117 @@ STEP_CONFIGURATIONS = {
     },
     
     # ========================================================================
-    # 阶段4: 文献质量评价（手动）
+    # 阶段4: 文献质量评价（子步骤流水线）
     # ========================================================================
     "QUALITY": {
         "name": "文献质量评价",
         "stage_key": "QUALITY",
-        "execution_mode": "manual",
-        "description": "评价纳入文献的方法学质量",
+        "execution_mode": "pipeline",
+        "description": "评价纳入文献的方法学质量（QUADAS-2/NOS/RoB2等）",
         "dependencies": ["SCREEN_2"],
-        "timeout": None,
-        "ui_actions": ["evaluate_quality", "add_quality_notes"],
+        "sub_steps": ["qa_upload", "qa_method", "qa_eval", "qa_review", "qa_chart", "qa_export"],
         "monitoring": {
-            "progress_type": "manual_count",
-            "progress_unit": "refs"
+            "progress_type": "aggregate",
         },
         "metadata_template": {
             "total_refs": 0,
             "evaluated_refs": 0,
-            "high_quality": 0,
-            "medium_quality": 0,
-            "low_quality": 0
         }
+    },
+
+    # ------------------------------------------------------------------------
+    # QA 子步骤: 上传文献（手动）
+    # ------------------------------------------------------------------------
+    "qa_upload": {
+        "name": "上传文献",
+        "stage_key": "QUALITY",
+        "execution_mode": "manual",
+        "description": "从初筛/复筛导入或上传全文 PDF",
+        "timeout": None,
+        "monitoring": {"progress_type": "manual_count", "progress_unit": "refs"},
+        "metadata_template": {"total_refs": 0},
+    },
+
+    # ------------------------------------------------------------------------
+    # QA 子步骤: 方法选择（手动）
+    # ------------------------------------------------------------------------
+    "qa_method": {
+        "name": "方法选择",
+        "stage_key": "QUALITY",
+        "execution_mode": "manual",
+        "description": "为文献选择质量评价方法（QUADAS-2/NOS等）",
+        "timeout": None,
+        "monitoring": {"progress_type": "manual_count"},
+        "metadata_template": {"method": ""},
+    },
+
+    # ------------------------------------------------------------------------
+    # QA 子步骤: AI 质量评价（异步）
+    # ------------------------------------------------------------------------
+    "qa_eval": {
+        "name": "AI 质量评价",
+        "stage_key": "QUALITY",
+        "execution_mode": "async",
+        "description": "调用 AI 对纳入文献进行方法学质量评价",
+        "timeout": 7200,
+        "resume_capability": False,
+        "retry_policy": {
+            "max_retries": 1,
+            "retry_delay": 30,
+            "retry_on": ["timeout", "api_error"],
+        },
+        "monitoring": {
+            "progress_type": "percentage",
+            "progress_unit": "refs",
+            "real_time_update": True,
+            "update_interval": 5,
+        },
+        "logging": {"level": "INFO"},
+        "metadata_template": {
+            "total_refs": 0,
+            "completed": 0,
+            "failed": 0,
+            "skipped": 0,
+        },
+    },
+
+    # ------------------------------------------------------------------------
+    # QA 子步骤: 结果审核（手动）
+    # ------------------------------------------------------------------------
+    "qa_review": {
+        "name": "结果审核",
+        "stage_key": "QUALITY",
+        "execution_mode": "manual",
+        "description": "人工确认 AI 质量评价结果",
+        "timeout": None,
+        "monitoring": {"progress_type": "manual_count"},
+        "metadata_template": {"confirmed": 0, "total": 0},
+    },
+
+    # ------------------------------------------------------------------------
+    # QA 子步骤: 结果可视化（手动/轻量同步）
+    # ------------------------------------------------------------------------
+    "qa_chart": {
+        "name": "结果可视化",
+        "stage_key": "QUALITY",
+        "execution_mode": "manual",
+        "description": "生成 QUADAS-2 等质量评价图表",
+        "timeout": None,
+        "monitoring": {"progress_type": "boolean"},
+        "metadata_template": {},
+    },
+
+    # ------------------------------------------------------------------------
+    # QA 子步骤: 导出报告（手动）
+    # ------------------------------------------------------------------------
+    "qa_export": {
+        "name": "导出报告",
+        "stage_key": "QUALITY",
+        "execution_mode": "manual",
+        "description": "导出质量评价报告（Excel/图表）",
+        "timeout": None,
+        "monitoring": {"progress_type": "boolean"},
+        "metadata_template": {},
     },
     
     # ========================================================================
@@ -419,7 +509,14 @@ STAGE_DEFINITIONS = [
         "stage_key": "QUALITY",
         "name": "文献质量评价",
         "order": 40,
-        "steps": []
+        "steps": [
+            {"step_key": "qa_upload",  "name": "上传文献",      "order": 10, "can_skip": False},
+            {"step_key": "qa_method",  "name": "方法选择",      "order": 20, "can_skip": False},
+            {"step_key": "qa_eval",    "name": "AI 质量评价",   "order": 30, "can_skip": False},
+            {"step_key": "qa_review",  "name": "结果审核",      "order": 40, "can_skip": True},
+            {"step_key": "qa_chart",   "name": "结果可视化",    "order": 50, "can_skip": True},
+            {"step_key": "qa_export",  "name": "导出报告",      "order": 60, "can_skip": True},
+        ]
     },
     {
         "stage_key": "EXTRACT",

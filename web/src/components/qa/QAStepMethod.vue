@@ -94,19 +94,6 @@
         <p class="method-stat">信号问题：{{ m.signal_count }} 条</p>
       </div>
     </div>
-
-    <!-- 底部操作 -->
-    <div class="step-footer-actions">
-      <button class="btn-secondary" @click="qa.currentStep = 1">
-        <i class="fas fa-arrow-left"></i> 上一步
-      </button>
-      <span class="footer-tip">
-        {{ readyCount }} 篇已选方法，{{ noMethodCount }} 篇待选
-      </span>
-      <button class="btn-primary" :disabled="!readyCount" @click="qa.currentStep = 3">
-        下一步：AI 质量评价 <i class="fas fa-arrow-right"></i>
-      </button>
-    </div>
   </div>
 </template>
 

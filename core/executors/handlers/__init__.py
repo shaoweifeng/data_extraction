@@ -3,5 +3,6 @@ from .parse_handler import ParseHandler
 from .dedup_handler import DedupHandler
 from .export_handler import ExportHandler
 from .ai_screen_handler import AIScreenHandler
+from .qa_handler import QAEvalStepHandler
 
-__all__ = ["ParseHandler", "DedupHandler", "ExportHandler", "AIScreenHandler"]
+__all__ = ["ParseHandler", "DedupHandler", "ExportHandler", "AIScreenHandler", "QAEvalStepHandler"]

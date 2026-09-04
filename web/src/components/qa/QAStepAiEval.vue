@@ -1,183 +1,182 @@
 <template>
   <div class="qa-aiev">
+    <!-- 标题行 -->
     <div class="step-header">
-      <div class="step-icon-wrap" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
+      <div class="step-icon-wrap">
         <i class="fas fa-robot"></i>
       </div>
       <div>
         <h3 class="step-title">AI 质量评价</h3>
-        <p class="step-subtitle">选择评价模式与模型，AI 将自动分析每篇文献的信号问题</p>
+        <p class="step-subtitle">选择一个或多个模型进行质量评价，多模型时自动校验一致性</p>
       </div>
     </div>
 
-    <!-- 评价配置卡片 -->
-    <div class="config-section" v-if="!isRunning && showConfig">
-      <!-- 文献概览 -->
-      <div class="overview-row">
-        <div class="ov-item">
-          <span class="ov-val">{{ totalCount }}</span>
-          <span class="ov-label">待评价文献</span>
-        </div>
-        <div class="ov-divider"></div>
-        <div class="ov-item">
-          <span class="ov-val ai-ok">{{ aiSupportedCount }}</span>
-          <span class="ov-label">AI 可评价</span>
-        </div>
-        <div class="ov-divider"></div>
-        <div class="ov-item">
-          <span class="ov-val text-gray">{{ noMethodCount }}</span>
-          <span class="ov-label">未选方法</span>
-        </div>
-        <div class="ov-divider"></div>
-        <div class="ov-item">
-          <span class="ov-val text-orange">{{ noFultextCount }}</span>
-          <span class="ov-label">无全文（用摘要）</span>
-        </div>
-      </div>
+    <!-- 主体：左右分栏 -->
+    <div class="aiev-body">
 
-      <!-- 模式选择 -->
-      <div class="config-card">
-        <div class="config-label">评价模式</div>
-        <div class="mode-options">
-          <div
-            v-for="mode in evalModes"
-            :key="mode.key"
-            :class="['mode-option', { active: evalMode === mode.key }]"
-            @click="evalMode = mode.key"
-          >
-            <div class="mode-icon"><i :class="mode.icon"></i></div>
-            <div>
-              <p class="mode-name">{{ mode.name }}</p>
-              <p class="mode-desc">{{ mode.desc }}</p>
+      <!-- ── 左栏：配置 ── -->
+      <div class="aiev-left">
+
+        <!-- 文献概览 -->
+        <div class="overview-row">
+          <div class="ov-item">
+            <span class="ov-val">{{ totalCount }}</span>
+            <span class="ov-label">待评价</span>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-item">
+            <span class="ov-val ai-ok">{{ aiSupportedCount }}</span>
+            <span class="ov-label">AI可评价</span>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-item">
+            <span class="ov-val text-gray">{{ noMethodCount }}</span>
+            <span class="ov-label">未选方法</span>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-item">
+            <span class="ov-val text-orange">{{ noFultextCount }}</span>
+            <span class="ov-label">无全文</span>
+          </div>
+        </div>
+
+        <!-- 模型选择 -->
+        <div class="config-card">
+          <div class="config-label">
+            <i class="fas fa-brain" style="color:#a5b4fc"></i>
+            选择评价模型
+            <span class="config-tip">
+              <template v-if="selectedModels.length === 0">至少选择一个模型</template>
+              <template v-else-if="selectedModels.length === 1">单模型评价</template>
+              <template v-else>{{ selectedModels.length }} 个模型 · 自动校验一致性</template>
+            </span>
+          </div>
+
+          <div v-if="modelsLoading" class="models-loading">
+            <i class="fas fa-spinner fa-spin"></i> 加载中...
+          </div>
+
+          <div v-else class="ai-provider-list">
+            <div v-for="provider in modelsList" :key="provider.id" class="ai-provider-group">
+              <div class="ai-provider-header">
+                <span class="ai-provider-logo">
+                  <span v-if="provider.logo === 'deepseek'">🤖</span>
+                  <span v-else-if="provider.logo === 'doubao'">🫘</span>
+                  <span v-else-if="provider.logo === 'qwen'">🌙</span>
+                  <span v-else>🧠</span>
+                </span>
+                <span class="ai-provider-name">{{ provider.name }}</span>
+                <span v-if="!provider.configured" class="ai-provider-unconfigured">未配置</span>
+              </div>
+              <div class="ai-submodel-list">
+                <button
+                  v-for="sm in provider.sub_models"
+                  :key="sm.id"
+                  :class="[
+                    'ai-submodel-btn',
+                    isModelSelected(sm.id) ? 'ai-submodel-btn-active' : '',
+                    !sm.configured ? 'ai-submodel-btn-disabled' : '',
+                  ]"
+                  :title="sm.description"
+                  @click="sm.configured && toggleModel(sm.id)"
+                >
+                  <span class="ai-submodel-name">{{ sm.name }}</span>
+                  <span class="ai-submodel-desc">{{ sm.description }}</span>
+                  <i v-if="isModelSelected(sm.id)" class="fas fa-check ai-submodel-check"></i>
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- 启动区 -->
+        <div class="start-section">
+          <div class="start-hints">
+            <div class="reeval-hint" v-if="isCompleted && reevalScope === 'failed'">
+              <i class="fas fa-info-circle"></i> 仅重评 {{ failedCount }} 篇失败/跳过
+            </div>
+            <div class="credit-hint" v-if="estimatedCredits > 0">
+              <i class="fas fa-coins"></i> 预计 {{ estimatedCredits }} 积分
+            </div>
+          </div>
+          <div class="start-btns">
+            <button
+              class="btn-start"
+              @click="showConfirmModal = true"
+              :disabled="!canStart || isRunning"
+            >
+              <i class="fas fa-spinner fa-spin" v-if="isRunning"></i>
+              <i class="fas fa-play" v-else></i>
+              {{ isRunning ? '评价中...' : isCompleted ? '重新评价' : '开始 AI 评价' }}
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- 模型选择 -->
-      <div class="config-card">
-        <div class="config-label">
-          选择模型
-          <span class="config-tip">{{ evalMode === 'dual' ? '双模型校验需选择两个不同模型' : '选择单个模型进行评价' }}</span>
+      <!-- ── 右栏：进度 ── -->
+      <div class="aiev-right">
+        <!-- 未开始 -->
+        <div v-if="!isRunning && !isCompleted" class="progress-empty">
+          <i class="fas fa-robot"></i>
+          <p>选好模型后点击「开始 AI 评价」</p>
+          <p class="progress-empty-sub">评价进行中将在此实时显示进度</p>
         </div>
-        <div class="model-grid">
-          <div
-            v-for="m in availableModels"
-            :key="m.id"
-            :class="['model-option', { selected: selectedModels.includes(m.id), disabled: isModelDisabled(m.id) }]"
-            @click="toggleModel(m.id)"
-          >
-            <div class="model-check"><i class="fas fa-check" v-if="selectedModels.includes(m.id)"></i></div>
-            <div class="model-info">
-              <p class="model-name">{{ m.name }}</p>
-              <p class="model-provider">{{ m.provider }}</p>
+
+        <!-- 运行中 / 已完成 -->
+        <div v-else class="progress-panel">
+          <!-- 状态头 -->
+          <div class="progress-head">
+            <div class="progress-status-icon" :class="isCompleted ? 'done' : 'running'">
+              <i :class="isCompleted ? 'fas fa-check' : 'fas fa-spinner fa-spin'"></i>
             </div>
-            <span v-if="m.recommended" class="tag tag-amber">推荐</span>
+            <div class="progress-head-text">
+              <p class="progress-title">{{ isCompleted ? 'AI 评价完成' : 'AI 评价进行中...' }}</p>
+              <p class="progress-subtitle">共 {{ totalCount }} 篇，已完成 {{ doneCount }} 篇</p>
+            </div>
+            <button v-if="!isCompleted" class="btn-cancel" @click="handleCancel">
+              <i class="fas fa-stop"></i> 取消
+            </button>
+          </div>
+
+          <!-- 完成后：积分消耗提示 -->
+          <div v-if="isCompleted && lastConsumedCredits > 0" class="credits-consumed">
+            <i class="fas fa-coins"></i>
+            本次消耗 <strong>{{ lastConsumedCredits }}</strong> 积分
+            <span v-if="lastUsedModels.length" class="used-models-tip">
+              · 使用模型：{{ lastUsedModels.join(' / ') }}
+            </span>
+          </div>
+
+          <!-- 总进度条 -->
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" :style="{ width: progressPct + '%' }"></div>
+            </div>
+            <span class="progress-pct">{{ progressPct }}%</span>
+          </div>
+
+          <!-- 状态统计 -->
+          <div class="stat-row" v-if="qa.evalProgress?.summary">
+            <div class="stat-item"><span class="stat-dot dot-blue"></span>进行中 {{ qa.evalProgress.summary.running }}</div>
+            <div class="stat-item"><span class="stat-dot dot-green"></span>完成 {{ qa.evalProgress.summary.completed }}</div>
+            <div class="stat-item"><span class="stat-dot dot-orange"></span>摘要 {{ qa.evalProgress.summary.abstract_only || 0 }}</div>
+            <div class="stat-item">
+              <span class="stat-dot dot-gray"></span>
+              跳过 {{ (qa.evalProgress.summary.skipped_no_fulltext || 0) + (qa.evalProgress.summary.skipped_no_method || 0) }}
+            </div>
+            <div class="stat-item"><span class="stat-dot dot-red"></span>失败 {{ qa.evalProgress.summary.failed || 0 }}</div>
+          </div>
+
+          <!-- 文献状态列表 -->
+          <div class="ref-progress-list" v-if="qa.evalProgress?.refs?.length">
+            <div v-for="pr in qa.evalProgress.refs" :key="pr.id" class="ref-prog-item">
+              <i :class="['status-icon', statusIconClass(pr.ai_eval_status)]"></i>
+              <span class="ref-prog-title">{{ pr.title }}</span>
+              <span :class="['status-badge', statusBadgeClass(pr.ai_eval_status)]">{{ statusLabel(pr.ai_eval_status) }}</span>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- 启动按钮 -->
-      <div class="start-section">
-        <button v-if="isCompleted" class="btn-back-result" @click="showConfig = false">
-          <i class="fas fa-arrow-left"></i> 返回结果
-        </button>
-        <div class="reeval-hint" v-if="isCompleted && reevalScope === 'failed'">
-          <i class="fas fa-info-circle" style="color:#f59e0b"></i>
-          仅重评 {{ failedCount }} 篇失败/跳过的文献
-        </div>
-        <div class="credit-hint" v-if="estimatedCredits > 0">
-          <i class="fas fa-coins" style="color:#f59e0b"></i>
-          预计消耗 {{ estimatedCredits }} 积分
-        </div>
-        <button
-          class="btn-start"
-          @click="showConfirmModal = true"
-          :disabled="!canStart"
-        >
-          <i class="fas fa-play"></i>
-          {{ isCompleted ? (reevalScope === 'failed' ? '重新评价（失败/跳过）' : '重新评价（全部）') : '开始 AI 评价' }}
-        </button>
-      </div>
-    </div>
-
-      <!-- 运行中 / 已完成进度面板 -->
-    <div v-if="isRunning || (isCompleted && !showConfig)" class="progress-panel">
-      <div class="progress-head">
-        <div class="progress-status-icon" :class="isCompleted ? 'done' : 'running'">
-          <i :class="isCompleted ? 'fas fa-check' : 'fas fa-spinner fa-spin'"></i>
-        </div>
-        <div>
-          <p class="progress-title">{{ isCompleted ? 'AI 评价完成' : 'AI 评价进行中...' }}</p>
-          <p class="progress-subtitle">共 {{ totalCount }} 篇文献，已完成 {{ doneCount }} 篇</p>
-        </div>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-          <button v-if="isCompleted" class="btn-reeval" @click="enterReeval('failed')">
-            <i class="fas fa-redo"></i> 重评失败/跳过
-          </button>
-          <button v-if="isCompleted" class="btn-reeval btn-reeval-all" @click="enterReeval('all')">
-            <i class="fas fa-rotate"></i> 重评全部
-          </button>
-          <button v-if="!isCompleted" class="btn-cancel" @click="handleCancel">
-            <i class="fas fa-stop"></i> 取消
-          </button>
-        </div>
-      </div>
-
-      <!-- 总进度条 -->
-      <div class="progress-bar-wrap">
-        <div class="progress-bar-track">
-          <div class="progress-bar-fill" :style="{ width: progressPct + '%' }"></div>
-        </div>
-        <span class="progress-pct">{{ progressPct }}%</span>
-      </div>
-
-      <!-- 状态统计 -->
-      <div class="stat-row" v-if="qa.evalProgress?.summary">
-        <div class="stat-item">
-          <span class="stat-dot dot-blue"></span>
-          运行中 {{ qa.evalProgress.summary.running }}
-        </div>
-        <div class="stat-item">
-          <span class="stat-dot dot-green"></span>
-          完成 {{ qa.evalProgress.summary.completed }}
-        </div>
-        <div class="stat-item">
-          <span class="stat-dot dot-orange"></span>
-          摘要评价 {{ qa.evalProgress.summary.abstract_only || 0 }}
-        </div>
-        <div class="stat-item">
-          <span class="stat-dot dot-gray"></span>
-          跳过 {{ (qa.evalProgress.summary.skipped_no_fulltext || 0) + (qa.evalProgress.summary.skipped_no_method || 0) }}
-        </div>
-        <div class="stat-item">
-          <span class="stat-dot dot-red"></span>
-          失败 {{ qa.evalProgress.summary.failed || 0 }}
-        </div>
-      </div>
-
-      <!-- 文献状态列表 -->
-      <div class="ref-progress-list" v-if="qa.evalProgress?.refs?.length">
-        <div v-for="pr in qa.evalProgress.refs" :key="pr.id" class="ref-prog-item">
-          <i :class="['status-icon', statusIconClass(pr.ai_eval_status)]"></i>
-          <span class="ref-prog-title">{{ pr.title }}</span>
-          <span :class="['status-badge', statusBadgeClass(pr.ai_eval_status)]">{{ statusLabel(pr.ai_eval_status) }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 底部操作 -->
-    <div class="step-footer-actions">
-      <button class="btn-secondary" @click="qa.currentStep = 2">
-        <i class="fas fa-arrow-left"></i> 上一步
-      </button>
-      <button
-        class="btn-primary"
-        :disabled="!isCompleted"
-        @click="qa.currentStep = 4"
-      >
-        下一步：结果审核 <i class="fas fa-arrow-right"></i>
-      </button>
     </div>
 
     <!-- 启动确认弹窗 -->
@@ -189,15 +188,33 @@
             <span>确认启动 AI 评价</span>
           </div>
           <div class="modal-body">
-            <p>即将对 <strong>{{ aiSupportedCount }}</strong> 篇文献进行 AI 质量评价。</p>
+            <!-- 重评范围选择（仅已完成时展示） -->
+            <div v-if="isCompleted" class="reeval-scope-row">
+              <span class="reeval-scope-label">重评范围：</span>
+              <div class="reeval-scope-btns">
+                <button
+                  :class="['scope-btn', { 'scope-btn-active': reevalScope === 'failed' }]"
+                  @click="reevalScope = 'failed'"
+                >
+                  <i class="fas fa-redo"></i> 仅失败/跳过（{{ failedCount }} 篇）
+                </button>
+                <button
+                  :class="['scope-btn', { 'scope-btn-active': reevalScope === 'all' }]"
+                  @click="reevalScope = 'all'"
+                >
+                  <i class="fas fa-rotate"></i> 全部重评（{{ aiSupportedCount }} 篇）
+                </button>
+              </div>
+            </div>
+            <p>即将对 <strong>{{ reevalScope === 'failed' ? failedCount : aiSupportedCount }}</strong> 篇文献进行 AI 质量评价。</p>
             <ul class="confirm-list">
-              <li>评价模式：<strong>{{ evalMode === 'dual' ? '双模型校验' : '单模型评价' }}</strong></li>
-              <li>使用模型：<strong>{{ selectedModels.join(' / ') }}</strong></li>
-              <li v-if="noFultextCount > 0">{{ noFultextCount }} 篇文献无全文，将使用摘要评价</li>
+              <li>评价模式：<strong>{{ selectedModels.length === 1 ? '单模型评价' : selectedModels.length + ' 个模型校验' }}</strong></li>
+              <li>使用模型：<strong>{{ selectedModelNames.join(' / ') }}</strong></li>
+              <li v-if="noFultextCount > 0">{{ noFultextCount }} 篇无全文，将用摘要评价</li>
             </ul>
             <p class="confirm-credit" v-if="estimatedCredits > 0">
               <i class="fas fa-coins" style="color:#f59e0b"></i>
-              本次预计消耗 <strong>{{ estimatedCredits }}</strong> 积分
+              预计消耗 <strong>{{ estimatedCredits }}</strong> 积分
             </p>
           </div>
           <div class="modal-footer">
@@ -218,71 +235,82 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQAStore } from '@/stores/qa'
 import { useProjectStore } from '@/stores/project'
+import { useTaskStore } from '@/stores/task'
+import http from '@/api/http'
 
 const qa      = useQAStore()
 const project = useProjectStore()
+const taskStore = useTaskStore()
 
-const evalMode      = ref('single')
-const selectedModels = ref(['deepseek'])
+const selectedModels   = ref([])
 const showConfirmModal = ref(false)
-const startLoading  = ref(false)
-const showConfig    = ref(true)   // 控制配置面板显示：未评价时/点重新评价时显示
-const reevalScope   = ref('all')  // 重评范围：'all' | 'failed'
+const startLoading     = ref(false)
+const reevalScope      = ref('all')
 
-const evalModes = [
-  {
-    key: 'single',
-    icon: 'fas fa-circle-dot',
-    name: '单模型评价',
-    desc: '使用一个模型进行评价，速度较快，适合初步筛查',
-  },
-  {
-    key: 'dual',
-    icon: 'fas fa-code-compare',
-    name: '双模型校验',
-    desc: '两个模型独立评价并比对结果，不一致时标记分歧，结果更可靠',
-  },
-]
+// 记录最近一次评价消耗的积分和模型（评价完成后展示）
+const lastConsumedCredits = ref(0)
+const lastUsedModels      = ref([])
 
-const availableModels = [
-  { id: 'deepseek', name: 'DeepSeek V3', provider: 'DeepSeek', recommended: true },
-  { id: 'gpt4o',   name: 'GPT-4o',      provider: 'OpenAI',    recommended: false },
-  { id: 'claude3',  name: 'Claude 3.5',  provider: 'Anthropic', recommended: false },
-  { id: 'qwen',    name: 'Qwen-Max',     provider: '阿里云',    recommended: false },
-]
+// ── 模型列表 ──────────────────────────────────────────────────────────────────
+
+const modelsList    = ref([])
+const modelsLoading = ref(false)
+
+async function loadModels() {
+  modelsLoading.value = true
+  try {
+    const res = await http.get('/ai-models/')
+    modelsList.value = res.data
+    if (!selectedModels.value.length) {
+      for (const provider of modelsList.value) {
+        const def = provider.sub_models?.find(sm => sm.is_default && sm.configured)
+          || provider.sub_models?.find(sm => sm.configured)
+        if (def) { selectedModels.value = [def.id]; break }
+      }
+    }
+  } catch (e) {
+    console.error('加载模型列表失败', e)
+  } finally {
+    modelsLoading.value = false
+  }
+}
+
+const allSubModels = computed(() => {
+  const flat = []
+  for (const p of modelsList.value) for (const sm of (p.sub_models || [])) flat.push(sm)
+  return flat
+})
+
+const selectedModelNames = computed(() =>
+  selectedModels.value.map(id => allSubModels.value.find(sm => sm.id === id)?.name || id)
+)
 
 // ── 统计 ──────────────────────────────────────────────────────────────────────
 
 const AI_SUPPORTED = new Set(['QUADAS2', 'NOS'])
 
-const totalCount      = computed(() => qa.refs.length)
+const totalCount       = computed(() => qa.refs.length)
 const aiSupportedCount = computed(() => qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method)).length)
-const noMethodCount   = computed(() => qa.refs.filter(r => !r.quality_method).length)
-const noFultextCount  = computed(() => qa.refs.filter(r => r.fulltext_status !== 'available').length)
-const failedCount     = computed(() => {
-  const failedStatuses = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
-  return qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && failedStatuses.includes(r.ai_eval_status)).length
+const noMethodCount    = computed(() => qa.refs.filter(r => !r.quality_method).length)
+const noFultextCount   = computed(() => qa.refs.filter(r => r.fulltext_status !== 'available').length)
+const failedCount      = computed(() => {
+  const fs = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
+  return qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && fs.includes(r.ai_eval_status)).length
 })
 const estimatedCredits = computed(() => {
   const count = reevalScope.value === 'failed' ? failedCount.value : aiSupportedCount.value
-  return count * (evalMode.value === 'dual' ? 10 : 5)
+  return count * selectedModels.value.length * 5
 })
 
 // ── 进度 ──────────────────────────────────────────────────────────────────────
 
-const isRunning   = computed(() => {
-  if (!qa.evalProgress?.summary) return false
-  return qa.evalProgress.summary.running > 0
-})
+const isRunning   = computed(() => !!qa.evalProgress?.summary && qa.evalProgress.summary.running > 0)
 const isCompleted = computed(() => qa.evalCompleted)
 
 const doneCount = computed(() => {
   if (!qa.evalProgress?.summary) return 0
-  return (qa.evalProgress.summary.completed || 0) +
-         (qa.evalProgress.summary.failed || 0) +
-         (qa.evalProgress.summary.abstract_only || 0) +
-         (qa.evalProgress.summary.skipped_no_fulltext || 0) +
-         (qa.evalProgress.summary.skipped_no_method || 0)
+  const s = qa.evalProgress.summary
+  return (s.completed || 0) + (s.failed || 0) + (s.abstract_only || 0) + (s.skipped_no_fulltext || 0) + (s.skipped_no_method || 0)
 })
 
 const progressPct = computed(() => {
@@ -290,34 +318,26 @@ const progressPct = computed(() => {
   return Math.round((doneCount.value / totalCount.value) * 100)
 })
 
+const btnLabel = computed(() => {
+  if (isRunning.value) return '评价中...'
+  if (isCompleted.value) return '重新评价'
+  return '开始 AI 评价'
+})
+
 // ── 模型选择 ──────────────────────────────────────────────────────────────────
 
-function isModelDisabled(id) {
-  if (evalMode.value === 'single') return false
-  // dual 模式：已选 2 个且当前不在选中列表 → 禁用
-  return selectedModels.value.length >= 2 && !selectedModels.value.includes(id)
-}
+function isModelSelected(id) { return selectedModels.value.includes(id) }
 
 function toggleModel(id) {
-  if (isModelDisabled(id)) return
   const idx = selectedModels.value.indexOf(id)
   if (idx !== -1) {
     if (selectedModels.value.length > 1) selectedModels.value.splice(idx, 1)
-    return
-  }
-  if (evalMode.value === 'single') {
-    selectedModels.value = [id]
   } else {
-    if (selectedModels.value.length < 2) selectedModels.value.push(id)
+    selectedModels.value.push(id)
   }
 }
 
-const canStart = computed(() => {
-  if (!aiSupportedCount.value) return false
-  if (!selectedModels.value.length) return false
-  if (evalMode.value === 'dual' && selectedModels.value.length < 2) return false
-  return true
-})
+const canStart = computed(() => aiSupportedCount.value > 0 && selectedModels.value.length > 0)
 
 // ── 启动评价 ──────────────────────────────────────────────────────────────────
 
@@ -326,37 +346,31 @@ async function doStartEval() {
   try {
     let refIds
     if (reevalScope.value === 'failed') {
-      // 仅重评失败/跳过的文献
-      const failedStatuses = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
+      const fs = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
       refIds = qa.refs
-        .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && failedStatuses.includes(r.ai_eval_status))
+        .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && fs.includes(r.ai_eval_status))
         .map(r => r.id)
-      if (!refIds.length) {
-        alert('没有需要重评的失败/跳过文献')
-        return
-      }
+      if (!refIds.length) { alert('没有需要重评的文献'); return }
     } else {
       refIds = qa.refs
         .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method))
         .map(r => r.id)
     }
-    await qa.startEval(project.currentProject.id, refIds, evalMode.value, selectedModels.value)
+    await qa.startEval(project.currentProject.id, refIds, null, selectedModels.value)
     showConfirmModal.value = false
-    showConfig.value = false   // 启动后隐藏配置，显示进度
-    // 开始轮询
+    // 缓存本次积分和模型，完成后展示在右栏
+    lastConsumedCredits.value = estimatedCredits.value
+    lastUsedModels.value = selectedModelNames.value.slice()
+    // 启动后刷新任务与日志
+    taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
+    taskStore.fetchActivityLogs(project.currentProject.id)
     qa.startPollingProgress(project.currentProject.id)
-    // 立即拉一次
     await qa.fetchEvalProgress(project.currentProject.id)
   } catch (e) {
     alert(e?.response?.data?.error || '启动失败，请重试')
   } finally {
     startLoading.value = false
   }
-}
-
-function enterReeval(scope) {
-  reevalScope.value = scope
-  showConfig.value = true   // 回到配置界面
 }
 
 function handleCancel() {
@@ -366,152 +380,150 @@ function handleCancel() {
 // ── 生命周期 ──────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  // 如果有进行中的评价，自动恢复轮询
+  await loadModels()
   if (project.currentProject) {
     await qa.fetchEvalProgress(project.currentProject.id)
-    if (isRunning.value) {
-      qa.startPollingProgress(project.currentProject.id)
-      showConfig.value = false
-    } else if (isCompleted.value) {
-      showConfig.value = false   // 已完成 → 默认显示结果面板，不遮住进度
-    }
+    if (isRunning.value) qa.startPollingProgress(project.currentProject.id)
   }
 })
 
 onUnmounted(() => {
-  // 离开步骤时停止轮询（已完成则保留状态）
   if (!isCompleted.value) qa.stopPolling()
 })
 
-// ── 状态显示 ──────────────────────────────────────────────────────────────────
+// ── 状态显示辅助 ──────────────────────────────────────────────────────────────
 
 function statusLabel(s) {
-  return {
-    pending:              '等待中',
-    running:              '评价中',
-    completed:            '已完成',
-    abstract_only:        '摘要评价',
-    failed:               '失败',
-    skipped_no_fulltext:  '跳过（无内容）',
-    skipped_no_method:    '跳过（无方法）',
-  }[s] || s
+  return { pending: '等待中', running: '评价中', completed: '已完成', abstract_only: '摘要评价',
+           failed: '失败', skipped_no_fulltext: '跳过(无内容)', skipped_no_method: '跳过(无方法)' }[s] || s
 }
 function statusIconClass(s) {
-  return {
-    pending:              'fas fa-clock text-gray',
-    running:              'fas fa-spinner fa-spin text-blue',
-    completed:            'fas fa-check-circle text-green',
-    abstract_only:        'fas fa-file-lines text-orange',
-    failed:               'fas fa-times-circle text-red',
-    skipped_no_fulltext:  'fas fa-ban text-gray',
-    skipped_no_method:    'fas fa-ban text-gray',
-  }[s] || 'fas fa-circle'
+  return { pending: 'fas fa-clock text-gray', running: 'fas fa-spinner fa-spin text-blue',
+           completed: 'fas fa-check-circle text-green', abstract_only: 'fas fa-file-lines text-orange',
+           failed: 'fas fa-times-circle text-red', skipped_no_fulltext: 'fas fa-ban text-gray',
+           skipped_no_method: 'fas fa-ban text-gray' }[s] || 'fas fa-circle'
 }
 function statusBadgeClass(s) {
-  return {
-    pending:              'badge-gray',
-    running:              'badge-blue',
-    completed:            'badge-green',
-    abstract_only:        'badge-orange',
-    failed:               'badge-red',
-    skipped_no_fulltext:  'badge-gray',
-    skipped_no_method:    'badge-gray',
-  }[s] || 'badge-gray'
+  return { pending: 'badge-gray', running: 'badge-blue', completed: 'badge-green',
+           abstract_only: 'badge-orange', failed: 'badge-red',
+           skipped_no_fulltext: 'badge-gray', skipped_no_method: 'badge-gray' }[s] || 'badge-gray'
 }
 </script>
 
 <style scoped>
-.qa-aiev { display: flex; flex-direction: column; gap: 16px; }
+.qa-aiev { display: flex; flex-direction: column; gap: 14px; }
+
+/* 标题 */
 .step-header { display: flex; align-items: center; gap: 12px; }
-.step-icon-wrap { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+.step-icon-wrap { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; background: linear-gradient(135deg,#f59e0b,#f97316); }
 .step-title { font-size: 1rem; font-weight: 600; color: #1e293b; margin: 0; }
 .step-subtitle { font-size: 0.75rem; color: #64748b; margin: 0; }
 
+/* ── 主体左右分栏 ── */
+.aiev-body {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* ── 左栏 ── */
+.aiev-left { display: flex; flex-direction: column; gap: 10px; }
+
 /* 概览 */
-.overview-row { display: flex; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 20px; gap: 0; }
+.overview-row { display: flex; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
 .ov-item { flex: 1; text-align: center; }
-.ov-val { display: block; font-size: 1.5rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
+.ov-val { display: block; font-size: 1.35rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
 .ov-val.ai-ok { color: #10b981; }
 .ov-val.text-gray { color: #94a3b8; }
 .ov-val.text-orange { color: #f59e0b; }
-.ov-label { font-size: 0.72rem; color: #64748b; }
-.ov-divider { width: 1px; height: 36px; background: #e2e8f0; flex-shrink: 0; }
+.ov-label { font-size: 0.68rem; color: #64748b; }
+.ov-divider { width: 1px; height: 30px; background: #e2e8f0; flex-shrink: 0; }
 
 /* 配置卡片 */
-.config-section { display: flex; flex-direction: column; gap: 12px; }
-.config-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
-.config-label { font-size: 0.82rem; font-weight: 600; color: #475569; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-.config-tip { font-size: 0.72rem; color: #94a3b8; font-weight: 400; }
+.config-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; }
+.config-label { font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.config-tip { font-size: 0.7rem; color: #94a3b8; font-weight: 400; }
 
-/* 模式选项 */
-.mode-options { display: flex; gap: 10px; }
-.mode-option { flex: 1; display: flex; align-items: flex-start; gap: 12px; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.15s; }
-.mode-option:hover { border-color: #a5b4fc; background: #f5f3ff; }
-.mode-option.active { border-color: #6366f1; background: #eef2ff; }
-.mode-icon { width: 32px; height: 32px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6366f1; flex-shrink: 0; font-size: 1rem; }
-.mode-option.active .mode-icon { background: #6366f1; color: #fff; }
-.mode-name { font-size: 0.85rem; font-weight: 600; color: #1e293b; margin: 0 0 2px; }
-.mode-desc { font-size: 0.72rem; color: #64748b; margin: 0; }
-
-/* 模型网格 */
-.model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
-.model-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.15s; }
-.model-option:hover:not(.disabled) { border-color: #a5b4fc; }
-.model-option.selected { border-color: #6366f1; background: #eef2ff; }
-.model-option.disabled { opacity: 0.45; cursor: not-allowed; }
-.model-check { width: 18px; height: 18px; border: 2px solid #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #fff; flex-shrink: 0; background: #fff; }
-.model-option.selected .model-check { background: #6366f1; border-color: #6366f1; }
-.model-name { font-size: 0.82rem; font-weight: 600; color: #1e293b; margin: 0; }
-.model-provider { font-size: 0.7rem; color: #94a3b8; margin: 0; }
-.tag-amber { background: #fef3c7; color: #b45309; font-size: 0.65rem; padding: 1px 5px; border-radius: 4px; }
+.models-loading { font-size: 0.8rem; color: #94a3b8; padding: 8px 0; display: flex; align-items: center; gap: 6px; }
+.ai-provider-list { display: flex; flex-direction: column; gap: 10px; }
+.ai-provider-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.ai-provider-logo { font-size: 0.95rem; line-height: 1; }
+.ai-provider-name { font-size: 0.78rem; font-weight: 600; color: #334155; }
+.ai-provider-unconfigured { font-size: 0.65rem; color: #94a3b8; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; margin-left: 2px; }
+.ai-submodel-list { display: flex; flex-wrap: wrap; gap: 5px; padding-left: 18px; }
+.ai-submodel-btn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 7px; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; transition: all 0.14s; font-size: 0.75rem; }
+.ai-submodel-btn:hover:not(.ai-submodel-btn-disabled) { border-color: #a5b4fc; background: #f5f3ff; }
+.ai-submodel-btn-active { border-color: #6366f1 !important; background: #eef2ff !important; }
+.ai-submodel-btn-disabled { opacity: 0.42; cursor: not-allowed; }
+.ai-submodel-name { font-weight: 500; color: #334155; }
+.ai-submodel-desc { font-size: 0.65rem; color: #94a3b8; }
+.ai-submodel-btn-active .ai-submodel-name { color: #4338ca; }
+.ai-submodel-btn-active .ai-submodel-desc { color: #818cf8; }
+.ai-submodel-check { font-size: 0.58rem; color: #6366f1; }
 
 /* 启动区 */
-.start-section { display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap; }
-.credit-hint { font-size: 0.78rem; color: #94a3b8; display: flex; align-items: center; gap: 4px; }
-.reeval-hint { font-size: 0.78rem; color: #f59e0b; display: flex; align-items: center; gap: 4px; }
-.btn-start { padding: 10px 28px; background: linear-gradient(135deg, #f59e0b, #f97316); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(249,115,22,.25); }
-.btn-start:hover:not(:disabled) { opacity: 0.9; }
-.btn-start:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-back-result { padding: 8px 14px; background: #fff; border: 1px solid #e2e8f0; color: #64748b; border-radius: 8px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
-.btn-back-result:hover { border-color: #6366f1; color: #6366f1; }
-.btn-reeval { padding: 7px 14px; background: #fff; border: 1px solid #e2e8f0; color: #475569; border-radius: 8px; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.start-section { display: flex; flex-direction: column; gap: 8px; }
+.start-hints { display: flex; flex-wrap: wrap; gap: 8px; }
+.credit-hint { font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 4px; }
+.reeval-hint { font-size: 0.75rem; color: #f59e0b; display: flex; align-items: center; gap: 4px; }
+.start-btns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn-reeval { padding: 6px 12px; background: #fff; border: 1px solid #e2e8f0; color: #475569; border-radius: 7px; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; gap: 4px; transition: all 0.12s; white-space: nowrap; }
 .btn-reeval:hover { border-color: #f59e0b; color: #f59e0b; }
 .btn-reeval-all:hover { border-color: #6366f1; color: #6366f1; }
+.btn-reeval-active { border-color: #6366f1 !important; color: #6366f1 !important; background: #eef2ff !important; }
+.btn-start { flex: 1; padding: 10px 0; background: linear-gradient(135deg, #f59e0b, #f97316); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; box-shadow: 0 2px 8px rgba(249,115,22,.22); white-space: nowrap; }
+.btn-start:hover:not(:disabled) { opacity: 0.88; }
+.btn-start:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* 进度面板 */
-.progress-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.progress-head { display: flex; align-items: center; gap: 12px; }
-.progress-status-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+/* ── 右栏：进度 ── */
+.aiev-right { }
+
+.progress-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 48px 20px;
+  background: #fafafa; border: 1.5px dashed #e2e8f0; border-radius: 14px;
+  color: #cbd5e1; text-align: center; min-height: 260px;
+}
+.progress-empty i { font-size: 2.4rem; }
+.progress-empty p { font-size: 0.85rem; margin: 0; color: #94a3b8; }
+.progress-empty-sub { font-size: 0.73rem !important; color: #cbd5e1 !important; }
+
+.progress-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.progress-head { display: flex; align-items: center; gap: 10px; }
+.progress-status-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
 .progress-status-icon.running { background: #dbeafe; color: #2563eb; }
 .progress-status-icon.done { background: #d1fae5; color: #059669; }
-.progress-title { font-size: 0.92rem; font-weight: 600; color: #1e293b; margin: 0; }
-.progress-subtitle { font-size: 0.75rem; color: #64748b; margin: 0; }
-.btn-cancel { margin-left: auto; padding: 6px 14px; border: 1px solid #fca5a5; background: #fff; color: #ef4444; border-radius: 7px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+.progress-head-text { flex: 1; }
+.progress-title { font-size: 0.9rem; font-weight: 600; color: #1e293b; margin: 0; }
+.progress-subtitle { font-size: 0.73rem; color: #64748b; margin: 0; }
+
+/* 积分消耗提示 */
+.credits-consumed { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 7px 12px; }
+.credits-consumed i { color: #f59e0b; }
+.used-models-tip { color: #78716c; }
+
+.btn-cancel { padding: 6px 12px; border: 1px solid #fca5a5; background: #fff; color: #ef4444; border-radius: 7px; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.btn-cancel:hover { background: #fee2e2; }
 
 .progress-bar-wrap { display: flex; align-items: center; gap: 10px; }
-.progress-bar-track { flex: 1; height: 8px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; }
+.progress-bar-track { flex: 1; height: 7px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; }
 .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 9999px; transition: width 0.5s ease; }
-.progress-pct { font-size: 0.78rem; color: #64748b; width: 36px; text-align: right; flex-shrink: 0; }
+.progress-pct { font-size: 0.78rem; color: #64748b; width: 34px; text-align: right; flex-shrink: 0; }
 
-.stat-row { display: flex; gap: 16px; flex-wrap: wrap; }
-.stat-item { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; color: #64748b; }
-.stat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.dot-blue { background: #3b82f6; }
-.dot-green { background: #10b981; }
-.dot-orange { background: #f59e0b; }
-.dot-gray { background: #94a3b8; }
-.dot-red { background: #ef4444; }
+.stat-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.stat-item { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #64748b; }
+.stat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-blue { background: #3b82f6; } .dot-green { background: #10b981; }
+.dot-orange { background: #f59e0b; } .dot-gray { background: #94a3b8; } .dot-red { background: #ef4444; }
 
-.ref-progress-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; border-top: 1px solid #f1f5f9; padding-top: 10px; }
-.ref-prog-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
-.status-icon { width: 14px; flex-shrink: 0; font-size: 0.78rem; }
-.text-blue { color: #3b82f6; }
-.text-green { color: #10b981; }
-.text-orange { color: #f59e0b; }
-.text-red { color: #ef4444; }
-.text-gray { color: #94a3b8; }
-.ref-prog-title { flex: 1; font-size: 0.78rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.status-badge { font-size: 0.68rem; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
+.ref-progress-list { display: flex; flex-direction: column; gap: 3px; max-height: 280px; overflow-y: auto; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+.ref-prog-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.status-icon { width: 14px; flex-shrink: 0; font-size: 0.75rem; }
+.text-blue { color: #3b82f6; } .text-green { color: #10b981; }
+.text-orange { color: #f59e0b; } .text-red { color: #ef4444; } .text-gray { color: #94a3b8; }
+.ref-prog-title { flex: 1; font-size: 0.76rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-badge { font-size: 0.66rem; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
 .badge-gray { background: #f1f5f9; color: #64748b; }
 .badge-blue { background: #dbeafe; color: #1d4ed8; }
 .badge-green { background: #d1fae5; color: #065f46; }
@@ -526,13 +538,21 @@ function statusBadgeClass(s) {
 .btn-secondary { padding: 8px 16px; background: #fff; color: #6366f1; border: 1px solid #6366f1; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
 .btn-secondary:hover { background: #f5f3ff; }
 
-/* 确认弹窗 */
+/* 弹窗 */
 .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.modal-box { background: #fff; border-radius: 16px; width: 420px; max-width: 94vw; box-shadow: 0 16px 48px rgba(0,0,0,.18); }
+.modal-box { background: #fff; border-radius: 16px; width: 440px; max-width: 94vw; box-shadow: 0 16px 48px rgba(0,0,0,.18); }
 .modal-head { display: flex; align-items: center; gap: 10px; padding: 20px 24px 16px; font-size: 1rem; font-weight: 600; color: #1e293b; border-bottom: 1px solid #f1f5f9; }
 .modal-body { padding: 16px 24px; font-size: 0.85rem; color: #475569; }
 .modal-body p { margin: 0 0 10px; }
 .confirm-list { margin: 0 0 10px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 .confirm-credit { color: #f59e0b; display: flex; align-items: center; gap: 6px; font-size: 0.82rem; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid #f1f5f9; }
+
+/* 重评范围选择 */
+.reeval-scope-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; }
+.reeval-scope-label { font-size: 0.82rem; color: #64748b; flex-shrink: 0; }
+.reeval-scope-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.scope-btn { padding: 5px 12px; border: 1.5px solid #e2e8f0; background: #fff; border-radius: 7px; cursor: pointer; font-size: 0.78rem; color: #475569; display: flex; align-items: center; gap: 5px; transition: all 0.12s; }
+.scope-btn:hover { border-color: #a5b4fc; color: #6366f1; }
+.scope-btn-active { border-color: #6366f1 !important; background: #eef2ff !important; color: #4338ca !important; font-weight: 600; }
 </style>

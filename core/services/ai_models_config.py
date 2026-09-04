@@ -31,6 +31,7 @@ AI_PROVIDERS = [
                 "model": "deepseek-v4-flash",
                 "description": "高速版，价格极低",
                 "is_default": False,
+                "is_reasoning": True,   # 推理模型，需禁用 thinking 以直接输出结构化内容
             },
             {
                 "id": "deepseek-v4-pro",
@@ -38,6 +39,7 @@ AI_PROVIDERS = [
                 "model": "deepseek-v4-pro",
                 "description": "旗舰版，效果最佳",
                 "is_default": True,
+                "is_reasoning": True,   # 推理模型，需禁用 thinking 以直接输出结构化内容
             },
         ],
     },
@@ -141,15 +143,16 @@ def get_model_config(model_id: str) -> Optional[dict]:
     for provider, sm in _iter_sub_models():
         if sm["id"] == model_id:
             return {
-                "id":       sm["id"],
-                "name":     sm["name"],
-                "model":    sm["model"],
-                "logo":     provider["logo"],
-                "provider": provider["id"],
-                "api_url":  provider["api_url"],
-                "api_key":  provider["api_key"],
-                "timeout":  provider["timeout"],
-                "is_default": sm.get("is_default", False),
+                "id":           sm["id"],
+                "name":         sm["name"],
+                "model":        sm["model"],
+                "logo":         provider["logo"],
+                "provider":     provider["id"],
+                "api_url":      provider["api_url"],
+                "api_key":      provider["api_key"],
+                "timeout":      provider["timeout"],
+                "is_default":   sm.get("is_default", False),
+                "is_reasoning": sm.get("is_reasoning", False),  # 推理模型标志
             }
     return None
 

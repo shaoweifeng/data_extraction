@@ -121,15 +121,6 @@
       </div>
     </div>
 
-    <!-- 底部操作 -->
-    <div class="step-footer-actions">
-      <button class="btn-secondary" @click="qa.currentStep = 5">
-        <i class="fas fa-arrow-left"></i> 上一步
-      </button>
-      <button class="btn-reset" @click="confirmReset">
-        <i class="fas fa-rotate-left"></i> 重新开始
-      </button>
-    </div>
   </div>
 </template>
 

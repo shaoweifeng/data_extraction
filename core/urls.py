@@ -22,7 +22,7 @@ from .api.qa_views import (
     eval_start, eval_progress,
     signal_items_list, signal_item_confirm, signal_batch_confirm,
     domain_results,
-    chart_generate, chart_info,
+    chart_generate, chart_preview, chart_info,
     export_excel, export_status,
 )
 
@@ -81,6 +81,7 @@ urlpatterns = [
     path('qa/domain-results/',                 domain_results,        name='qa_domain_results'),
     # 图表
     path('qa/chart/',                          chart_info,            name='qa_chart_info'),
+    path('qa/chart/preview/',                  chart_preview,         name='qa_chart_preview'),
     path('qa/chart/generate/',                 chart_generate,        name='qa_chart_generate'),
     # 导出
     path('qa/export/excel/',                   export_excel,          name='qa_export_excel'),

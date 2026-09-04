@@ -31,6 +31,13 @@ export function getTaskTypeName(taskType) {
     criteria: '纳排标准',
     SCREEN_1: '初筛阶段',
     SEARCH: '文献检索',
+    // QA 步骤
+    qa_upload: '上传文献',
+    qa_method: '方法选择',
+    qa_eval:   'AI质量评价',
+    qa_review: '结果审核',
+    qa_chart:  '结果可视化',
+    qa_export: '导出报告',
   }
   return names[taskType] || taskType
 }

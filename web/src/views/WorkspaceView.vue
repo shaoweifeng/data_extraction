@@ -54,8 +54,48 @@
 
           <!-- ── QUALITY：文献质量评价 ── -->
           <template v-else-if="project.currentStage === 'QUALITY'">
-            <div class="ws-step-content" style="padding:20px 24px;overflow-y:auto;flex:1">
-              <QAWorkspaceView />
+            <!-- 步骤指示器（与 SCREEN_1 完全一致的容器 + 组件） -->
+            <div class="ws-step-bar">
+              <div class="step-indicator">
+                <template v-for="(step, idx) in qaSteps" :key="step.key">
+                  <button
+                    :class="['step-node', getQANodeClass(step)]"
+                    @click="jumpToQAStep(step.index)"
+                  >
+                    <span class="step-node-num">
+                      <i v-if="step.index < qa.maxReachedStep && qa.currentStep !== step.index" class="fas fa-check step-check-icon"></i>
+                      <span v-else>{{ step.index }}</span>
+                    </span>
+                    <span class="step-node-label">{{ step.label }}</span>
+                  </button>
+                  <div
+                    v-if="idx < qaSteps.length - 1"
+                    :class="['step-line', step.index < qa.maxReachedStep ? 'step-line-done' : '']"
+                  ></div>
+                </template>
+              </div>
+            </div>
+            <div class="ws-body">
+              <div class="ws-step-wrap">
+                <div class="ws-step-content" :class="{ 'qa-review-mode': qa.currentStep === 4 }">
+                  <QAWorkspaceView />
+                </div>
+                <!-- 固定底部页脚，与 SCREEN_1 完全一致的结构 -->
+                <div class="ws-step-footer">
+                  <QAStepNav :next-disabled="qaNextDisabled">
+                    <template #center>
+                      <span class="qa-footer-tip" v-if="qaFooterTip">{{ qaFooterTip }}</span>
+                    </template>
+                  </QAStepNav>
+                </div>
+              </div>
+              <div class="ws-task-sidebar" :class="{ 'ws-task-sidebar--collapsed': qaSidebarCollapsed }">
+                <button v-if="qaSidebarCollapsed" class="ws-sidebar-expand-btn" @click="qaSidebarCollapsed = false" title="展开任务面板">
+                  <i class="fas fa-chevron-left"></i>
+                  <span class="ws-sidebar-expand-label">任务</span>
+                </button>
+                <TaskSidebar v-else @toggle="qaSidebarCollapsed = true" />
+              </div>
             </div>
           </template>
 
@@ -77,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useScreeningStore } from '@/stores/screening'
@@ -95,6 +135,7 @@ import StepAiScreen from '@/components/steps/StepAiScreen.vue'
 import StepReview from '@/components/steps/StepReview.vue'
 import StepExport from '@/components/steps/StepExport.vue'
 import QAWorkspaceView from '@/components/qa/QAWorkspaceView.vue'
+import QAStepNav from '@/components/qa/QAStepNav.vue'
 import { useQAStore } from '@/stores/qa'
 
 const route = useRoute()
@@ -106,6 +147,26 @@ const qa = useQAStore()
 
 const loading = ref(true)
 const sidebarCollapsed = ref(false)
+const qaSidebarCollapsed = ref(false)
+
+// QA 页脚：下一步禁用条件 + 中间提示文字
+const qaNextDisabled = computed(() => {
+  const step = qa.currentStep
+  if (step === 1) return qa.refs.length === 0
+  if (step === 2) return !qa.refs.some(r => r.quality_method)
+  if (step === 3) return !qa.evalCompleted
+  if (step === 4) return !qa.refs.some(r => r.review_status === 'confirmed' || r.review_status === 'partial')
+  return false
+})
+const qaFooterTip = computed(() => {
+  const step = qa.currentStep
+  if (step === 1 && qa.refs.length > 0) return `已导入 ${qa.refs.length} 篇文献`
+  if (step === 4) {
+    const confirmed = qa.refs.filter(r => r.review_status === 'confirmed').length
+    return `${confirmed} / ${qa.refs.length} 篇已确认`
+  }
+  return ''
+})
 
 const screen1Steps = [
   { id: 1, name: '文献解析',  stepKey: 'parse' },
@@ -116,6 +177,26 @@ const screen1Steps = [
   { id: 6, name: '人工审阅',  stepKey: 'review' },
   { id: 7, name: '结果导出',  stepKey: 'export' },
 ]
+
+const qaSteps = [
+  { index: 1, key: 'upload',  label: '上传文献' },
+  { index: 2, key: 'method',  label: '方法选择' },
+  { index: 3, key: 'ai_eval', label: 'AI 质量评价' },
+  { index: 4, key: 'review',  label: '结果审核' },
+  { index: 5, key: 'chart',   label: '结果可视化' },
+  { index: 6, key: 'export',  label: '导出报告' },
+]
+
+function getQANodeClass(step) {
+  if (qa.currentStep === step.index) return 'step-node-active'
+  if (step.index <= qa.maxReachedStep) return 'step-node-done'
+  return 'step-node-idle'
+}
+
+function jumpToQAStep(index) {
+  if (index > qa.maxReachedStep) return
+  qa.currentStep = index
+}
 
 const stageMeta = {
   SEARCH:   { name: '文献检索',   icon: 'fas fa-search',       bg: '#eff6ff', color: '#3b82f6' },
@@ -201,6 +282,12 @@ onMounted(async () => {
   border-top: 1px solid #f1f5f9;
   background: #fff;
 }
+/* QA 结果审核步骤：内部三栏自己管理滚动，外层不滚动 */
+.ws-step-content.qa-review-mode {
+  overflow: hidden;
+  padding: 12px 16px;
+}
+
 
 .ws-task-sidebar {
   width: 280px; min-width: 280px;
@@ -247,4 +334,38 @@ onMounted(async () => {
   border-radius: 999px; font-size: 0.75rem; font-weight: 600;
   margin-top: 4px;
 }
+
+/* ── QA 步骤条（与 StepIndicator.vue 样式完全一致）── */
+.step-indicator {
+  display: flex; align-items: center; gap: 0; overflow-x: auto;
+}
+.step-node {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 12px; border-radius: 999px; border: none;
+  cursor: pointer; font-size: 0.8rem; font-weight: 500;
+  white-space: nowrap; transition: all 0.2s;
+  position: relative; flex-shrink: 0;
+}
+.step-node-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.step-check-icon { font-size: 0.65rem; }
+.step-node-label { font-size: 0.8rem; }
+.step-node-active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,.35);
+}
+.step-node-active .step-node-num { background: rgba(255,255,255,0.25); color: #fff; }
+.step-node-done { background: #ecfdf5; color: #059669; }
+.step-node-done:hover { background: #d1fae5; }
+.step-node-done .step-node-num { background: #10b981; color: #fff; }
+.step-node-idle { background: transparent; color: #64748b; cursor: default; }
+.step-node-idle .step-node-num { background: #e2e8f0; color: #64748b; }
+.step-line {
+  flex: 1; min-width: 8px; max-width: 28px; height: 2px;
+  background: #e2e8f0; border-radius: 999px; flex-shrink: 0;
+}
+.step-line-done { background: linear-gradient(90deg, #10b981, #6366f1); }
 </style>

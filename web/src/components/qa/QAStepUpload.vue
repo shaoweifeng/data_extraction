@@ -27,24 +27,32 @@
     <div class="upload-panel">
       <!-- 从初筛/复筛导入 -->
       <template v-if="activeTab === 'screening'">
-        <div class="import-info">
-          <i class="fas fa-info-circle" style="color:#6366f1"></i>
-          <span>将自动导入文献初筛阶段中已标记为「纳入」的文献，快速进入质量评价流程。</span>
-        </div>
-        <div class="import-actions">
-          <select v-model="importStage" class="qa-select" style="width:200px">
-            <option value="SCREEN_1">从文献初筛导入</option>
-            <option value="SCREEN_2">从文献复筛导入</option>
-          </select>
-          <button class="btn-primary" @click="doImport" :disabled="importing">
-            <i class="fas fa-download" v-if="!importing"></i>
-            <i class="fas fa-spinner fa-spin" v-else></i>
-            {{ importing ? '导入中...' : '开始导入' }}
-          </button>
-        </div>
-        <div v-if="importResult" class="import-result">
-          <span class="result-ok">✓ 成功导入 {{ importResult.imported }} 篇</span>
-          <span v-if="importResult.skipped" class="result-skip">，跳过重复 {{ importResult.skipped }} 篇</span>
+        <div
+          class="dropzone dropzone--import"
+          @click.stop
+        >
+          <i class="fas fa-database" style="font-size:2rem;color:#6366f1;margin-bottom:8px"></i>
+          <p>将自动导入初筛/复筛阶段中已标记为「纳入」的文献</p>
+          <p style="font-size:0.72rem;color:#94a3b8">快速进入质量评价流程，无需手动上传</p>
+          <div class="import-inline-actions" @click.stop>
+            <select v-model="importStage" class="qa-select">
+              <option value="SCREEN_1">从文献初筛导入</option>
+              <option value="SCREEN_2">从文献复筛导入</option>
+            </select>
+            <button class="btn-primary" @click="confirmImport" :disabled="importing">
+              <i class="fas fa-download" v-if="!importing"></i>
+              <i class="fas fa-spinner fa-spin" v-else></i>
+              {{ importing ? '导入中...' : '开始导入' }}
+            </button>
+          </div>
+          <p style="font-size:0.72rem;color:#f59e0b;margin-top:10px" @click.stop>
+            <i class="fas fa-exclamation-triangle"></i>
+            导入将重置文献列表及所有已有评价记录
+          </p>
+          <div v-if="importResult" class="import-result" @click.stop>
+            <span class="result-ok" v-if="importResult.imported !== undefined">✓ 成功导入 {{ importResult.imported }} 篇最终纳入文献</span>
+            <span class="result-err" v-if="importResult.error">✗ {{ importResult.error }}</span>
+          </div>
         </div>
       </template>
 
@@ -52,53 +60,47 @@
       <template v-else-if="activeTab === 'fulltext'">
         <div
           class="dropzone"
-          :class="{ 'dropzone--drag': isDragging }"
+          :class="{ 'dropzone--drag': isDragging, 'dropzone--uploading': uploading }"
           @dragover.prevent="isDragging = true"
           @dragleave="isDragging = false"
           @drop.prevent="onDrop"
-          @click="$refs.fileInput.click()"
+          @click="!uploading && $refs.fileInput.click()"
         >
-          <i class="fas fa-file-pdf" style="font-size:2rem;color:#e74c3c;margin-bottom:8px"></i>
-          <p>拖拽 PDF 文件到此处，或<span class="link-text">点击选择文件</span></p>
-          <p style="font-size:0.72rem;color:#94a3b8">支持批量上传，每个 PDF 自动识别为一篇文献</p>
+          <template v-if="uploading">
+            <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#6366f1;margin-bottom:8px"></i>
+            <p style="font-weight:500;color:#6366f1">正在上传 {{ uploadTotal }} 个文件…</p>
+            <p style="font-size:0.72rem;color:#94a3b8">请稍候，上传完成后将自动刷新文献列表</p>
+          </template>
+          <template v-else>
+            <i class="fas fa-file-pdf" style="font-size:2rem;color:#e74c3c;margin-bottom:8px"></i>
+            <p>拖拽 PDF 文件到此处，或<span class="link-text">点击选择文件</span></p>
+            <p style="font-size:0.72rem;color:#94a3b8">支持批量上传，拖入或选择后自动开始上传</p>
+          </template>
           <input ref="fileInput" type="file" multiple accept=".pdf" style="display:none" @change="onFileSelect" />
         </div>
-
-        <!-- 上传队列 -->
-        <div v-if="uploadQueue.length" class="upload-queue">
-          <div v-for="(f, i) in uploadQueue" :key="i" class="queue-item">
-            <i class="fas fa-file-pdf" style="color:#e74c3c"></i>
-            <span class="queue-name">{{ f.name }}</span>
-            <span class="queue-size">{{ formatSize(f.size) }}</span>
-            <button class="queue-remove" @click="uploadQueue.splice(i, 1)">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <button class="btn-primary" @click="doUpload" :disabled="uploading">
-            <i class="fas fa-upload" v-if="!uploading"></i>
-            <i class="fas fa-spinner fa-spin" v-else></i>
-            {{ uploading ? `上传中 (${uploadedCount}/${uploadQueue.length})...` : `上传 ${uploadQueue.length} 个文件` }}
-          </button>
+        <!-- 上传结果提示 -->
+        <div v-if="uploadResult" class="upload-result-bar" :class="uploadResult.error ? 'result-err-bar' : 'result-ok-bar'">
+          <i :class="uploadResult.error ? 'fas fa-times-circle' : 'fas fa-check-circle'"></i>
+          {{ uploadResult.error || `成功上传 ${uploadResult.count} 个文件` }}
         </div>
       </template>
 
-      <!-- 上传题录（简化版：暂仅提示） -->
+      <!-- 上传题录 -->
       <template v-else-if="activeTab === 'bibliography'">
-        <div class="import-info">
-          <i class="fas fa-info-circle" style="color:#f59e0b"></i>
-          <span>支持 RIS / BibTeX / EndNote 格式题录文件，系统将解析文献标题、作者、年份等信息。</span>
-        </div>
         <div
           class="dropzone"
-          @dragover.prevent @drop.prevent="onBibDrop"
+          :class="{ 'dropzone--drag': isBibDragging }"
+          @dragover.prevent="isBibDragging = true"
+          @dragleave="isBibDragging = false"
+          @drop.prevent="onBibDrop"
           @click="$refs.bibInput.click()"
         >
           <i class="fas fa-file-alt" style="font-size:2rem;color:#6366f1;margin-bottom:8px"></i>
           <p>拖拽题录文件到此处，或<span class="link-text">点击选择文件</span></p>
-          <p style="font-size:0.72rem;color:#94a3b8">支持 .ris / .bib / .txt 格式</p>
+          <p style="font-size:0.72rem;color:#94a3b8">支持 .ris / .bib / .txt 格式，系统将解析文献标题、作者、年份等信息</p>
           <input ref="bibInput" type="file" accept=".ris,.bib,.txt,.enw" style="display:none" @change="onBibSelect" />
+          <p v-if="bibMessage" class="bib-msg" @click.stop>{{ bibMessage }}</p>
         </div>
-        <p v-if="bibMessage" class="bib-msg">{{ bibMessage }}</p>
       </template>
     </div>
 
@@ -117,9 +119,9 @@
             <tr>
               <th style="width:40px">#</th>
               <th>文献标题</th>
-              <th>来源</th>
-              <th>全文状态</th>
-              <th>操作</th>
+              <th style="min-width:90px">来源</th>
+              <th style="min-width:88px">全文状态</th>
+              <th style="min-width:90px">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -145,15 +147,6 @@
         </table>
       </div>
     </div>
-
-    <!-- 底部操作 -->
-    <div class="step-footer-actions">
-      <span class="footer-tip" v-if="!qa.refs.length">请先导入文献</span>
-      <span class="footer-tip" v-else>已导入 {{ qa.refs.length }} 篇文献，可继续下一步</span>
-      <button class="btn-primary" :disabled="!qa.refs.length" @click="qa.currentStep = 2">
-        下一步：选择评价方法 <i class="fas fa-arrow-right"></i>
-      </button>
-    </div>
   </div>
 </template>
 
@@ -170,9 +163,10 @@ const importStage = ref('SCREEN_1')
 const importing  = ref(false)
 const importResult = ref(null)
 const uploading  = ref(false)
-const uploadedCount = ref(0)
-const uploadQueue  = ref([])
+const uploadTotal  = ref(0)
+const uploadResult = ref(null)   // { count } | { error }
 const isDragging   = ref(false)
+const isBibDragging = ref(false)
 const bibMessage   = ref('')
 
 const tabs = [
@@ -202,33 +196,45 @@ async function doImport() {
   }
 }
 
+function confirmImport() {
+  if (qa.refs.length > 0) {
+    if (!confirm(`当前已有 ${qa.refs.length} 篇文献及相关评价记录。\n导入将清空所有已有数据并重新导入最终纳入文献，是否继续？`)) return
+  }
+  doImport()
+}
+
 function onFileSelect(e) {
-  const files = Array.from(e.target.files || [])
-  uploadQueue.value.push(...files.filter(f => f.name.toLowerCase().endsWith('.pdf')))
+  const files = Array.from(e.target.files || []).filter(f => f.name.toLowerCase().endsWith('.pdf'))
+  // 重置 input，允许重复选同一文件
+  e.target.value = ''
+  if (files.length) doUpload(files)
 }
 function onDrop(e) {
   isDragging.value = false
-  const files = Array.from(e.dataTransfer.files || [])
-  uploadQueue.value.push(...files.filter(f => f.name.toLowerCase().endsWith('.pdf')))
+  const files = Array.from(e.dataTransfer.files || []).filter(f => f.name.toLowerCase().endsWith('.pdf'))
+  if (files.length) doUpload(files)
 }
 
-async function doUpload() {
-  if (!uploadQueue.value.length) return
+async function doUpload(files) {
+  if (!files || !files.length) return
   uploading.value = true
-  uploadedCount.value = 0
+  uploadTotal.value = files.length
+  uploadResult.value = null
   try {
-    await qa.uploadFulltext(project.currentProject.id, uploadQueue.value)
-    uploadedCount.value = uploadQueue.value.length
-    uploadQueue.value = []
+    await qa.uploadFulltext(project.currentProject.id, files)
+    uploadResult.value = { count: files.length }
     await qa.fetchRefs(project.currentProject.id)
   } catch (e) {
-    alert(e?.response?.data?.error || '上传失败')
+    uploadResult.value = { error: e?.response?.data?.error || '上传失败，请重试' }
   } finally {
     uploading.value = false
   }
 }
 
-function onBibDrop(e) { bibMessage.value = '题录导入功能即将上线，敬请期待' }
+function onBibDrop(e) {
+  isBibDragging.value = false
+  bibMessage.value = '题录导入功能即将上线，敬请期待'
+}
 function onBibSelect() { bibMessage.value = '题录导入功能即将上线，敬请期待' }
 
 function bindFulltext(ref) {
@@ -241,6 +247,7 @@ function formatSize(bytes) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB'
   return (bytes / 1024 / 1024).toFixed(1) + 'MB'
 }
+
 function sourceLabel(t) {
   return { screening_import: '初筛/复筛', bibliography_upload: '题录', fulltext_upload: '全文上传' }[t] || t
 }
@@ -268,14 +275,28 @@ function fulltextTagClass(s) {
 .upload-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
 .import-info { display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px; background: #f0f9ff; border-radius: 8px; font-size: 0.82rem; color: #475569; margin-bottom: 16px; }
 .import-actions { display: flex; gap: 10px; align-items: center; }
-.import-result { margin-top: 12px; font-size: 0.82rem; }
-.result-ok { color: #10b981; font-weight: 500; }
-.result-skip { color: #94a3b8; }
-.dropzone { border: 2px dashed #e2e8f0; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.dropzone { border: 2px dashed #e2e8f0; border-radius: 12px; padding: 40px 32px; text-align: center; cursor: pointer; transition: all 0.2s; }
 .dropzone:hover, .dropzone--drag { border-color: #6366f1; background: #f0f4ff; }
 .dropzone p { margin: 4px 0; font-size: 0.85rem; color: #64748b; }
-.link-text { color: #6366f1; font-weight: 500; }
-.upload-queue { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+
+/* 导入型 dropzone：不触发文件选择框，只是容器 */
+.dropzone--import { cursor: default; }
+.dropzone--import:hover { border-color: #6366f1; background: #f5f3ff; }
+
+/* 导入操作内联区 */
+.import-inline-actions { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+.import-result { margin-top: 10px; font-size: 0.82rem; }
+.result-ok { color: #10b981; font-weight: 500; }
+.result-skip { color: #94a3b8; }
+.result-err { color: #ef4444; font-weight: 500; }
+.dropzone--uploading { cursor: default; border-color: #6366f1; background: #f0f4ff; }
+.upload-result-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;
+  margin-top: 10px;
+}
+.result-ok-bar { background: #d1fae5; color: #065f46; }
+.result-err-bar { background: #fee2e2; color: #991b1b; }
 .queue-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f8fafc; border-radius: 8px; font-size: 0.82rem; }
 .queue-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .queue-size { color: #94a3b8; flex-shrink: 0; }

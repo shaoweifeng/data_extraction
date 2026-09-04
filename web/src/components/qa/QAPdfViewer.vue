@@ -1,5 +1,5 @@
 <template>
-  <div class="pdf-viewer">
+  <div class="pdf-viewer" ref="viewerEl">
     <div class="viewer-toolbar">
       <span class="viewer-title">
         <i class="fas fa-file-pdf" style="color:#e74c3c"></i>
@@ -45,16 +45,17 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   pdfUrl:   { type: String, default: '' },
   filename: { type: String, default: 'document.pdf' },
 })
 
-const blobUrl = ref('')
-const loading = ref(false)
-const error   = ref('')
+const viewerEl = ref(null)
+const blobUrl  = ref('')
+const loading  = ref(false)
+const error    = ref('')
 
 let currentBlobUrl = ''
 
@@ -66,16 +67,11 @@ function revokeCurrent() {
 }
 
 async function loadPdf(url) {
-  if (!url) {
-    revokeCurrent()
-    blobUrl.value = ''
-    return
-  }
+  if (!url) { revokeCurrent(); blobUrl.value = ''; return }
   loading.value = true
   error.value   = ''
   revokeCurrent()
   blobUrl.value = ''
-
   try {
     const resp = await fetch(url, { credentials: 'include' })
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
@@ -92,7 +88,21 @@ async function loadPdf(url) {
 
 watch(() => props.pdfUrl, (url) => loadPdf(url), { immediate: true })
 
-onUnmounted(() => revokeCurrent())
+// 阻止水平滑动手势触发浏览器后退/前进（非 passive，才能 preventDefault）
+function _blockHorizontalSwipe(e) {
+  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+    e.preventDefault()
+  }
+}
+
+onMounted(() => {
+  viewerEl.value?.addEventListener('wheel', _blockHorizontalSwipe, { passive: false })
+})
+
+onUnmounted(() => {
+  viewerEl.value?.removeEventListener('wheel', _blockHorizontalSwipe)
+  revokeCurrent()
+})
 </script>
 
 <style scoped>

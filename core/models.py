@@ -423,6 +423,7 @@ class ActivityLog(models.Model):
         ('task_start_dedup', '启动文献去重'),
         ('task_start_ai_screen', '启动AI初筛'),
         ('task_start_export', '启动结果归纳'),
+        ('task_start_qa_eval', '启动AI质量评价'),
         ('task_stop', '暂停任务'),
         ('task_resume', '继续任务'),
         ('task_abandon', '放弃任务'),
@@ -431,6 +432,14 @@ class ActivityLog(models.Model):
         ('model_select', '切换AI模型'),
         ('field_extraction_add', '添加提取字段'),
         ('field_extraction_delete', '删除提取字段'),
+        # QA 操作日志
+        ('qa_import', 'QA导入文献'),
+        ('qa_upload_pdf', 'QA上传全文'),
+        ('qa_set_method', 'QA设置评价方法'),
+        ('qa_confirm_signal', 'QA确认信号问题'),
+        ('qa_batch_confirm', 'QA批量确认'),
+        ('qa_generate_chart', 'QA生成图表'),
+        ('qa_export_excel', 'QA导出Excel'),
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='activity_logs', verbose_name="所属项目")
@@ -658,8 +667,10 @@ class QAReference(models.Model):
         ('ROBINS_I', 'ROBINS-I'),
     ]
     EVAL_MODE_CHOICES = [
-        ('single', '单模型评价'),
-        ('dual',   '双模型校验'),
+        ('single',   '单模型评价'),
+        ('multi',    '多模型校验'),
+        # 向后兼容旧值
+        ('dual',     '双模型校验（旧）'),
     ]
     AI_STATUS_CHOICES = [
         ('pending',             '待评价'),
@@ -718,6 +729,7 @@ class QASignalItem(models.Model):
     CONSISTENCY_CHOICES = [
         ('single',     '单模型'),
         ('consistent', '模型一致'),
+        ('majority',   '多数一致'),
         ('divergent',  '模型分歧'),
         ('partial',    '部分生成'),
         ('failed',     '生成失败'),
@@ -731,12 +743,15 @@ class QASignalItem(models.Model):
     signal_question  = models.CharField(max_length=500, verbose_name="信号问题")
     signal_description = models.CharField(max_length=1000, blank=True, default='', verbose_name="中文释义")
     options          = models.JSONField(default=list, verbose_name="可选值列表")
-    # 单模型结果
-    ai_judgment      = models.CharField(max_length=50, blank=True, default='', verbose_name="单模型AI判断")
-    ai_reason        = models.TextField(blank=True, default='', verbose_name="单模型判断理由")
+    # 通用汇总字段（单模型时=该模型结果；多模型时=共识/多数/推荐结果，便于界面统一展示）
+    ai_judgment      = models.CharField(max_length=50, blank=True, default='', verbose_name="AI汇总判断")
+    ai_reason        = models.TextField(blank=True, default='', verbose_name="AI汇总判断理由")
     ai_evidence      = models.TextField(blank=True, default='', verbose_name="证据原文")
     ai_evidence_page = models.CharField(max_length=100, blank=True, default='', verbose_name="证据位置")
-    # 双模型结果
+    # 多模型原始结果列表（N 个模型）
+    # [{"model_id": "deepseek-v4-pro", "judgment": "是", "reason": "...", "evidence": "...", "evidence_page": "..."}, ...]
+    model_results    = models.JSONField(default=list, blank=True, verbose_name="各模型评价结果")
+    # 向后兼容：双模型专用字段（新评价时由 model_results 填充前两个，旧数据不影响）
     model1_id        = models.CharField(max_length=100, blank=True, default='', verbose_name="模型1 ID")
     model1_judgment  = models.CharField(max_length=50, blank=True, default='', verbose_name="模型1判断")
     model1_reason    = models.TextField(blank=True, default='', verbose_name="模型1理由")

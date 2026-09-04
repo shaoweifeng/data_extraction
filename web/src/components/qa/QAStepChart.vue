@@ -6,16 +6,16 @@
       </div>
       <div>
         <h3 class="step-title">结果可视化</h3>
-        <p class="step-subtitle">生成偏倚风险评估图表，支持交通灯图与比例图</p>
+        <p class="step-subtitle">交互式预览评估图表，编辑文献名后点击「生成图片」导出 PNG</p>
       </div>
     </div>
 
-    <!-- 生成控制区 -->
+    <!-- 配置控制区 -->
     <div class="gen-control">
       <div class="ctrl-row">
         <div class="ctrl-item">
           <span class="ctrl-label">评价方法</span>
-          <select v-model="chartMethod" class="qa-select">
+          <select v-model="chartMethod" class="qa-select" @change="doPreview">
             <option v-for="m in qa.methods.filter(m => m.ai_supported)" :key="m.key" :value="m.key">
               {{ m.name }}
             </option>
@@ -23,7 +23,7 @@
         </div>
         <div class="ctrl-item">
           <span class="ctrl-label">包含文献</span>
-          <select v-model="refScope" class="qa-select">
+          <select v-model="refScope" class="qa-select" @change="doPreview">
             <option value="confirmed">仅已确认</option>
             <option value="all">全部已评价</option>
           </select>
@@ -35,36 +35,48 @@
             <option value="vertical">纵向（研究=行）</option>
           </select>
         </div>
+        <!-- 生成图片（调 matplotlib 生成 PNG 并自动下载） -->
         <button
           class="btn-generate"
-          @click="doGenerate"
-          :disabled="qa.chartLoading || !chartMethod"
+          @click="doGenerateAndDownload"
+          :disabled="qa.chartLoading || !qa.chartData"
+          title="调用后端渲染高清 PNG 并自动下载"
         >
           <i class="fas fa-spinner fa-spin" v-if="qa.chartLoading"></i>
-          <i class="fas fa-chart-bar" v-else></i>
-          {{ qa.chartLoading ? '生成中...' : '生成图表' }}
+          <i class="fas fa-image" v-else></i>
+          {{ qa.chartLoading ? '生成中...' : '生成图片' }}
         </button>
       </div>
     </div>
 
-    <!-- 图表区 -->
-    <template v-if="qa.chartData">
-      <!-- 导出工具栏 -->
+    <!-- 加载预览中 -->
+    <div v-if="qa.chartPreviewLoading" class="preview-loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>加载预览中...</span>
+    </div>
+
+    <!-- 图表预览区（前端渲染） -->
+    <template v-else-if="qa.chartData">
+
+      <!-- 图表信息栏 -->
       <div class="chart-toolbar">
         <span class="chart-meta">
           共 {{ refCount }} 篇文献 · {{ qa.chartData.quality_method }}
-          · 生成于 {{ formatTime(qa.chartData.generated_at) }}
+          <template v-if="qa.chartData.unconfirmed_count">
+            · <span class="warn-text">{{ qa.chartData.unconfirmed_count }} 篇未确认</span>
+          </template>
         </span>
         <div class="chart-toolbar-actions">
-          <button class="tb-btn" @click="downloadImage"
-            :disabled="downloadLoading"
-            title="下载交通灯图 + 比例图（共两张 PNG）"
-          >
-            <i class="fas fa-spinner fa-spin" v-if="downloadLoading"></i>
-            <i class="fas fa-download" v-else></i>
-            {{ downloadLoading ? '下载中...' : '下载图片（2张）' }}
+          <button class="tb-btn" @click="doPreview" :disabled="qa.chartPreviewLoading">
+            <i class="fas fa-sync-alt"></i> 刷新预览
           </button>
         </div>
+      </div>
+
+      <!-- 文献名编辑提示 -->
+      <div class="label-edit-tip">
+        <i class="fas fa-pencil-alt"></i>
+        点击下方交通灯图中的文献名可直接编辑，编辑完成后点击「生成图片」导出带自定义名称的 PNG
       </div>
 
       <!-- 图表标签切换 -->
@@ -111,23 +123,15 @@
         />
         <div v-else class="chart-empty">暂无表格数据</div>
       </div>
+
     </template>
 
-    <!-- 未生成时占位 -->
+    <!-- 未加载时占位 -->
     <div v-else class="chart-placeholder">
       <i class="fas fa-chart-bar" style="font-size:2.5rem;color:#e2e8f0"></i>
-      <p>点击「生成图表」开始可视化</p>
+      <p>暂无数据，请确保已完成结果审核</p>
     </div>
 
-    <!-- 底部操作 -->
-    <div class="step-footer-actions">
-      <button class="btn-secondary" @click="qa.currentStep = 4">
-        <i class="fas fa-arrow-left"></i> 上一步
-      </button>
-      <button class="btn-primary" @click="qa.currentStep = 6">
-        下一步：导出报告 <i class="fas fa-arrow-right"></i>
-      </button>
-    </div>
   </div>
 </template>
 
@@ -146,14 +150,12 @@ const chartMethod    = ref('QUADAS2')
 const refScope       = ref('confirmed')
 const orientation    = ref('horizontal')
 const activeChartTab = ref('traffic')
-const downloadLoading = ref(false)
 
-// 文献名自定义标签：{ ref_id: label_str }
-// 每次 chartData 刷新时用默认值初始化，用户修改后保留到下次生成
+// 文献名自定义标签：{ ref_id_str: label }
 const studyLabels = reactive({})
 
+// 当 chartData 刷新时，用默认值初始化（不覆盖用户已修改的）
 watch(() => qa.chartData, (d) => {
-  // 新数据加载时，把已有默认值填入（不覆盖用户已经改过的）
   if (!d || !Array.isArray(d.traffic_light)) return
   d.traffic_light.forEach(row => {
     const id = String(row.ref_id)
@@ -169,12 +171,8 @@ const chartTabs = [
   { key: 'table',      icon: 'fas fa-table',           label: '明细表格' },
 ]
 
-// ── 数据适配：把后端格式转换为子组件期望格式 ─────────────────────────────────
+// ── 数据适配 ─────────────────────────────────────────────────────────────────
 
-/**
- * 后端 traffic_light 是数组，bias_domains/applic_domains 是领域配置列表
- * 转换为 QATrafficLight 需要的 { domain_names, refs: [{ title, bias_results }] }
- */
 const trafficLightData = computed(() => {
   const d = qa.chartData
   if (!d || !Array.isArray(d.traffic_light)) return null
@@ -202,10 +200,6 @@ const trafficLightData = computed(() => {
   }
 })
 
-/**
- * 后端 proportion 是对象 { domain_key: { domain_name, counts, percentages } }
- * 转换为 QAProportionChart 需要的 { proportions: [{ domain_name, low, high, unclear, na, total }] }
- */
 const proportionData = computed(() => {
   const d = qa.chartData
   if (!d || !d.proportion || typeof d.proportion !== 'object') return null
@@ -218,7 +212,7 @@ const proportionData = computed(() => {
       low:     (counts.low     || 0) / total,
       high:    (counts.high    || 0) / total,
       unclear: (counts.unclear || 0) / total,
-      na:      (counts.pending || 0) / total,   // pending 展示为灰色
+      na:      (counts.pending || 0) / total,
       total:   Object.values(counts).reduce((s, v) => s + v, 0),
     }
   })
@@ -226,23 +220,17 @@ const proportionData = computed(() => {
   return { proportions }
 })
 
-/**
- * 明细表格：从 traffic_light 数组构建
- */
 const tableData = computed(() => {
   const d = qa.chartData
   if (!d || !Array.isArray(d.traffic_light) || !d.traffic_light.length) return null
 
   const biasDomains   = d.bias_domains  || []
   const applicDomains = d.applic_domains || []
-
   const columns = [
     ...biasDomains.map(x => x.name),
     ...applicDomains.map(x => `${x.name}(适用性)`),
   ]
-
   const riskLabel = r => ({ low: '低风险', high: '高风险', unclear: '不清楚', pending: '待定', na: '不适用' })[r] || r
-
   const rows = d.traffic_light.map(row => ({
     title: row.title || `文献 ${row.ref_id}`,
     values: [
@@ -254,55 +242,55 @@ const tableData = computed(() => {
   return { columns, rows }
 })
 
-// ── 文献计数（用于工具栏展示）────────────────────────────────────────────────
 const refCount = computed(() =>
   Array.isArray(qa.chartData?.traffic_light) ? qa.chartData.traffic_light.length : 0
 )
 
-onMounted(async () => {
-  if (qa.methods.length === 0) await qa.fetchMethods()
-  if (qa.methods.length) chartMethod.value = qa.methods.find(m => m.ai_supported)?.key || 'QUADAS2'
-  if (project.currentProject) {
-    await qa.fetchChartInfo(project.currentProject.id, chartMethod.value)
-  }
-})
+// ── 操作 ─────────────────────────────────────────────────────────────────────
 
-async function doGenerate() {
-  if (!project.currentProject) return
-  const refIds = refScope.value === 'confirmed'
+function _getRefIds() {
+  return refScope.value === 'confirmed'
     ? qa.confirmedRefs.map(r => r.id)
     : qa.refs.filter(r => r.ai_eval_status !== 'pending').map(r => r.id)
+}
 
+/** 快速预览：仅拿数据，不调 matplotlib，进入页面自动触发 */
+async function doPreview() {
+  if (!project.currentProject) return
+  const refIds = _getRefIds()
+  if (!refIds.length) return
+  try {
+    await qa.previewChart(project.currentProject.id, chartMethod.value, refIds)
+  } catch (e) {
+    console.warn('[QAStepChart] previewChart failed', e)
+  }
+}
+
+/** 生成图片：调用 matplotlib 生成高清 PNG 并自动触发下载 */
+async function doGenerateAndDownload() {
+  if (!project.currentProject) return
+  const refIds = _getRefIds()
   if (!refIds.length) {
     alert(refScope.value === 'confirmed' ? '暂无已确认的文献，请先完成结果审核' : '暂无已评价的文献')
     return
   }
-
   try {
-    // 把用户自定义的文献名一起传给后端，robvis 用这些名称生成 PNG
-    await qa.generateChart(project.currentProject.id, chartMethod.value, refIds, { ...studyLabels }, orientation.value)
-  } catch (e) {
-    alert(e?.response?.data?.error || '图表生成失败')
-  }
-}
-
-// 下载图表图片：同时下载交通灯图 + 比例图
-async function downloadImage() {
-  downloadLoading.value = true
-  try {
+    await qa.generateChart(
+      project.currentProject.id,
+      chartMethod.value,
+      refIds,
+      { ...studyLabels },
+      orientation.value,
+    )
+    // 自动下载两张图片
     const method = qa.chartData?.quality_method || ''
     const tl  = qa.chartData?.traffic_light_image
     const sum = qa.chartData?.proportion_image
-
-    if (!tl && !sum) {
-      alert('暂无图表，请先生成图表')
-      return
-    }
+    if (!tl && !sum) { alert('图片生成失败，请重试'); return }
     if (tl)  _dl(tl,  `qa_traffic_light_${method}.png`)
-    // 稍微延迟，避免浏览器合并两次下载
     if (sum) setTimeout(() => _dl(sum, `qa_proportion_${method}.png`), 200)
-  } finally {
-    downloadLoading.value = false
+  } catch (e) {
+    alert(e?.response?.data?.error || '图片生成失败')
   }
 }
 
@@ -313,13 +301,15 @@ function _dl(dataUrl, filename) {
   a.click()
 }
 
-function formatTime(ts) {
-  if (!ts) return ''
-  return new Date(ts).toLocaleString('zh-CN', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit',
-  })
-}
+// ── 初始化：进入页面自动加载预览 ─────────────────────────────────────────────
+
+onMounted(async () => {
+  if (qa.methods.length === 0) await qa.fetchMethods()
+  if (qa.methods.length) {
+    chartMethod.value = qa.methods.find(m => m.ai_supported)?.key || 'QUADAS2'
+  }
+  await doPreview()
+})
 </script>
 
 <style scoped>
@@ -335,16 +325,40 @@ function formatTime(ts) {
 .ctrl-item { display: flex; flex-direction: column; gap: 4px; }
 .ctrl-label { font-size: 0.72rem; color: #64748b; }
 .qa-select { padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.82rem; background: #fff; }
-.btn-generate { padding: 8px 18px; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff; border: none; border-radius: 9px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+
+/* 生成图片按钮 */
+.btn-generate {
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  color: #fff; border: none; border-radius: 9px;
+  cursor: pointer; font-size: 0.85rem;
+  display: flex; align-items: center; gap: 6px;
+  align-self: flex-end;
+}
 .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 加载预览中 */
+.preview-loading {
+  display: flex; align-items: center; gap: 10px;
+  justify-content: center; padding: 40px;
+  color: #64748b; font-size: 0.85rem;
+}
 
 /* 图表工具栏 */
 .chart-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
 .chart-meta { font-size: 0.72rem; color: #94a3b8; }
+.warn-text { color: #f59e0b; font-weight: 500; }
 .chart-toolbar-actions { display: flex; gap: 6px; }
 .tb-btn { padding: 6px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 7px; cursor: pointer; font-size: 0.78rem; color: #475569; display: flex; align-items: center; gap: 5px; }
 .tb-btn:hover:not(:disabled) { border-color: #6366f1; color: #6366f1; }
 .tb-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* 文献名编辑提示 */
+.label-edit-tip {
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+  padding: 8px 14px; font-size: 0.75rem; color: #92400e;
+  display: flex; align-items: center; gap: 8px;
+}
 
 /* 图表 tabs */
 .chart-tabs { display: flex; gap: 4px; }
@@ -355,11 +369,4 @@ function formatTime(ts) {
 /* 空状态 */
 .chart-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px; color: #94a3b8; font-size: 0.85rem; border: 2px dashed #e2e8f0; border-radius: 12px; }
 .chart-empty { text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 30px; }
-
-/* 底部 */
-.step-footer-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
-.btn-primary { padding: 8px 18px; background: #6366f1; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
-.btn-primary:hover { background: #4f46e5; }
-.btn-secondary { padding: 8px 16px; background: #fff; color: #6366f1; border: 1px solid #6366f1; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
-.btn-secondary:hover { background: #f5f3ff; }
 </style>

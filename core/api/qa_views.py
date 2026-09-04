@@ -102,6 +102,14 @@ def _serialize_ref(ref: QAReference) -> dict:
     }
 
 
+def _safe_int(val):
+    """将字符串安全转换为 int，失败返回 None。"""
+    try:
+        return int(val) if val else None
+    except (ValueError, TypeError):
+        return None
+
+
 def _safe_list(val) -> list:
     """确保 options 字段始终返回 list，兼容历史数据中意外存成字符串的情况。"""
     if isinstance(val, list):
@@ -115,23 +123,35 @@ def _safe_list(val) -> list:
     return []
 
 
+_DOMAIN_NAME_MAP = {
+    'patient_selection':  '患者选择',
+    'index_test':         '待评价试验',
+    'reference_standard': '参考标准',
+    'flow_timing':        '流程与时间',
+    'bias_risk':          '偏倚风险',
+    'applicability':      '适用性',
+}
+
 def _serialize_signal(item: QASignalItem) -> dict:
     return {
         'id':               item.id,
         'qa_ref_id':        item.qa_ref_id,
         'quality_method':   item.quality_method,
         'domain':           item.domain,
+        'domain_name':      _DOMAIN_NAME_MAP.get(item.domain, item.domain),
         'result_type':      item.result_type,
         'signal_key':       item.signal_key,
         'signal_question':  item.signal_question,
         'signal_description': item.signal_description,
         'options':          _safe_list(item.options),
-        # 单模型
+        # 汇总字段
         'ai_judgment':      item.ai_judgment,
         'ai_reason':        item.ai_reason,
         'ai_evidence':      item.ai_evidence,
         'ai_evidence_page': item.ai_evidence_page,
-        # 双模型
+        # N 模型原始结果列表
+        'model_results':    item.model_results or [],
+        # 向后兼容双模型字段
         'model1_id':        item.model1_id,
         'model1_judgment':  item.model1_judgment,
         'model1_reason':    item.model1_reason,
@@ -289,34 +309,83 @@ def ref_import(request):
     if not project:
         return _json_err('项目不存在', 404)
 
-    # 从 ManualReview 中取已纳入的文献（decision=included）
-    from core.models import ManualReview
-    qs = ManualReview.objects.filter(
-        project=project,
-        step__stage__stage_key=source_stage,
-        decision='included',
-    )
-    if ref_ids:
-        qs = qs.filter(id__in=ref_ids)
+    # ── 每次导入 = 清空重建：删除所有已有 QA 数据（含信号问题、领域结果，CASCADE 自动级联）
+    # QAChart 挂在 project 上需单独清空
+    from core.models import ManualReview, QAChart
+    from core.api.review_views import _load_ai_results
 
-    imported = []
-    skipped  = 0
     with transaction.atomic():
-        for mr in qs:
-            # 检查是否已导入过（以 source_ref_id 去重）
-            if QAReference.objects.filter(project=project, source_ref_id=mr.id).exists():
-                skipped += 1
+        # 删除所有文献（QASignalItem / QADomainResult 会 CASCADE 跟着删）
+        QAReference.objects.filter(project=project).delete()
+        # 删除图表缓存
+        QAChart.objects.filter(project=project).delete()
+
+        # ── 收集"最终纳入"文献 ─────────────────────────────────────────────
+        # 逻辑与导出步骤完全一致：
+        #   人工决定（included/excluded）优先；无人工记录则取 AI 决定
+        # 同一 source_xml 在本次重建中只创建一条
+
+        # 1. 所有 ManualReview 记录（该 stage）
+        manual_reviews = {
+            mr.source_xml: mr
+            for mr in ManualReview.objects.filter(
+                project=project,
+                step__stage__stage_key=source_stage,
+            )
+        }
+
+        # 2. AI 结果列表（每条是一个 dict，含 source_xml / title / decision 等）
+        ai_results = _load_ai_results(project.id)
+
+        # 3. 按导出模块同款逻辑判断最终决定
+        def _final_included(r: dict) -> bool:
+            source_xml  = r.get('source_xml', '')
+            mr = manual_reviews.get(source_xml)
+            if mr and mr.decision in ('included', 'excluded'):
+                return mr.decision == 'included'
+            # 无人工记录 → 取 AI 决定
+            consensus = r.get('consensus') or r.get('decision', '')
+            if consensus in ('included', 'excluded', 'conflict'):
+                return consensus == 'included'
+            v = r.get('include_or_not', '')
+            if v:
+                return v.lower() == 'yes'
+            return False
+
+        imported = []
+        seen_xml = set()   # 防止 AI 结果文件中同一篇出现多次
+        for r in ai_results:
+            source_xml = r.get('source_xml', '')
+            if not source_xml or source_xml in seen_xml:
                 continue
+            seen_xml.add(source_xml)
+
+            if not _final_included(r):
+                continue
+
+            mr = manual_reviews.get(source_xml)
             ref = QAReference.objects.create(
                 project=project,
-                title=mr.source_xml,    # 暂用 source_xml 作为标题，AI评价时再解析
+                title=r.get('title', '') or source_xml,
+                first_author=(r.get('authors') or '').split(';')[0].split(',')[0][:100],
+                year=_safe_int(r.get('year', '')),
+                journal=(r.get('journal') or '')[:300],
+                doi=(r.get('doi') or '')[:200],
                 source_type='screening_import',
-                source_ref_id=mr.id,
+                source_ref_id=mr.id if mr else None,
                 fulltext_status='pending',
             )
             imported.append(ref.id)
 
-    return _json_ok({'imported': len(imported), 'skipped': skipped, 'ref_ids': imported})
+    # ActivityLog
+    from core.models import ActivityLog as _ActivityLog
+    _ActivityLog.objects.create(
+        project=project,
+        operation_type='qa_import',
+        operation_detail={'imported': len(imported), 'source_stage': source_stage},
+        created_by=request.user,
+    )
+    return _json_ok({'imported': len(imported), 'skipped': 0, 'ref_ids': imported})
 
 
 @csrf_exempt
@@ -366,6 +435,15 @@ def ref_upload(request):
             pass  # Celery 未就绪时跳过，不影响上传
         created_refs.append(_serialize_ref(ref))
 
+    # ActivityLog
+    from core.models import ActivityLog
+    if created_refs:
+        ActivityLog.objects.create(
+            project=project,
+            operation_type='qa_upload_pdf',
+            operation_detail={'count': len(created_refs), 'filenames': [r['title'] for r in created_refs]},
+            created_by=request.user,
+        )
     return _json_ok({'created': len(created_refs), 'refs': created_refs}, status=201)
 
 
@@ -423,6 +501,19 @@ def ref_batch_method(request):
         return _json_err('缺少 ref_ids 或 quality_method')
 
     updated = QAReference.objects.filter(pk__in=ref_ids).update(quality_method=quality_method)
+
+    # ActivityLog
+    from core.models import ActivityLog
+    if updated:
+        # 取项目 id（从第一条 ref）
+        first_ref = QAReference.objects.filter(pk__in=ref_ids).first()
+        if first_ref:
+            ActivityLog.objects.create(
+                project=first_ref.project,
+                operation_type='qa_set_method',
+                operation_detail={'method': quality_method, 'count': updated},
+                created_by=request.user,
+            )
     return _json_ok({'updated': updated})
 
 
@@ -434,16 +525,17 @@ def ref_batch_method(request):
 @login_required
 @require_http_methods(['POST'])
 def eval_start(request):
-    """POST /api/qa/eval/start/ — 启动 AI 质量评价任务"""
+    """POST /api/qa/eval/start/ — 启动 AI 质量评价任务（接入 Task/ActivityLog 体系）"""
     try:
         body = json.loads(request.body)
     except Exception:
         return _json_err('请求体 JSON 格式错误')
 
-    project_id   = body.get('project_id')
-    ref_ids      = body.get('ref_ids', [])      # 空 = 项目全部已选方法文献
-    eval_mode    = body.get('eval_mode', 'single')   # single | dual
-    model_ids    = body.get('model_ids', [])     # 选择的模型 ID 列表
+    project_id = body.get('project_id')
+    ref_ids    = body.get('ref_ids', [])
+    model_ids  = body.get('model_ids', [])
+    # eval_mode 由服务端根据 model_ids 长度自动推断，前端不再需要传
+    eval_mode  = body.get('eval_mode', '')  # 保留向后兼容，忽略实际值
 
     if not project_id:
         return _json_err('缺少 project_id')
@@ -451,10 +543,9 @@ def eval_start(request):
     if not project:
         return _json_err('项目不存在', 404)
 
-    # 验证积分
+    # 积分校验
     from core.services.billing_service import get_balance, estimate_credits
     balance = get_balance(request.user)
-    # 先估算可评价文献数
     qs = QAReference.objects.filter(project=project)
     if ref_ids:
         qs = qs.filter(pk__in=ref_ids)
@@ -468,33 +559,34 @@ def eval_start(request):
     if balance < estimated:
         return _json_err(f'积分不足（当前 {balance}，需要约 {estimated}）')
 
-    # 将被评价的 ref 更新为 running
     ref_ids_to_eval = list(qs.values_list('pk', flat=True))
-    QAReference.objects.filter(pk__in=ref_ids_to_eval).update(
-        ai_eval_status='running',
-        eval_mode=eval_mode,
-        selected_models=model_ids,
-    )
 
-    # 提交 Celery 任务
+    # ── 走统一的 TaskScheduler 体系 ──────────────────────────────────────
     try:
-        from core.tasks import run_qa_ai_eval
-        task = run_qa_ai_eval.delay(
-            project_id=project.id,
+        from core.scheduler import TaskScheduler
+        from core.services.task_service import log_task_start
+        from core.models import ActivityLog
+
+        scheduler = TaskScheduler(project.id)
+        task = scheduler.start_step(
+            'qa_eval',
+            request.user.id,
             ref_ids=ref_ids_to_eval,
-            eval_mode=eval_mode,
             model_ids=model_ids,
-            user_id=request.user.id,
         )
         task_id = task.id
+
+        # ActivityLog
+        log_task_start(project.id, 'qa_eval', task_id, request.user)
+
     except Exception as e:
-        logger.warning(f'Celery 提交失败，降级同步执行: {e}')
-        task_id = None
+        logger.error(f'[qa_eval] TaskScheduler 提交失败: {e}')
+        return _json_err(f'任务提交失败: {e}')
 
     return _json_ok({
-        'task_id':        task_id,
-        'evaluable_count': evaluable_count,
-        'ref_ids':        ref_ids_to_eval,
+        'task_id':          task_id,
+        'evaluable_count':  evaluable_count,
+        'ref_ids':          ref_ids_to_eval,
         'estimated_credits': estimated,
     })
 
@@ -625,6 +717,19 @@ def signal_item_confirm(request, item_id):
         # 重新聚合领域结果
         _recalc_domain_results(item.qa_ref)
 
+    # ActivityLog
+    from core.models import ActivityLog
+    ActivityLog.objects.create(
+        project=item.qa_ref.project,
+        operation_type='qa_confirm_signal',
+        operation_detail={
+            'qa_ref_id': item.qa_ref_id,
+            'signal_key': item.signal_key,
+            'judgment': human_judgment,
+            'modified': item.is_modified,
+        },
+        created_by=request.user,
+    )
     return _json_ok(_serialize_signal(item))
 
 
@@ -695,6 +800,18 @@ def signal_batch_confirm(request):
         # 重新聚合
         _recalc_domain_results(ref)
 
+    # ActivityLog
+    from core.models import ActivityLog
+    ActivityLog.objects.create(
+        project=ref.project,
+        operation_type='qa_batch_confirm',
+        operation_detail={
+            'qa_ref_id': qa_ref_id,
+            'confirm_mode': confirm_mode,
+            'confirmed_count': confirmed_count,
+        },
+        created_by=request.user,
+    )
     return _json_ok({'confirmed': confirmed_count})
 
 
@@ -717,62 +834,29 @@ def domain_results(request):
 # 图表
 # ─────────────────────────────────────────────────────────────────────────────
 
-@csrf_exempt
-@login_required
-@require_http_methods(['POST'])
-def chart_generate(request):
+def _build_chart_data(project, quality_method, ref_ids=None):
     """
-    POST /api/qa/chart/generate/
-    返回前端渲染所需的图表数据结构（不生成文件，文件在 export 时生成）
+    计算图表所需的数据结构（不渲染图片）。
+    返回 (traffic_light_data, proportion_data, bias_domains, applic_domains, method_cfg)
     """
-    try:
-        body = json.loads(request.body)
-    except Exception:
-        return _json_err('请求体 JSON 格式错误')
-
-    project_id     = body.get('project_id')
-    quality_method = body.get('quality_method', 'QUADAS2')
-    ref_ids        = body.get('ref_ids', [])   # 空 = 全部已确认
-    # 前端用户自定义文献标签 {ref_id_str: label}
-    study_labels   = body.get('study_labels') or {}
-    # 交通灯图方向：'horizontal'（研究=列，默认）| 'vertical'（研究=行）
-    orientation    = body.get('orientation', 'horizontal')
-
-    if not project_id:
-        return _json_err('缺少 project_id')
-    project = _get_project(request, project_id)
-    if not project:
-        return _json_err('项目不存在', 404)
+    from core.services.quality_methods import get_method_config
+    method_cfg = get_method_config(quality_method)
+    domains        = method_cfg['domains']
+    bias_domains   = [d for d in domains if d['has_bias_risk']]
+    applic_domains = [d for d in domains if d['has_applicability']]
 
     qs = QAReference.objects.filter(project=project, quality_method=quality_method)
     if ref_ids:
         qs = qs.filter(pk__in=ref_ids)
 
-    # 获取方法配置
-    try:
-        method_cfg = get_method_config(quality_method)
-    except Exception:
-        return _json_err(f'不支持的质量评价方法: {quality_method}')
-
-    domains = method_cfg['domains']
-    bias_domains   = [d for d in domains if d['has_bias_risk']]
-    applic_domains = [d for d in domains if d['has_applicability']]
-
-    # 构建红绿灯图数据
     traffic_light_data = []
     for ref in qs:
-        domain_map = {}
-        for dr in ref.domain_results.all():
-            domain_map[dr.domain] = dr
-
+        domain_map = {dr.domain: dr for dr in ref.domain_results.all()}
         row = {
-            'ref_id':     ref.id,
-            'title':      ref.title,
-            'first_author': ref.first_author,
-            'year':       ref.year,
+            'ref_id': ref.id, 'title': ref.title,
+            'first_author': ref.first_author, 'year': ref.year,
             'review_status': ref.review_status,
-            'bias_risk':    {},
-            'applicability': {},
+            'bias_risk': {}, 'applicability': {},
         }
         for d in bias_domains:
             dr = domain_map.get(d['key'])
@@ -782,12 +866,9 @@ def chart_generate(request):
             row['applicability'][d['key']] = dr.applicability_result if dr else 'pending'
         traffic_light_data.append(row)
 
-    # 构建汇总比例数据
     proportion_data = {}
     for d in bias_domains + applic_domains:
         k = d['key']
-        result_type = 'bias_risk' if d['has_bias_risk'] else 'applicability'
-        # 统计领域级结果（仅已确认文献）
         confirmed_refs = [r for r in traffic_light_data if r['review_status'] == 'confirmed']
         counts = {'low': 0, 'high': 0, 'unclear': 0, 'pending': 0}
         for r in confirmed_refs:
@@ -801,6 +882,82 @@ def chart_generate(request):
             'counts': counts,
             'percentages': {k2: round(v / total * 100, 1) for k2, v in counts.items()},
         }
+
+    return traffic_light_data, proportion_data, bias_domains, applic_domains, method_cfg
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(['POST'])
+def chart_preview(request):
+    """
+    POST /api/qa/chart/preview/
+    快速返回前端渲染所需的数据结构，不生成 PNG 图片。
+    用于页面加载时的实时预览，用户编辑文献名后点「生成图片」才真正渲染 PNG。
+    """
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return _json_err('请求体 JSON 格式错误')
+
+    project_id     = body.get('project_id')
+    quality_method = body.get('quality_method', 'QUADAS2')
+    ref_ids        = body.get('ref_ids', [])
+
+    if not project_id:
+        return _json_err('缺少 project_id')
+    project = _get_project(request, project_id)
+    if not project:
+        return _json_err('项目不存在', 404)
+
+    try:
+        tl, prop, bias_d, applic_d, method_cfg = _build_chart_data(project, quality_method, ref_ids or None)
+    except Exception as e:
+        return _json_err(f'数据构建失败: {e}')
+
+    return _json_ok({
+        'quality_method':    quality_method,
+        'method_name':       method_cfg['name'],
+        'bias_domains':      bias_d,
+        'applic_domains':    applic_d,
+        'traffic_light':     tl,
+        'proportion':        prop,
+        'generated_at':      None,
+        'unconfirmed_count': sum(1 for r in tl if r['review_status'] != 'confirmed'),
+    })
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(['POST'])
+def chart_generate(request):
+    """
+    POST /api/qa/chart/generate/
+    使用用户最终确认的文献名生成 PNG 图片（base64）并返回。
+    需先调用 /preview/ 获取数据、编辑文献名后再调用本接口生成图片文件。
+    """
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return _json_err('请求体 JSON 格式错误')
+
+    project_id     = body.get('project_id')
+    quality_method = body.get('quality_method', 'QUADAS2')
+    ref_ids        = body.get('ref_ids', [])
+    study_labels   = body.get('study_labels') or {}
+    orientation    = body.get('orientation', 'horizontal')
+
+    if not project_id:
+        return _json_err('缺少 project_id')
+    project = _get_project(request, project_id)
+    if not project:
+        return _json_err('项目不存在', 404)
+
+    try:
+        traffic_light_data, proportion_data, bias_domains, applic_domains, method_cfg = \
+            _build_chart_data(project, quality_method, ref_ids or None)
+    except Exception as e:
+        return _json_err(f'数据构建失败: {e}')
 
     # 保存/更新图表记录
     chart, _ = QAChart.objects.update_or_create(
@@ -828,16 +985,26 @@ def chart_generate(request):
         study_labels=study_labels,
     )
 
+    from core.models import ActivityLog
+    ActivityLog.objects.create(
+        project=project,
+        operation_type='qa_generate_chart',
+        operation_detail={
+            'quality_method': quality_method,
+            'ref_count': len(traffic_light_data),
+        },
+        created_by=request.user,
+    )
     return _json_ok({
-        'chart_id':          chart.id,
-        'quality_method':    quality_method,
-        'method_name':       method_cfg['name'],
-        'bias_domains':      bias_domains,
-        'applic_domains':    applic_domains,
-        'traffic_light':     traffic_light_data,
-        'proportion':        proportion_data,
-        'generated_at':      chart.generated_at.isoformat(),
-        'unconfirmed_count': sum(1 for r in traffic_light_data if r['review_status'] != 'confirmed'),
+        'chart_id':             chart.id,
+        'quality_method':       quality_method,
+        'method_name':          method_cfg['name'],
+        'bias_domains':         bias_domains,
+        'applic_domains':       applic_domains,
+        'traffic_light':        traffic_light_data,
+        'proportion':           proportion_data,
+        'generated_at':         chart.generated_at.isoformat(),
+        'unconfirmed_count':    sum(1 for r in traffic_light_data if r['review_status'] != 'confirmed'),
         'traffic_light_image':  traffic_b64,
         'proportion_image':     proportion_b64,
     })
@@ -1205,52 +1372,101 @@ def _draw_summary_bar(ax, summary_df, title):
         ax.spines[spine].set_visible(False)
 
 
-def _draw_traffic_light_matrix(ax, studies, rows, n_bias):
+def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizontal'):
     """
-    studies: list of str
-    rows: list of {"label": str, "values": list of "High"/"Unclear"/"Low"}
-    n_bias: int — 前几行属于 Risk of Bias（其余为 Applicability Concerns）
+    studies:     list of str
+    rows:        list of {"label": str, "values": list of "High"/"Unclear"/"Low"}
+    n_bias:      int — 前几行属于 Risk of Bias（其余为 Applicability Concerns）
+    orientation: 'horizontal'（研究=列，默认） | 'vertical'（研究=行）
     """
-    n_cols = len(studies)
-    n_rows = len(rows)
-    ax.set_xlim(-0.5, n_cols + 3.5)
-    ax.set_ylim(-1.5, n_rows + 0.6)   # 顶部多留 1 个单位给列头，底部收紧
-    ax.invert_yaxis()
-    ax.axis("off")
+    n_studies = len(studies)
+    n_domains = len(rows)
 
-    # 研究名（列头，旋转 90°）—— 放在 y=-0.8 位置，离第一行圆圈（y=0）有足够间距
-    for i, study in enumerate(studies):
-        ax.text(i, -0.8, study, ha="center", va="bottom",
-                rotation=90, fontsize=7)
+    if orientation == 'vertical':
+        # ── 纵向：研究=行，领域=列 ─────────────────────────────────────────
+        # xlim: (-1.0 ~ n_domains+0.5)  留左侧给研究名标签
+        # ylim: (-0.5 ~ n_studies+0.5)  顶部留给列头
+        ax.set_xlim(-1.0, n_domains + 0.5)
+        ax.set_ylim(-1.0, n_studies + 0.5)
+        ax.invert_yaxis()
+        ax.axis("off")
 
-    # bias / applic 分隔线
-    split_index = n_bias
-    ax.plot([-0.5, n_cols - 0.5],
-            [split_index - 0.5, split_index - 0.5],
-            color="black", linewidth=1)
+        # 领域名（列头，旋转 45°）
+        for col_idx, row in enumerate(rows):
+            ax.text(col_idx, -0.6, row["label"],
+                    ha="center", va="bottom", rotation=45, fontsize=7)
 
-    # 圆 + 符号 + 行标签
-    for row_idx, row in enumerate(rows):
-        for col_idx, value in enumerate(row["values"]):
-            circle = Circle(
-                (col_idx, row_idx), radius=0.32,
-                facecolor=_COLORS[value], edgecolor="black", linewidth=0.8,
-            )
-            ax.add_patch(circle)
-            sym_color = "black" if value == "Unclear" else "white"
-            ax.text(col_idx, row_idx, _SYMBOLS[value],
-                    ha="center", va="center",
-                    fontsize=9, fontweight="bold", color=sym_color)
-        ax.text(n_cols + 0.3, row_idx, row["label"],
-                ha="left", va="center", fontsize=8)
+        # bias / applic 纵向分隔线
+        ax.plot([n_bias - 0.5, n_bias - 0.5],
+                [-0.5, n_studies - 0.5],
+                color="black", linewidth=1)
 
-    # 右侧竖排组名
-    ax.text(n_cols + 2.2, (n_bias - 1) / 2,
-            "Risk of Bias",
-            ha="center", va="center", rotation=270, fontsize=8)
-    ax.text(n_cols + 2.2, n_bias + (n_rows - n_bias - 1) / 2,
-            "Applicability Concerns",
-            ha="center", va="center", rotation=270, fontsize=8)
+        # 圆 + 符号
+        for row_idx, study in enumerate(studies):
+            ax.text(-0.6, row_idx, study,
+                    ha="right", va="center", fontsize=7)
+            for col_idx, domain_row in enumerate(rows):
+                value = domain_row["values"][row_idx]
+                circle = Circle(
+                    (col_idx, row_idx), radius=0.32,
+                    facecolor=_COLORS[value], edgecolor="black", linewidth=0.8,
+                )
+                ax.add_patch(circle)
+                sym_color = "black" if value == "Unclear" else "white"
+                ax.text(col_idx, row_idx, _SYMBOLS[value],
+                        ha="center", va="center",
+                        fontsize=9, fontweight="bold", color=sym_color)
+
+        # 底部横排组名
+        ax.text((n_bias - 1) / 2, n_studies + 0.2,
+                "Risk of Bias",
+                ha="center", va="top", fontsize=8)
+        if n_domains > n_bias:
+            ax.text(n_bias + (n_domains - n_bias - 1) / 2, n_studies + 0.2,
+                    "Applicability Concerns",
+                    ha="center", va="top", fontsize=8)
+
+    else:
+        # ── 横向（默认）：研究=列，领域=行 ───────────────────────────────────
+        n_cols = n_studies
+        n_rows = n_domains
+        ax.set_xlim(-0.5, n_cols + 3.5)
+        ax.set_ylim(-1.5, n_rows + 0.6)
+        ax.invert_yaxis()
+        ax.axis("off")
+
+        # 研究名（列头，旋转 90°）
+        for i, study in enumerate(studies):
+            ax.text(i, -0.8, study, ha="center", va="bottom",
+                    rotation=90, fontsize=7)
+
+        # bias / applic 水平分隔线
+        ax.plot([-0.5, n_cols - 0.5],
+                [n_bias - 0.5, n_bias - 0.5],
+                color="black", linewidth=1)
+
+        # 圆 + 符号 + 行标签
+        for row_idx, row in enumerate(rows):
+            for col_idx, value in enumerate(row["values"]):
+                circle = Circle(
+                    (col_idx, row_idx), radius=0.32,
+                    facecolor=_COLORS[value], edgecolor="black", linewidth=0.8,
+                )
+                ax.add_patch(circle)
+                sym_color = "black" if value == "Unclear" else "white"
+                ax.text(col_idx, row_idx, _SYMBOLS[value],
+                        ha="center", va="center",
+                        fontsize=9, fontweight="bold", color=sym_color)
+            ax.text(n_cols + 0.3, row_idx, row["label"],
+                    ha="left", va="center", fontsize=8)
+
+        # 右侧竖排组名
+        ax.text(n_cols + 2.2, (n_bias - 1) / 2,
+                "Risk of Bias",
+                ha="center", va="center", rotation=270, fontsize=8)
+        ax.text(n_cols + 2.2, n_bias + (n_rows - n_bias - 1) / 2,
+                "Applicability Concerns",
+                ha="center", va="center", rotation=270, fontsize=8)
 
 
 def _draw_legend(ax):
@@ -1318,15 +1534,22 @@ def _render_traffic_light(traffic_light_data, bias_domains, applic_domains,
     n_rows      = len(rows)
     n_studies   = len(studies)
 
-    # 图幅自适应（与原脚本 plot_quadas2 一致）
-    # 计算 figsize 使 data 单位近似正方形（确保圆形）
-    data_w = n_studies + 4.0   # xlim 范围：(-0.5 ~ n_studies+3.5)
-    data_h = n_rows + 2.1      # ylim 范围：(-1.5 ~ n_rows+0.6)
-    fig_w  = max(8, n_studies * 0.85 + 5)
-    fig_h  = fig_w * data_h / data_w
+    # 根据方向计算图幅
+    if orientation == 'vertical':
+        # 纵向：研究=行，领域=列；宽度由领域数决定，高度由研究数决定
+        data_w = n_rows + 1.5      # xlim 范围
+        data_h = n_studies + 1.5   # ylim 范围
+        fig_w  = max(7, n_rows * 1.2 + 2)
+        fig_h  = max(5, n_studies * 0.85 + 2)
+    else:
+        # 横向：研究=列，领域=行
+        data_w = n_studies + 4.0
+        data_h = n_rows + 2.1
+        fig_w  = max(8, n_studies * 0.85 + 5)
+        fig_h  = fig_w * data_h / data_w
 
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-    _draw_traffic_light_matrix(ax, studies, rows, n_bias_rows)
+    _draw_traffic_light_matrix(ax, studies, rows, n_bias_rows, orientation=orientation)
 
     plt.tight_layout(pad=0.5)
     return _fig_to_b64(fig)
@@ -1546,11 +1769,11 @@ def export_excel(request):
                 '是' if item.is_modified else '否',
             ])
 
-    # ── Sheet 4: 双模型校验记录 ────────────────────────────
-    ws4 = wb.create_sheet('双模型校验记录')
+    # ── Sheet 4: 多模型校验记录 ────────────────────────────
+    ws4 = wb.create_sheet('多模型校验记录')
     ws4.append(['文献标题', '信号问题', '模型1 ID', '模型1判断', '模型1理由', '模型2 ID', '模型2判断', '模型2理由', '一致性', '系统推荐', '人工最终判断'])
-    for ref in refs.filter(eval_mode='dual'):
-        for item in ref.signal_items.all():
+    for ref in refs.filter(eval_mode__in=['multi', 'dual']):
+        for item in ref.signal_items.exclude(consistency='single'):
             ws4.append([
                 ref.title, item.signal_question,
                 item.model1_id, item.model1_judgment, item.model1_reason,
@@ -1570,6 +1793,19 @@ def export_excel(request):
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )
     resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # ActivityLog
+    from core.models import ActivityLog
+    ActivityLog.objects.create(
+        project=project,
+        operation_type='qa_export_excel',
+        operation_detail={
+            'quality_method': quality_method,
+            'include_unconfirmed': include_unconfirmed,
+            'filename': filename,
+        },
+        created_by=request.user,
+    )
     return resp
 
 

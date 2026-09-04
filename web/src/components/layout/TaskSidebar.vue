@@ -108,9 +108,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useTaskStore } from '@/stores/task'
 import { useProjectStore } from '@/stores/project'
+import { useQAStore } from '@/stores/qa'
 import {
   formatDuration, getTaskTypeName,
   getTaskStatusClass, getTaskStatusName,
@@ -120,23 +121,70 @@ import {
 const emit = defineEmits(['toggle'])
 
 const taskStore = useTaskStore()
-const project = useProjectStore()
+const project   = useProjectStore()
+const qa        = useQAStore()
 
 const PAGE = 5
 const taskPage = ref(0)
-const logPage = ref(0)
+const logPage  = ref(0)
 
 const taskPageCount = computed(() => Math.ceil(taskStore.recentTasks.length / PAGE) || 1)
-const logPageCount = computed(() => Math.ceil(taskStore.activityLogs.length / PAGE) || 1)
+const logPageCount  = computed(() => Math.ceil(taskStore.activityLogs.length / PAGE) || 1)
 const pagedTasks = computed(() => taskStore.recentTasks.slice(taskPage.value * PAGE, taskPage.value * PAGE + PAGE))
-const pagedLogs = computed(() => taskStore.activityLogs.slice(logPage.value * PAGE, logPage.value * PAGE + PAGE))
+const pagedLogs  = computed(() => taskStore.activityLogs.slice(logPage.value * PAGE, logPage.value * PAGE + PAGE))
 
-function refreshTasks() {
-  taskStore.fetchRecentTasks(project.currentProject?.id, project.stagesData)
+function refreshAll() {
+  const pid = project.currentProject?.id
+  if (!pid) return
+  taskStore.fetchRecentTasks(pid, project.stagesData)
+  taskStore.fetchActivityLogs(pid)
 }
-function refreshLogs() {
-  taskStore.fetchActivityLogs(project.currentProject?.id)
+function refreshTasks() { taskStore.fetchRecentTasks(project.currentProject?.id, project.stagesData) }
+function refreshLogs()  { taskStore.fetchActivityLogs(project.currentProject?.id) }
+
+// ── 自动轮询：有运行中任务时每 12 秒刷新一次 ──────────────────────────────────
+
+const hasRunningTask = computed(() =>
+  taskStore.recentTasks.some(t => t.status === 'running' || t.status === 'pending')
+)
+
+let autoTimer = null
+
+function startAutoRefresh() {
+  if (autoTimer) return
+  autoTimer = setInterval(refreshAll, 12000)
 }
+function stopAutoRefresh() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null }
+}
+
+watch(hasRunningTask, (running) => {
+  if (running) startAutoRefresh()
+  else stopAutoRefresh()
+}, { immediate: true })
+
+// ── 监听 QA 关键操作，触发日志刷新 ─────────────────────────────────────────
+// 当 signalItems 中已确认数量变化（用户点击确认），刷新操作日志
+let prevConfirmedCount = 0
+watch(() => qa.signalItems.filter(i => i.is_confirmed).length, (n) => {
+  if (n !== prevConfirmedCount) {
+    prevConfirmedCount = n
+    taskStore.fetchActivityLogs(project.currentProject?.id)
+  }
+})
+
+// 当 evalProgress 变为 completed，刷新任务+日志
+watch(() => qa.evalCompleted, (done) => {
+  if (done) refreshAll()
+})
+
+onMounted(() => {
+  refreshAll()
+})
+
+onUnmounted(() => {
+  stopAutoRefresh()
+})
 </script>
 
 <style scoped>
