@@ -2,7 +2,7 @@
   <div class="qa-review">
     <div class="step-header">
       <div class="step-icon-wrap" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">
-        <i class="fas fa-magnifying-glass-chart"></i>
+        <i class="fas fa-clipboard-check"></i>
       </div>
       <div>
         <h3 class="step-title">结果审核</h3>

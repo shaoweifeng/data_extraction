@@ -137,11 +137,13 @@ def _build_qa_prompt(ref_info: dict, signal_items: list, method_name: str) -> st
 # 单篇文献 AI 评价
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _call_model_for_ref(model_id: str, prompt: str, signal_items: list) -> List[dict]:
+def _call_model_for_ref(model_id: str, prompt: str, signal_items: list) -> tuple:
     """
     调用单个模型对一篇文献的信号问题进行评价。
-    返回：[{'signal_key': ..., 'judgment': ..., 'reason': ..., 'evidence': ..., 'evidence_page': ...}, ...]
-    若失败返回空列表。
+    返回：(results, token_usage)
+      results:     [{'signal_key': ..., 'judgment': ..., 'reason': ..., 'evidence': ..., 'evidence_page': ...}, ...]
+                   失败时返回空列表
+      token_usage: {'prompt': int, 'completion': int, 'total': int} 或 None
     """
     from core.executors.ai_providers import get_provider
     from core.services.ai_models_config import get_model_config
@@ -150,18 +152,17 @@ def _call_model_for_ref(model_id: str, prompt: str, signal_items: list) -> List[
     has_key = bool(model_cfg and model_cfg.get('api_key')) or bool(os.environ.get('AI_API_KEY'))
     if not has_key:
         logger.warning(f'[QA] 模型 {model_id} 未配置 API Key，跳过')
-        return []
+        return [], None
 
     try:
         provider = get_provider(model_id)
-        # 使用底层 _call_api(full_prompt) -> (content, token_usage)
-        response_text, _ = provider._call_api(prompt)
+        response_text, token_usage = provider._call_api(prompt)
         if not response_text:
             logger.warning(f'[QA] 模型 {model_id} 返回空内容')
-            return []
+            return [], token_usage
     except Exception as e:
         logger.warning(f'[QA] 模型 {model_id} 调用失败: {e}')
-        return []
+        return [], None
 
     # 解析 JSON
     try:
@@ -208,10 +209,10 @@ def _call_model_for_ref(model_id: str, prompt: str, signal_items: list) -> List[
                     'evidence':      item.get('evidence', ''),
                     'evidence_page': item.get('evidence_page', ''),
                 })
-        return valid
+        return valid, token_usage
     except Exception as e:
         logger.warning(f'[QA] 模型 {model_id} 响应解析失败: {e}，原始: {response_text[:300]}')
-        return []
+        return [], token_usage
 
 
 def _determine_consistency(model_results: list) -> tuple:
@@ -291,27 +292,131 @@ class QAEvalHandler:
 
         logger.info(f'[QA] 开始评价 project_id={self.project_id}，共 {len(refs)} 篇，模式={self.eval_mode}，模型={self.model_ids}')
 
+        # ── 余额预检（旁路，不足时拒绝启动）─────────────────────────────────
+        if self.user_id:
+            try:
+                from core.services.billing_service import estimate_credits, check_balance_sufficient, get_balance
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                user = User.objects.filter(pk=self.user_id).first()
+                if user and not user.is_staff:
+                    estimated = estimate_credits(len(refs), self.model_ids)
+                    balance = get_balance(user)
+                    if balance < estimated:
+                        raise ValueError(
+                            f"余额不足（预估需 {estimated} credits，当前余额 {balance} credits）"
+                        )
+                    logger.info(f'[QA][计费] 余额预检通过，预估消耗 {estimated} credits')
+            except ValueError:
+                raise
+            except Exception as e:
+                logger.warning(f'[QA][计费] 余额预检异常（非致命）: {e}')
+
+        # ── token 累计器 ──────────────────────────────────────────────────────
+        token_stats = {
+            'prompt_tokens':     0,
+            'completion_tokens': 0,
+            'total_tokens':      0,
+            'ref_count':         0,
+        }
+
         # 串行评价（每篇文献独立，失败不影响其他）
-        # 若需并发可改为 ThreadPoolExecutor，暂时串行保证稳定性
         for ref in refs:
             try:
-                self._eval_one_ref(ref)
+                ref_token = self._eval_one_ref(ref)
+                if ref_token:
+                    token_stats['prompt_tokens']     += ref_token.get('prompt', 0)
+                    token_stats['completion_tokens'] += ref_token.get('completion', 0)
+                    token_stats['total_tokens']      += ref_token.get('total', 0)
+                    token_stats['ref_count']         += 1
             except Exception as e:
                 logger.exception(f'[QA] 文献 {ref.id} 评价失败: {e}')
                 QAReference.objects.filter(pk=ref.id).update(ai_eval_status='failed')
 
         logger.info(f'[QA] 评价完成 project_id={self.project_id}')
 
-        # 扣积分
-        if self.user_id:
-            try:
-                from core.services.billing_service import deduct_credits, estimate_credits
-                credits = estimate_credits(len(refs), self.model_ids)
-                deduct_credits(self.user_id, credits, reason='质量评价 AI 评价')
-            except Exception as e:
-                logger.warning(f'[QA] 扣积分失败（非致命）: {e}')
+        # ── 结算：按实际 token 扣费 ───────────────────────────────────────────
+        self._settle_credits(token_stats)
 
-    def _eval_one_ref(self, ref):
+    def _settle_credits(self, token_stats: dict):
+        """按实际 token 写 TokenUsageLog 并真实结算积分（旁路，异常不影响主流程）。"""
+        if not self.user_id:
+            return
+
+        total_tokens = token_stats.get('total_tokens', 0)
+        if total_tokens == 0:
+            return
+
+        try:
+            from django.conf import settings as dj_settings
+            from django.contrib.auth import get_user_model
+            from core.services.billing_service import consume_credits, log_admin_usage
+
+            ratio = getattr(dj_settings, 'BILLING_CREDIT_TOKEN_RATIO', 1000)
+            credits_actual = max(1, total_tokens // ratio)
+            token_stats['credits_actual'] = credits_actual
+            token_stats['credit_token_ratio'] = ratio
+
+            User = get_user_model()
+            user = User.objects.filter(pk=self.user_id).first()
+            if not user:
+                return
+
+            # 获取项目名和模型名（用于流水备注）
+            try:
+                from core.models import Project
+                proj = Project.objects.filter(pk=self.project_id).first()
+                project_name = proj.name if proj else f'项目{self.project_id}'
+            except Exception:
+                project_name = f'项目{self.project_id}'
+
+            model_names = '/'.join(self.model_ids)
+            note = (
+                f"AI质量评价 · {project_name} · 模型:{model_names}"
+                f"（{token_stats.get('ref_count', 0)}篇"
+                f"/{total_tokens} tokens）"
+            )
+
+            # 写 TokenUsageLog
+            try:
+                from core.models_billing import TokenUsageLog
+                from core.models import Project as _Project
+                task_obj = getattr(self, 'task_obj', None)
+                proj_obj = _Project.objects.filter(pk=self.project_id).first()
+                TokenUsageLog.objects.create(
+                    user=user,
+                    task=task_obj,
+                    project=proj_obj,
+                    model=self.model_ids[0] if self.model_ids else '',
+                    prompt_tokens=token_stats.get('prompt_tokens', 0),
+                    completion_tokens=token_stats.get('completion_tokens', 0),
+                    total_tokens=total_tokens,
+                    credits_consumed=credits_actual,
+                    ref_count=token_stats.get('ref_count', 0),
+                )
+                logger.info(
+                    f'[QA][计费] TokenUsageLog 已写入 '
+                    f'project_id={self.project_id} task_id={task_obj.id if task_obj else None}'
+                )
+            except Exception as e:
+                logger.warning(f'[QA][计费] 写 TokenUsageLog 失败: {e}')
+
+            # 扣费 or 记录管理员免费用量
+            if user.is_staff:
+                admin_note = f"AI质量评价(免费) · {project_name} · 模型:{model_names}（{token_stats.get('ref_count', 0)}篇/{total_tokens} tokens，等值{credits_actual} credits）"
+                log_admin_usage(user, credits_actual, note=admin_note)
+                logger.info(f'[QA][计费] 管理员账户，跳过扣费（实际用量 {credits_actual} credits）')
+            else:
+                consume_credits(user, credits_actual, note=note)
+                logger.info(f'[QA][计费] 已扣除 {credits_actual} credits（实际用量）')
+
+        except Exception as e:
+            logger.warning(f'[QA][计费] 结算失败（非致命）: {e}')
+
+    def _eval_one_ref(self, ref) -> Optional[dict]:
+        """
+        评价单篇文献，返回本篇累计的 token_usage dict，或 None（跳过/失败）。
+        """
         from core.models import QAReference, QASignalItem
         from core.services.quality_methods import get_method_config
         from core.api.qa_views import _recalc_domain_results
@@ -321,20 +426,20 @@ class QAEvalHandler:
             method_cfg = get_method_config(method_key)
         except Exception:
             QAReference.objects.filter(pk=ref.id).update(ai_eval_status='skipped_no_method')
-            return
+            return None
 
         signal_items_cfg = method_cfg.get('signal_items', [])
         if not signal_items_cfg:
             # 方法未配置信号问题（如 ROB2）
             QAReference.objects.filter(pk=ref.id).update(ai_eval_status='skipped_no_method')
-            return
+            return None
 
         # 获取内容
         content, has_fulltext = self._get_ref_content(ref)
         if not content:
             QAReference.objects.filter(pk=ref.id).update(ai_eval_status='skipped_no_fulltext')
             logger.info(f'[QA] 文献 {ref.id} 无全文和摘要，跳过')
-            return
+            return None
 
         ai_status = 'completed' if has_fulltext else 'abstract_only'
         ref_info = {
@@ -351,11 +456,22 @@ class QAEvalHandler:
         # ── N 模型评价（统一逻辑：1 个=单模型，2+=多模型校验）────────────────
         logger.info(f'[QA] 文献 {ref.id} 使用 {len(self.model_ids)} 个模型: {self.model_ids}')
 
+        # 本篇 token 累计
+        ref_token_stats = {'prompt': 0, 'completion': 0, 'total': 0}
+
+        def _add_token(usage):
+            if usage:
+                ref_token_stats['prompt']     += usage.get('prompt', 0)
+                ref_token_stats['completion'] += usage.get('completion', 0)
+                ref_token_stats['total']      += usage.get('total', 0)
+
         # 并发调用所有模型（最多同时 4 个，避免占用过多连接）
         all_model_raw = {}   # model_id -> List[dict]
         if len(self.model_ids) == 1:
-            all_model_raw[self.model_ids[0]] = _call_model_for_ref(
+            results, usage = _call_model_for_ref(
                 self.model_ids[0], prompt, signal_items_cfg)
+            all_model_raw[self.model_ids[0]] = results
+            _add_token(usage)
         else:
             max_workers = min(len(self.model_ids), 4)
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
@@ -366,13 +482,22 @@ class QAEvalHandler:
                 for fut in as_completed(futures):
                     mid = futures[fut]
                     try:
-                        all_model_raw[mid] = fut.result()
+                        results, usage = fut.result()
+                        all_model_raw[mid] = results
+                        _add_token(usage)
                     except Exception as e:
                         logger.warning(f'[QA] 模型 {mid} 并发调用异常: {e}')
                         all_model_raw[mid] = []
 
         # 先删除已有条目（重新生成场景）
         QASignalItem.objects.filter(qa_ref=ref).delete()
+
+        # 检查是否所有模型都返回空结果（超时/API 失败等）
+        all_empty = all(len(v) == 0 for v in all_model_raw.values())
+        if all_empty:
+            logger.warning(f'[QA] 文献 {ref.id} 所有模型均无有效返回，标记为 failed')
+            QAReference.objects.filter(pk=ref.id).update(ai_eval_status='failed')
+            return None
 
         # 获取模型名称映射
         from core.services.ai_models_config import get_model_config
@@ -449,7 +574,12 @@ class QAEvalHandler:
         ref.refresh_from_db()
         _recalc_domain_results(ref)
 
-        logger.info(f'[QA] 文献 {ref.id} 评价完成，状态={ai_status}，创建 {len(signal_items_cfg)} 条信号问题')
+        logger.info(
+            f'[QA] 文献 {ref.id} 评价完成，状态={ai_status}，'
+            f'创建 {len(signal_items_cfg)} 条信号问题，'
+            f'tokens={ref_token_stats["total"]}'
+        )
+        return ref_token_stats if ref_token_stats['total'] > 0 else None
 
     def _get_ref_content(self, ref) -> tuple:
         """
@@ -595,6 +725,16 @@ class QAEvalStepHandler(BaseStepHandler):
             model_ids=model_ids,
             user_id=user_id,
         )
+        # 透传 task_obj，供结算时写入 TokenUsageLog
+        engine.task_obj = self.task_obj
+
+        # ── token 累计器 ──────────────────────────────────────────────────────
+        token_stats = {
+            'prompt_tokens':     0,
+            'completion_tokens': 0,
+            'total_tokens':      0,
+            'ref_count':         0,
+        }
 
         # 逐篇评价，同时更新进度到 Task
         completed = 0
@@ -608,12 +748,20 @@ class QAEvalStepHandler(BaseStepHandler):
                 self.logger.warning('[QA] 检测到停止信号，中断评价')
                 break
             try:
-                engine._eval_one_ref(ref)
+                ref_token = engine._eval_one_ref(ref)
+                if ref_token:
+                    token_stats['prompt_tokens']     += ref_token.get('prompt', 0)
+                    token_stats['completion_tokens'] += ref_token.get('completion', 0)
+                    token_stats['total_tokens']      += ref_token.get('total', 0)
+                    token_stats['ref_count']         += 1
             except Exception as e:
                 logger.exception(f'[QA] 文献 {ref.id} 评价失败: {e}')
                 QAReference.objects.filter(pk=ref.id).update(ai_eval_status='failed')
             completed += 1
             self.logger.update_progress(completed, total, '篇')
 
-        self.logger.info(f'[QA] 评价完成，共处理 {completed}/{total} 篇')
+        self.logger.info(f'[QA] 评价完成，共处理 {completed}/{total} 篇，总 tokens={token_stats["total_tokens"]}')
+
+        # 按实际 token 结算
+        engine._settle_credits(token_stats)
         return True

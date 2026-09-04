@@ -48,7 +48,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
 
 from core.models import (
@@ -591,6 +591,35 @@ def eval_start(request):
     })
 
 
+def _get_qa_token_stats(project, user):
+    """从 TokenUsageLog 查本项目最近一次 QA 评价的实际 token/积分消耗。"""
+    try:
+        from core.models_billing import TokenUsageLog
+        # 优先通过 project 字段直接关联（新写法），兼容通过 task 关联的旧记录
+        log = (
+            TokenUsageLog.objects
+            .filter(user=user)
+            .filter(
+                models.Q(project=project) | models.Q(task__project=project)
+            )
+            .order_by('-created_at')
+            .first()
+        )
+        if log:
+            return {
+                'total_tokens':      log.total_tokens,
+                'prompt_tokens':     log.prompt_tokens,
+                'completion_tokens': log.completion_tokens,
+                'credits_consumed':  log.credits_consumed,
+                'ref_count':         log.ref_count,
+                'model':             log.model,
+                'recorded_at':       log.created_at.isoformat(),
+            }
+    except Exception:
+        pass
+    return None
+
+
 @login_required
 @require_http_methods(['GET'])
 def eval_progress(request):
@@ -648,6 +677,7 @@ def eval_progress(request):
             'divergent_signal_count': divergent_count,
         },
         'refs': ref_list_data,
+        'token_stats': _get_qa_token_stats(project, request.user),
     })
 
 

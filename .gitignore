@@ -41,6 +41,9 @@ db.sqlite3-journal
 celerybeat-schedule
 celerybeat.pid
 
+# Redis 持久化快照（由 redis-server 写入项目根目录）
+dump.rdb
+
 # 进程 PID 文件（由 start.sh -d 守护模式生成）
 pids/
 

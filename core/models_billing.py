@@ -99,8 +99,12 @@ class TokenUsageLog(models.Model):
     """每次 AI API 调用的 token 用量明细"""
 
     task = models.ForeignKey(
-        'core.Task', on_delete=models.CASCADE,
+        'core.Task', null=True, blank=True, on_delete=models.SET_NULL,
         related_name='token_logs', verbose_name="任务",
+    )
+    project = models.ForeignKey(
+        'core.Project', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='token_logs', verbose_name="项目",
     )
     user = models.ForeignKey(
         User, on_delete=models.CASCADE,

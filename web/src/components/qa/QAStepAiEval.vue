@@ -102,7 +102,7 @@
           <div class="start-btns">
             <button
               class="btn-start"
-              @click="showConfirmModal = true"
+              @click="openConfirmModal"
               :disabled="!canStart || isRunning"
             >
               <i class="fas fa-spinner fa-spin" v-if="isRunning"></i>
@@ -142,6 +142,15 @@
           <div v-if="isCompleted && lastConsumedCredits > 0" class="credits-consumed">
             <i class="fas fa-coins"></i>
             本次消耗 <strong>{{ lastConsumedCredits }}</strong> 积分
+            <template v-if="lastTokenStats">
+              <span class="credits-detail">
+                （{{ lastTokenStats.total_tokens?.toLocaleString() }} tokens
+                · {{ lastTokenStats.ref_count }} 篇）
+              </span>
+            </template>
+            <template v-else>
+              <span class="credits-est-tip">预估</span>
+            </template>
             <span v-if="lastUsedModels.length" class="used-models-tip">
               · 使用模型：{{ lastUsedModels.join(' / ') }}
             </span>
@@ -186,6 +195,7 @@
           <div class="modal-head">
             <i class="fas fa-robot" style="color:#f59e0b"></i>
             <span>确认启动 AI 评价</span>
+            <button class="modal-close-btn" @click="showConfirmModal = false"><i class="fas fa-times"></i></button>
           </div>
           <div class="modal-body">
             <!-- 重评范围选择（仅已完成时展示） -->
@@ -204,10 +214,57 @@
                 >
                   <i class="fas fa-rotate"></i> 全部重评（{{ aiSupportedCount }} 篇）
                 </button>
+                <button
+                  :class="['scope-btn', { 'scope-btn-active': reevalScope === 'custom' }]"
+                  @click="reevalScope = 'custom'"
+                >
+                  <i class="fas fa-list-check"></i> 手动选择
+                </button>
               </div>
             </div>
-            <p>即将对 <strong>{{ reevalScope === 'failed' ? failedCount : aiSupportedCount }}</strong> 篇文献进行 AI 质量评价。</p>
-            <ul class="confirm-list">
+
+            <!-- 手动选择文献列表 -->
+            <div v-if="reevalScope === 'custom'" class="custom-ref-picker">
+              <div class="custom-ref-toolbar">
+                <label class="check-all-label">
+                  <input
+                    type="checkbox"
+                    :checked="customSelectedIds.length === customPickerRefs.length && customPickerRefs.length > 0"
+                    :indeterminate="customSelectedIds.length > 0 && customSelectedIds.length < customPickerRefs.length"
+                    @change="toggleAllCustom"
+                  />
+                  全选
+                </label>
+                <span class="custom-ref-count">已选 {{ customSelectedIds.length }} / {{ customPickerRefs.length }} 篇</span>
+              </div>
+              <div class="custom-ref-list">
+                <label
+                  v-for="ref in customPickerRefs"
+                  :key="ref.id"
+                  class="custom-ref-item"
+                  :class="{ 'custom-ref-item-checked': customSelectedIds.includes(ref.id) }"
+                >
+                  <input
+                    type="checkbox"
+                    :value="ref.id"
+                    v-model="customSelectedIds"
+                    class="custom-ref-checkbox"
+                  />
+                  <span class="custom-ref-status-dot" :class="statusDotClass(ref.ai_eval_status)"></span>
+                  <span class="custom-ref-title">{{ ref.title || '（无标题）' }}</span>
+                  <span class="custom-ref-badge" :class="statusBadgeClass(ref.ai_eval_status)">{{ statusLabel(ref.ai_eval_status) }}</span>
+                </label>
+              </div>
+            </div>
+
+            <p v-if="reevalScope !== 'custom'">
+              即将对 <strong>{{ reevalScope === 'failed' ? failedCount : aiSupportedCount }}</strong> 篇文献进行 AI 质量评价。
+            </p>
+            <p v-else-if="customSelectedIds.length === 0" class="custom-empty-tip">
+              <i class="fas fa-info-circle"></i> 请至少选择一篇文献
+            </p>
+            <ul class="confirm-list" v-if="reevalScope !== 'custom' || customSelectedIds.length > 0">
+              <li v-if="reevalScope === 'custom'">即将对 <strong>{{ customSelectedIds.length }}</strong> 篇文献进行 AI 质量评价</li>
               <li>评价模式：<strong>{{ selectedModels.length === 1 ? '单模型评价' : selectedModels.length + ' 个模型校验' }}</strong></li>
               <li>使用模型：<strong>{{ selectedModelNames.join(' / ') }}</strong></li>
               <li v-if="noFultextCount > 0">{{ noFultextCount }} 篇无全文，将用摘要评价</li>
@@ -219,7 +276,11 @@
           </div>
           <div class="modal-footer">
             <button class="btn-secondary" @click="showConfirmModal = false">取消</button>
-            <button class="btn-primary" @click="doStartEval" :disabled="startLoading">
+            <button
+              class="btn-primary"
+              @click="doStartEval"
+              :disabled="startLoading || (reevalScope === 'custom' && customSelectedIds.length === 0)"
+            >
               <i class="fas fa-spinner fa-spin" v-if="startLoading"></i>
               <i class="fas fa-play" v-else></i>
               {{ startLoading ? '启动中...' : '确认启动' }}
@@ -232,7 +293,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQAStore } from '@/stores/qa'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
@@ -247,9 +308,56 @@ const showConfirmModal = ref(false)
 const startLoading     = ref(false)
 const reevalScope      = ref('all')
 
+// 手动选择模式的勾选状态
+const customSelectedIds = ref([])
+
+// 手动选择模式可选文献（AI 可评价文献）
+const customPickerRefs = computed(() =>
+  qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method))
+)
+
+// 切换全选/全不选
+function toggleAllCustom(e) {
+  if (e.target.checked) {
+    customSelectedIds.value = customPickerRefs.value.map(r => r.id)
+  } else {
+    customSelectedIds.value = []
+  }
+}
+
+// 打开弹窗时重置手动选择列表（默认选中失败/跳过的）
+function openConfirmModal() {
+  if (isCompleted.value) {
+    reevalScope.value = 'failed'
+    // 默认勾选失败/跳过的文献
+    const fs = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
+    customSelectedIds.value = customPickerRefs.value
+      .filter(r => fs.includes(r.ai_eval_status))
+      .map(r => r.id)
+  } else {
+    reevalScope.value = 'all'
+    customSelectedIds.value = []
+  }
+  showConfirmModal.value = true
+}
+
 // 记录最近一次评价消耗的积分和模型（评价完成后展示）
+// 优先从后端 token_stats 读取真实值，不可用时退回预估值
 const lastConsumedCredits = ref(0)
 const lastUsedModels      = ref([])
+const lastTokenStats      = ref(null)  // 后端真实 token 统计
+
+// 监听进度，评价完成时同步真实积分消耗
+watch(() => qa.evalProgress?.token_stats, (stats) => {
+  if (stats && stats.credits_consumed > 0) {
+    lastConsumedCredits.value = stats.credits_consumed
+    lastTokenStats.value = stats
+    // 如果 lastUsedModels 还未设置（刷新场景），从 token_stats.model 恢复
+    if (!lastUsedModels.value.length && stats.model) {
+      lastUsedModels.value = [stats.model]
+    }
+  }
+}, { immediate: true })
 
 // ── 模型列表 ──────────────────────────────────────────────────────────────────
 
@@ -298,8 +406,11 @@ const failedCount      = computed(() => {
   return qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && fs.includes(r.ai_eval_status)).length
 })
 const estimatedCredits = computed(() => {
-  const count = reevalScope.value === 'failed' ? failedCount.value : aiSupportedCount.value
-  return count * selectedModels.value.length * 5
+  let count
+  if (reevalScope.value === 'failed') count = failedCount.value
+  else if (reevalScope.value === 'custom') count = customSelectedIds.value.length
+  else count = aiSupportedCount.value
+  return count * selectedModels.value.length * 10
 })
 
 // ── 进度 ──────────────────────────────────────────────────────────────────────
@@ -351,6 +462,9 @@ async function doStartEval() {
         .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && fs.includes(r.ai_eval_status))
         .map(r => r.id)
       if (!refIds.length) { alert('没有需要重评的文献'); return }
+    } else if (reevalScope.value === 'custom') {
+      refIds = customSelectedIds.value.slice()
+      if (!refIds.length) { alert('请至少选择一篇文献'); return }
     } else {
       refIds = qa.refs
         .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method))
@@ -358,7 +472,7 @@ async function doStartEval() {
     }
     await qa.startEval(project.currentProject.id, refIds, null, selectedModels.value)
     showConfirmModal.value = false
-    // 缓存本次积分和模型，完成后展示在右栏
+    // 估算值先占位，完成后 watch token_stats 自动替换为真实值
     lastConsumedCredits.value = estimatedCredits.value
     lastUsedModels.value = selectedModelNames.value.slice()
     // 启动后刷新任务与日志
@@ -383,6 +497,15 @@ onMounted(async () => {
   await loadModels()
   if (project.currentProject) {
     await qa.fetchEvalProgress(project.currentProject.id)
+    // fetchEvalProgress 完成后手动同步一次 token_stats（避免 watch immediate 时数据未就绪）
+    const stats = qa.evalProgress?.token_stats
+    if (stats && stats.credits_consumed > 0) {
+      lastConsumedCredits.value = stats.credits_consumed
+      lastTokenStats.value = stats
+      if (!lastUsedModels.value.length && stats.model) {
+        lastUsedModels.value = [stats.model]
+      }
+    }
     if (isRunning.value) qa.startPollingProgress(project.currentProject.id)
   }
 })
@@ -407,6 +530,11 @@ function statusBadgeClass(s) {
   return { pending: 'badge-gray', running: 'badge-blue', completed: 'badge-green',
            abstract_only: 'badge-orange', failed: 'badge-red',
            skipped_no_fulltext: 'badge-gray', skipped_no_method: 'badge-gray' }[s] || 'badge-gray'
+}
+function statusDotClass(s) {
+  return { pending: 'dot-gray', running: 'dot-blue', completed: 'dot-green',
+           abstract_only: 'dot-orange', failed: 'dot-red',
+           skipped_no_fulltext: 'dot-gray', skipped_no_method: 'dot-gray' }[s] || 'dot-gray'
 }
 </script>
 
@@ -499,8 +627,10 @@ function statusBadgeClass(s) {
 .progress-subtitle { font-size: 0.73rem; color: #64748b; margin: 0; }
 
 /* 积分消耗提示 */
-.credits-consumed { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 7px 12px; }
+.credits-consumed { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 7px 12px; flex-wrap: wrap; }
 .credits-consumed i { color: #f59e0b; }
+.credits-detail { color: #a16207; font-size: 0.72rem; }
+.credits-est-tip { font-size: 0.7rem; color: #b45309; background: #fef9c3; border-radius: 3px; padding: 0 4px; }
 .used-models-tip { color: #78716c; }
 
 .btn-cancel { padding: 6px 12px; border: 1px solid #fca5a5; background: #fff; color: #ef4444; border-radius: 7px; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
@@ -540,13 +670,35 @@ function statusBadgeClass(s) {
 
 /* 弹窗 */
 .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.modal-box { background: #fff; border-radius: 16px; width: 440px; max-width: 94vw; box-shadow: 0 16px 48px rgba(0,0,0,.18); }
+.modal-box { background: #fff; border-radius: 16px; width: 560px; max-width: 94vw; box-shadow: 0 16px 48px rgba(0,0,0,.18); }
+.modal-box-wide { width: 580px; }
 .modal-head { display: flex; align-items: center; gap: 10px; padding: 20px 24px 16px; font-size: 1rem; font-weight: 600; color: #1e293b; border-bottom: 1px solid #f1f5f9; }
+.modal-head span { flex: 1; }
+.modal-close-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; padding: 2px 4px; border-radius: 4px; }
+.modal-close-btn:hover { color: #475569; background: #f1f5f9; }
 .modal-body { padding: 16px 24px; font-size: 0.85rem; color: #475569; }
 .modal-body p { margin: 0 0 10px; }
 .confirm-list { margin: 0 0 10px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 .confirm-credit { color: #f59e0b; display: flex; align-items: center; gap: 6px; font-size: 0.82rem; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid #f1f5f9; }
+
+/* 手动选择文献 */
+.custom-ref-picker { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+.custom-ref-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+.check-all-label { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; font-weight: 600; color: #475569; cursor: pointer; user-select: none; }
+.check-all-label input { cursor: pointer; width: 14px; height: 14px; accent-color: #6366f1; }
+.custom-ref-count { font-size: 0.72rem; color: #94a3b8; }
+.custom-ref-list { max-height: 240px; overflow-y: auto; }
+.custom-ref-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.1s; user-select: none; }
+.custom-ref-item:last-child { border-bottom: none; }
+.custom-ref-item:hover { background: #f8fafc; }
+.custom-ref-item-checked { background: #eef2ff; }
+.custom-ref-item-checked:hover { background: #e0e7ff; }
+.custom-ref-checkbox { width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; accent-color: #6366f1; }
+.custom-ref-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.custom-ref-title { flex: 1; font-size: 0.77rem; color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.custom-ref-badge { font-size: 0.64rem; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
+.custom-empty-tip { color: #94a3b8; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
 
 /* 重评范围选择 */
 .reeval-scope-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; }

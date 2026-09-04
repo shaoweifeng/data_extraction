@@ -285,7 +285,7 @@ onMounted(async () => {
 /* QA 结果审核步骤：内部三栏自己管理滚动，外层不滚动 */
 .ws-step-content.qa-review-mode {
   overflow: hidden;
-  padding: 12px 16px;
+  padding: 20px 24px;
 }
 
 
