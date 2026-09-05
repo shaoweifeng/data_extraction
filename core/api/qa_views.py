@@ -216,23 +216,47 @@ def _recalc_domain_results(qa_ref: QAReference):
         bias_items  = [i for i in domain_items if i.result_type == 'bias_risk']
         applic_items = [i for i in domain_items if i.result_type == 'applicability']
 
-        def calc_result(signal_list):
+        def calc_bias(signal_list):
+            """
+            偏倚风险判断（支持多种评价方法）：
+            QUADAS-2：选项为 是/否/不清楚/不适用
+              - '否' → high；'不清楚' → unclear；'是'/'不适用' → low
+            NOS：选项为以 ★/✗ 开头的完整字符串
+              - 含 '✗' 开头 → high；★ → low
+            """
             if not signal_list:
                 return 'na', True
             confirmed = [i for i in signal_list if i.is_confirmed]
             if len(confirmed) < len(signal_list):
                 return 'pending', False
             judgments = [i.human_judgment for i in confirmed]
-            # QUADAS-2 bias: 有'否'→high；有'不清楚'→unclear；否则low
-            # NOS: 有✗ → high, 有★★ or ★ → 计星，暂用简化逻辑
-            if any(j in ('否', '✗') for j in judgments):
+            # 检查高风险：精确值'否' 或 以'✗'开头的 NOS 选项
+            if any(j == '否' or j.startswith('✗') for j in judgments):
                 return 'high', True
-            if any(j in ('不清楚', '高') for j in judgments):
+            # 检查不清楚
+            if any(j == '不清楚' for j in judgments):
                 return 'unclear', True
             return 'low', True
 
-        bias_result, bias_confirmed = calc_result(bias_items)
-        applic_result, applic_confirmed = calc_result(applic_items)
+        def calc_applicability(signal_list):
+            """
+            适用性：选项为 低/高/不清楚（QUADAS-2）
+            有'高' → high；有'不清楚' → unclear；否则 low
+            """
+            if not signal_list:
+                return 'na', True
+            confirmed = [i for i in signal_list if i.is_confirmed]
+            if len(confirmed) < len(signal_list):
+                return 'pending', False
+            judgments = [i.human_judgment for i in confirmed]
+            if any(j == '高' for j in judgments):
+                return 'high', True
+            if any(j == '不清楚' for j in judgments):
+                return 'unclear', True
+            return 'low', True
+
+        bias_result, bias_confirmed = calc_bias(bias_items)
+        applic_result, applic_confirmed = calc_applicability(applic_items)
 
         QADomainResult.objects.update_or_create(
             qa_ref=qa_ref,
