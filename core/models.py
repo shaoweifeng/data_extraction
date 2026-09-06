@@ -833,3 +833,20 @@ class QAChart(models.Model):
 
     def __str__(self):
         return f"{self.project.name} | {self.quality_method} | {self.generated_at}"
+
+
+class QAChartSettings(models.Model):
+    """图表用户设置（每个项目×评价方法唯一一条，持久化自定义文献名等）"""
+    project        = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='qa_chart_settings', verbose_name="所属项目")
+    quality_method = models.CharField(max_length=20, verbose_name="评价方法")
+    study_labels   = models.JSONField(default=dict, verbose_name="自定义文献名 {ref_id: label}")
+    updated_at     = models.DateTimeField(auto_now=True, verbose_name="最后更新时间")
+
+    class Meta:
+        db_table       = 'plat_qa_chart_settings'
+        unique_together = (('project', 'quality_method'),)
+        verbose_name        = "图表设置"
+        verbose_name_plural = "图表设置"
+
+    def __str__(self):
+        return f"{self.project.name} | {self.quality_method}"

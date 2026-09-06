@@ -29,6 +29,9 @@ export const useQAStore = defineStore('qa', () => {
   const chartData = ref(null)
   const chartLoading = ref(false)
   const chartPreviewLoading = ref(false)
+  // 图表渲染偏好（Step5 设置，Step6 导出时共用）
+  const chartOrientation = ref('horizontal')   // 'horizontal' | 'vertical'
+  const chartLang        = ref('zh')           // 'zh' | 'en'
 
   // ── 导出状态（Step6）───────────────────────────────────
   const exportStatus = ref(null)
@@ -238,7 +241,7 @@ export const useQAStore = defineStore('qa', () => {
     }
   }
 
-  async function generateChart(projectId, qualityMethod, refIds = [], studyLabels = {}, orientation = 'horizontal') {
+  async function generateChart(projectId, qualityMethod, refIds = [], studyLabels = {}, orientation = 'horizontal', lang = 'zh') {
     chartLoading.value = true
     try {
       const res = await http.post('/qa/chart/generate/', {
@@ -247,6 +250,7 @@ export const useQAStore = defineStore('qa', () => {
         ref_ids: refIds,
         study_labels: studyLabels,
         orientation,
+        lang,
       })
       chartData.value = res.data.data
       // 缓存到 sessionStorage，刷新后可恢复（key 带 projectId 隔离）
@@ -314,15 +318,42 @@ export const useQAStore = defineStore('qa', () => {
     evalProgress.value = null
     chartData.value = null
     exportStatus.value = null
+    chartOrientation.value = 'horizontal'
+    chartLang.value = 'zh'
     // methods 是公共配置，不随项目切换清空
     stopPolling()
+  }
+
+  async function fetchChartSettings(projectId, qualityMethod) {
+    try {
+      const res = await http.get('/qa/chart/settings/', {
+        params: { project_id: projectId, quality_method: qualityMethod }
+      })
+      return res.data.data?.study_labels || {}
+    } catch {
+      return {}
+    }
+  }
+
+  async function saveChartSettings(projectId, qualityMethod, studyLabels) {
+    try {
+      await http.patch('/qa/chart/settings/save/', {
+        project_id: projectId,
+        quality_method: qualityMethod,
+        study_labels: studyLabels,
+      })
+    } catch (e) {
+      console.warn('保存图表设置失败', e)
+    }
   }
 
   return {
     // state
     currentStep, maxReachedStep, refs, refsLoading,
     currentRef, signalItems, domainResults, signalLoading,
-    evalProgress, chartData, chartLoading, chartPreviewLoading, exportStatus, methods,
+    evalProgress, chartData, chartLoading, chartPreviewLoading,
+    chartOrientation, chartLang,
+    exportStatus, methods,
     // computed
     confirmedRefs, pendingRefs, totalRefs, evalCompleted,
     // actions
@@ -332,6 +363,7 @@ export const useQAStore = defineStore('qa', () => {
     selectRef, fetchSignalItems, fetchDomainResults,
     confirmSignalItem, batchConfirm,
     previewChart, generateChart, fetchChartInfo, exportExcel,
+    fetchChartSettings, saveChartSettings,
     reset,
   }
 })

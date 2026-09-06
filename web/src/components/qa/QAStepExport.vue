@@ -22,6 +22,20 @@
           </select>
         </div>
         <div class="config-item">
+          <span class="config-label">交通灯方向</span>
+          <select v-model="qa.chartOrientation" class="qa-select">
+            <option value="horizontal">横向（研究=列）</option>
+            <option value="vertical">纵向（研究=行）</option>
+          </select>
+        </div>
+        <div class="config-item">
+          <span class="config-label">图例语言</span>
+          <select v-model="qa.chartLang" class="qa-select">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="config-item">
           <label class="checkbox-label">
             <input type="checkbox" v-model="includeUnconfirmed" />
             <span>包含未完全确认的文献</span>
@@ -39,7 +53,7 @@
         </div>
         <div class="card-body">
           <h4 class="card-title">偏倚风险图（图片）</h4>
-          <p class="card-desc">导出 PNG 格式的交通灯图和比例图，可直接插入论文</p>
+          <p class="card-desc">导出 PNG 格式的交通灯图和比例图，按上方配置的方向和图例语言实时生成，可直接插入论文</p>
           <ul class="card-features">
             <li><i class="fas fa-check" style="color:#10b981"></i> Risk of Bias Summary（交通灯图）</li>
             <li><i class="fas fa-check" style="color:#10b981"></i> Risk of Bias Graph（比例条形图）</li>
@@ -153,30 +167,38 @@ async function doExportImage() {
   if (!project.currentProject) return
   exportingImage.value = true
   try {
-    // 若尚无图表数据，先生成
-    if (!qa.chartData?.traffic_light) {
-      const refIds = includeUnconfirmed.value
-        ? qa.refs.map(r => r.id)
-        : qa.confirmedRefs.map(r => r.id)
-      if (!refIds.length) {
-        alert(includeUnconfirmed.value ? '暂无已评价的文献' : '暂无已确认的文献，请先完成结果审核')
-        return
-      }
-      await qa.generateChart(project.currentProject.id, exportMethod.value, refIds)
+    const refIds = includeUnconfirmed.value
+      ? qa.refs.map(r => r.id)
+      : qa.confirmedRefs.map(r => r.id)
+    if (!refIds.length) {
+      alert(includeUnconfirmed.value ? '暂无已评价的文献' : '暂无已确认的文献，请先完成结果审核')
+      return
     }
 
-    const method = qa.chartData?.quality_method || exportMethod.value
+    // 从数据库读取用户自定义文献名（与 Step5 保持一致）
+    const studyLabels = await qa.fetchChartSettings(project.currentProject.id, exportMethod.value)
 
+    // 始终重新生成，确保 orientation / lang / studyLabels 都是最新值
+    await qa.generateChart(
+      project.currentProject.id,
+      exportMethod.value,
+      refIds,
+      studyLabels,
+      qa.chartOrientation,
+      qa.chartLang,
+    )
+
+    const method = qa.chartData?.quality_method || exportMethod.value
     if (qa.chartData?.traffic_light_image) {
       _dl(qa.chartData.traffic_light_image, `qa_traffic_light_${method}.png`)
       addHistory('image', `qa_traffic_light_${method}.png`, null)
     }
     if (qa.chartData?.proportion_image) {
-      _dl(qa.chartData.proportion_image, `qa_proportion_${method}.png`)
+      setTimeout(() => _dl(qa.chartData.proportion_image, `qa_proportion_${method}.png`), 200)
       addHistory('image', `qa_proportion_${method}.png`, null)
     }
     if (!qa.chartData?.traffic_light_image && !qa.chartData?.proportion_image) {
-      alert('图片生成失败，请重新生成图表')
+      alert('图片生成失败，请重试')
     }
   } catch (e) {
     alert('导出失败：' + (e?.response?.data?.error || e?.message || e))

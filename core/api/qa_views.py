@@ -52,7 +52,7 @@ from django.db import transaction, models
 from django.utils import timezone
 
 from core.models import (
-    Project, DataFile, QAReference, QASignalItem, QADomainResult, QAChart
+    Project, DataFile, QAReference, QASignalItem, QADomainResult, QAChart, QAChartSettings
 )
 from core.services.quality_methods import get_method_config, get_all_methods_meta, AI_SUPPORTED_METHODS
 
@@ -931,7 +931,8 @@ def _build_chart_data(project, quality_method, ref_ids=None):
                 counts[val] += 1
         total = max(1, len(confirmed_refs))
         proportion_data[k] = {
-            'domain_name': d['name'],
+            'domain_name':    d['name'],
+            'domain_name_en': d.get('name_en', d['name']),
             'result_type': 'bias_risk' if d['has_bias_risk'] else 'applicability',
             'counts': counts,
             'percentages': {k2: round(v / total * 100, 1) for k2, v in counts.items()},
@@ -1000,6 +1001,7 @@ def chart_generate(request):
     ref_ids        = body.get('ref_ids', [])
     study_labels   = body.get('study_labels') or {}
     orientation    = body.get('orientation', 'horizontal')
+    lang           = body.get('lang', 'zh')  # 'zh' | 'en'
 
     if not project_id:
         return _json_err('缺少 project_id')
@@ -1028,7 +1030,7 @@ def chart_generate(request):
     traffic_b64  = _render_traffic_light(
         traffic_light_data, bias_domains, applic_domains,
         method_cfg['name'], quality_method=quality_method,
-        study_labels=study_labels, orientation=orientation,
+        study_labels=study_labels, orientation=orientation, lang=lang,
     )
     proportion_b64 = _render_proportion(
         proportion_data, method_cfg['name'],
@@ -1037,6 +1039,7 @@ def chart_generate(request):
         bias_domains=bias_domains,
         applic_domains=applic_domains,
         study_labels=study_labels,
+        lang=lang,
     )
 
     from core.models import ActivityLog
@@ -1061,6 +1064,66 @@ def chart_generate(request):
         'unconfirmed_count':    sum(1 for r in traffic_light_data if r['review_status'] != 'confirmed'),
         'traffic_light_image':  traffic_b64,
         'proportion_image':     proportion_b64,
+    })
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(['GET'])
+def chart_settings_get(request):
+    """GET /api/qa/chart/settings/?project_id=&quality_method="""
+    project_id     = request.GET.get('project_id')
+    quality_method = request.GET.get('quality_method', '')
+    if not project_id:
+        return _json_err('缺少 project_id')
+    project = _get_project(request, project_id)
+    if not project:
+        return _json_err('项目不存在', 404)
+
+    obj = QAChartSettings.objects.filter(project=project, quality_method=quality_method).first()
+    return _json_ok({
+        'study_labels': obj.study_labels if obj else {},
+        'updated_at':   obj.updated_at.isoformat() if obj else None,
+    })
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(['PATCH'])
+def chart_settings_save(request):
+    """PATCH /api/qa/chart/settings/ — 保存/合并 study_labels"""
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return _json_err('请求体 JSON 格式错误')
+
+    project_id     = body.get('project_id')
+    quality_method = body.get('quality_method', '')
+    study_labels   = body.get('study_labels')
+
+    if not project_id:
+        return _json_err('缺少 project_id')
+    if not isinstance(study_labels, dict):
+        return _json_err('study_labels 必须是对象')
+
+    project = _get_project(request, project_id)
+    if not project:
+        return _json_err('项目不存在', 404)
+
+    obj, created = QAChartSettings.objects.get_or_create(
+        project=project,
+        quality_method=quality_method,
+        defaults={'study_labels': study_labels},
+    )
+    if not created:
+        # 合并：只更新前端传来的 key，不覆盖未传的 key
+        merged = {**obj.study_labels, **study_labels}
+        obj.study_labels = merged
+        obj.save(update_fields=['study_labels', 'updated_at'])
+
+    return _json_ok({
+        'study_labels': obj.study_labels,
+        'updated_at':   obj.updated_at.isoformat(),
     })
 
 
@@ -1391,6 +1454,24 @@ _JUDGMENT_MAP = {
     "na":      "Low",
 }
 
+# 图例 / 分组标题国际化（lang='zh' 中文，lang='en' 英文）
+_I18N = {
+    'zh': {
+        'risk_of_bias':           '偏倚风险',
+        'applicability_concerns': '适用性问题',
+        'high':    '高风险',
+        'unclear': '不清楚',
+        'low':     '低风险',
+    },
+    'en': {
+        'risk_of_bias':           'Risk of Bias',
+        'applicability_concerns': 'Applicability Concerns',
+        'high':    'High',
+        'unclear': 'Unclear',
+        'low':     'Low',
+    },
+}
+
 
 def _get_study_label(row: dict, study_labels: dict) -> str:
     ref_id = row['ref_id']
@@ -1426,13 +1507,16 @@ def _draw_summary_bar(ax, summary_df, title):
         ax.spines[spine].set_visible(False)
 
 
-def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizontal'):
+def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizontal', i18n=None):
     """
     studies:     list of str
     rows:        list of {"label": str, "values": list of "High"/"Unclear"/"Low"}
     n_bias:      int — 前几行属于 Risk of Bias（其余为 Applicability Concerns）
     orientation: 'horizontal'（研究=列，默认） | 'vertical'（研究=行）
+    i18n:        _I18N['zh'] 或 _I18N['en']
     """
+    if i18n is None:
+        i18n = _I18N['zh']
     n_studies = len(studies)
     n_domains = len(rows)
 
@@ -1473,11 +1557,11 @@ def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizonta
 
         # 底部横排组名
         ax.text((n_bias - 1) / 2, n_studies + 0.2,
-                "Risk of Bias",
+                i18n['risk_of_bias'],
                 ha="center", va="top", fontsize=8)
         if n_domains > n_bias:
             ax.text(n_bias + (n_domains - n_bias - 1) / 2, n_studies + 0.2,
-                    "Applicability Concerns",
+                    i18n['applicability_concerns'],
                     ha="center", va="top", fontsize=8)
 
     else:
@@ -1516,23 +1600,26 @@ def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizonta
 
         # 右侧竖排组名
         ax.text(n_cols + 2.2, (n_bias - 1) / 2,
-                "Risk of Bias",
+                i18n['risk_of_bias'],
                 ha="center", va="center", rotation=270, fontsize=8)
         ax.text(n_cols + 2.2, n_bias + (n_rows - n_bias - 1) / 2,
-                "Applicability Concerns",
+                i18n['applicability_concerns'],
                 ha="center", va="center", rotation=270, fontsize=8)
 
 
-def _draw_legend(ax):
+def _draw_legend(ax, i18n=None):
     """用矩形色块画图例（与原脚本对齐，避免 aspect 影响）。"""
+    if i18n is None:
+        i18n = _I18N['zh']
     ax.axis("off")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    for x, key in zip([0.1, 0.42, 0.72], ["High", "Unclear", "Low"]):
+    labels = [i18n['high'], i18n['unclear'], i18n['low']]
+    for x, key, label in zip([0.1, 0.42, 0.72], ["High", "Unclear", "Low"], labels):
         rect = plt.Rectangle((x, 0.25), 0.08, 0.5,
                               facecolor=_COLORS[key], edgecolor="black", linewidth=0.8)
         ax.add_patch(rect)
-        ax.text(x + 0.10, 0.5, key, ha="left", va="center", fontsize=9)
+        ax.text(x + 0.10, 0.5, label, ha="left", va="center", fontsize=9)
     # 外框
     border = plt.Rectangle((0.05, 0.1), 0.9, 0.8,
                             facecolor="none", edgecolor="black", linewidth=1.0)
@@ -1543,9 +1630,10 @@ def _draw_legend(ax):
 
 def _render_traffic_light(traffic_light_data, bias_domains, applic_domains,
                           method_name, quality_method='', study_labels=None,
-                          orientation='horizontal') -> str:
+                          orientation='horizontal', lang='zh') -> str:
     """生成交通灯图（Panel B），返回 base64 data URL。"""
     _init_cjk_font()
+    i18n = _I18N.get(lang, _I18N['zh'])
     if not traffic_light_data:
         return None
 
@@ -1566,10 +1654,14 @@ def _render_traffic_light(traffic_light_data, bias_domains, applic_domains,
     # ── 组装数据（内部 key → "High"/"Unclear"/"Low"）─────────────────────────
     studies = [_get_study_label(r, study_labels) for r in traffic_light_data]
 
+    def _domain_label(d):
+        """按 lang 返回领域显示名"""
+        return d.get('name_en', d['name']) if lang == 'en' else d['name']
+
     rows = []
     for d in bias_domains:
         rows.append({
-            "label": d['name'],
+            "label": _domain_label(d),
             "values": [
                 _JUDGMENT_MAP.get(r['bias_risk'].get(d['key'], 'pending'), 'Unclear')
                 for r in traffic_light_data
@@ -1577,7 +1669,7 @@ def _render_traffic_light(traffic_light_data, bias_domains, applic_domains,
         })
     for d in applic_domains:
         rows.append({
-            "label": d['name'],
+            "label": _domain_label(d),
             "values": [
                 _JUDGMENT_MAP.get(r['applicability'].get(d['key'], 'pending'), 'Unclear')
                 for r in traffic_light_data
@@ -1603,7 +1695,7 @@ def _render_traffic_light(traffic_light_data, bias_domains, applic_domains,
         fig_h  = fig_w * data_h / data_w
 
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-    _draw_traffic_light_matrix(ax, studies, rows, n_bias_rows, orientation=orientation)
+    _draw_traffic_light_matrix(ax, studies, rows, n_bias_rows, orientation=orientation, i18n=i18n)
 
     plt.tight_layout(pad=0.5)
     return _fig_to_b64(fig)
@@ -1611,9 +1703,10 @@ def _render_traffic_light(traffic_light_data, bias_domains, applic_domains,
 
 def _render_proportion(proportion_data, method_name, quality_method='',
                        traffic_light_data=None, bias_domains=None, applic_domains=None,
-                       study_labels=None) -> str:
+                       study_labels=None, lang='zh') -> str:
     """生成比例图（Panel A），返回 base64 data URL。"""
     _init_cjk_font()
+    i18n = _I18N.get(lang, _I18N['zh'])
     if not proportion_data:
         return None
 
@@ -1643,8 +1736,9 @@ def _render_proportion(proportion_data, method_name, quality_method='',
             if item is None:
                 continue
             total = max(1, sum(item['counts'].values()))
+            domain_label = d.get('name_en', d['name']) if lang == 'en' else d['name']
             records.append({
-                "domain":   d['name'],
+                "domain":   domain_label,
                 "High":     item['counts'].get('high', 0)   / total,
                 "Unclear":  item['counts'].get('unclear', 0) / total,
                 "Low":      item['counts'].get('low', 0)    / total,
@@ -1668,13 +1762,13 @@ def _render_proportion(proportion_data, method_name, quality_method='',
     ax_right  = fig.add_subplot(grid[0, 1])
     ax_legend = fig.add_subplot(grid[1, :])
 
-    _draw_summary_bar(ax_left,  rob_summary, "Risk of Bias")
+    _draw_summary_bar(ax_left,  rob_summary, i18n['risk_of_bias'])
     if has_applic:
-        _draw_summary_bar(ax_right, app_summary, "Applicability Concerns")
+        _draw_summary_bar(ax_right, app_summary, i18n['applicability_concerns'])
     else:
         ax_right.axis("off")
 
-    _draw_legend(ax_legend)
+    _draw_legend(ax_legend, i18n=i18n)
 
     plt.tight_layout(pad=0.5)
     return _fig_to_b64(fig)

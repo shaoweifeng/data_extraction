@@ -7,6 +7,7 @@ _DOMAINS = [
     {
         'key':        'patient_selection',
         'name':       '患者选择',
+        'name_en':    'Patient Selection',
         'has_bias_risk':     True,
         'has_applicability': True,
         'order':      1,
@@ -14,6 +15,7 @@ _DOMAINS = [
     {
         'key':        'index_test',
         'name':       '待评价试验',
+        'name_en':    'Index Test',
         'has_bias_risk':     True,
         'has_applicability': True,
         'order':      2,
@@ -21,6 +23,7 @@ _DOMAINS = [
     {
         'key':        'reference_standard',
         'name':       '参考标准',
+        'name_en':    'Reference Standard',
         'has_bias_risk':     True,
         'has_applicability': True,
         'order':      3,
@@ -28,8 +31,9 @@ _DOMAINS = [
     {
         'key':        'flow_timing',
         'name':       '流程与时间',
+        'name_en':    'Flow and Timing',
         'has_bias_risk':     True,
-        'has_applicability': False,  # 流程与时间无适用性担忧
+        'has_applicability': False,
         'order':      4,
     },
 ]

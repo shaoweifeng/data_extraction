@@ -5,15 +5,15 @@ NOS（Newcastle-Ottawa Scale）信号问题配置
 """
 
 _DOMAINS_COHORT = [
-    {'key': 'selection',     'name': '选择（Selection）',     'has_bias_risk': True, 'has_applicability': False, 'order': 1},
-    {'key': 'comparability', 'name': '可比性（Comparability）','has_bias_risk': True, 'has_applicability': False, 'order': 2},
-    {'key': 'outcome',       'name': '结局（Outcome）',        'has_bias_risk': True, 'has_applicability': False, 'order': 3},
+    {'key': 'selection',     'name': '选择（Selection）',      'name_en': 'Selection',     'has_bias_risk': True, 'has_applicability': False, 'order': 1},
+    {'key': 'comparability', 'name': '可比性（Comparability）', 'name_en': 'Comparability', 'has_bias_risk': True, 'has_applicability': False, 'order': 2},
+    {'key': 'outcome',       'name': '结局（Outcome）',         'name_en': 'Outcome',       'has_bias_risk': True, 'has_applicability': False, 'order': 3},
 ]
 
 _DOMAINS_CASE_CONTROL = [
-    {'key': 'selection',     'name': '选择（Selection）',     'has_bias_risk': True, 'has_applicability': False, 'order': 1},
-    {'key': 'comparability', 'name': '可比性（Comparability）','has_bias_risk': True, 'has_applicability': False, 'order': 2},
-    {'key': 'exposure',      'name': '暴露（Exposure）',       'has_bias_risk': True, 'has_applicability': False, 'order': 3},
+    {'key': 'selection',     'name': '选择（Selection）',      'name_en': 'Selection',     'has_bias_risk': True, 'has_applicability': False, 'order': 1},
+    {'key': 'comparability', 'name': '可比性（Comparability）', 'name_en': 'Comparability', 'has_bias_risk': True, 'has_applicability': False, 'order': 2},
+    {'key': 'exposure',      'name': '暴露（Exposure）',        'name_en': 'Exposure',      'has_bias_risk': True, 'has_applicability': False, 'order': 3},
 ]
 
 # NOS 评分制：每项 1 星（部分项最多 2 星），满分 9 星

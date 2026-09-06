@@ -6,7 +6,7 @@
       </div>
       <div>
         <h3 class="step-title">结果可视化</h3>
-        <p class="step-subtitle">交互式预览评估图表，编辑文献名后点击「生成图片」导出 PNG</p>
+        <p class="step-subtitle">交互式预览评估图表，可在下方直接编辑文献名；导出图片请前往「导出报告」步骤</p>
       </div>
     </div>
 
@@ -30,21 +30,28 @@
         </div>
         <div class="ctrl-item">
           <span class="ctrl-label">交通灯方向</span>
-          <select v-model="orientation" class="qa-select">
+          <select v-model="qa.chartOrientation" class="qa-select">
             <option value="horizontal">横向（研究=列）</option>
             <option value="vertical">纵向（研究=行）</option>
           </select>
         </div>
-        <!-- 生成图片（调 matplotlib 生成 PNG 并自动下载） -->
+        <div class="ctrl-item">
+          <span class="ctrl-label">导出图例语言</span>
+          <select v-model="qa.chartLang" class="qa-select">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <!-- 刷新预览（沿用原"生成图片"的主操作样式） -->
         <button
           class="btn-generate"
-          @click="doGenerateAndDownload"
-          :disabled="qa.chartLoading || !qa.chartData"
-          title="调用后端渲染高清 PNG 并自动下载"
+          @click="doPreview"
+          :disabled="qa.chartPreviewLoading"
+          title="重新拉取最新评价数据并刷新预览"
         >
-          <i class="fas fa-spinner fa-spin" v-if="qa.chartLoading"></i>
-          <i class="fas fa-image" v-else></i>
-          {{ qa.chartLoading ? '生成中...' : '生成图片' }}
+          <i class="fas fa-spinner fa-spin" v-if="qa.chartPreviewLoading"></i>
+          <i class="fas fa-sync-alt" v-else></i>
+          {{ qa.chartPreviewLoading ? '刷新中...' : '刷新预览' }}
         </button>
       </div>
     </div>
@@ -66,11 +73,6 @@
             · <span class="warn-text">{{ qa.chartData.unconfirmed_count }} 篇未确认</span>
           </template>
         </span>
-        <div class="chart-toolbar-actions">
-          <button class="tb-btn" @click="doPreview" :disabled="qa.chartPreviewLoading">
-            <i class="fas fa-sync-alt"></i> 刷新预览
-          </button>
-        </div>
       </div>
 
       <!-- 文献名编辑提示 -->
@@ -136,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useQAStore } from '@/stores/qa'
 import { useProjectStore } from '@/stores/project'
 import QATrafficLight    from './QATrafficLight.vue'
@@ -148,22 +150,47 @@ const project = useProjectStore()
 
 const chartMethod    = ref('QUADAS2')
 const refScope       = ref('confirmed')
-const orientation    = ref('horizontal')
 const activeChartTab = ref('traffic')
 
 // 文献名自定义标签：{ ref_id_str: label }
-const studyLabels = reactive({})
+// 必须用 ref 而非 reactive，才能被 v-model:studyLabels 的 $event 赋值更新
+const studyLabels = ref({})
+
+// debounce 保存定时器
+let _saveLabelTimer = null
+function scheduleSaveLabels() {
+  clearTimeout(_saveLabelTimer)
+  _saveLabelTimer = setTimeout(() => {
+    _flushSave()
+  }, 600)
+}
+
+function _flushSave() {
+  clearTimeout(_saveLabelTimer)
+  _saveLabelTimer = null
+  if (!project.currentProject || !Object.keys(studyLabels.value).length) return
+  qa.saveChartSettings(
+    project.currentProject.id,
+    chartMethod.value,
+    { ...studyLabels.value }
+  )
+}
 
 // 当 chartData 刷新时，用默认值初始化（不覆盖用户已修改的）
 watch(() => qa.chartData, (d) => {
   if (!d || !Array.isArray(d.traffic_light)) return
+  const merged = { ...studyLabels.value }
   d.traffic_light.forEach(row => {
     const id = String(row.ref_id)
-    if (!(id in studyLabels)) {
-      studyLabels[id] = row.title || `Ref ${row.ref_id}`
+    if (!(id in merged)) {
+      merged[id] = row.title || `Ref ${row.ref_id}`
     }
   })
+  studyLabels.value = merged
 })
+
+// 监听 studyLabels 变化自动触发 debounce 保存
+watch(studyLabels, () => scheduleSaveLabels(), { deep: true })
 
 const chartTabs = [
   { key: 'traffic',    icon: 'fas fa-traffic-light', label: '交通灯图' },
@@ -266,40 +293,15 @@ async function doPreview() {
   }
 }
 
-/** 生成图片：调用 matplotlib 生成高清 PNG 并自动触发下载 */
-async function doGenerateAndDownload() {
-  if (!project.currentProject) return
-  const refIds = _getRefIds()
-  if (!refIds.length) {
-    alert(refScope.value === 'confirmed' ? '暂无已确认的文献，请先完成结果审核' : '暂无已评价的文献')
-    return
+// 切换评价方法时重新加载对应的自定义标签
+watch(chartMethod, async (newMethod) => {
+  // 清空当前标签缓存，避免上一个方法的标签残留
+  studyLabels.value = {}
+  if (project.currentProject) {
+    const saved = await qa.fetchChartSettings(project.currentProject.id, newMethod)
+    studyLabels.value = { ...saved }
   }
-  try {
-    await qa.generateChart(
-      project.currentProject.id,
-      chartMethod.value,
-      refIds,
-      { ...studyLabels },
-      orientation.value,
-    )
-    // 自动下载两张图片
-    const method = qa.chartData?.quality_method || ''
-    const tl  = qa.chartData?.traffic_light_image
-    const sum = qa.chartData?.proportion_image
-    if (!tl && !sum) { alert('图片生成失败，请重试'); return }
-    if (tl)  _dl(tl,  `qa_traffic_light_${method}.png`)
-    if (sum) setTimeout(() => _dl(sum, `qa_proportion_${method}.png`), 200)
-  } catch (e) {
-    alert(e?.response?.data?.error || '图片生成失败')
-  }
-}
-
-function _dl(dataUrl, filename) {
-  const a = document.createElement('a')
-  a.href = dataUrl
-  a.download = filename
-  a.click()
-}
+})
 
 // ── 初始化：进入页面自动加载预览 ─────────────────────────────────────────────
 
@@ -308,7 +310,17 @@ onMounted(async () => {
   if (qa.methods.length) {
     chartMethod.value = qa.methods.find(m => m.ai_supported)?.key || 'QUADAS2'
   }
+  // 先拉已保存的自定义标签，再 preview（watch(chartData) 会用已有值保护）
+  if (project.currentProject) {
+    const saved = await qa.fetchChartSettings(project.currentProject.id, chartMethod.value)
+    studyLabels.value = { ...saved }
+  }
   await doPreview()
+})
+
+// ── 离开页面立即刷新待保存的标签 ──────────────────────────────────────────────
+onUnmounted(() => {
+  _flushSave()
 })
 </script>
 
@@ -345,13 +357,9 @@ onMounted(async () => {
 }
 
 /* 图表工具栏 */
-.chart-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+.chart-toolbar { display: flex; align-items: center; padding: 4px 0; }
 .chart-meta { font-size: 0.72rem; color: #94a3b8; }
 .warn-text { color: #f59e0b; font-weight: 500; }
-.chart-toolbar-actions { display: flex; gap: 6px; }
-.tb-btn { padding: 6px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 7px; cursor: pointer; font-size: 0.78rem; color: #475569; display: flex; align-items: center; gap: 5px; }
-.tb-btn:hover:not(:disabled) { border-color: #6366f1; color: #6366f1; }
-.tb-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* 文献名编辑提示 */
 .label-edit-tip {
