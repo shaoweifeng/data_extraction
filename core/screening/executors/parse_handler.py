@@ -107,7 +107,7 @@ class ParseHandler(BaseStepHandler):
         merged_xml = output_dir / "references.xml"
 
         def write_split(entry, position):
-            title = entry.get('title', f'unknown_{position}')
+            title = entry.get('title') or f'unknown_{position}'
             xml_file = split_dir / f"{position:05d}_{safe_title(title, 40)}.xml"
             root = ET.Element('reference')
             field_map = [

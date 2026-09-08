@@ -206,3 +206,32 @@ ER  -
         self.assertEqual(count, 2)
         self.assertEqual(len(split_paths), 2)
         self.assertEqual([entry['title'] for entry in merged], ['First', 'Second'])
+
+    def test_parse_handler_uses_fallback_filename_when_ris_title_is_missing(self):
+        ris = """TY  - JOUR
+TI  - First
+ER  -
+TY  - JOUR
+JO  - Journal Without Title
+ER  -
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            input_dir = root / 'input'
+            output_dir = root / 'output'
+            split_dir = root / 'split'
+            input_dir.mkdir()
+            output_dir.mkdir()
+            split_dir.mkdir()
+            (input_dir / 'missing-title.ris').write_text(ris, encoding='utf-8')
+            handler = ParseHandler.__new__(ParseHandler)
+            handler._update_parse_progress = lambda *args, **kwargs: None
+
+            count, merged_path = handler._run_parser(input_dir, output_dir, split_dir)
+            split_names = sorted(path.name for path in split_dir.glob('*.xml'))
+            merged = parse_file(str(merged_path))
+
+        self.assertEqual(count, 2)
+        self.assertEqual(len(split_names), 2)
+        self.assertTrue(any(name.startswith('00002_unknown_2_') for name in split_names))
+        self.assertEqual([entry['title'] for entry in merged], ['First', ''])

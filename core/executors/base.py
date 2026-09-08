@@ -394,13 +394,15 @@ class BaseExecutor(ABC):
 # 工具函数
 # ============================================================================
 
-def safe_title(title: str, max_len: int = 50) -> str:
+def safe_title(title: object, max_len: int = 50) -> str:
     """生成安全的目录名（截断 + hash）"""
     import re
     from hashlib import md5
 
-    safe = re.sub(r'[^\w\-]', '_', title[:max_len])
-    hash_suffix = md5(title.encode()).hexdigest()[:8]
+    normalized_title = str(title).strip() if title is not None else ''
+    normalized_title = normalized_title or 'unknown'
+    safe = re.sub(r'[^\w\-]', '_', normalized_title[:max_len])
+    hash_suffix = md5(normalized_title.encode()).hexdigest()[:8]
     return f"{safe}_{hash_suffix}"
 
 
