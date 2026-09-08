@@ -529,7 +529,9 @@ _PROCITE_TAG_MAP = {
 def _parse_procite_text(text: str) -> List[Dict]:
     """
     解析 ProCite Tagged 格式文本，返回标准化文献字典列表。
-    记录以空行分隔，每行以 %X 标签开头（两字符标签 + 空格 + 值）。
+    记录以 %0 标签开始，每行以 %X 标签开头（两字符标签 + 空格 + 值）。
+    部分中文数据库的导出文件会在同一条记录内插入空行，因此空行
+    不能作为记录边界。
     多值字段（如 %A 作者）以列表存储。
     """
     MULTI_VALUE_TAGS = {'%A', '%+'}
@@ -543,12 +545,9 @@ def _parse_procite_text(text: str) -> List[Dict]:
 
     for raw_line in text.splitlines():
         line = raw_line.rstrip('\r\n')
-        # 空行 → 一条记录结束
+        # 空行可能出现在同一条文献内（如维普导出的作者与机构之间）。
+        # 记录边界由下一个 %0 标签或文件结尾确定。
         if not line.strip():
-            if current:
-                _flush(current)
-                current = {}
-                last_tag = None
             continue
 
         # 判断是否是标签行（以 %? 开头，第2字符是字母/数字/+/~/</ [）
@@ -627,8 +626,26 @@ def parse_enw(file_path: str) -> List[Dict]:
     """
     解析 ProCite Tagged 格式（.enw 或 .txt）文件。
     """
-    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-        text = f.read()
+    with open(file_path, 'rb') as f:
+        raw = f.read()
+
+    # 文献管理工具可能导出 UTF-8（含 BOM）、UTF-16 或 GB18030。
+    # 严格解码，避免 errors='ignore' 静默丢失中文字符。
+    # UTF-16 只在存在 BOM 时尝试；否则 GB18030 的偶数长字节串也可能
+    # 被 UTF-16“成功”解码成不可读文本。
+    if raw.startswith((b'\xff\xfe', b'\xfe\xff')):
+        encodings = ('utf-16',)
+    else:
+        encodings = ('utf-8-sig', 'gb18030')
+    for encoding in encodings:
+        try:
+            text = raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        raise UnicodeError('无法识别 TXT/ENW 文件编码，请使用 UTF-8、UTF-16 或 GB18030')
+
     entries = _parse_procite_text(text)
     for i, e in enumerate(entries, 1):
         e['source_file'] = os.path.basename(file_path)

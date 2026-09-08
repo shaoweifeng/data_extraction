@@ -1,4 +1,6 @@
-from rest_framework import viewsets
+from django.http import FileResponse
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -70,6 +72,30 @@ class DataFileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response({'total': total, 'results': serializer.data})
 
+    @action(detail=True, methods=['get'])
+    def download(self, request, pk=None):
+        """通过受权限保护的附件响应下载原始文件。
+
+        文件始终以二进制流返回，不对 TXT 进行解码或重新编码。
+        """
+        from .common import check_permission
+
+        if not check_permission(request.user, 'file.download'):
+            raise PermissionDenied("缺少权限：file.download")
+
+        data_file = self.get_object()
+        if not data_file.file:
+            return Response({'error': '文件不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        data_file.file.open('rb')
+        response = FileResponse(
+            data_file.file,
+            as_attachment=True,
+            filename=data_file.filename,
+            content_type='application/octet-stream',
+        )
+        return response
+
     def perform_create(self, serializer):
         user = self.request.user
         from .common import check_permission
@@ -133,4 +159,3 @@ class DataFileViewSet(viewsets.ModelViewSet):
             created_by=self.request.user,
         )
         instance.delete()
-

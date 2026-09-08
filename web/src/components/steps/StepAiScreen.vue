@@ -361,7 +361,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useScreeningStore } from '@/stores/screening'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
@@ -377,6 +377,17 @@ const queueInfo = ref({ position: 0, queueLength: 0, slotsNeeded: 0, slotsFree: 
 const promptPanelOpen = ref(false)
 const promptSaveStatus = ref('')
 const defaultPromptPreview = ref('（加载中...）')
+
+let componentActive = true
+let aiPollGeneration = 0
+let aiPollTimer = null
+let pendingRequestGeneration = 0
+let statsRequestGeneration = 0
+let screenedRequestGeneration = 0
+
+function isCurrentProject(projectId) {
+  return componentActive && project.currentProject?.id === projectId
+}
 
 // ── 文献计数 ──────────────────────────────────────────────────
 // 后端 aiModelsList 现在是分组结构，展平为子模型列表供选择
@@ -517,6 +528,8 @@ function getModelProgress(modelId) {
 const PAGE_SIZE = 50
 
 onMounted(async () => {
+  const projectId = project.currentProject?.id
+  if (!projectId) return
   if (s.criteriaList.length === 0) {
     const stage = project.stagesData.find((st) => st.stage_key === 'SCREEN_1')
     const step  = stage?.steps?.find((st) => st.step_key === 'criteria')
@@ -527,9 +540,11 @@ onMounted(async () => {
     loadPrompt(),
     taskStore.fetchRecentTasks(project.currentProject?.id, project.stagesData),
   ])
+  if (!isCurrentProject(projectId)) return
   await loadPending()
   await loadAiScreenStats()
   await loadScreenedFiles()
+  if (!isCurrentProject(projectId)) return
   syncLatestAiTask()
   loadBilling()
 })
@@ -537,8 +552,10 @@ onMounted(async () => {
 // ── Prompt ──────────────────────────────────────────────────
 async function loadPrompt() {
   if (!project.currentProject) return
+  const projectId = project.currentProject.id
   try {
-    const res = await http.get(`/projects/${project.currentProject.id}/get_prompt/`)
+    const res = await http.get(`/projects/${projectId}/get_prompt/`)
+    if (!isCurrentProject(projectId)) return
     s.useCustomPrompt = res.data.use_custom_prompt || false
     s.customPromptText = res.data.custom_prompt || ''
     if (res.data.default_prompt) defaultPromptPreview.value = res.data.default_prompt
@@ -628,6 +645,7 @@ async function loadPending(page) {
   const pageNum = page ?? 0
   const offset = pageNum * LIST_PAGE_SIZE
   const pid = project.currentProject.id
+  const requestGeneration = ++pendingRequestGeneration
 
   let sourceStep = null
   for (const key of ['dedup', 'parse']) {
@@ -635,37 +653,50 @@ async function loadPending(page) {
     if (!step) continue
     try {
       const probe = await http.get(`/files/?project=${pid}&step=${step.id}&data_category=intermediate&limit=1&offset=0`)
+      if (!isCurrentProject(pid) || requestGeneration !== pendingRequestGeneration) return
       if ((probe.data.total ?? 0) > 0) { sourceStep = step; break }
     } catch {}
   }
-  if (!sourceStep) { s.pendingTotal = 0; return }
+  if (!sourceStep) {
+    if (isCurrentProject(pid) && requestGeneration === pendingRequestGeneration) s.pendingTotal = 0
+    return
+  }
   try {
     const res = await http.get(`/files/?project=${pid}&step=${sourceStep.id}&data_category=intermediate&exclude_screened=1&limit=${LIST_PAGE_SIZE}&offset=${offset}`)
+    if (!isCurrentProject(pid) || requestGeneration !== pendingRequestGeneration) return
     const data = res.data
     s.pendingFiles = extractListData(data)
     s.pendingTotal = data.total ?? s.pendingFiles.length
     if (page !== undefined) s.pendingPage = page
     if (page === undefined || page === 0) loadBilling()
-  } catch { s.pendingTotal = 0 }
+  } catch {
+    if (isCurrentProject(pid) && requestGeneration === pendingRequestGeneration) s.pendingTotal = 0
+  }
 }
 
 async function loadAiScreenStats() {
   if (!project.currentProject) return
+  const projectId = project.currentProject.id
+  const requestGeneration = ++statsRequestGeneration
   try {
-    const res = await http.get(`/projects/${project.currentProject.id}/ai_screen_stats/`)
+    const res = await http.get(`/projects/${projectId}/ai_screen_stats/`)
+    if (!isCurrentProject(projectId) || requestGeneration !== statsRequestGeneration) return
     s.aiScreenStats = res.data
   } catch {}
 }
 
-async function loadScreenedFiles() {
+async function loadScreenedFiles({ resetPage = true } = {}) {
   if (!project.currentProject) return
+  const projectId = project.currentProject.id
+  const requestGeneration = ++screenedRequestGeneration
   const stage = project.stagesData.find(st => st.stage_key === 'SCREEN_1')
   const reviewStepId = stage?.steps?.find(st => st.step_key === 'review')?.id
   try {
     // 第一页先取，再看总数决定是否继续取
     const first = await http.get('/review/list/', {
-      params: { project: project.currentProject.id, step: reviewStepId, decision: '', page: 1, page_size: 200 }
+      params: { project: projectId, step: reviewStepId, decision: '', page: 1, page_size: 200 }
     })
+    if (!isCurrentProject(projectId) || requestGeneration !== screenedRequestGeneration) return
     const total = first.data.total || 0
     let all = (first.data.results || []).filter(r => r.ai_decision)
 
@@ -675,10 +706,11 @@ async function loadScreenedFiles() {
       const rest = await Promise.all(
         Array.from({ length: pages - 1 }, (_, i) =>
           http.get('/review/list/', {
-            params: { project: project.currentProject.id, step: reviewStepId, decision: '', page: i + 2, page_size: 200 }
+            params: { project: projectId, step: reviewStepId, decision: '', page: i + 2, page_size: 200 }
           })
         )
       )
+      if (!isCurrentProject(projectId) || requestGeneration !== screenedRequestGeneration) return
       for (const r of rest) {
         all = all.concat((r.data.results || []).filter(f => f.ai_decision))
       }
@@ -687,7 +719,7 @@ async function loadScreenedFiles() {
     s.screenedFiles = all
     s.screenedTotal = all.length
     // 翻回第一页
-    screenedListPage.value = 1
+    if (resetPage) screenedListPage.value = 1
   } catch (e) {
     // 静默失败：不影响主流程
   }
@@ -700,35 +732,12 @@ async function loadScreenedFiles() {
  * 由于筛选过程中文献会从待筛移到已筛，UI 应自动反映变化。
  */
 async function refreshLeftPanel() {
-  // 更新当前页的待筛（保持用户所在页面，只刷新当前页数据）
-  await loadPending(pendingListPage.value - 1)
-  // 已筛列表全量刷新（不切回第 1 页，让用户继续浏览当前页）
-  if (!project.currentProject) return
-  const stage = project.stagesData.find(st => st.stage_key === 'SCREEN_1')
-  const reviewStepId = stage?.steps?.find(st => st.step_key === 'review')?.id
-  try {
-    const first = await http.get('/review/list/', {
-      params: { project: project.currentProject.id, step: reviewStepId, decision: '', page: 1, page_size: 200 }
-    })
-    const total = first.data.total || 0
-    let all = (first.data.results || []).filter(r => r.ai_decision)
-    if (total > 200) {
-      const pages = Math.min(Math.ceil(total / 200), 5)
-      const rest = await Promise.all(
-        Array.from({ length: pages - 1 }, (_, i) =>
-          http.get('/review/list/', {
-            params: { project: project.currentProject.id, step: reviewStepId, decision: '', page: i + 2, page_size: 200 }
-          })
-        )
-      )
-      for (const r of rest) all = all.concat((r.data.results || []).filter(f => f.ai_decision))
-    }
-    s.screenedFiles = all
-    s.screenedTotal = all.length
-    // 若当前页已超出新总页数，退回最后一页
-    const newTotalPages = Math.max(1, Math.ceil(all.length / LIST_PAGE_SIZE))
-    if (screenedListPage.value > newTotalPages) screenedListPage.value = newTotalPages
-  } catch {}
+  await Promise.all([
+    loadPending(pendingListPage.value - 1),
+    loadScreenedFiles({ resetPage: false }),
+  ])
+  const newTotalPages = Math.max(1, Math.ceil((s.screenedFiles?.length || 0) / LIST_PAGE_SIZE))
+  if (screenedListPage.value > newTotalPages) screenedListPage.value = newTotalPages
 }
 
 function syncLatestAiTask() {
@@ -846,14 +855,21 @@ async function clearAiScreenResults() {
 }
 
 async function pollAiScreening(taskId) {
+  clearTimeout(aiPollTimer)
+  const generation = ++aiPollGeneration
+  const projectId = project.currentProject?.id
+  if (!projectId) return
   // 上次触发左栏刷新时的 processedCount，后端每完成一个 batch（= concurrency 篇）才更新一次
   // 只要 processedCount 有变化说明新的一批完成了，立即同步左栏
   let lastRefreshedCount = -1
 
   const poll = async () => {
+    if (generation !== aiPollGeneration || !isCurrentProject(projectId)) return
     try {
       const res = await http.get(`/tasks/${taskId}/`)
+      if (generation !== aiPollGeneration || !isCurrentProject(projectId)) return
       const task = res.data
+      if (Number(task.project) !== Number(projectId)) return
       s.latestAiScreenTask = task
       const status = task.status
       s.screeningProgressValue = task.progress_percentage || 0
@@ -881,11 +897,13 @@ async function pollAiScreening(taskId) {
           loadAiScreenStats()
           refreshLeftPanel()
         }
-        setTimeout(poll, interval)
+        aiPollTimer = setTimeout(poll, interval)
       } else {
         s.isProcessing = false
-        await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
-        await project.fetchStages(project.currentProject.id)
+        await taskStore.fetchRecentTasks(projectId, project.stagesData)
+        if (generation !== aiPollGeneration || !isCurrentProject(projectId)) return
+        await project.fetchStages(projectId)
+        if (generation !== aiPollGeneration || !isCurrentProject(projectId)) return
         if (status === 'completed') {
           await Promise.all([loadPending(), loadAiScreenStats(), loadScreenedFiles()])
           loadBilling()
@@ -900,12 +918,22 @@ async function pollAiScreening(taskId) {
         }
       }
     } catch (err) {
+      if (generation !== aiPollGeneration || !isCurrentProject(projectId)) return
       console.error('轮询AI初筛状态失败', err)
       s.isProcessing = false
     }
   }
   await poll()
 }
+
+onUnmounted(() => {
+  componentActive = false
+  aiPollGeneration++
+  pendingRequestGeneration++
+  statsRequestGeneration++
+  screenedRequestGeneration++
+  clearTimeout(aiPollTimer)
+})
 </script>
 
 <style scoped>

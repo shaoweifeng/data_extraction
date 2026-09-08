@@ -13,6 +13,7 @@ export const useProjectStore = defineStore('project', () => {
 
   // 当前阶段（固定 SCREEN_1，后续扩展时修改）
   const currentStage = ref('SCREEN_1')
+  let stageRequestGeneration = 0
 
   // computed: 当前阶段的步骤列表
   const currentStageSteps = computed(() => {
@@ -40,12 +41,20 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   async function selectProject(project) {
+    const generation = ++stageRequestGeneration
     currentProject.value = project
-    await fetchStages(project.id)
+    const stages = await projectApi.fetchStages(project.id)
+    if (generation === stageRequestGeneration && currentProject.value?.id === project.id) {
+      stagesData.value = stages
+    }
   }
 
   async function fetchStages(projectId) {
-    stagesData.value = await projectApi.fetchStages(projectId)
+    const generation = ++stageRequestGeneration
+    const stages = await projectApi.fetchStages(projectId)
+    if (generation === stageRequestGeneration && currentProject.value?.id === Number(projectId)) {
+      stagesData.value = stages
+    }
   }
 
   async function skipStep(stepId) {
@@ -53,6 +62,7 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   function reset() {
+    stageRequestGeneration++
     currentProject.value = null
     stagesData.value = []
   }

@@ -26,7 +26,7 @@
               />
             </div>
             <!-- 步骤内容 + 右侧任务栏 -->
-            <div class="ws-body">
+            <div class="ws-body" :key="`screen-${project.currentProject?.id}`">
               <div class="ws-step-wrap">
                 <div class="ws-step-content" :class="{ 'review-mode': screening.currentStep === 6 }">
                   <StepParse    v-if="screening.currentStep === 1" />
@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useScreeningStore } from '@/stores/screening'
@@ -206,29 +206,38 @@ const stageMeta = {
   META:     { name: 'Meta 分析',  icon: 'fas fa-chart-line',  bg: '#fdf2f8', color: '#ec4899' },
 }
 
-onMounted(async () => {
-  const projectId = Number(route.params.projectId)
+let workspaceGeneration = 0
+
+async function initializeWorkspace(projectId) {
+  const generation = ++workspaceGeneration
+  loading.value = true
 
   if (!project.currentProject || project.currentProject.id !== projectId) {
     await project.fetchProjects()
+    if (generation !== workspaceGeneration) return
     const found = project.projects.find((p) => p.id === projectId)
     if (!found) { router.push('/'); return }
-    // 只有在切换到【不同项目】时才重置 screening store，刷新同一项目不重置
-    const isProjectSwitch = project.currentProject && project.currentProject.id !== projectId
-    if (isProjectSwitch) {
-      screening.reset()
-      taskStore.reset()
-      qa.reset()  // 切换项目时清空 QA store，防止旧项目数据串入新项目
-    }
+    // 切换项目时先清空所有项目级状态，防止旧项目数据短暂显示。
+    screening.reset()
+    taskStore.reset()
+    qa.reset()
     await project.selectProject(found)
+    if (generation !== workspaceGeneration || project.currentProject?.id !== projectId) return
   }
 
   await Promise.all([
     taskStore.fetchRecentTasks(projectId, project.stagesData),
     taskStore.fetchActivityLogs(projectId),
   ])
+  if (generation !== workspaceGeneration || project.currentProject?.id !== projectId) return
   loading.value = false
-})
+}
+
+watch(
+  () => Number(route.params.projectId),
+  projectId => initializeWorkspace(projectId),
+  { immediate: true },
+)
 </script>
 
 <style scoped>

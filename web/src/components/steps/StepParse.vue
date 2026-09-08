@@ -140,7 +140,12 @@
               <span class="truncate text-sm text-gray-700">{{ file.filename }}</span>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0">
-              <a :href="file.file" class="text-blue-400 hover:text-blue-600 transition">
+              <a
+                :href="`/api/files/${file.id}/download/`"
+                :download="file.filename"
+                class="text-blue-400 hover:text-blue-600 transition"
+                title="下载原始文件"
+              >
                 <i class="fas fa-download text-sm"></i>
               </a>
               <button @click="handleDeleteFile(file.id)" class="text-gray-300 hover:text-red-400 transition">

@@ -20,22 +20,47 @@ export const useTaskStore = defineStore('task', () => {
   const isLoadingLogs = ref(false)
   const logPage = ref(0)
 
+  const activeProjectId = ref(null)
+  let taskRequestGeneration = 0
+  let logRequestGeneration = 0
+
+  function activateProject(projectId) {
+    const normalizedId = Number(projectId)
+    if (activeProjectId.value === normalizedId) return
+
+    activeProjectId.value = normalizedId
+    taskRequestGeneration++
+    logRequestGeneration++
+    recentTasks.value = []
+    latestAiScreenTask.value = null
+    activityLogs.value = []
+    taskLogs.value = {}
+    taskPage.value = 0
+    logPage.value = 0
+  }
+
   async function fetchRecentTasks(projectId, stagesData) {
     if (!projectId) return
+    activateProject(projectId)
+    const requestedProjectId = Number(projectId)
+    const generation = ++taskRequestGeneration
     isLoadingTasks.value = true
     try {
       const res = await http.get(`/tasks/?project=${projectId}`)
+      if (generation !== taskRequestGeneration || activeProjectId.value !== requestedProjectId) {
+        return { stale: true }
+      }
       const tasks = extractListData(res.data).filter((t) => t.status !== 'superseded')
       recentTasks.value = tasks.slice(0, 10)
 
       const aiTask = tasks.find((t) => t.task_type === 'ai_screen')
-      if (aiTask) latestAiScreenTask.value = aiTask
+      latestAiScreenTask.value = aiTask || null
 
       return { tasks, aiTask }
     } catch (err) {
       console.error('获取任务列表失败', err)
     } finally {
-      isLoadingTasks.value = false
+      if (generation === taskRequestGeneration) isLoadingTasks.value = false
     }
   }
 
@@ -64,9 +89,13 @@ export const useTaskStore = defineStore('task', () => {
 
   async function fetchActivityLogs(projectId) {
     if (!projectId) return
+    activateProject(projectId)
+    const requestedProjectId = Number(projectId)
+    const generation = ++logRequestGeneration
     isLoadingLogs.value = true
     try {
       const res = await http.get(`/activity-logs/?project=${projectId}&page=${logPage.value + 1}`)
+      if (generation !== logRequestGeneration || activeProjectId.value !== requestedProjectId) return
       const data = res.data
       if (logPage.value === 0) {
         activityLogs.value = extractListData(data)
@@ -77,11 +106,14 @@ export const useTaskStore = defineStore('task', () => {
     } catch (err) {
       console.error('获取操作日志失败', err)
     } finally {
-      isLoadingLogs.value = false
+      if (generation === logRequestGeneration) isLoadingLogs.value = false
     }
   }
 
   function reset() {
+    taskRequestGeneration++
+    logRequestGeneration++
+    activeProjectId.value = null
     recentTasks.value = []
     latestAiScreenTask.value = null
     taskPage.value = 0
@@ -89,6 +121,8 @@ export const useTaskStore = defineStore('task', () => {
     taskLogs.value = {}
     activityLogs.value = []
     logPage.value = 0
+    isLoadingTasks.value = false
+    isLoadingLogs.value = false
   }
 
   return {
@@ -101,6 +135,7 @@ export const useTaskStore = defineStore('task', () => {
     activityLogs,
     isLoadingLogs,
     logPage,
+    activeProjectId,
     fetchRecentTasks,
     toggleTaskDetail,
     getLogDisplay,
