@@ -45,6 +45,14 @@ def _normalize_procite_record(rec: Dict) -> Dict:
     authors = rec.get('%A', [])
     if isinstance(authors, str):
         authors = [authors]
+    affiliations = rec.get('%+', [])
+    if isinstance(affiliations, str):
+        affiliations = [affiliations]
+    address = '; '.join(
+        value.strip().rstrip(';').strip()
+        for value in affiliations
+        if value and value.strip().rstrip(';').strip()
+    )
     return {
         'title': rec.get('%T', '').strip(),
         'authors': authors,
@@ -58,7 +66,8 @@ def _normalize_procite_record(rec: Dict) -> Dict:
         'pmcid': '',
         'abstract': rec.get('%X', '').strip(),
         'url': url,
-        'address': rec.get('%C', '').strip(),
+        # EndNote tagged text uses %+ for Author Address; %C is Place Published.
+        'address': address,
         'reference_type': rec.get('%0', '').strip(),
         'keywords': rec.get('%K', '').strip(),
         'publisher': rec.get('%I', '').strip(),

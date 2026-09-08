@@ -84,6 +84,7 @@ def _normalize_internal_reference(ref, source_file: str, position: int) -> Dict:
         "abstract": _first_text(ref, ["Abstract"]),
         "doi": _first_text(ref, ["DOI", "Doi", "doi"]),
         "url": _first_text(ref, ["URL", "Url", "url"]),
+        "address": _first_text(ref, ["Address"]),
         "source_file": source_file,
         "source_position": position,
         "type": "XML",

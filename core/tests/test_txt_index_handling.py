@@ -9,6 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 
 from core.models import DataFile, Project
+from core.screening.parsers import convert_to_xml, parse_file
 from core.screening.parsers.enw import parse_enw
 
 
@@ -48,6 +49,28 @@ class TaggedTextParserTests(TestCase):
         )
         self.assertEqual(entries[0]['authors'], ['张三', '李四'])
         self.assertEqual(entries[0]['journal'], '中华循证医学杂志')
+        self.assertEqual(entries[0]['address'], '循证医学中心')
+
+    def test_author_address_survives_enw_to_xml_conversion(self):
+        content = """%0 Journal Article
+%A 张三
+%+ 第一附属医院;
+%+ 循证医学中心
+%C 北京
+%T 地址字段测试
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / 'references.enw'
+            output_path = Path(temp_dir) / 'references.xml'
+            input_path.write_text(content, encoding='utf-8')
+
+            entries = parse_enw(str(input_path))
+            convert_to_xml(entries, str(output_path))
+            round_tripped = parse_file(str(output_path))
+
+        expected_address = '第一附属医院; 循证医学中心'
+        self.assertEqual(entries[0]['address'], expected_address)
+        self.assertEqual(round_tripped[0]['address'], expected_address)
 
     def test_common_chinese_encodings_preserve_characters(self):
         for encoding in ('utf-8-sig', 'utf-16', 'gb18030'):

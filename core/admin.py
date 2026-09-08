@@ -1,3 +1,5 @@
+from django import forms
+from django.conf import settings
 from django.contrib import admin
 from .models import (
     UserProfile, Permission, UserPermission, RoleTemplate,
@@ -7,10 +9,53 @@ from .models import (
 from .models_billing import CreditAccount, CreditTransaction, TokenUsageLog, RechargeCode
 
 
+class UserProfileAdminForm(forms.ModelForm):
+    """Validate user quotas and concurrency edited through Django Admin."""
+
+    quota_projects = forms.IntegerField(
+        label='项目配额',
+        min_value=-1,
+        help_text='可创建的项目数；-1 表示不限额，0 表示不能再创建项目。',
+    )
+    quota_storage_mb = forms.IntegerField(
+        label='存储配额(MB)',
+        min_value=-1,
+        help_text='用户存储配额；-1 表示不限额。',
+    )
+
+    concurrency_limit = forms.IntegerField(
+        label='AI筛选并发数',
+        min_value=1,
+    )
+
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        max_concurrency = settings.AI_SCREEN_MAX_GLOBAL_THREADS
+        field = self.fields['concurrency_limit']
+        field.widget.attrs['max'] = max_concurrency
+        field.help_text = (
+            f'普通用户下次启动 AI 初筛时生效，可设范围 1～{max_concurrency}。'
+            '管理员角色仍使用系统的管理员并发配置。'
+        )
+
+    def clean_concurrency_limit(self):
+        value = self.cleaned_data['concurrency_limit']
+        max_concurrency = settings.AI_SCREEN_MAX_GLOBAL_THREADS
+        if value > max_concurrency:
+            raise forms.ValidationError(f'并发数不能超过全局上限 {max_concurrency}')
+        return value
+
+
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'role', 'quota_projects', 'quota_storage_mb', 
+    form = UserProfileAdminForm
+    list_display = ['user', 'role', 'concurrency_limit', 'quota_projects', 'quota_storage_mb',
                    'is_approved', 'approved_at', 'created_at']
+    list_editable = ['concurrency_limit', 'quota_projects', 'quota_storage_mb']
     list_filter = ['role', 'is_approved']
     search_fields = ['user__username', 'user__email']
     readonly_fields = ['created_at', 'updated_at']
@@ -20,7 +65,7 @@ class UserProfileAdmin(admin.ModelAdmin):
             'fields': ('user', 'role')
         }),
         ('配额设置', {
-            'fields': ('quota_projects', 'quota_storage_mb')
+            'fields': ('quota_projects', 'quota_storage_mb', 'concurrency_limit')
         }),
         ('审核状态', {
             'fields': ('is_approved', 'approved_at', 'approved_by')
