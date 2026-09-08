@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class OpenAICompatibleProvider(BaseAIProvider):
     """
     OpenAI 兼容接口 Provider（OpenAI 兼容格式）
-    
+
     将来扩展其他模型时，只需新建类继承 BaseAIProvider 并实现 screen_single()。
     """
 
@@ -62,12 +62,12 @@ class OpenAICompatibleProvider(BaseAIProvider):
     def screen_single(self, entry: Dict, criteria: List[str], prompt_template: str) -> ScreeningResult:
         """
         对单篇文献调用 DeepSeek API 执行筛选
-        
+
         Args:
             entry: 文献信息字典
             criteria: 纳排标准列表（每条一个字符串）
             prompt_template: prompt 模板，含 {screening_criteria} 占位符
-        
+
         Returns:
             ScreeningResult（含 token_usage 字段）
         """
@@ -77,7 +77,7 @@ class OpenAICompatibleProvider(BaseAIProvider):
         # 摘要不截断：让 AI 读完整摘要，避免因截断导致错误排除
         # （总 prompt 超 100000 字符时会在 _call_api 里整体截断）
         abstract = entry.get("abstract", "")
-        
+
         content = f"Title: {title}\n"
         if abstract:
             content += f"Abstract: {abstract}\n"
@@ -91,11 +91,11 @@ class OpenAICompatibleProvider(BaseAIProvider):
             f"{i+1}. {c}" for i, c in enumerate(criteria)
         )
         prompt = prompt_template.replace("{screening_criteria}", criteria_text)
-        
+
         full_prompt = f"{prompt}\n\n[文献内容]\n{content}"
 
         # 调用 API，同时获取 token 用量
-        raw_response, token_usage = self._call_api(full_prompt)
+        raw_response, token_usage = self.generate_text(full_prompt)
         if raw_response is None:
             return ScreeningResult(
                 title=title,
@@ -172,6 +172,10 @@ class OpenAICompatibleProvider(BaseAIProvider):
         except Exception as e:
             logger.error(f"[DeepSeek] 请求异常: {e}")
             return None, None
+
+    def generate_text(self, prompt: str):
+        """Public raw-generation API shared by screening and quality evaluation."""
+        return self._call_api(prompt)
 
     def _parse_response(self, title: str, raw: str) -> ScreeningResult:
         """解析 AI 返回的 JSON，生成 ScreeningResult"""

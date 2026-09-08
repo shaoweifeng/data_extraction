@@ -45,7 +45,8 @@ class StepExecutor(BaseExecutor):
         Returns:
             True if 成功, False if 失败
         """
-        from core.executors import handlers as _handlers  # noqa: F401 触发 @register 自注册
+        from core.screening import executors as _screening_executors  # noqa: F401 触发初筛 handler 注册
+        from core.quality import executors as _quality_executors  # noqa: F401 触发 QA handler 注册
         from core.executors.registry import get_handler
 
         handler_cls = get_handler(self.step_key)
@@ -55,4 +56,3 @@ class StepExecutor(BaseExecutor):
 
         handler = handler_cls(self)
         return handler.execute()
-

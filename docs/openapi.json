@@ -1,0 +1,150 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Data Extraction Platform API",
+    "version": "1.0.0",
+    "description": "Current API contract. Authentication uses the Django session and unsafe methods require X-CSRFToken."
+  },
+  "servers": [{"url": "/api"}],
+  "tags": [
+    {"name": "Auth"},
+    {"name": "Projects"},
+    {"name": "Workflow"},
+    {"name": "Screening Review"},
+    {"name": "Quality Assessment"},
+    {"name": "Billing"}
+  ],
+  "paths": {
+    "/auth/register/": {"post": {"tags": ["Auth"], "responses": {"201": {"description": "Registered"}, "400": {"$ref": "#/components/responses/BadRequest"}}}},
+    "/auth/login/": {"post": {"tags": ["Auth"], "responses": {"200": {"description": "Logged in"}, "401": {"description": "Invalid credentials"}}}},
+    "/auth/logout/": {"post": {"tags": ["Auth"], "responses": {"200": {"description": "Logged out"}}}},
+    "/auth/me/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Current user"}}}},
+    "/ai-models/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Configured model catalog"}}}},
+    "/projects/": {
+      "get": {"tags": ["Projects"], "responses": {"200": {"description": "Visible projects", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedProjects"}}}}}},
+      "post": {"tags": ["Projects"], "responses": {"201": {"description": "Created"}}}
+    },
+    "/projects/{id}/": {
+      "parameters": [{"$ref": "#/components/parameters/Id"}],
+      "get": {"tags": ["Projects"], "responses": {"200": {"description": "Project"}, "404": {"$ref": "#/components/responses/NotFound"}}},
+      "patch": {"tags": ["Projects"], "responses": {"200": {"description": "Updated"}, "404": {"$ref": "#/components/responses/NotFound"}}},
+      "delete": {"tags": ["Projects"], "responses": {"204": {"description": "Deleted"}, "404": {"$ref": "#/components/responses/NotFound"}}}
+    },
+    "/projects/{id}/stages/": {"get": {"tags": ["Projects"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Stages"}}}},
+    "/projects/{id}/clear_ai_screen_results/": {"post": {"tags": ["Projects"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Cleared"}}}},
+    "/projects/{id}/ai_screen_stats/": {"get": {"tags": ["Projects"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Screening stats"}}}},
+    "/projects/{id}/get_prompt/": {"get": {"tags": ["Projects"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Prompt"}}}},
+    "/projects/{id}/save_prompt/": {"post": {"tags": ["Projects"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Saved"}}}},
+    "/projects/{id}/reset_prompt/": {"post": {"tags": ["Projects"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Reset"}}}},
+    "/projects/{id}/log_model_select/": {"post": {"tags": ["Projects"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Logged"}}}},
+    "/projects/{id}/extraction_fields/": {"get": {"tags": ["Projects"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Extraction fields"}}}},
+    "/stages/": {"get": {"tags": ["Workflow"], "responses": {"200": {"description": "Visible stages"}}}},
+    "/stages/{id}/": {"get": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Stage"}}}},
+    "/stages/{id}/start/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Started"}}}},
+    "/stages/{id}/stop/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Stopped"}}}},
+    "/stages/{id}/skip/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Skipped"}}}},
+    "/steps/": {"get": {"tags": ["Workflow"], "responses": {"200": {"description": "Visible steps"}}}},
+    "/steps/{id}/": {"get": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Step"}}}},
+    "/steps/{id}/start/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Started"}}}},
+    "/steps/{id}/stop/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Stopped"}}}},
+    "/steps/{id}/skip/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Skipped"}}}},
+    "/steps/{id}/complete/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Completed"}}}},
+    "/steps/{id}/update_metadata/": {"patch": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Metadata updated"}}}},
+    "/tasks/": {
+      "get": {"tags": ["Workflow"], "responses": {"200": {"description": "Visible tasks"}}},
+      "post": {"tags": ["Workflow"], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/TaskStart"}}}}, "responses": {"201": {"description": "Task started"}}}
+    },
+    "/tasks/{id}/stop/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Stopped"}, "400": {"$ref": "#/components/responses/BadRequest"}}}},
+    "/tasks/{id}/resume/": {"post": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Resumed"}, "400": {"$ref": "#/components/responses/BadRequest"}}}},
+    "/tasks/{id}/": {"get": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Task"}}}},
+    "/tasks/{id}/logs/": {"get": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Task logs"}}}},
+    "/tasks/{id}/tail/": {"get": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Task log tail"}}}},
+    "/files/": {"get": {"tags": ["Workflow"], "responses": {"200": {"description": "Visible files"}}}, "post": {"tags": ["Workflow"], "responses": {"201": {"description": "Uploaded"}}}},
+    "/files/{id}/": {"get": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "File"}}}, "delete": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"204": {"description": "Deleted"}}}},
+    "/users/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Users for administrators"}}}},
+    "/users/{id}/": {"get": {"tags": ["Auth"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "User"}}}},
+    "/users/{id}/approve/": {"post": {"tags": ["Auth"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Approved"}}}},
+    "/users/{id}/ban/": {"post": {"tags": ["Auth"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Banned"}}}},
+    "/users/{id}/unban/": {"post": {"tags": ["Auth"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Unbanned"}}}},
+    "/users/{id}/adjust_credits/": {"post": {"tags": ["Billing"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Adjusted"}}}},
+    "/activity-logs/": {"get": {"tags": ["Workflow"], "responses": {"200": {"description": "Visible activity logs"}}}},
+    "/review/list/": {"get": {"tags": ["Screening Review"], "responses": {"200": {"description": "Review page", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ReviewList"}}}}, "404": {"$ref": "#/components/responses/NotFound"}}}},
+    "/review/submit/": {"post": {"tags": ["Screening Review"], "responses": {"200": {"description": "Submitted"}, "400": {"$ref": "#/components/responses/BadRequest"}}}},
+    "/review/item/{source_xml}/": {"patch": {"tags": ["Screening Review"], "parameters": [{"$ref": "#/components/parameters/SourceXml"}], "responses": {"200": {"description": "Updated"}}}},
+    "/review/stats/": {"get": {"tags": ["Screening Review"], "responses": {"200": {"description": "Decision statistics", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ReviewStats"}}}}}}},
+    "/review/complete/": {"post": {"tags": ["Screening Review"], "responses": {"200": {"description": "Step completed"}}}},
+    "/review/note/{source_xml}/": {"post": {"tags": ["Screening Review"], "parameters": [{"$ref": "#/components/parameters/SourceXml"}], "responses": {"200": {"description": "Note appended"}}}},
+    "/review/notes/{source_xml}/": {"get": {"tags": ["Screening Review"], "parameters": [{"$ref": "#/components/parameters/SourceXml"}], "responses": {"200": {"description": "Notes"}}}},
+    "/qa/methods/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/refs/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}, "404": {"$ref": "#/components/responses/NotFound"}}}},
+    "/qa/refs/import/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/refs/upload/": {"post": {"tags": ["Quality Assessment"], "responses": {"201": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/refs/batch-method/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/refs/{id}/": {"patch": {"tags": ["Quality Assessment"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}, "404": {"$ref": "#/components/responses/NotFound"}}}},
+    "/qa/eval/start/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/eval/progress/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/signal-items/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/signal-items/{id}/confirm/": {"patch": {"tags": ["Quality Assessment"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/signal-items/batch-confirm/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/domain-results/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/chart/preview/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/chart/generate/": {"post": {"tags": ["Quality Assessment"], "responses": {"202": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/chart/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/chart/settings/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/chart/settings/save/": {"patch": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/export/excel/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"description": "Excel workbook", "content": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {"schema": {"type": "string", "format": "binary"}}}}}}},
+    "/qa/export/status/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/billing/balance/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Current balance"}}}},
+    "/billing/estimate/": {"post": {"tags": ["Billing"], "responses": {"200": {"description": "Estimated credits"}}}},
+    "/billing/redeem/": {"post": {"tags": ["Billing"], "responses": {"200": {"description": "Redeemed"}, "410": {"description": "Already used or expired"}}}},
+    "/billing/transactions/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Transactions"}}}}
+  },
+  "components": {
+    "parameters": {
+      "Id": {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}},
+      "SourceXml": {"name": "source_xml", "in": "path", "required": true, "schema": {"type": "string"}}
+    },
+    "responses": {
+      "QaSuccess": {"description": "QA success envelope", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QaEnvelope"}}}},
+      "BadRequest": {"description": "Invalid input"},
+      "NotFound": {"description": "Resource unavailable or not visible"}
+    },
+    "schemas": {
+      "QaEnvelope": {
+        "type": "object",
+        "required": ["ok", "data"],
+        "properties": {"ok": {"type": "boolean", "enum": [true]}, "data": {}}
+      },
+      "PaginatedProjects": {
+        "type": "object",
+        "required": ["count", "next", "previous", "results"],
+        "properties": {
+          "count": {"type": "integer"},
+          "next": {"type": "string", "nullable": true},
+          "previous": {"type": "string", "nullable": true},
+          "results": {"type": "array", "items": {"type": "object", "required": ["id", "name", "owner"]}}
+        }
+      },
+      "TaskStart": {
+        "type": "object",
+        "required": ["project", "task_type"],
+        "properties": {"project": {"type": "integer"}, "task_type": {"type": "string"}, "config": {"type": "object"}}
+      },
+      "ReviewList": {
+        "type": "object",
+        "required": ["total", "page", "page_size", "results"],
+        "properties": {"total": {"type": "integer"}, "page": {"type": "integer"}, "page_size": {"type": "integer"}, "results": {"type": "array", "items": {"type": "object"}}}
+      },
+      "ReviewStats": {
+        "type": "object",
+        "required": ["total", "reviewed", "unreviewed", "tab_included", "tab_excluded", "tab_pending", "tab_conflict", "final_included", "final_excluded", "final_conflict_pending", "ai_accuracy"],
+        "properties": {
+          "total": {"type": "integer"}, "reviewed": {"type": "integer"}, "unreviewed": {"type": "integer"},
+          "tab_included": {"type": "integer"}, "tab_excluded": {"type": "integer"}, "tab_pending": {"type": "integer"}, "tab_conflict": {"type": "integer"},
+          "final_included": {"type": "integer"}, "final_excluded": {"type": "integer"}, "final_conflict_pending": {"type": "integer"},
+          "ai_accuracy": {"type": "number", "nullable": true}
+        }
+      }
+    }
+  }
+}

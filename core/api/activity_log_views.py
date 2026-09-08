@@ -1,9 +1,9 @@
-from django.db import models as db_models
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from ..models import ActivityLog
 from ..serializers import ActivityLogSerializer
+from ..services.access_policy import ProjectAccessPolicy
 
 
 class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
@@ -11,25 +11,9 @@ class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_superuser:
-            qs = ActivityLog.objects.all()
-        else:
-            # admin 角色也可查看所有日志
-            from core.models import UserProfile
-            profile = getattr(user, 'profile', None)
-            if profile and profile.role in ('admin',):
-                qs = ActivityLog.objects.all()
-            else:
-                # 自己创建的项目 + 被授权的项目
-                from core.models import UserPermission
-                permitted_ids = list(UserPermission.objects.filter(
-                    user=user
-                ).values_list('project_id', flat=True))
-                qs = ActivityLog.objects.filter(
-                    db_models.Q(project__owner=user) |
-                    db_models.Q(project_id__in=permitted_ids)
-                )
+        qs = ActivityLog.objects.filter(
+            project__in=ProjectAccessPolicy.visible_projects(self.request.user)
+        )
 
         project_id = self.request.query_params.get('project')
         if project_id:

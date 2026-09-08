@@ -1,0 +1,22 @@
+# Runtime dependencies. Regenerate requirements.txt in a Python 3.9 environment.
+Django>=4.2,<5.0
+djangorestframework>=3.14,<3.17
+django-cors-headers
+whitenoise
+python-dotenv
+celery
+redis
+django-celery-results
+django-celery-beat
+PyMySQL
+requests
+pandas
+openpyxl
+PyPDF2
+PyMuPDF
+Pillow
+matplotlib>=3.7,<3.10
+bibtexparser
+rispy
+python-docx
+gunicorn

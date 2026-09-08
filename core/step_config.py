@@ -38,7 +38,7 @@ STEP_CONFIGURATIONS = {
             "total_results": 0
         }
     },
-    
+
     # ========================================================================
     # 阶段2: 文献初筛（流水线）
     # ========================================================================
@@ -63,7 +63,7 @@ STEP_CONFIGURATIONS = {
         },
         "metadata_template": {}
     },
-    
+
     # ------------------------------------------------------------------------
     # 子步骤: 文献解析（同步）
     # ------------------------------------------------------------------------
@@ -97,7 +97,7 @@ STEP_CONFIGURATIONS = {
             "split_files": 0
         }
     },
-    
+
     # ------------------------------------------------------------------------
     # 子步骤: 自动去重（同步）
     # ------------------------------------------------------------------------
@@ -131,7 +131,7 @@ STEP_CONFIGURATIONS = {
             "duplicate_rate": "0%"
         }
     },
-    
+
     # ------------------------------------------------------------------------
     # 子步骤: 纳排标准（手动）
     # ------------------------------------------------------------------------
@@ -155,7 +155,7 @@ STEP_CONFIGURATIONS = {
             "confirmed_at": None
         }
     },
-    
+
     # ------------------------------------------------------------------------
     # 子步骤: 提取字段（手动，定义字段后在 AI 初筛时一并提取）
     # ------------------------------------------------------------------------
@@ -179,7 +179,7 @@ STEP_CONFIGURATIONS = {
             "confirmed_at": None
         }
     },
-    
+
     # ------------------------------------------------------------------------
     # 子步骤: AI初筛（异步）
     # ------------------------------------------------------------------------
@@ -223,7 +223,7 @@ STEP_CONFIGURATIONS = {
             "duration": None
         }
     },
-    
+
     # ------------------------------------------------------------------------
     # 子步骤: 人工审阅（纯交互，order=45）
     # ------------------------------------------------------------------------
@@ -279,7 +279,7 @@ STEP_CONFIGURATIONS = {
             "file_size_ris": 0
         }
     },
-    
+
     # ========================================================================
     # 阶段3: 文献复筛（手动）
     # ========================================================================
@@ -302,7 +302,7 @@ STEP_CONFIGURATIONS = {
             "excluded_refs": 0
         }
     },
-    
+
     # ========================================================================
     # 阶段4: 文献质量评价（子步骤流水线）
     # ========================================================================
@@ -392,14 +392,15 @@ STEP_CONFIGURATIONS = {
     },
 
     # ------------------------------------------------------------------------
-    # QA 子步骤: 结果可视化（手动/轻量同步）
+    # QA 子步骤: 结果可视化（异步）
     # ------------------------------------------------------------------------
     "qa_chart": {
         "name": "结果可视化",
         "stage_key": "QUALITY",
-        "execution_mode": "manual",
+        "execution_mode": "async",
         "description": "生成 QUADAS-2 等质量评价图表",
-        "timeout": None,
+        "timeout": 300,
+        "retry_policy": {"max_retries": 1, "retry_delay": 10},
         "monitoring": {"progress_type": "boolean"},
         "metadata_template": {},
     },
@@ -416,7 +417,7 @@ STEP_CONFIGURATIONS = {
         "monitoring": {"progress_type": "boolean"},
         "metadata_template": {},
     },
-    
+
     # ========================================================================
     # 阶段5: 数据提取（手动）
     # ========================================================================
@@ -438,7 +439,7 @@ STEP_CONFIGURATIONS = {
             "variables_count": 0
         }
     },
-    
+
     # ========================================================================
     # 阶段6: Meta分析（异步）
     # ========================================================================
@@ -540,13 +541,13 @@ STAGE_DEFINITIONS = [
 def get_step_config(step_key: str) -> dict:
     """
     获取步骤配置
-    
+
     Args:
         step_key: 步骤标识（parse/dedup/criteria等）
-    
+
     Returns:
         步骤配置字典
-    
+
     Raises:
         KeyError: 步骤不存在
     """
@@ -558,13 +559,13 @@ def get_step_config(step_key: str) -> dict:
 def get_stage_definition(stage_key: str) -> dict:
     """
     获取阶段定义
-    
+
     Args:
         stage_key: 阶段标识（SEARCH/SCREEN_1等）
-    
+
     Returns:
         阶段定义字典
-    
+
     Raises:
         KeyError: 阶段不存在
     """
@@ -577,10 +578,10 @@ def get_stage_definition(stage_key: str) -> dict:
 def get_execution_mode(step_key: str) -> str:
     """
     获取步骤的执行模式
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         执行模式（sync/async/manual/pipeline）
     """
@@ -591,10 +592,10 @@ def get_execution_mode(step_key: str) -> str:
 def is_async_step(step_key: str) -> bool:
     """
     判断是否为异步步骤
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         True if 异步步骤, False otherwise
     """
@@ -604,10 +605,10 @@ def is_async_step(step_key: str) -> bool:
 def is_manual_step(step_key: str) -> bool:
     """
     判断是否为手动步骤
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         True if 手动步骤, False otherwise
     """
@@ -617,16 +618,16 @@ def is_manual_step(step_key: str) -> bool:
 def get_sub_steps(stage_key: str) -> list:
     """
     获取阶段包含的子步骤列表
-    
+
     Args:
         stage_key: 阶段标识
-    
+
     Returns:
         子步骤键列表
     """
     if stage_key in STEP_CONFIGURATIONS:
         return STEP_CONFIGURATIONS[stage_key].get("sub_steps", [])
-    
+
     stage_def = get_stage_definition(stage_key)
     return [step["step_key"] for step in stage_def.get("steps", [])]
 
@@ -634,36 +635,36 @@ def get_sub_steps(stage_key: str) -> list:
 def get_step_order(step_key: str) -> int:
     """
     获取步骤的执行顺序
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         步骤顺序号
     """
     # 如果是阶段本身，返回阶段定义的order
     if step_key in [stage["stage_key"] for stage in STAGE_DEFINITIONS]:
         return get_stage_definition(step_key)["order"]
-    
+
     # 否则查找子步骤定义中的order
     config = get_step_config(step_key)
     stage_key = config.get("stage_key")
     stage_def = get_stage_definition(stage_key)
-    
+
     for step_def in stage_def.get("steps", []):
         if step_def["step_key"] == step_key:
             return step_def["order"]
-    
+
     return 100  # 默认靠后
 
 
 def can_skip_step(step_key: str) -> bool:
     """
     判断步骤是否可以跳过
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         True if 可跳过, False otherwise
     """
@@ -674,10 +675,10 @@ def can_skip_step(step_key: str) -> bool:
 def get_retry_policy(step_key: str) -> dict:
     """
     获取步骤的重试策略
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         重试策略字典
     """
@@ -688,10 +689,10 @@ def get_retry_policy(step_key: str) -> dict:
 def get_timeout(step_key: str) -> int:
     """
     获取步骤的超时时间（秒）
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         超时秒数，None表示无限制
     """
@@ -702,10 +703,10 @@ def get_timeout(step_key: str) -> int:
 def get_monitoring_config(step_key: str) -> dict:
     """
     获取步骤的监控配置
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         监控配置字典
     """
@@ -716,10 +717,10 @@ def get_monitoring_config(step_key: str) -> dict:
 def get_inputs(step_key: str) -> list:
     """
     获取步骤的输入文件模式列表
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         输入文件模式列表
     """
@@ -730,10 +731,10 @@ def get_inputs(step_key: str) -> list:
 def get_outputs(step_key: str) -> list:
     """
     获取步骤的输出文件模式列表
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         输出文件模式列表
     """
@@ -744,10 +745,10 @@ def get_outputs(step_key: str) -> list:
 def get_metadata_template(step_key: str) -> dict:
     """
     获取步骤的元数据模板
-    
+
     Args:
         step_key: 步骤标识
-    
+
     Returns:
         元数据模板字典（深拷贝）
     """

@@ -3,22 +3,21 @@
 
 职责：
 - 封装项目创建时的阶段/步骤初始化逻辑
-- 封装项目删除时的权限校验、数据归档、文件清理
+- 封装项目删除时的权限校验、文件清理
 - 统一项目级权限检查（project.create / project.delete_own）
 
 调用方（project_views.py）只需调用 create_project / delete_project，
 不再在 ViewSet 里内联 50+ 行的业务规则。
 """
 
-import json
 import logging
 import os
 import shutil
 
 from django.conf import settings
-from django.db import connection
 
 from core.models import ActivityLog, Project, ProjectStage, StageStep
+from core.workflow.domain.statuses import ProjectStageStatus, StageStepStatus
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ def initialize_project(project: Project, user) -> None:
             stage_key=stage_key,
             name=stage_def.get("name", stage_key),
             order=stage_def.get("order", 100),
-            status="pending",
+            status=ProjectStageStatus.PENDING,
         )
 
         for step_def in stage_def.get("steps", []):
@@ -71,7 +70,7 @@ def initialize_project(project: Project, user) -> None:
                 name=step_def.get("name", step_def["step_key"]),
                 order=step_def.get("order", 100),
                 can_skip=step_def.get("can_skip", True),
-                status="pending",
+                status=StageStepStatus.PENDING,
             )
 
 
@@ -94,7 +93,7 @@ def check_create_permission(user) -> None:
 
 
 # ============================================================================
-# 删除项目（归档 + 文件清理）
+# 删除项目（文件清理 + 数据清理）
 # ============================================================================
 
 def check_delete_permission(instance: Project, user) -> None:
@@ -107,37 +106,10 @@ def check_delete_permission(instance: Project, user) -> None:
     if not _check_permission(user, 'project.delete_own'):
         raise PermissionError("缺少权限：project.delete_own")
 
-    if instance.owner != user and not user.is_superuser:
+    profile = getattr(user, 'profile', None)
+    is_platform_admin = user.is_superuser or (profile and profile.role == 'admin')
+    if instance.owner != user and not is_platform_admin:
         raise PermissionError("无权删除该项目")
-
-
-def archive_project(instance: Project) -> None:
-    """将项目归档到历史表（软删除记录）。"""
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO plat_project_history
-                    (id, name, slug, description, owner_id, status, metadata, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE
-                    name=VALUES(name), slug=VALUES(slug), description=VALUES(description),
-                    status=VALUES(status), metadata=VALUES(metadata), updated_at=VALUES(updated_at)
-                """,
-                [
-                    instance.id,
-                    instance.name,
-                    instance.slug,
-                    instance.description,
-                    instance.owner_id,
-                    'deleted',
-                    json.dumps(instance.metadata) if instance.metadata else '{}',
-                    instance.created_at,
-                    instance.updated_at,
-                ],
-            )
-    except Exception as e:
-        logger.warning(f"[project_service] 归档项目 {instance.id} 到历史表失败: {e}")
 
 
 def cleanup_project_files(instance: Project) -> None:
@@ -181,7 +153,7 @@ def cleanup_project_files(instance: Project) -> None:
 
 def delete_project(instance: Project, user) -> None:
     """
-    删除项目的完整流程：权限校验 → 归档 → 文件清理 → 删除 DB 记录。
+    删除项目的完整流程：权限校验 → 文件清理 → 删除 DB 记录。
 
     Args:
         instance: 要删除的 Project 对象
@@ -191,6 +163,5 @@ def delete_project(instance: Project, user) -> None:
         PermissionError: 权限不足
     """
     check_delete_permission(instance, user)
-    archive_project(instance)
     cleanup_project_files(instance)
     instance.delete()

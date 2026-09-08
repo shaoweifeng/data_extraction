@@ -7,7 +7,7 @@ from .api.billing_views import (
     redeem as billing_redeem,
     transactions as billing_transactions,
 )
-from .api.review_views import (
+from .screening.api.review_views import (
     review_list,
     review_submit,
     review_item,
@@ -16,15 +16,12 @@ from .api.review_views import (
     review_note_append,
     review_notes_list,
 )
-from .api.qa_views import (
-    methods_list,
-    ref_list, ref_import, ref_upload, ref_update, ref_batch_method,
-    eval_start, eval_progress,
-    signal_items_list, signal_item_confirm, signal_batch_confirm,
-    domain_results,
-    chart_generate, chart_preview, chart_info, chart_settings_get, chart_settings_save,
-    export_excel, export_status,
-)
+from .quality.api.reference_views import methods_list, ref_list, ref_import, ref_upload, ref_update, ref_batch_method
+from .quality.api.evaluation_views import eval_start, eval_progress
+from .quality.api.review_views import signal_items_list, signal_item_confirm, signal_batch_confirm, domain_results
+from .quality.api.chart_views import chart_generate, chart_preview, chart_info, chart_settings_get, chart_settings_save
+from .quality.api.export_views import export_excel, export_status
+from .api.schema_views import openapi_schema
 
 # 注册 ViewSets
 router = DefaultRouter()
@@ -37,6 +34,8 @@ router.register(r'users', api.UserViewSet, basename='user')
 router.register(r'activity-logs', api.ActivityLogViewSet, basename='activity-log')
 
 urlpatterns = [
+    # 机器可读 API 契约
+    path('schema/', openapi_schema, name='openapi_schema'),
     # 认证 API
     path('auth/register/', api.register, name='register'),
     path('auth/login/', api.login_view, name='login'),

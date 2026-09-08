@@ -14,6 +14,7 @@ from rest_framework import status as http_status
 
 from django.db import transaction
 from django.utils import timezone
+from core.ai.quota import is_unlimited_ai_user
 
 
 @api_view(['GET'])
@@ -34,8 +35,7 @@ def balance(request):
     from django.conf import settings
 
     user = request.user
-    profile = getattr(user, 'profile', None)
-    is_unlimited = user.is_superuser or (profile and profile.role == 'admin')
+    is_unlimited = is_unlimited_ai_user(user)
 
     if is_unlimited:
         return Response({
@@ -97,8 +97,7 @@ def estimate(request):
     else:
         estimated = estimate_credits(ref_count) * model_count
     user = request.user
-    profile = getattr(user, 'profile', None)
-    is_unlimited = user.is_superuser or (profile and profile.role == 'admin')
+    is_unlimited = is_unlimited_ai_user(user)
 
     if is_unlimited:
         return Response({

@@ -10,12 +10,17 @@ from django.contrib.auth.models import User
 from ..models import UserPermission
 from ..serializers import UserSerializer
 from .common import require_permission
+from ..services.access_policy import ProjectAccessPolicy
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if ProjectAccessPolicy.is_platform_admin(self.request.user):
+            return User.objects.all()
+        return User.objects.filter(pk=self.request.user.pk)
 
     @require_permission('user.view_all')
     def list(self, request, *args, **kwargs):
@@ -128,4 +133,3 @@ class UserViewSet(viewsets.ModelViewSet):
             "new_balance": acct.balance,
             "note": note,
         })
-

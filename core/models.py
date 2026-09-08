@@ -9,6 +9,8 @@ import os
 import shutil
 import uuid
 
+from core.workflow.domain.statuses import ProjectStageStatus, StageStepStatus, TaskStatus
+
 
 # ============================================================================
 # 用户与权限管理
@@ -23,7 +25,7 @@ class UserProfile(models.Model):
         ('researcher', '研究者'),
         ('viewer', '访客'),
     ]
-    
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="用户")
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user', verbose_name="角色")
     quota_projects = models.IntegerField(default=10, verbose_name="项目配额")
@@ -33,11 +35,11 @@ class UserProfile(models.Model):
     is_banned = models.BooleanField(default=False, verbose_name="是否被封禁")
     concurrency_limit = models.IntegerField(default=2, verbose_name="AI筛选并发档位")
     approved_at = models.DateTimeField(null=True, blank=True, verbose_name="审核时间")
-    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, 
+    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='approved_users', verbose_name="审核人")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    
+
     class Meta:
         db_table = 'plat_userprofile'
         verbose_name = "用户配置"
@@ -47,7 +49,7 @@ class UserProfile(models.Model):
     def is_admin(self):
         """是否管理员：role=admin 或 Django 超级用户"""
         return self.role == 'admin' or self.user.is_superuser
-    
+
     def __str__(self):
         return f"{self.user.username} ({self.get_role_display()})"
 
@@ -62,20 +64,20 @@ class Permission(models.Model):
         ('file', '文件管理'),
         ('system', '系统管理'),
     ]
-    
+
     code = models.CharField(max_length=100, unique=True, verbose_name="权限代码")
     name = models.CharField(max_length=255, verbose_name="权限名称")
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, verbose_name="权限分类")
     description = models.TextField(blank=True, verbose_name="权限描述")
     is_system = models.BooleanField(default=True, verbose_name="是否系统权限")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    
+
     class Meta:
         db_table = 'plat_permission'
         verbose_name = "权限"
         verbose_name_plural = "权限"
         ordering = ['category', 'code']
-    
+
     def __str__(self):
         return f"{self.code} - {self.name}"
 
@@ -84,17 +86,17 @@ class UserPermission(models.Model):
     """用户权限关系"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_permissions', verbose_name="用户")
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE, verbose_name="权限")
-    granted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, 
+    granted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
                                     related_name='granted_permissions', verbose_name="授权人")
     granted_at = models.DateTimeField(auto_now_add=True, verbose_name="授权时间")
     expires_at = models.DateTimeField(null=True, blank=True, verbose_name="过期时间")
-    
+
     class Meta:
         db_table = 'plat_userpermission'
         verbose_name = "用户权限"
         verbose_name_plural = "用户权限"
         unique_together = ('user', 'permission')
-    
+
     def __str__(self):
         return f"{self.user.username} - {self.permission.code}"
 
@@ -106,22 +108,22 @@ class RoleTemplate(models.Model):
     is_system = models.BooleanField(default=True, verbose_name="是否系统预设")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    
+
     class Meta:
         db_table = 'plat_roletemplate'
         verbose_name = "角色模板"
         verbose_name_plural = "角色模板"
-    
+
     def __str__(self):
         return self.name
 
 
 class RoleTemplatePermission(models.Model):
     """角色模板-权限关联"""
-    role_template = models.ForeignKey(RoleTemplate, on_delete=models.CASCADE, 
+    role_template = models.ForeignKey(RoleTemplate, on_delete=models.CASCADE,
                                        related_name='template_permissions', verbose_name="角色模板")
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE, verbose_name="权限")
-    
+
     class Meta:
         db_table = 'plat_roletemplatepermission'
         verbose_name = "角色模板权限"
@@ -150,7 +152,7 @@ class ProjectQuerySet(models.QuerySet):
             permission__code='project.view_all'
         ).exists():
             return self
-        
+
         # 仅返回自己的项目
         return self.filter(owner=user)
 
@@ -162,7 +164,7 @@ class Project(models.Model):
         ('archived', '已归档'),
         ('deleted', '已删除'),
     ]
-    
+
     name = models.CharField(max_length=255, verbose_name="项目名称")
     slug = models.SlugField(max_length=100, unique=True, blank=True, verbose_name="URL标识")
     description = models.TextField(blank=True, verbose_name="项目描述")
@@ -171,32 +173,32 @@ class Project(models.Model):
     metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    
+
     objects = ProjectQuerySet.as_manager()
-    
+
     class Meta:
         db_table = 'plat_project'
         verbose_name = "项目"
         verbose_name_plural = "项目"
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return self.name
-    
+
     def save(self, *args, **kwargs):
         if not self.slug:
             # 自动生成 slug
             base_slug = slugify(self.name[:50])
             if not base_slug:
                 base_slug = f"project-{uuid.uuid4().hex[:8]}"
-            
+
             slug = base_slug
             counter = 1
             while Project.objects.filter(slug=slug).exists():
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = slug
-        
+
         super().save(*args, **kwargs)
 
 
@@ -206,13 +208,8 @@ class Project(models.Model):
 
 class ProjectStage(models.Model):
     """项目阶段"""
-    STATUS_CHOICES = [
-        ('pending', '未开始'),
-        ('in_progress', '进行中'),
-        ('completed', '已完成'),
-        ('skipped', '已跳过'),
-    ]
-    
+    STATUS_CHOICES = ProjectStageStatus.choices
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='stages', verbose_name="所属项目")
     stage_key = models.CharField(max_length=50, verbose_name="阶段标识")
     name = models.CharField(max_length=255, verbose_name="阶段名称")
@@ -223,28 +220,22 @@ class ProjectStage(models.Model):
     metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    
+
     class Meta:
         db_table = 'plat_projectstage'
         verbose_name = "项目阶段"
         verbose_name_plural = "项目阶段"
         unique_together = ('project', 'stage_key')
         ordering = ['project', 'order']
-    
+
     def __str__(self):
         return f"{self.project.name} - {self.name}"
 
 
 class StageStep(models.Model):
     """阶段步骤"""
-    STATUS_CHOICES = [
-        ('pending', '未开始'),
-        ('in_progress', '进行中'),
-        ('completed', '已完成'),
-        ('failed', '失败'),
-        ('skipped', '已跳过'),
-    ]
-    
+    STATUS_CHOICES = StageStepStatus.choices
+
     stage = models.ForeignKey(ProjectStage, on_delete=models.CASCADE, related_name='steps', verbose_name="所属阶段")
     step_key = models.CharField(max_length=50, verbose_name="步骤标识")
     name = models.CharField(max_length=255, verbose_name="步骤名称")
@@ -256,14 +247,14 @@ class StageStep(models.Model):
     metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    
+
     class Meta:
         db_table = 'plat_stagestep'
         verbose_name = "阶段步骤"
         verbose_name_plural = "阶段步骤"
         unique_together = ('stage', 'step_key')
         ordering = ['stage', 'order']
-    
+
     def __str__(self):
         return f"{self.stage.name} - {self.name}"
 
@@ -279,10 +270,10 @@ def data_file_upload_path(instance, filename):
         project_id = instance.project.id if instance.project else 'unknown'
     except:
         project_id = 'unknown'
-    
+
     stage_key = instance.stage.stage_key if instance.stage else 'general'
     category = instance.data_category if hasattr(instance, 'data_category') else 'unknown'
-    
+
     return f"projects/project_{project_id}/stages/{stage_key}/{category}/{filename}"
 
 
@@ -293,19 +284,19 @@ class DataFile(models.Model):
         ('tool_generated', '工具生成'),
         ('imported', '导入'),
     ]
-    
+
     CATEGORY_CHOICES = [
         ('input', '输入数据'),
         ('output', '输出数据'),
         ('intermediate', '中间数据'),
     ]
-    
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files', verbose_name="所属项目")
-    stage = models.ForeignKey(ProjectStage, null=True, blank=True, on_delete=models.CASCADE, 
+    stage = models.ForeignKey(ProjectStage, null=True, blank=True, on_delete=models.CASCADE,
                                related_name='files', verbose_name="所属阶段")
-    step = models.ForeignKey(StageStep, null=True, blank=True, on_delete=models.CASCADE, 
+    step = models.ForeignKey(StageStep, null=True, blank=True, on_delete=models.CASCADE,
                               related_name='files', verbose_name="所属步骤")
-    
+
     filename = models.CharField(max_length=255, verbose_name="文件名")
     file = models.FileField(upload_to=data_file_upload_path, verbose_name="文件")
     file_size = models.BigIntegerField(default=0, verbose_name="文件大小(字节)")
@@ -317,25 +308,25 @@ class DataFile(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="创建者")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    
+
     class Meta:
         db_table = 'plat_datafile'
         verbose_name = "数据文件"
         verbose_name_plural = "数据文件"
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return self.filename
-    
+
     def save(self, *args, **kwargs):
         # 自动提取文件类型
         if not self.file_type and self.filename:
             self.file_type = self.filename.split('.')[-1].lower() if '.' in self.filename else ''
-        
+
         # 自动计算文件大小
         if self.file and not self.file_size:
             self.file_size = self.file.size
-        
+
         super().save(*args, **kwargs)
 
 
@@ -349,14 +340,14 @@ class DataFileVersion(models.Model):
     metadata = models.JSONField(default=dict, blank=True, verbose_name="元数据")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="创建者")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    
+
     class Meta:
         db_table = 'plat_datafileversion'
         verbose_name = "文件版本"
         verbose_name_plural = "文件版本"
         unique_together = ('data_file', 'version')
         ordering = ['data_file', '-version']
-    
+
     def __str__(self):
         return f"{self.data_file.filename} v{self.version}"
 
@@ -367,22 +358,14 @@ class DataFileVersion(models.Model):
 
 class Task(models.Model):
     """后台任务"""
-    STATUS_CHOICES = [
-        ('queuing', '排队等待'),
-        ('pending', '等待中'),
-        ('running', '运行中'),
-        ('completed', '已完成'),
-        ('failed', '失败'),
-        ('stopped', '已停止'),
-        ('superseded', '已被续传替代'),
-    ]
-    
+    STATUS_CHOICES = TaskStatus.choices
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', verbose_name="所属项目")
-    stage = models.ForeignKey(ProjectStage, null=True, blank=True, on_delete=models.CASCADE, 
+    stage = models.ForeignKey(ProjectStage, null=True, blank=True, on_delete=models.CASCADE,
                                related_name='tasks', verbose_name="所属阶段")
-    step = models.ForeignKey(StageStep, null=True, blank=True, on_delete=models.CASCADE, 
+    step = models.ForeignKey(StageStep, null=True, blank=True, on_delete=models.CASCADE,
                               related_name='tasks', verbose_name="所属步骤")
-    
+
     task_type = models.CharField(max_length=50, verbose_name="任务类型")
     celery_task_id = models.CharField(max_length=255, blank=True, verbose_name="Celery任务ID")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="状态")
@@ -397,13 +380,13 @@ class Task(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="创建者")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    
+
     class Meta:
         db_table = 'plat_task'
         verbose_name = "任务"
         verbose_name_plural = "任务"
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f"{self.task_type} - {self.get_status_display()}"
 

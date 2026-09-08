@@ -2,7 +2,10 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
 import App from './App.vue'
-import { useAuthStore } from './stores/auth'
+import { useAuthStore } from './features/account/store'
+import { useScreeningStore } from './features/screening/store'
+import { useQAStore } from './features/quality/store'
+import { useTaskStore } from './features/workflow/store'
 import './style.css'
 
 const app = createApp(App)
@@ -16,6 +19,16 @@ window.addEventListener('app:unauthorized', () => {
   const auth = useAuthStore()
   auth.user = null
   router.push('/login')
+})
+
+window.addEventListener('app:project-left', () => {
+  useScreeningStore().reset()
+  useQAStore().reset()
+  useTaskStore().reset()
+})
+
+window.addEventListener('app:stage-changed', (event) => {
+  if (event.detail?.stage === 'SCREEN_1') useScreeningStore().currentStep = 1
 })
 
 app.mount('#app')

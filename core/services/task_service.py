@@ -40,20 +40,6 @@ TASK_TYPE_DISPLAY: dict = {
     'qa_export': '导出报告',
 }
 
-# task_type 别名映射（前端传旧名 → 内部 step_key）
-TASK_TYPE_ALIAS: dict = {
-    'reference_parsing': 'parse',
-    'deduplication': 'dedup',
-    'ai_screening': 'ai_screen',
-    'result_aggregation': 'export',
-}
-
-
-def resolve_step_key(task_type: str) -> str:
-    """将前端 task_type 值转换为内部 step_key。"""
-    return TASK_TYPE_ALIAS.get(task_type, task_type)
-
-
 def get_display_name(step_key: str) -> str:
     """获取步骤的中文名称，未知步骤直接返回 step_key。"""
     return TASK_TYPE_DISPLAY.get(step_key, step_key)
@@ -135,13 +121,13 @@ def start_task(project_id: int, task_type: str, config: dict, user) -> Task:
 
     流程：
     1. 权限校验
-    2. 解析 step_key
+    2. 使用 task_type 作为规范 step_key
     3. 调用 TaskScheduler.start_step
     4. 写入 ActivityLog
 
     Args:
         project_id: 项目 ID
-        task_type: 前端传入的任务类型（支持别名）
+        task_type: 前端传入的规范步骤 key
         config: 任务配置（ai_model、criteria 等）
         user: 操作用户
 
@@ -155,9 +141,13 @@ def start_task(project_id: int, task_type: str, config: dict, user) -> Task:
     if not check_task_permission(user, 'task.start'):
         raise PermissionError("缺少权限：task.start，请联系管理员")
 
-    step_key = resolve_step_key(task_type)
+    step_key = task_type
 
     from core.scheduler import TaskScheduler
+    from core.services.access_policy import ProjectAccessPolicy
+
+    if ProjectAccessPolicy.get_project(user, project_id) is None:
+        raise PermissionError("无权访问该项目或项目不存在")
     scheduler = TaskScheduler(project_id)
     task = scheduler.start_step(step_key, user.id, **config)
 

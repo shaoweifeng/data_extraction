@@ -1,0 +1,16 @@
+[
+  {
+    "include_or_not": "no",
+    "manual_override": "yes",
+    "exclusion_reason_id": "2",
+    "exclusion_reason": "Wrong population",
+    "Title": "Excluded Study"
+  },
+  {
+    "include_or_not": "yes",
+    "manual_override": "no",
+    "exclusion_reason_id": null,
+    "exclusion_reason": null,
+    "Title": "Included Study"
+  }
+]

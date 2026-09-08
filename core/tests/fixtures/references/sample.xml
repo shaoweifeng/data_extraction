@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<references>
+  <Reference>
+    <ReferenceType>Journal Article</ReferenceType>
+    <Title>Internal XML Example</Title>
+    <Authors>
+      <Author>Wang, Wu</Author>
+      <Author>Zhao, Liu</Author>
+    </Authors>
+    <Year>2023</Year>
+    <Journal>Clinical Evidence</Journal>
+    <Volume>8</Volume>
+    <Issue>2</Issue>
+    <Page>20-29</Page>
+    <DOI>10.1000/example.2</DOI>
+    <Abstract>XML fixture abstract.</Abstract>
+    <URL>https://example.org/xml</URL>
+  </Reference>
+</references>

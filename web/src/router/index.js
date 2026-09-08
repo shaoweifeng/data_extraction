@@ -1,30 +1,30 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/features/account/store'
 
 const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/LoginView.vue'),
+    component: () => import('@/features/account/views/LoginView.vue'),
     meta: { requiresAuth: false },
   },
   {
     path: '/',
     name: 'Home',
-    component: () => import('@/views/HomeView.vue'),
+    component: () => import('@/features/projects/views/HomeView.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/workspace/:projectId',
     name: 'Workspace',
-    component: () => import('@/views/WorkspaceView.vue'),
+    component: () => import('@/features/projects/views/WorkspaceView.vue'),
     meta: { requiresAuth: true },
     props: true,
   },
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('@/views/ProfileView.vue'),
+    component: () => import('@/features/account/views/ProfileView.vue'),
     meta: { requiresAuth: true },
   },
 ]

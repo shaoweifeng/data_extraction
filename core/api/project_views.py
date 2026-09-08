@@ -4,7 +4,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActivityLog, Project, ProjectStage, StageStep
+from ..models import ActivityLog, Project
 from ..serializers import ProjectSerializer, ProjectStageSerializer
 
 
@@ -80,13 +80,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def extraction_fields(self, request, pk=None):
         project = self.get_object()
-        try:
-            stage = ProjectStage.objects.get(project=project, stage_key='SCREEN_1')
-            step = StageStep.objects.get(stage=stage, step_key='field_extraction')
-            fields = (step.metadata or {}).get('fields', [])
-            return Response({'fields': fields})
-        except (ProjectStage.DoesNotExist, StageStep.DoesNotExist):
-            return Response({'fields': []})
+        from core.screening.services.configuration_service import ScreeningConfigurationService
+        return Response({'fields': ScreeningConfigurationService.extraction_fields(project)})
 
     @action(detail=True, methods=['post'])
     def save_prompt(self, request, pk=None):
@@ -108,4 +103,3 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         project = self.get_object()
         return Response(reset_prompt(project, request.user))
-

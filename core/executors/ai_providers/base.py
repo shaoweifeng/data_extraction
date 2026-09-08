@@ -14,7 +14,7 @@ from typing import List, Dict, Optional
 class ScreeningResult:
     """
     单篇文献的筛选结果
-    
+
     预留字段说明：
     - model: 用于将来多模型对比时标识是哪个模型的结论
     - raw_response: 保留原始 AI 响应，方便审计和调试
@@ -58,9 +58,9 @@ class ScreeningResult:
 class BaseAIProvider(ABC):
     """
     AI Provider 抽象基类
-    
+
     子类实现 screen_single() 即可，批处理和并发由框架层（StepExecutor）控制。
-    
+
     将来多模型扩展时：
     1. 新建 xxx_provider.py 继承此类，实现 screen_single()
     2. 在 __init__.py 的 registry 里注册
@@ -81,16 +81,20 @@ class BaseAIProvider(ABC):
         """Provider 名称，如 'deepseek'、'claude'"""
         pass
 
+    def generate_text(self, prompt: str):
+        """Generate raw text for non-screening AI features."""
+        raise NotImplementedError(f'{self.__class__.__name__} 不支持通用文本生成')
+
     @abstractmethod
     def screen_single(self, entry: Dict, criteria: List[str], prompt_template: str) -> ScreeningResult:
         """
         对单篇文献执行 AI 筛选
-        
+
         Args:
             entry: 文献信息字典（title, abstract, authors, journal, year, doi 等）
             criteria: 纳排标准列表
             prompt_template: prompt 模板字符串（含 {screening_criteria} 占位符）
-        
+
         Returns:
             ScreeningResult
         """
@@ -100,13 +104,13 @@ class BaseAIProvider(ABC):
                      concurrency: int = 16) -> List[ScreeningResult]:
         """
         批量筛选（默认使用线程池并发调用 screen_single，子类可覆盖实现真正的批量 API）
-        
+
         Args:
             batch: 文献列表
             criteria: 纳排标准列表
             prompt_template: prompt 模板
             concurrency: 并发线程数（默认16）
-        
+
         Returns:
             ScreeningResult 列表（与 batch 顺序对应）
         """

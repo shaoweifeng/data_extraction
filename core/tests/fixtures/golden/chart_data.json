@@ -1,0 +1,43 @@
+{
+  "traffic_light": [
+    {
+      "title": "Confirmed Study",
+      "review_status": "confirmed",
+      "bias_risk": {
+        "patient_selection": "low",
+        "index_test": "high",
+        "reference_standard": "unclear",
+        "flow_timing": "low"
+      },
+      "applicability": {
+        "patient_selection": "low",
+        "index_test": "high",
+        "reference_standard": "unclear"
+      }
+    },
+    {
+      "title": "Pending Study",
+      "review_status": "partial",
+      "bias_risk": {
+        "patient_selection": "pending",
+        "index_test": "pending",
+        "reference_standard": "pending",
+        "flow_timing": "pending"
+      },
+      "applicability": {
+        "patient_selection": "pending",
+        "index_test": "pending",
+        "reference_standard": "pending"
+      }
+    }
+  ],
+  "proportion": {
+    "patient_selection": {"low": 1, "high": 0, "unclear": 0, "pending": 0},
+    "index_test": {"low": 0, "high": 1, "unclear": 0, "pending": 0},
+    "reference_standard": {"low": 0, "high": 0, "unclear": 1, "pending": 0},
+    "flow_timing": {"low": 1, "high": 0, "unclear": 0, "pending": 0},
+    "app_patient_selection": {"low": 1, "high": 0, "unclear": 0, "pending": 0},
+    "app_index_test": {"low": 0, "high": 1, "unclear": 0, "pending": 0},
+    "app_reference_standard": {"low": 0, "high": 0, "unclear": 1, "pending": 0}
+  }
+}

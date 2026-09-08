@@ -1,10 +1,13 @@
-from rest_framework import viewsets
+from django.http import FileResponse
+from rest_framework import serializers as drf_serializers, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import ActivityLog, DataFile, ProjectStage, StageStep
 from ..serializers import DataFileSerializer
+from ..services.access_policy import ProjectAccessPolicy
 
 
 class DataFileViewSet(viewsets.ModelViewSet):
@@ -13,11 +16,9 @@ class DataFileViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_superuser:
-            qs = DataFile.objects.all()
-        else:
-            qs = DataFile.objects.filter(project__owner=user)
+        qs = DataFile.objects.filter(
+            project__in=ProjectAccessPolicy.visible_projects(self.request.user)
+        )
 
         qp = self.request.query_params
         project_id = qp.get('project')
@@ -70,6 +71,29 @@ class DataFileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response({'total': total, 'results': serializer.data})
 
+    @action(detail=True, methods=['get'])
+    def download(self, request, pk=None):
+        """通过受权限保护的附件响应下载原始文件。
+
+        文件始终以二进制流返回，不对 TXT 进行解码或重新编码。
+        """
+        from .common import check_permission
+
+        if not check_permission(request.user, 'file.download'):
+            raise PermissionDenied("缺少权限：file.download")
+
+        data_file = self.get_object()
+        if not data_file.file:
+            return Response({'error': '文件不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        data_file.file.open('rb')
+        return FileResponse(
+            data_file.file,
+            as_attachment=True,
+            filename=data_file.filename,
+            content_type='application/octet-stream',
+        )
+
     def perform_create(self, serializer):
         user = self.request.user
         from .common import check_permission
@@ -82,6 +106,18 @@ class DataFileViewSet(viewsets.ModelViewSet):
 
         project = serializer.validated_data.get('project')
         if project:
+            if not ProjectAccessPolicy.can_access_project(user, project):
+                raise PermissionDenied("无权向该项目上传文件")
+
+            stage = serializer.validated_data.get('stage')
+            step = serializer.validated_data.get('step')
+            if stage and stage.project_id != project.id:
+                raise drf_serializers.ValidationError("stage 不属于指定项目")
+            if step and step.stage.project_id != project.id:
+                raise drf_serializers.ValidationError("step 不属于指定项目")
+            if stage and step and step.stage_id != stage.id:
+                raise drf_serializers.ValidationError("step 不属于指定 stage")
+
             project_id = project.id
             data_category = serializer.validated_data.get('data_category', 'input')
 
@@ -133,4 +169,3 @@ class DataFileViewSet(viewsets.ModelViewSet):
             created_by=self.request.user,
         )
         instance.delete()
-

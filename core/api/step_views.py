@@ -5,9 +5,12 @@ from rest_framework.response import Response
 
 from django.utils import timezone
 
-from ..models import ActivityLog, StageStep, Task
+from ..models import StageStep, Task
 from ..serializers import StageStepSerializer, TaskSerializer
 from .common import require_permission
+from ..services.access_policy import ProjectAccessPolicy
+from ..workflow.domain.statuses import StageStepStatus, TaskStatus
+from ..workflow.services.lifecycle import InvalidStateTransition, transition_step
 
 
 class StageStepViewSet(viewsets.ModelViewSet):
@@ -15,10 +18,9 @@ class StageStepViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_superuser:
-            return StageStep.objects.all()
-        return StageStep.objects.filter(stage__project__owner=user)
+        return StageStep.objects.filter(
+            stage__project__in=ProjectAccessPolicy.visible_projects(self.request.user)
+        )
 
     @action(detail=True, methods=['post'])
     @require_permission('step.start')
@@ -29,30 +31,38 @@ class StageStepViewSet(viewsets.ModelViewSet):
         stage = step.stage
         project = stage.project
 
-        if project.owner != request.user and not request.user.is_superuser:
+        if not ProjectAccessPolicy.can_access_project(request.user, project):
             return Response({"error": "无权操作该项目"}, status=status.HTTP_403_FORBIDDEN)
 
-        if step.status == 'in_progress':
+        if step.status == StageStepStatus.IN_PROGRESS:
             return Response({"error": "步骤正在运行中"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if step.status == 'completed':
+        if step.status in (StageStepStatus.COMPLETED, StageStepStatus.SKIPPED):
             return Response({"error": "步骤已完成，请勿重复执行"}, status=status.HTTP_400_BAD_REQUEST)
 
         config = request.data.get('config', {})
 
         if step.step_key == 'criteria' and 'criteria' in config:
-            step.metadata = step.metadata or {}
-            step.metadata['criteria'] = config['criteria']
-            step.save()
+            from core.screening.services.configuration_service import ScreeningConfigurationService
+            ScreeningConfigurationService.save_start_criteria(step, config['criteria'])
 
         scheduler = TaskScheduler(project.id)
 
         try:
             task = scheduler.start_step(step.step_key, request.user.id, **config)
 
-            step.status = 'in_progress'
-            step.started_at = timezone.now()
-            step.save()
+            step.refresh_from_db()
+            # 异步 worker 若已经完成，不允许 API 用过期对象覆盖终态。
+            if step.status in (
+                StageStepStatus.PENDING,
+                StageStepStatus.STOPPED,
+                StageStepStatus.FAILED,
+            ):
+                transition_step(
+                    step,
+                    StageStepStatus.IN_PROGRESS,
+                    updates={'started_at': timezone.now(), 'completed_at': None},
+                )
 
             return Response({"message": f"步骤 {step.name} 已启动", "task": TaskSerializer(task).data})
         except ValueError as e:
@@ -68,26 +78,35 @@ class StageStepViewSet(viewsets.ModelViewSet):
         stage = step.stage
         project = stage.project
 
-        if project.owner != request.user and not request.user.is_superuser:
+        if not ProjectAccessPolicy.can_access_project(request.user, project):
             return Response({"error": "无权操作该项目"}, status=status.HTTP_403_FORBIDDEN)
 
-        if step.status != 'in_progress':
+        if step.status != StageStepStatus.IN_PROGRESS:
             return Response({"error": "步骤未在运行"}, status=status.HTTP_400_BAD_REQUEST)
 
-        running_task = Task.objects.filter(project=project, task_type=step.step_key, status='running').first()
+        running_task = Task.objects.filter(
+            project=project,
+            task_type=step.step_key,
+            status__in=(TaskStatus.QUEUING, TaskStatus.PENDING, TaskStatus.RUNNING),
+        ).order_by('-created_at').first()
 
         if not running_task:
-            step.status = 'stopped'
-            step.save()
+            transition_step(
+                step,
+                StageStepStatus.STOPPED,
+                updates={'completed_at': timezone.now()},
+            )
             return Response({"message": "步骤已停止"})
 
         scheduler = TaskScheduler(project.id)
         success = scheduler.stop_task(running_task.id)
 
         if success:
-            step.status = 'stopped'
-            step.completed_at = timezone.now()
-            step.save()
+            transition_step(
+                step,
+                StageStepStatus.STOPPED,
+                updates={'completed_at': timezone.now()},
+            )
             return Response({"message": "步骤已停止"})
         return Response({"error": "停止失败"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -99,18 +118,28 @@ class StageStepViewSet(viewsets.ModelViewSet):
         if not step.can_skip:
             return Response({"error": "该步骤不允许跳过"}, status=status.HTTP_400_BAD_REQUEST)
 
-        step.status = 'skipped'
-        step.completed_at = timezone.now()
-        step.save()
+        try:
+            transition_step(
+                step,
+                StageStepStatus.SKIPPED,
+                updates={'completed_at': timezone.now()},
+            )
+        except InvalidStateTransition as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(StageStepSerializer(step).data)
 
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
         step = self.get_object()
-        step.status = 'completed'
-        step.completed_at = timezone.now()
-        step.save()
+        try:
+            transition_step(
+                step,
+                StageStepStatus.COMPLETED,
+                updates={'completed_at': timezone.now()},
+            )
+        except InvalidStateTransition as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(StageStepSerializer(step).data)
 
     @action(detail=True, methods=['patch'])
@@ -118,47 +147,11 @@ class StageStepViewSet(viewsets.ModelViewSet):
         step = self.get_object()
         metadata = request.data.get('metadata', {})
 
-        if step.step_key == 'criteria' and 'criteria' in metadata:
-            old_criteria = set((step.metadata or {}).get('criteria', []))
-            new_criteria = set(metadata['criteria'])
-            project = step.stage.project
-            for c in (new_criteria - old_criteria):
-                ActivityLog.objects.create(
-                    project=project,
-                    operation_type='criteria_add',
-                    operation_detail={'criteria': c},
-                    created_by=request.user,
-                )
-            for c in (old_criteria - new_criteria):
-                ActivityLog.objects.create(
-                    project=project,
-                    operation_type='criteria_delete',
-                    operation_detail={'criteria': c},
-                    created_by=request.user,
-                )
-
-        if step.step_key == 'field_extraction' and 'fields' in metadata:
-            old_fields = {(f['name'], f['definition']) for f in (step.metadata or {}).get('fields', [])}
-            new_fields = {(f['name'], f['definition']) for f in metadata['fields']}
-            project = step.stage.project
-            for f in (new_fields - old_fields):
-                ActivityLog.objects.create(
-                    project=project,
-                    operation_type='field_extraction_add',
-                    operation_detail={'field_name': f[0], 'field_definition': f[1]},
-                    created_by=request.user,
-                )
-            for f in (old_fields - new_fields):
-                ActivityLog.objects.create(
-                    project=project,
-                    operation_type='field_extraction_delete',
-                    operation_detail={'field_name': f[0], 'field_definition': f[1]},
-                    created_by=request.user,
-                )
-
-        step.metadata = step.metadata or {}
-        step.metadata.update(metadata)
-        step.save()
+        if step.step_key in ('criteria', 'field_extraction'):
+            from core.screening.services.configuration_service import ScreeningConfigurationService
+            ScreeningConfigurationService.update_step_metadata(step, metadata, request.user)
+        else:
+            step.metadata = step.metadata or {}
+            step.metadata.update(metadata)
+            step.save(update_fields=['metadata'])
         return Response(StageStepSerializer(step).data)
-
-

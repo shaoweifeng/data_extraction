@@ -5,6 +5,8 @@ from rest_framework.response import Response
 
 from ..models import Task
 from ..serializers import TaskSerializer
+from ..services.access_policy import ProjectAccessPolicy
+from ..workflow.domain.statuses import TaskStatus
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -12,12 +14,9 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-
-        if user.is_superuser:
-            queryset = Task.objects.all()
-        else:
-            queryset = Task.objects.filter(project__owner=user)
+        queryset = Task.objects.filter(
+            project__in=ProjectAccessPolicy.visible_projects(self.request.user)
+        )
 
         project_id = self.request.query_params.get('project')
         if project_id:
@@ -52,7 +51,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         task = self.get_object()
 
-        if task.status not in ['running', 'pending']:
+        if task.status not in (TaskStatus.QUEUING, TaskStatus.RUNNING, TaskStatus.PENDING):
             return Response({"error": "任务未在运行"}, status=status.HTTP_400_BAD_REQUEST)
 
         success = stop_task(task, request.user)
@@ -68,7 +67,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         task = self.get_object()
 
-        if task.status != 'stopped':
+        if task.status != TaskStatus.STOPPED:
             return Response({"error": "只能恢复已停止的任务"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:

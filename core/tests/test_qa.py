@@ -2,8 +2,7 @@
 QA 模块基础单元测试
 
 运行方式：
-    export DB_PASSWORD=123456
-    python manage.py test core.tests.test_qa -v 2
+    python manage.py test core.tests.test_qa --settings=platform_backend.test_settings -v 2
 """
 import json
 from unittest.mock import patch, MagicMock
@@ -22,7 +21,7 @@ class TestQualityMethodsConfig(TestCase):
 
     def test_get_all_methods_meta(self):
         """get_all_methods_meta 返回 5 个方法"""
-        from core.services.quality_methods import get_all_methods_meta
+        from core.quality.domain.methods import get_all_methods_meta
         meta = get_all_methods_meta()
         self.assertEqual(len(meta), 5)
         keys = [m['key'] for m in meta]
@@ -32,7 +31,7 @@ class TestQualityMethodsConfig(TestCase):
 
     def test_quadas2_has_signal_items(self):
         """QUADAS-2 应有信号问题"""
-        from core.services.quality_methods import get_method_config
+        from core.quality.domain.methods import get_method_config
         cfg = get_method_config('QUADAS2')
         self.assertTrue(cfg['ai_supported'])
         self.assertGreater(len(cfg['signal_items']), 0)
@@ -42,14 +41,14 @@ class TestQualityMethodsConfig(TestCase):
 
     def test_nos_has_signal_items(self):
         """NOS 应有信号问题（队列研究变体）"""
-        from core.services.quality_methods import get_method_config
+        from core.quality.domain.methods import get_method_config
         cfg = get_method_config('NOS')
         self.assertTrue(cfg['ai_supported'])
         self.assertGreater(len(cfg['signal_items']), 0)
 
     def test_rob2_no_signal_items(self):
         """ROB2 AI 暂不支持，信号问题为空"""
-        from core.services.quality_methods import get_method_config, AI_SUPPORTED_METHODS
+        from core.quality.domain.methods import get_method_config, AI_SUPPORTED_METHODS
         cfg = get_method_config('ROB2')
         self.assertFalse(cfg['ai_supported'])
         self.assertEqual(cfg['signal_items'], [])
@@ -57,13 +56,13 @@ class TestQualityMethodsConfig(TestCase):
 
     def test_invalid_method_raises(self):
         """无效方法键应抛出异常（ValueError 或 KeyError）"""
-        from core.services.quality_methods import get_method_config
+        from core.quality.domain.methods import get_method_config
         with self.assertRaises((ValueError, KeyError)):
             get_method_config('NONEXISTENT')
 
     def test_signal_items_have_required_fields(self):
         """QUADAS-2 信号问题条目应包含必需字段"""
-        from core.services.quality_methods import get_method_config
+        from core.quality.domain.methods import get_method_config
         cfg = get_method_config('QUADAS2')
         required_fields = {'signal_key', 'signal_question', 'domain', 'result_type', 'options'}
         for item in cfg['signal_items']:
@@ -82,41 +81,41 @@ class TestQAHandlerUtils(TestCase):
 
     def test_determine_consistency_consistent(self):
         """两个模型结果相同 → consistent"""
-        from core.executors.handlers.qa_handler import _determine_consistency
+        from core.quality.executors.qa_eval import _determine_consistency
         r1 = {'judgment': '是', 'reason': '理由1'}
         r2 = {'judgment': '是', 'reason': '理由2'}
-        consistency, recommendation = _determine_consistency(r1, r2)
+        consistency, recommendation = _determine_consistency([r1, r2])
         self.assertEqual(consistency, 'consistent')
         self.assertEqual(recommendation, '是')
 
     def test_determine_consistency_divergent(self):
         """两个模型结果不同 → divergent，推荐保守值"""
-        from core.executors.handlers.qa_handler import _determine_consistency
+        from core.quality.executors.qa_eval import _determine_consistency
         r1 = {'judgment': '是', 'reason': ''}
         r2 = {'judgment': '否', 'reason': ''}
-        consistency, recommendation = _determine_consistency(r1, r2)
+        consistency, recommendation = _determine_consistency([r1, r2])
         self.assertEqual(consistency, 'divergent')
         # '否' 比 '是' 更保守
         self.assertEqual(recommendation, '否')
 
     def test_determine_consistency_both_empty(self):
         """两个模型都为空 → failed"""
-        from core.executors.handlers.qa_handler import _determine_consistency
-        consistency, recommendation = _determine_consistency({}, {})
+        from core.quality.executors.qa_eval import _determine_consistency
+        consistency, recommendation = _determine_consistency([{}, {}])
         self.assertEqual(consistency, 'failed')
 
     def test_determine_consistency_one_empty(self):
         """一个模型为空 → partial，推荐另一个的结果"""
-        from core.executors.handlers.qa_handler import _determine_consistency
+        from core.quality.executors.qa_eval import _determine_consistency
         r1 = {}
         r2 = {'judgment': '不清楚', 'reason': '无法判断'}
-        consistency, recommendation = _determine_consistency(r1, r2)
+        consistency, recommendation = _determine_consistency([r1, r2])
         self.assertEqual(consistency, 'partial')
         self.assertEqual(recommendation, '不清楚')
 
     def test_build_qa_prompt_contains_questions(self):
         """构建 prompt 应包含信号问题文本"""
-        from core.executors.handlers.qa_handler import _build_qa_prompt
+        from core.quality.executors.qa_eval import _build_qa_prompt
         ref_info = {
             'title': '测试文献',
             'first_author': '张三',
@@ -140,7 +139,7 @@ class TestQAHandlerUtils(TestCase):
 
     def test_parse_model_response_valid_json(self):
         """_call_model_for_ref 应正确解析有效的 JSON 响应"""
-        from core.executors.handlers.qa_handler import _call_model_for_ref
+        from core.quality.executors.qa_eval import _call_model_for_ref
         signal_items = [
             {'signal_key': 'PS1', 'signal_question': '问题1', 'signal_description': '', 'options': ['是', '否', '不清楚']},
         ]
@@ -149,39 +148,21 @@ class TestQAHandlerUtils(TestCase):
         ])
 
         mock_provider = MagicMock()
-        mock_provider._call_api.return_value = (mock_response, {'total_tokens': 100})
-        mock_cfg = {'api_key': 'test_key'}
+        mock_provider.generate_text.return_value = (mock_response, {'total_tokens': 100})
 
-        # get_provider 和 get_model_config 在函数内 lazy import，用 sys.modules 注入
-        import sys
-        mock_ai_providers = MagicMock()
-        mock_ai_providers.get_provider.return_value = mock_provider
-        mock_config_module = MagicMock()
-        mock_config_module.get_model_config.return_value = mock_cfg
-
-        original_providers = sys.modules.get('core.executors.ai_providers')
-        original_config    = sys.modules.get('core.services.ai_models_config')
-        sys.modules['core.executors.ai_providers'] = mock_ai_providers
-        sys.modules['core.services.ai_models_config'] = mock_config_module
-        try:
-            result = _call_model_for_ref('deepseek', 'test_prompt', signal_items)
-        finally:
-            if original_providers is not None:
-                sys.modules['core.executors.ai_providers'] = original_providers
-            elif 'core.executors.ai_providers' in sys.modules:
-                del sys.modules['core.executors.ai_providers']
-            if original_config is not None:
-                sys.modules['core.services.ai_models_config'] = original_config
-            elif 'core.services.ai_models_config' in sys.modules:
-                del sys.modules['core.services.ai_models_config']
+        with patch('core.ai.providers.provider_is_configured', return_value=True), patch(
+            'core.ai.providers.get_provider', return_value=mock_provider,
+        ):
+            result, usage = _call_model_for_ref('deepseek', 'test_prompt', signal_items)
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['signal_key'], 'PS1')
         self.assertEqual(result[0]['judgment'], '是')
+        self.assertEqual(usage, {'total_tokens': 100})
 
     def test_parse_model_response_invalid_key_filtered(self):
         """无效 signal_key 的条目应被过滤掉"""
-        from core.executors.handlers.qa_handler import _call_model_for_ref
+        from core.quality.executors.qa_eval import _call_model_for_ref
         signal_items = [
             {'signal_key': 'PS1', 'signal_question': '问题1', 'signal_description': '', 'options': ['是']},
         ]
@@ -191,28 +172,16 @@ class TestQAHandlerUtils(TestCase):
         ])
 
         mock_provider = MagicMock()
-        mock_provider._call_api.return_value = (mock_response, {})
+        mock_provider.generate_text.return_value = (mock_response, {})
 
-        import sys
-        mock_ai_providers = MagicMock()
-        mock_ai_providers.get_provider.return_value = mock_provider
-        mock_config_module = MagicMock()
-        mock_config_module.get_model_config.return_value = {'api_key': 'key'}
-
-        original_providers = sys.modules.get('core.executors.ai_providers')
-        original_config    = sys.modules.get('core.services.ai_models_config')
-        sys.modules['core.executors.ai_providers'] = mock_ai_providers
-        sys.modules['core.services.ai_models_config'] = mock_config_module
-        try:
-            result = _call_model_for_ref('deepseek', 'prompt', signal_items)
-        finally:
-            if original_providers is not None:
-                sys.modules['core.executors.ai_providers'] = original_providers
-            if original_config is not None:
-                sys.modules['core.services.ai_models_config'] = original_config
+        with patch('core.ai.providers.provider_is_configured', return_value=True), patch(
+            'core.ai.providers.get_provider', return_value=mock_provider,
+        ):
+            result, usage = _call_model_for_ref('deepseek', 'prompt', signal_items)
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['signal_key'], 'PS1')
+        self.assertEqual(usage, {})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -220,10 +189,10 @@ class TestQAHandlerUtils(TestCase):
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestQAApiHelpers(TestCase):
-    """测试 qa_views.py 的工具函数"""
+    """测试质量评价 API 的工具函数。"""
 
     def test_json_ok(self):
-        from core.api.qa_views import _json_ok
+        from core.quality.api.common import _json_ok
         resp = _json_ok({'foo': 'bar'})
         self.assertEqual(resp.status_code, 200)
         data = json.loads(resp.content)
@@ -231,7 +200,7 @@ class TestQAApiHelpers(TestCase):
         self.assertEqual(data['data']['foo'], 'bar')
 
     def test_json_err(self):
-        from core.api.qa_views import _json_err
+        from core.quality.api.common import _json_err
         resp = _json_err('出错了', status=400)
         self.assertEqual(resp.status_code, 400)
         data = json.loads(resp.content)
@@ -241,7 +210,7 @@ class TestQAApiHelpers(TestCase):
     def test_methods_list_view(self):
         """methods_list 需要登录，返回方法列表"""
         from django.test import RequestFactory
-        from core.api.qa_views import methods_list
+        from core.quality.api.reference_views import methods_list
         factory = RequestFactory()
         req = factory.get('/qa/methods/')
         # 注入已登录用户
@@ -254,6 +223,41 @@ class TestQAApiHelpers(TestCase):
         self.assertTrue(data['ok'])
         self.assertIsInstance(data['data'], list)
         self.assertEqual(len(data['data']), 5)
+
+
+class TestQAEvaluationStartService(TestCase):
+    """评价任务入队后应立即发布可见的运行状态。"""
+
+    def test_start_marks_selected_references_running_before_worker_execution(self):
+        from core.models import Project, QAReference
+        from core.quality.services.evaluation_service import start_evaluation
+
+        user = User.objects.create_user('qa-start-user')
+        project = Project.objects.create(name='QA start project', owner=user)
+        qa_ref = QAReference.objects.create(
+            project=project,
+            title='Queued QA study',
+            quality_method='QUADAS2',
+        )
+        queued_task = MagicMock(id=91)
+        model_ids = ['deepseek-v4-pro', 'qwen3-6-plus']
+
+        with patch(
+            'core.quality.services.evaluation_service.AIQuotaService.preflight',
+            return_value=20,
+        ), patch(
+            'core.scheduler.TaskScheduler.start_step',
+            return_value=queued_task,
+        ), patch(
+            'core.quality.services.evaluation_service.log_task_start',
+        ):
+            result = start_evaluation(project, user, [qa_ref.id], model_ids)
+
+        qa_ref.refresh_from_db()
+        self.assertEqual(result['task_id'], 91)
+        self.assertEqual(qa_ref.ai_eval_status, 'running')
+        self.assertEqual(qa_ref.eval_mode, 'multi')
+        self.assertEqual(qa_ref.selected_models, model_ids)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

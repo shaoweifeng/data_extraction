@@ -50,6 +50,8 @@ pids/
 # IDEs
 .vscode/
 .idea/
+.codeflicker/
+.myflicker/
 *.swp
 *.swo
 *~
@@ -64,12 +66,14 @@ pids/
 .pytest_cache/
 htmlcov/
 .tox/
+.cache/
 
 # Backup files
 *_backup*
 *.bak
 
 # Vite 前端工程
+/node_modules/
 web/node_modules/
 
 # 前端构建产物：需要提交到仓库，供服务器 git pull 后直接使用（服务器无 Node 环境）

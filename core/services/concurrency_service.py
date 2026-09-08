@@ -135,9 +135,7 @@ def try_acquire(task_id: int, slots: int) -> bool:
 
 
 def release(task_id: int, slots: int) -> None:
-    """
-    归还 slots 个线程槽，并尝试唤醒队首任务。
-    """
+    """归还 slots 个线程槽；等待任务由已有 Celery retry 定时重试。"""
     member = _make_member(task_id, slots)
     try:
         r = _get_redis()
@@ -145,18 +143,8 @@ def release(task_id: int, slots: int) -> None:
         # 清理自己（正常情况已在 acquire 时移除，这里保底）
         r.zrem(_QUEUE_KEY, member)
         logger.info(f"[并发] task={task_id} 归还 {slots} 槽，当前已用: {new_val}")
-        _notify_queue_head()
     except Exception as e:
         logger.warning(f"[并发] release 失败: {e}")
-
-
-def _notify_queue_head():
-    """触发一个轻量 Celery 任务让队首任务立刻重试，而不是等 retry countdown。"""
-    try:
-        from core.executors.celery_tasks import wake_queue_head
-        wake_queue_head.apply_async(countdown=1)
-    except Exception as e:
-        logger.debug(f"[并发] 唤醒队首失败（不影响功能，会靠 retry 自动重试）: {e}")
 
 
 def get_queue_info(task_id: int, slots: int) -> dict:

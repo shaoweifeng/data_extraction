@@ -38,6 +38,18 @@ LOG_DIR="$SCRIPT_DIR/logs"
 PID_DIR="$SCRIPT_DIR/pids"
 mkdir -p "$LOG_DIR" "$PID_DIR"
 
+# 加载本地配置，使 Shell、Django、Gunicorn 和 Celery 使用同一组环境变量。
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "$SCRIPT_DIR/.env"
+    set +a
+fi
+
+# Matplotlib 字体缓存使用项目内可写目录，避免服务器用户 HOME 不可写。
+export MPLCONFIGDIR=${MPLCONFIGDIR:-$SCRIPT_DIR/.cache/matplotlib}
+mkdir -p "$MPLCONFIGDIR"
+
 # ── 日志文件路径 ──────────────────────────────────────────
 DJANGO_LOG="$LOG_DIR/gunicorn_access.log"
 DJANGO_ERR="$LOG_DIR/gunicorn_error.log"
@@ -47,7 +59,7 @@ VITE_LOG="$LOG_DIR/vite.log"
 # 0) 数据库配置（MySQL）
 export DB_NAME=${DB_NAME:-data_extraction}
 export DB_USER=${DB_USER:-root}
-export DB_PASSWORD=${DB_PASSWORD:-123456}
+export DB_PASSWORD=${DB_PASSWORD:-}
 export DB_HOST=${DB_HOST:-127.0.0.1}
 export DB_PORT=${DB_PORT:-3306}
 
@@ -75,17 +87,17 @@ export REGISTER_IP_WINDOW_HOURS=${REGISTER_IP_WINDOW_HOURS:-24}
 export REQUIRE_EMAIL_VERIFICATION=${REQUIRE_EMAIL_VERIFICATION:-false}
 
 # DeepSeek 配置
-export DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-sk-dcc67593b429483daf0be1d45a7c0290}
+export DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
 export DEEPSEEK_API_URL=${DEEPSEEK_API_URL:-https://api.deepseek.com/v1}
 export DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-v4-flash}
 
 # 豆包（字节跳动 Doubao / Ark）配置
-export DOUBAO_API_KEY=${DOUBAO_API_KEY:-8dfb9fb8-77c9-4db3-be22-0aff21ecaf89}
+export DOUBAO_API_KEY=${DOUBAO_API_KEY:-}
 export DOUBAO_API_URL=${DOUBAO_API_URL:-https://ark.cn-beijing.volces.com/api/v3}
 export DOUBAO_MODEL=${DOUBAO_MODEL:-ep-20260509162819-bvjfj}
 
 # 千问（阿里云 DashScope）配置
-export QWEN_API_KEY=${QWEN_API_KEY:-sk-022f866434dc4165a448503ebb766f38}
+export QWEN_API_KEY=${QWEN_API_KEY:-}
 export QWEN_API_URL=${QWEN_API_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
 export QWEN_MODEL=${QWEN_MODEL:-qwen-plus}
 

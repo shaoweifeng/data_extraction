@@ -6,7 +6,11 @@
 - StepExecutor:  统一步骤执行器，同步/异步共用，通过 Handler 注册表分发
 """
 
-from .base import BaseExecutor, TaskLogger
+from .base import BaseExecutor
+from core.workflow.runtime import CheckpointStore, TaskReporter, WorkspaceManager
 from .executor import StepExecutor
 
-__all__ = ['BaseExecutor', 'TaskLogger', 'StepExecutor']
+__all__ = [
+    'BaseExecutor', 'TaskReporter', 'CheckpointStore',
+    'WorkspaceManager', 'StepExecutor',
+]
