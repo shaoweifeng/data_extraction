@@ -4,15 +4,11 @@ from django.db import transaction
 
 from core.models import ManualReview
 from core.screening.domain.decisions import ai_decision
-from core.screening.selectors import load_ai_results
+from core.screening.selectors import load_ai_results_by_source
 
 
-def _ai_result_map(project_id):
-    return {
-        result.get('source_xml', ''): result
-        for result in load_ai_results(project_id)
-        if result.get('source_xml')
-    }
+def _ai_result_map(project_id, source_xmls):
+    return load_ai_results_by_source(project_id, source_xmls)
 
 
 def _upsert(project_id, step, source_xml, decision, reason, user, result):
@@ -36,7 +32,10 @@ def _upsert(project_id, step, source_xml, decision, reason, user, result):
 @transaction.atomic
 def submit_reviews(project_id, step, review_items, user):
     """批量新增或更新人工审阅记录。"""
-    ai_results = _ai_result_map(project_id)
+    ai_results = _ai_result_map(
+        project_id,
+        [item['source_xml'] for item in review_items],
+    )
     created_count = 0
     updated_count = 0
     for item in review_items:
@@ -58,5 +57,5 @@ def submit_reviews(project_id, step, review_items, user):
 @transaction.atomic
 def update_review(project_id, step, source_xml, decision, reason, user):
     """更新一篇文献的人工审阅决定。"""
-    result = _ai_result_map(project_id).get(source_xml, {})
+    result = _ai_result_map(project_id, [source_xml]).get(source_xml, {})
     return _upsert(project_id, step, source_xml, decision, reason, user, result)

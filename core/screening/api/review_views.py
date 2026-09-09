@@ -63,8 +63,95 @@ def _validated_json(request, serializer_class):
 
 from core.screening.selectors import (
     load_ai_results,
+    load_ai_result_file,
     load_xml_fields_bulk,
 )
+from core.screening.services.review_query import (
+    aggregate_review_stats,
+    final_decision_filter,
+    review_result_queryset,
+)
+
+
+def _indexed_results_available(queryset):
+    """Only use the fast path when result metadata contains its lookup key."""
+    return queryset is not None and queryset.filter(
+        metadata__source_xml__isnull=False,
+    ).exists()
+
+
+def _indexed_review_list(project_id, queryset, decision, q, page, page_size):
+    """Filter and paginate in SQL, then open only the current page's files."""
+    queryset = queryset.filter(final_decision_filter(decision))
+    if q:
+        from django.db.models import Q
+
+        queryset = queryset.filter(
+            Q(metadata__title__icontains=q)
+            | Q(filename__icontains=q.replace(' ', '_'))
+        )
+
+    queryset = queryset.order_by('ai_excluded_priority', 'id')
+    total = queryset.count()
+    start = (page - 1) * page_size
+    data_files = list(queryset[start:start + page_size])
+    result_pairs = [(data_file, load_ai_result_file(data_file)) for data_file in data_files]
+
+    source_xmls = [
+        result.get('source_xml') or (data_file.metadata or {}).get('source_xml', '')
+        for data_file, result in result_pairs
+    ]
+    reviews = {
+        review.source_xml: review
+        for review in ManualReview.objects.filter(
+            project_id=project_id,
+            source_xml__in=[source for source in source_xmls if source],
+        )
+    }
+
+    items = []
+    for data_file, result in result_pairs:
+        metadata = data_file.metadata or {}
+        source_xml = result.get('source_xml') or metadata.get('source_xml', '')
+        ai_decision = result.get('decision', '') or (
+            'included' if result.get('include_or_not', '').lower() == 'yes'
+            else ('excluded' if result.get('include_or_not', '').lower() == 'no' else '')
+        )
+        review = reviews.get(source_xml)
+        items.append({
+            'source_xml': source_xml,
+            'title': result.get('title', '') or result.get('Title', '') or metadata.get('title', ''),
+            'authors': result.get('authors', '') or metadata.get('authors', ''),
+            'year': result.get('year', '') or metadata.get('year', ''),
+            'journal': result.get('journal', '') or metadata.get('journal', ''),
+            'doi': result.get('doi', '') or metadata.get('doi', ''),
+            'url': result.get('url', '') or metadata.get('url', ''),
+            'ai_decision': ai_decision,
+            'ai_reason': result.get('exclusion_reason', '') or metadata.get('ai_reason', ''),
+            'consensus': result.get('consensus', ai_decision),
+            'multi_model_results': result.get('multi_model_results', []),
+            'human_decision': review.decision if review else None,
+            'human_reason': review.reason if review else '',
+            'is_override': review.is_override if review else False,
+            'reviewed_at': review.reviewed_at.isoformat() if review else None,
+            'has_notes': bool(review and review.notes),
+        })
+
+    xml_fields = load_xml_fields_bulk(
+        [item['source_xml'] for item in items], project_id,
+    )
+    for item in items:
+        xml_data = xml_fields.get(item['source_xml'], {})
+        item['abstract'] = xml_data.get('abstract', '')
+        if not item.get('url'):
+            item['url'] = xml_data.get('url', '')
+
+    return JsonResponse({
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'results': items,
+    })
 # ─────────────────────────────────────────────────────────────────────────────
 # GET /api/review/list/?project=&step=&decision=&q=&page=&page_size=
 # ─────────────────────────────────────────────────────────────────────────────
@@ -86,6 +173,12 @@ def review_list(request):
         page_size = min(max(1, int(request.GET.get('page_size', 50))), 200)
     except (TypeError, ValueError):
         return JsonResponse({'error': 'page 和 page_size 必须是正整数'}, status=400)
+
+    indexed_results = review_result_queryset(project_id)
+    if _indexed_results_available(indexed_results):
+        return _indexed_review_list(
+            project_id, indexed_results, decision, q, page, page_size,
+        )
 
     # 加载 AI 结果
     all_results = load_ai_results(project_id)
@@ -235,6 +328,10 @@ def review_stats(request):
         return JsonResponse({'error': '缺少 project 参数'}, status=400)
     if not _get_project(request.user, project_id):
         return JsonResponse({'error': '无权访问该项目或项目不存在'}, status=404)
+
+    indexed_results = review_result_queryset(project_id)
+    if _indexed_results_available(indexed_results):
+        return JsonResponse(aggregate_review_stats(indexed_results))
 
     all_results = load_ai_results(project_id)
     total = len(all_results)

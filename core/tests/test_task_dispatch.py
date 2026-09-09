@@ -86,6 +86,21 @@ class SchedulerDispatchTests(TestCase):
         self.assertIsNone(task.started_at)
         self.assertEqual(task.celery_task_id, 'broker-job-1')
 
+    def test_export_is_dispatched_to_celery(self):
+        with patch(
+            'core.executors.celery_tasks.execute_async_step.delay',
+            return_value=SimpleNamespace(id='export-job-1'),
+        ) as delay:
+            task = TaskScheduler(self.project.id).start_step(
+                'export', self.user.id, export_type='all',
+            )
+
+        delay.assert_called_once_with(task.id, 'export', self.project.id)
+        task.refresh_from_db()
+        self.assertEqual(task.status, TaskStatus.PENDING)
+        self.assertEqual(task.celery_task_id, 'export-job-1')
+        self.assertEqual(task.config['export_type'], 'all')
+
     def test_broker_failure_marks_created_task_failed(self):
         with patch(
             'core.executors.celery_tasks.execute_async_step.delay',

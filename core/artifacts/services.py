@@ -14,6 +14,8 @@
 
 from typing import Dict, List
 
+from django.db.models import Count, Q
+
 from core.models import ActivityLog, DataFile, StageStep
 from core.artifacts.types import ArtifactType
 from core.workflow.domain.statuses import StageStepStatus
@@ -31,10 +33,38 @@ def get_ai_screen_stats(project) -> Dict:
     ai_step = StageStep.objects.filter(
         stage__project=project,
         step_key='ai_screen',
-    ).first()
+    ).order_by('-id').first()
 
     if not ai_step:
-        return {'included': 0, 'excluded': 0, 'conflict': 0, 'pending': 0, 'total': 0}
+        return {
+            'included': 0, 'excluded': 0, 'conflict': 0, 'pending_count': 0,
+            'total': 0, 'included_count': 0, 'excluded_count': 0,
+            'conflict_count': 0,
+        }
+
+    # 新版 AI 初筛在任务完成时已将互斥统计写入步骤元数据。完成后的页面
+    # 直接读取这一小段缓存，不再扫描 2.5 万条 DataFile；历史步骤自动回退
+    # 到下面的一次数据库聚合。
+    metadata = ai_step.metadata or {}
+    if (
+        ai_step.status == StageStepStatus.COMPLETED
+        and metadata.get('stats_version') == 2
+    ):
+        included = int(metadata.get('included_refs', 0))
+        excluded = int(metadata.get('excluded_refs', 0))
+        conflict = int(metadata.get('conflict_refs', 0))
+        pending = int(metadata.get('pending_refs', 0))
+        total = included + excluded + conflict + pending
+        return {
+            'included': included,
+            'excluded': excluded,
+            'conflict': conflict,
+            'pending_count': pending,
+            'total': total,
+            'included_count': included,
+            'excluded_count': excluded,
+            'conflict_count': conflict,
+        }
 
     qs = DataFile.objects.filter(
         project=project,
@@ -42,11 +72,40 @@ def get_ai_screen_stats(project) -> Dict:
         data_category='output',
         metadata__artifact_type=ArtifactType.SCREENING_RESULT_JSON,
     )
-    total    = qs.count()
-    included = qs.filter(metadata__decision='included').count()
-    excluded = qs.filter(metadata__decision='excluded').count()
-    conflict = qs.filter(metadata__consensus='conflict').count()
-    pending  = total - included - excluded - conflict
+    # JSONField 没有独立索引。原实现连续 count 四次，会让 MySQL 对同一批
+    # 结果反复扫描。一次条件聚合即可得到互斥分类，并避免 conflict 同时被计入
+    # included/excluded 后造成 pending 统计失真。
+    conflict_filter = (
+        Q(metadata__consensus='conflict')
+        | (Q(metadata__consensus__isnull=True) & Q(metadata__decision='conflict'))
+    )
+    not_conflict = ~conflict_filter
+    counts = qs.aggregate(
+        total=Count('pk'),
+        included=Count(
+            'pk', filter=Q(metadata__decision='included') & not_conflict,
+        ),
+        excluded=Count(
+            'pk', filter=Q(metadata__decision='excluded') & not_conflict,
+        ),
+        conflict=Count('pk', filter=conflict_filter),
+    )
+    total = counts['total']
+    included = counts['included']
+    excluded = counts['excluded']
+    conflict = counts['conflict']
+    pending = total - included - excluded - conflict
+
+    if ai_step.status == StageStepStatus.COMPLETED:
+        cached_metadata = dict(metadata)
+        cached_metadata.update({
+            'stats_version': 2,
+            'included_refs': included,
+            'excluded_refs': excluded,
+            'conflict_refs': conflict,
+            'pending_refs': max(0, pending),
+        })
+        StageStep.objects.filter(pk=ai_step.pk).update(metadata=cached_metadata)
 
     return {
         'included':       included,
@@ -81,6 +140,12 @@ def clear_ai_screen_outputs(project, user) -> Dict:
         data_category='output',
         metadata__artifact_type=ArtifactType.SCREENING_RESULT_JSON,
     ).delete()
+
+    # 删除结果后必须让完成时统计缓存失效，否则新任务真正启动前可能短暂展示旧值。
+    metadata = dict(ai_step.metadata or {})
+    metadata.pop('stats_version', None)
+    ai_step.metadata = metadata
+    ai_step.save(update_fields=['metadata'])
 
     ActivityLog.objects.create(
         project=project,

@@ -324,31 +324,27 @@ class BaseExecutor(ABC):
                          metadata: Dict = None) -> 'DataFile':
         """保存输出文件到 DataFile"""
         from core.models import DataFile
-        from django.core.files.base import ContentFile
-
-        # 读取文件内容
-        with open(file_path, 'rb') as f:
-            content = f.read()
-
-        # 使用ContentFile，避免保留原始路径信息
-        django_file = ContentFile(content, name=filename)
+        from django.core.files import File
 
         artifact_metadata = dict(metadata or {})
         if artifact_type:
             artifact_metadata['artifact_type'] = artifact_type
 
-        data_file = DataFile.objects.create(
-            project=self.project_obj,
-            stage=self.stage_obj,
-            step=self.step_obj,
-            filename=filename,
-            file=django_file,
-            data_category=category,
-            source='tool_generated',
-            description=description,
-            metadata=artifact_metadata,
-            created_by=self.task_obj.created_by
-        )
+        # 直接把磁盘文件交给 Django storage 分块保存。ContentFile(f.read()) 会让
+        # 大型导出文件在保存阶段再次完整驻留内存。
+        with open(file_path, 'rb') as source_file:
+            data_file = DataFile.objects.create(
+                project=self.project_obj,
+                stage=self.stage_obj,
+                step=self.step_obj,
+                filename=filename,
+                file=File(source_file, name=filename),
+                data_category=category,
+                source='tool_generated',
+                description=description,
+                metadata=artifact_metadata,
+                created_by=self.task_obj.created_by
+            )
 
         self.logger.info(f"[保存] {filename} ({category})")
         return data_file

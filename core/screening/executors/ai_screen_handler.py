@@ -192,22 +192,38 @@ class AIScreenHandler(BaseStepHandler):
         self._save_token_stats(token_stats)
 
         from django.db import close_old_connections
+        from django.db.models import Count, Q
         close_old_connections()
         all_outputs = DataFile.objects.filter(
             project=self.project_obj,
             step=self.step_obj,
             data_category='output',
+            metadata__artifact_type=ArtifactType.SCREENING_RESULT_JSON,
         )
-        included_count = all_outputs.filter(metadata__decision='included').count()
-        excluded_count = all_outputs.filter(metadata__decision='excluded').count()
-        total_out = all_outputs.count()
+        conflict_filter = (
+            Q(metadata__consensus='conflict')
+            | (Q(metadata__consensus__isnull=True) & Q(metadata__decision='conflict'))
+        )
+        not_conflict = ~conflict_filter
+        counts = all_outputs.aggregate(
+            total=Count('pk'),
+            included=Count('pk', filter=Q(metadata__decision='included') & not_conflict),
+            excluded=Count('pk', filter=Q(metadata__decision='excluded') & not_conflict),
+            conflict=Count('pk', filter=conflict_filter),
+        )
+        pending_count = (
+            counts['total'] - counts['included'] - counts['excluded'] - counts['conflict']
+        )
 
         self.step_obj.metadata = {
+            "stats_version": 2,
             "total_refs": total_refs,
             "processed_refs": processed_count,
-            "included_refs": included_count,
-            "excluded_refs": excluded_count,
-            "error_refs": total_out - included_count - excluded_count,
+            "included_refs": counts['included'],
+            "excluded_refs": counts['excluded'],
+            "conflict_refs": counts['conflict'],
+            "pending_refs": max(0, pending_count),
+            "error_refs": max(0, pending_count),
             "start_time": self.task_obj.started_at.isoformat() if self.task_obj.started_at else None,
             "end_time": datetime.now().isoformat(),
             "criteria_count": len(criteria),

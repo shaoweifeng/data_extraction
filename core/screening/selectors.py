@@ -22,7 +22,22 @@ def _parse_xml_summary(path: Path) -> dict:
         elem = ref.find(tag)
         return ''.join(elem.itertext()).strip() if elem is not None else ''
 
+    # 人工审阅只使用 abstract/url/doi；导出复用同一批量定位能力并需要完整字段。
     return {
+        'ReferenceType': text('ReferenceType'),
+        'Title': text('Title'),
+        'Author': text('Authors') or text('Author'),
+        'Year': text('Year'),
+        'Journal': text('Journal'),
+        'Volume': text('Volume'),
+        'Issue': text('Issue'),
+        'Page': text('Page'),
+        'Date': text('Date'),
+        'Doi': text('Doi') or text('DOI'),
+        'PMCID': text('PMCID'),
+        'Abstract': text('Abstract'),
+        'URL': text('Url') or text('URL') or text('url'),
+        'Address': text('Address'),
         'abstract': text('Abstract'),
         'url': text('Url') or text('URL') or text('url'),
         'doi': text('Doi') or text('DOI'),
@@ -30,31 +45,41 @@ def _parse_xml_summary(path: Path) -> dict:
 
 
 def load_xml_fields_bulk(source_xmls, project_id) -> dict:
-    """Resolve and parse many source XML files with one directory scan."""
-    import re
-    from django.conf import settings as django_settings
-
+    """Resolve and parse the requested XML files without scanning the project tree."""
     requested = [source for source in source_xmls if source]
     if not requested:
         return {}
 
-    project_dir = Path(django_settings.MEDIA_ROOT) / 'projects' / f'project_{project_id}'
-    candidates = list(project_dir.rglob('*.xml')) if project_dir.exists() else []
-    by_name = {path.name: path for path in candidates}
     resolved = {}
+    unresolved_names = set()
     for source in requested:
         direct = Path(source)
         if direct.exists():
             resolved[source] = direct
             continue
-        name = direct.name
-        match = by_name.get(name)
-        if match is None:
-            prefix_match = re.match(r'^(\d+_)', name)
-            prefix = prefix_match.group(1) if prefix_match else name
-            match = next((path for path in candidates if path.name.startswith(prefix)), None)
-        if match is not None:
-            resolved[source] = match
+        unresolved_names.add(direct.name)
+
+    # source_xml 通常只保存文件名。通过 DataFile 精确定位当前页文件，避免每次
+    # 请求都 rglob 项目下数万份 XML。若同名文件存在，优先使用最新记录。
+    if unresolved_names:
+        candidates = (
+            DataFile.objects.filter(project_id=project_id, filename__in=unresolved_names)
+            .exclude(file='')
+            .order_by('-id')
+            .only('filename', 'file')
+        )
+        by_name = {}
+        for data_file in candidates:
+            by_name.setdefault(data_file.filename, data_file)
+        for source in requested:
+            if source in resolved:
+                continue
+            data_file = by_name.get(Path(source).name)
+            if data_file is not None:
+                try:
+                    resolved[source] = Path(data_file.file.path)
+                except (NotImplementedError, ValueError):
+                    logger.debug('[review] 文件存储不支持本地路径: %s', data_file.file.name)
 
     fields = {}
     for source, path in resolved.items():
@@ -108,6 +133,47 @@ def load_ai_results(project_id):
 
     # ── 降级：从去重后 XML 文件读取基础信息 ──
     return load_refs_from_xml(project_id)
+
+
+def load_ai_result_file(data_file) -> dict:
+    """Load one result file, falling back to its indexed metadata if unreadable."""
+    try:
+        with data_file.file.open('r') as result_file:
+            return json.load(result_file)
+    except Exception as exc:
+        logger.warning('[review] 读取结果文件失败 %s: %s', data_file.filename, exc)
+        return dict(data_file.metadata or {})
+
+
+def load_ai_results_by_source(project_id, source_xmls) -> dict:
+    """Load only the requested AI result files, keyed by source XML name."""
+    requested = {source for source in source_xmls if source}
+    if not requested:
+        return {}
+
+    ai_step = StageStep.objects.filter(
+        stage__project_id=project_id,
+        step_key='ai_screen',
+    ).order_by('-id').first()
+    if ai_step:
+        result_files = ai_result_files(project_id, ai_step).filter(
+            metadata__source_xml__in=requested,
+        )
+        indexed = {}
+        for data_file in result_files:
+            result = load_ai_result_file(data_file)
+            source_xml = result.get('source_xml') or (data_file.metadata or {}).get('source_xml')
+            if source_xml:
+                indexed[source_xml] = result
+        if indexed:
+            return indexed
+
+    # Compatibility for legacy result rows that predate the metadata index.
+    return {
+        result.get('source_xml', ''): result
+        for result in load_ai_results(project_id)
+        if result.get('source_xml') in requested
+    }
 
 
 def load_refs_from_xml(project_id):

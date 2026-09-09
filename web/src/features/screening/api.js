@@ -1,5 +1,7 @@
 import http from '@/shared/api/http'
 
+const REVIEW_REQUEST_TIMEOUT = 60000
+
 export function uploadReferenceFile(file, projectId, onProgress) {
   return new Promise((resolve, reject) => {
     const form = new FormData()
@@ -27,9 +29,19 @@ export function uploadReferenceFile(file, projectId, onProgress) {
 export const fetchPrompt = projectId => http.get(`/projects/${projectId}/get_prompt/`)
 export const savePrompt = (projectId, payload) => http.post(`/projects/${projectId}/save_prompt/`, payload)
 export const resetPrompt = projectId => http.post(`/projects/${projectId}/reset_prompt/`)
-export const fetchScreeningStats = (projectId, config = {}) => http.get(`/projects/${projectId}/ai_screen_stats/`, config)
-export const fetchReviewList = (params, config = {}) => http.get('/review/list/', { ...config, params })
-export const fetchReviewStats = projectId => http.get('/review/stats/', { params: { project: projectId } })
+export const fetchScreeningStats = (projectId, config = {}) => http.get(`/projects/${projectId}/ai_screen_stats/`, {
+  timeout: REVIEW_REQUEST_TIMEOUT,
+  ...config,
+})
+export const fetchReviewList = (params, config = {}) => http.get('/review/list/', {
+  timeout: REVIEW_REQUEST_TIMEOUT,
+  ...config,
+  params,
+})
+export const fetchReviewStats = projectId => http.get('/review/stats/', {
+  timeout: REVIEW_REQUEST_TIMEOUT,
+  params: { project: projectId },
+})
 export const updateReviewItem = (sourceXml, payload) => http.patch(`/review/item/${encodeURIComponent(sourceXml)}/`, payload)
 export const appendReviewNote = (sourceXml, payload) => http.post(`/review/note/${encodeURIComponent(sourceXml)}/`, payload)
 export const fetchReviewNotes = (sourceXml, params = {}) => http.get(`/review/notes/${encodeURIComponent(sourceXml)}/`, { params })

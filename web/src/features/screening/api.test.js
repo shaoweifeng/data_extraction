@@ -13,7 +13,10 @@ describe('screening API', () => {
     await screeningApi.fetchReviewStats(8)
     await screeningApi.updateReviewItem('folder/a b.xml', { decision: 'included' })
 
-    expect(http.get).toHaveBeenCalledWith('/review/stats/', { params: { project: 8 } })
+    expect(http.get).toHaveBeenCalledWith('/review/stats/', {
+      timeout: 60000,
+      params: { project: 8 },
+    })
     expect(http.patch).toHaveBeenCalledWith('/review/item/folder%2Fa%20b.xml/', {
       decision: 'included',
     })
@@ -25,8 +28,12 @@ describe('screening API', () => {
     await screeningApi.fetchReviewList({ project: 8, page: 2 }, { signal })
     await workflowApi.fetchFiles({ project: 8, limit: 50 }, { signal })
 
-    expect(http.get).toHaveBeenCalledWith('/projects/8/ai_screen_stats/', { signal })
+    expect(http.get).toHaveBeenCalledWith('/projects/8/ai_screen_stats/', {
+      timeout: 60000,
+      signal,
+    })
     expect(http.get).toHaveBeenCalledWith('/review/list/', {
+      timeout: 60000,
       signal,
       params: { project: 8, page: 2 },
     })

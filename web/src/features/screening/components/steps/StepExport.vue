@@ -105,19 +105,39 @@
     <!-- 导出按钮区域 -->
     <div class="space-y-3">
 
-      <!-- 有待定/分歧时的警告提示 -->
-      <div v-if="hasPendingOrConflict" class="export-block-tip">
+      <!-- 待定文献始终阻止导出 -->
+      <div v-if="hasPending" class="export-block-tip">
         <i class="fas fa-exclamation-triangle mr-1.5"></i>
-        当前仍有
-        <b v-if="(displayStats?.final_conflict_pending ?? 0) > 0">{{ displayStats.final_conflict_pending }} 篇</b>
-        分歧/待定文献尚未经人工裁定，无法导出。请先在【人工审阅】步骤处理后再导出。
+        当前仍有 <b>{{ pendingCount }} 篇</b>待定文献，无法导出。请先在【人工审阅】步骤处理。
+      </div>
+
+      <!-- AI 分歧默认阻止导出，但允许用户明确豁免 -->
+      <div v-if="hasConflict" class="conflict-waiver-box">
+        <div class="conflict-waiver-copy">
+          <i class="fas fa-code-branch mr-1.5"></i>
+          当前有 <b>{{ conflictCount }} 篇</b> AI 分歧文献。建议先人工裁定；如需保留分歧状态直接导出，可启用豁免。
+        </div>
+        <label class="conflict-waiver-toggle">
+          <input v-model="allowConflictExport" type="checkbox">
+          <span>允许豁免分歧文献并导出</span>
+        </label>
+        <p v-if="allowConflictExport" class="conflict-waiver-note">
+          Excel 的 include_or_not 将标记为 conflict，exclusion_reason 将记录各模型决定和详细理由。
+        </p>
+        <label v-if="allowConflictExport" class="conflict-waiver-toggle conflict-ris-toggle">
+          <input v-model="includeConflictsInRis" type="checkbox">
+          <span>同时将分歧文献加入“仅纳入”RIS（导出所有/纳入时）</span>
+        </label>
+        <p v-if="allowConflictExport && includeConflictsInRis" class="conflict-waiver-note">
+          RIS 将使用 N1 备注保留“未经人工裁定”标记和各模型理由。
+        </p>
       </div>
 
       <!-- 生成按钮行 -->
       <div class="flex gap-3 justify-center flex-wrap">
         <button
           @click="exportResults('all')"
-          :disabled="s.isExporting || hasPendingOrConflict"
+          :disabled="s.isExporting || exportBlocked"
           class="bg-teal-600 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <i v-if="s.exportingType === 'all'" class="fas fa-spinner fa-spin mr-1.5"></i>
@@ -125,7 +145,7 @@
         </button>
         <button
           @click="exportResults('included')"
-          :disabled="s.isExporting || hasPendingOrConflict"
+          :disabled="s.isExporting || exportBlocked"
           class="bg-green-600 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <i v-if="s.exportingType === 'included'" class="fas fa-spinner fa-spin mr-1.5"></i>
@@ -133,12 +153,37 @@
         </button>
         <button
           @click="exportResults('excluded')"
-          :disabled="s.isExporting || hasPendingOrConflict"
+          :disabled="s.isExporting || exportBlocked"
           class="bg-red-500 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <i v-if="s.exportingType === 'excluded'" class="fas fa-spinner fa-spin mr-1.5"></i>
           <i v-else class="fas fa-times-circle mr-1.5"></i>导出排除文献
         </button>
+      </div>
+
+      <div v-if="s.isExporting && activeExportTask" class="export-progress-box">
+        <div class="export-progress-head">
+          <span>
+            <i class="fas fa-file-export mr-1.5"></i>
+            {{ exportStatusLabel }}
+          </span>
+          <span class="font-semibold">{{ exportProgressPercent }}%</span>
+        </div>
+        <div class="export-progress-track">
+          <div class="export-progress-fill" :style="{ width: `${exportProgressPercent}%` }"></div>
+        </div>
+        <div class="export-progress-foot">
+          <span v-if="exportTotal > 0">已处理约 {{ exportProcessed.toLocaleString() }} / {{ exportTotal.toLocaleString() }} 篇</span>
+          <span v-else>正在等待任务进度…</span>
+          <button
+            v-if="['pending', 'queuing', 'running'].includes(activeExportTask.status)"
+            class="export-stop-btn"
+            type="button"
+            @click="stopExport"
+          >
+            <i class="fas fa-stop mr-1"></i>停止导出
+          </button>
+        </div>
       </div>
 
       <!-- 下载区 -->
@@ -251,6 +296,9 @@ const selectedIncluVer = ref(0)
 const selectedExcluVer = ref(0)
 const selectedRisVer = ref(0)
 let exportAbortController = null
+const activeExportTask = ref(null)
+const allowConflictExport = ref(false)
+const includeConflictsInRis = ref(false)
 
 // 本地统计（脱离 screening store，直接从 review/stats 接口读）
 const exportStats = ref(null)
@@ -261,8 +309,23 @@ const displayStats = computed(() => {
   return s.screeningResults
 })
 
-// 是否有待定或分歧文献（有则阻止导出）
-const hasPendingOrConflict = computed(() => (displayStats.value?.final_conflict_pending ?? 0) > 0)
+const pendingCount = computed(() => Number(displayStats.value?.tab_pending ?? displayStats.value?.pending ?? 0))
+const conflictCount = computed(() => Number(displayStats.value?.tab_conflict ?? displayStats.value?.ai_conflict ?? 0))
+const hasPending = computed(() => pendingCount.value > 0)
+const hasConflict = computed(() => conflictCount.value > 0)
+const exportBlocked = computed(() => hasPending.value || (hasConflict.value && !allowConflictExport.value))
+const exportProgressPercent = computed(() => {
+  const progress = Number(activeExportTask.value?.progress_percentage || 0)
+  return Math.max(0, Math.min(100, Math.round(progress)))
+})
+const exportTotal = computed(() => Number(displayStats.value?.total || 0))
+const exportProcessed = computed(() => Math.round(exportTotal.value * exportProgressPercent.value / 100))
+const exportStatusLabel = computed(() => ({
+  pending: '导出任务等待 Worker 接收',
+  queuing: '导出任务排队中',
+  running: `正在生成${s.exportingType === 'included' ? '纳入' : s.exportingType === 'excluded' ? '排除' : '全部'}文献`,
+  stopping: '正在停止导出',
+}[activeExportTask.value?.status] || '正在导出'))
 
 // ── 加载统计（从 review/stats 读取完整数据）──
 async function loadStats() {
@@ -315,6 +378,74 @@ async function loadExportFiles() {
   }
 }
 
+async function monitorExportTask(task) {
+  activeExportTask.value = task
+  s.isExporting = true
+  s.exportingType = task.config?.export_type || s.exportingType || 'all'
+  allowConflictExport.value = Boolean(task.config?.allow_unresolved_conflicts)
+  includeConflictsInRis.value = Boolean(task.config?.include_conflicts_in_ris)
+
+  try {
+    const completedTask = ['completed', 'failed', 'stopped'].includes(task.status)
+      ? task
+      : await pollUntil(
+        async () => {
+          const current = (await workflowApi.fetchTask(task.id)).data
+          activeExportTask.value = current
+          return current
+        },
+        current => ['completed', 'failed', 'stopped'].includes(current.status),
+        {
+          interval: 1500,
+          maxAttempts: 2400,
+          timeoutMessage: '导出任务运行超过 1 小时，请稍后刷新页面查看结果',
+          signal: exportAbortController.signal,
+        },
+      )
+
+    activeExportTask.value = completedTask
+    if (completedTask.status === 'failed') {
+      alert(`导出失败：${completedTask.error_message || '请查看任务日志'}`)
+      return
+    }
+    if (completedTask.status === 'stopped') return
+
+    await project.fetchStages(project.currentProject.id)
+    await loadExportFiles()
+  } catch (err) {
+    if (err?.name !== 'AbortError') {
+      alert(`导出进度查询失败：${err.response?.data?.error || err.message}`)
+    }
+  } finally {
+    s.isExporting = false
+    s.exportingType = ''
+    activeExportTask.value = null
+  }
+}
+
+async function restoreActiveExport() {
+  const result = await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
+  const activeTask = result?.tasks?.find(task => (
+    task.task_type === 'export'
+    && ['pending', 'queuing', 'running', 'stopping'].includes(task.status)
+  ))
+  if (!activeTask) return
+
+  exportAbortController?.abort()
+  exportAbortController = new AbortController()
+  void monitorExportTask(activeTask)
+}
+
+async function stopExport() {
+  if (!activeExportTask.value) return
+  try {
+    await workflowApi.stopTask(activeExportTask.value.id)
+    activeExportTask.value = { ...activeExportTask.value, status: 'stopped' }
+  } catch (err) {
+    alert(`停止失败：${err.response?.data?.error || err.message}`)
+  }
+}
+
 // ── 导出任务 ──
 async function exportResults(exportType) {
   exportAbortController?.abort()
@@ -330,30 +461,12 @@ async function exportResults(exportType) {
         // 多模型时一并传入，供后端生成正确的文件名
         ai_models: s.selectedAiModels?.length ? s.selectedAiModels : (s.selectedAiModel ? [s.selectedAiModel] : []),
         export_type: exportType,
+        allow_unresolved_conflicts: allowConflictExport.value,
+        include_conflicts_in_ris: allowConflictExport.value && includeConflictsInRis.value,
       },
-    }, { noTimeout: true })
+    })
     const task = res.data
-    // export 是同步步骤，POST 返回时任务已完成；用轮询作兜底
-    if (task.status === 'completed') {
-      s.isExporting = false
-      s.exportingType = ''
-      await project.fetchStages(project.currentProject.id)
-      await loadExportFiles()
-      return
-    }
-    const completedTask = await pollUntil(
-      async () => (await workflowApi.fetchTask(task.id)).data,
-      current => ['completed', 'failed'].includes(current.status),
-      { interval: 1500, maxAttempts: 200, timeoutMessage: '导出任务超时', signal: exportAbortController.signal },
-    )
-    s.isExporting = false
-    s.exportingType = ''
-    if (completedTask.status === 'failed') {
-      alert('导出失败，请查看日志')
-      return
-    }
-    await project.fetchStages(project.currentProject.id)
-    await loadExportFiles()
+    await monitorExportTask(task)
   } catch (err) {
     if (err?.name === 'AbortError') return
     alert(`启动失败: ${err.response?.data?.error || err.message}`)
@@ -364,6 +477,7 @@ async function exportResults(exportType) {
 
 onMounted(async () => {
   await Promise.all([loadStats(), loadExportFiles()])
+  await restoreActiveExport()
 })
 onUnmounted(() => exportAbortController?.abort())
 </script>
@@ -371,6 +485,13 @@ onUnmounted(() => exportAbortController?.abort())
 <style scoped>
 /* 统计区域 */
 .stat-section { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: .9rem; }
+
+.export-progress-box { max-width: 680px; margin: 0 auto; padding: 12px 14px; border: 1px solid #99f6e4; border-radius: 10px; background: #f0fdfa; }
+.export-progress-head, .export-progress-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #0f766e; font-size: .82rem; }
+.export-progress-track { height: 8px; margin: 9px 0 7px; overflow: hidden; border-radius: 999px; background: #ccfbf1; }
+.export-progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0d9488, #14b8a6); transition: width .3s ease; }
+.export-stop-btn { padding: 3px 9px; border: 1px solid #fca5a5; border-radius: 6px; color: #b91c1c; background: #fff; cursor: pointer; white-space: nowrap; }
+.export-stop-btn:hover { background: #fef2f2; }
 
 /* 导出阻止提示 */
 .export-block-tip {
@@ -385,6 +506,12 @@ onUnmounted(() => exportAbortController?.abort())
   flex-wrap: wrap;
   gap: 4px;
 }
+.conflict-waiver-box { padding: 11px 14px; border: 1px solid #fde68a; border-radius: 9px; background: #fffbeb; color: #92400e; font-size: .82rem; }
+.conflict-waiver-copy { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; }
+.conflict-waiver-toggle { display: inline-flex; align-items: center; gap: 7px; margin-top: 9px; font-weight: 600; cursor: pointer; }
+.conflict-waiver-toggle input { width: 15px; height: 15px; accent-color: #d97706; }
+.conflict-ris-toggle { display: flex; font-weight: 500; }
+.conflict-waiver-note { margin-top: 7px; color: #a16207; font-size: .76rem; }
 .stat-block {
   background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: .85rem 1rem;
 }

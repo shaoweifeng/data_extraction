@@ -251,14 +251,14 @@ STEP_CONFIGURATIONS = {
     },
 
     # ------------------------------------------------------------------------
-    # 子步骤: 结果归纳（同步）
+    # 子步骤: 结果归纳（Celery 异步）
     # ------------------------------------------------------------------------
     "export": {
         "name": "结果归纳",
         "stage_key": "SCREEN_1",
-        "execution_mode": "sync",
+        "execution_mode": "async",
         "description": "聚合筛选结果生成Excel/RIS",
-        "timeout": 120,
+        "timeout": 3600,
         "inputs": ["results/*/*.json"],
         "outputs": ["screening_results.xlsx", "screening_results.ris"],
         "retry_policy": {
@@ -266,7 +266,8 @@ STEP_CONFIGURATIONS = {
             "retry_delay": 5
         },
         "monitoring": {
-            "progress_type": "boolean"
+            "progress_type": "count",
+            "progress_unit": "refs"
         },
         "logging": {
             "level": "INFO"

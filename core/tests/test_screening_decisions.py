@@ -5,8 +5,11 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
-from core.models import ManualReview, Project, QAReference
+from core.artifacts.types import ArtifactType
+from core.artifacts.services import get_ai_screen_stats
+from core.models import DataFile, ManualReview, Project, QAReference
 from core.services.project_service import initialize_project
+from core.workflow.domain.statuses import StageStepStatus
 
 
 User = get_user_model()
@@ -30,6 +33,28 @@ class ScreeningDecisionContractTests(TestCase):
             ai_decision=ai_decision,
             is_override=is_override,
             reviewer=self.user,
+        )
+
+    def add_result(self, source_xml, decision='', consensus=None, title=''):
+        ai_step = self.project.stages.get(stage_key='SCREEN_1').steps.get(step_key='ai_screen')
+        metadata = {
+            'artifact_type': ArtifactType.SCREENING_RESULT_JSON,
+            'source_xml': source_xml,
+            'decision': decision,
+            'consensus': consensus or decision or 'pending',
+            'title': title or source_xml,
+        }
+        return DataFile.objects.create(
+            project=self.project,
+            stage=ai_step.stage,
+            step=ai_step,
+            filename=f'screening_result_{source_xml}.json',
+            file='',
+            data_category='output',
+            source='tool_generated',
+            description='AI筛选结果',
+            metadata=metadata,
+            created_by=self.user,
         )
 
     def test_qa_import_uses_human_decision_before_ai(self):
@@ -100,6 +125,121 @@ class ScreeningDecisionContractTests(TestCase):
             'decisive_reviewed': 2,
         }
         self.assertEqual(data, expected)
+
+    def test_indexed_review_list_filters_conflicts_before_reading_page_files(self):
+        self.add_result('included.xml', 'included', title='Included')
+        conflict = self.add_result('conflict.xml', 'excluded', 'conflict', 'Conflict')
+        self.add_result('excluded.xml', 'excluded', title='Excluded')
+
+        with patch(
+            'core.screening.api.review_views.load_ai_results',
+            side_effect=AssertionError('indexed review must not scan every result file'),
+        ):
+            with patch(
+                'core.screening.api.review_views.load_ai_result_file',
+                side_effect=lambda data_file: dict(data_file.metadata),
+            ) as load_file:
+                with patch(
+                    'core.screening.api.review_views.load_xml_fields_bulk', return_value={},
+                ):
+                    response = self.client.get('/api/review/list/', {
+                        'project': self.project.id,
+                        'step': self.review_step.id,
+                        'decision': 'conflict',
+                        'page': 1,
+                        'page_size': 30,
+                    })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['total'], 1)
+        self.assertEqual(response.json()['results'][0]['source_xml'], 'conflict.xml')
+        self.assertEqual(load_file.call_count, 1)
+        self.assertEqual(load_file.call_args.args[0].pk, conflict.pk)
+
+    def test_indexed_review_stats_aggregate_in_database(self):
+        self.add_result('a.xml', 'included')
+        self.add_result('b.xml', 'excluded')
+        self.add_result('c.xml', 'excluded', 'conflict')
+        self.add_result('d.xml', '')
+        self.add_review('a.xml', 'excluded', 'included', True)
+
+        with patch(
+            'core.screening.api.review_views.load_ai_results',
+            side_effect=AssertionError('indexed stats must not load result files'),
+        ):
+            response = self.client.get('/api/review/stats/', {'project': self.project.id})
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['total'], 4)
+        self.assertEqual(data['reviewed'], 1)
+        self.assertEqual(data['tab_included'], 0)
+        self.assertEqual(data['tab_excluded'], 2)
+        self.assertEqual(data['tab_conflict'], 1)
+        self.assertEqual(data['tab_pending'], 1)
+
+    def test_ai_screen_stats_use_one_result_aggregation_query(self):
+        self.add_result('a.xml', 'included')
+        self.add_result('b.xml', 'excluded')
+        self.add_result('c.xml', 'excluded', 'conflict')
+        self.add_result('d.xml', '')
+
+        # 一次定位 ai_screen 步骤、一次条件聚合；不能按分类重复扫描结果表。
+        with self.assertNumQueries(2):
+            stats = get_ai_screen_stats(self.project)
+
+        self.assertEqual(stats['total'], 4)
+        self.assertEqual(stats['included_count'], 1)
+        self.assertEqual(stats['excluded_count'], 1)
+        self.assertEqual(stats['conflict_count'], 1)
+        self.assertEqual(stats['pending_count'], 1)
+
+    def test_completed_ai_screen_stats_use_step_metadata_cache(self):
+        ai_step = self.project.stages.get(stage_key='SCREEN_1').steps.get(step_key='ai_screen')
+        ai_step.status = StageStepStatus.COMPLETED
+        ai_step.metadata = {
+            'stats_version': 2,
+            'included_refs': 10,
+            'excluded_refs': 20,
+            'conflict_refs': 3,
+            'pending_refs': 2,
+        }
+        ai_step.save(update_fields=['status', 'metadata'])
+
+        # 只查询步骤自身，不访问 DataFile 结果表。
+        with self.assertNumQueries(1):
+            stats = get_ai_screen_stats(self.project)
+
+        self.assertEqual(stats['total'], 35)
+        self.assertEqual(stats['included_count'], 10)
+        self.assertEqual(stats['excluded_count'], 20)
+        self.assertEqual(stats['conflict_count'], 3)
+        self.assertEqual(stats['pending_count'], 2)
+
+    def test_single_review_update_reads_only_the_selected_result(self):
+        self.add_result('selected.xml', 'included')
+        self.add_result('other.xml', 'excluded')
+
+        with patch(
+            'core.screening.selectors.load_ai_results',
+            side_effect=AssertionError('single review update must not scan every result file'),
+        ):
+            response = self.client.patch(
+                '/api/review/item/selected.xml/',
+                data={
+                    'project': self.project.id,
+                    'step': self.review_step.id,
+                    'decision': 'excluded',
+                    'reason': '人工排除',
+                },
+                content_type='application/json',
+            )
+
+        self.assertEqual(response.status_code, 200)
+        review = ManualReview.objects.get(project=self.project, source_xml='selected.xml')
+        self.assertEqual(review.ai_decision, 'included')
+        self.assertEqual(review.decision, 'excluded')
+        self.assertTrue(review.is_override)
 
 
 class ScreeningDecisionServiceTests(TestCase):
