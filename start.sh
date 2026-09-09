@@ -32,11 +32,118 @@ if [ "$DEV_MODE" = true ]; then
     echo "🔧 开发模式：跳过构建，启动 Vite dev server (localhost:5173)"
 fi
 
+restore_platform_after_health() {
+    local health_ok=false
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        if curl -fsS "http://127.0.0.1:8000/api/health/ready/?allow_maintenance=1" >/dev/null 2>&1; then
+            health_ok=true
+            break
+        fi
+        sleep 1
+    done
+    if [ "$health_ok" = true ]; then
+        echo "✅ Web 健康检查通过"
+        if run_manage maintenance_tasks resume; then
+            run_manage maintenance normal
+            echo "✅ 平台已恢复开放"
+            return 0
+        fi
+        echo "❌ 维护任务恢复失败，平台保持维护状态"
+        return 1
+    fi
+    echo "❌ Web 健康检查失败，平台保持维护状态，请查看错误日志"
+    return 1
+}
+
 # ── 目录准备 ─────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_DIR="$SCRIPT_DIR/logs"
 PID_DIR="$SCRIPT_DIR/pids"
 mkdir -p "$LOG_DIR" "$PID_DIR"
+PYTHON_BIN="$SCRIPT_DIR/venv/bin/python"
+CELERY_BIN="$SCRIPT_DIR/venv/bin/celery"
+GUNICORN_BIN="$SCRIPT_DIR/venv/bin/gunicorn"
+
+run_manage() {
+    PYTHONWARNINGS=ignore "$PYTHON_BIN" manage.py "$@"
+}
+
+is_running() {
+    kill -0 "$1" 2>/dev/null
+}
+
+read_pid() {
+    local name=$1
+    local pid_file="$PID_DIR/${name}.pid"
+    if [ -f "$pid_file" ]; then
+        tr -d '[:space:]' < "$pid_file"
+    fi
+}
+
+matches_service_process() {
+    local name=$1
+    local pid=$2
+    local command
+    command=$(ps -p "$pid" -o command= 2>/dev/null) || return 1
+    case "$name" in
+        celery) [[ "$command" == *celery*platform_backend* ]] ;;
+        django) [[ "$command" == *gunicorn*platform_backend.wsgi* || "$command" == *"manage.py runserver"* ]] ;;
+        vite) [[ "$command" == *vite* || "$command" == *"npm run dev"* ]] ;;
+        *) return 1 ;;
+    esac
+}
+
+discover_service_pid() {
+    local name=$1
+    case "$name" in
+        celery) pgrep -o -f "$CELERY_BIN -A platform_backend" 2>/dev/null || true ;;
+        django) pgrep -o -f "$GUNICORN_BIN platform_backend.wsgi" 2>/dev/null || true ;;
+        vite) pgrep -o -f "$SCRIPT_DIR/web/node_modules/.bin/vite" 2>/dev/null || true ;;
+    esac
+}
+
+service_is_running() {
+    local name=$1
+    local pid
+    pid=$(read_pid "$name")
+    case "$pid" in
+        ''|*[!0-9]*) ;;
+        *)
+            if is_running "$pid" && matches_service_process "$name" "$pid"; then
+                echo "❌ ${name} 已在运行（PID: ${pid}）"
+                return 0
+            fi
+            ;;
+    esac
+    if [ -n "$pid" ]; then
+        echo "⚠️  清理 ${name} 的失效 PID 文件（PID: ${pid}）"
+        rm -f "$PID_DIR/${name}.pid"
+    fi
+    pid=$(discover_service_pid "$name")
+    if [ -n "$pid" ] && is_running "$pid" && matches_service_process "$name" "$pid"; then
+        echo "$pid" > "$PID_DIR/${name}.pid"
+        echo "❌ 发现当前项目未登记的 ${name} 进程（PID: ${pid}），已恢复 PID 文件"
+        return 0
+    fi
+    return 1
+}
+
+rollback_started_services() {
+    local name pid
+    echo "⚠️  启动未完成，正在回滚本次已启动的进程..."
+    for name in django vite celery; do
+        pid=$(read_pid "$name")
+        case "$pid" in
+            ''|*[!0-9]*) ;;
+            *)
+                if is_running "$pid" && matches_service_process "$name" "$pid"; then
+                    kill -TERM "$pid" 2>/dev/null || true
+                fi
+                ;;
+        esac
+        rm -f "$PID_DIR/${name}.pid"
+    done
+}
 
 # 加载本地配置，使 Shell、Django、Gunicorn 和 Celery 使用同一组环境变量。
 if [ -f "$SCRIPT_DIR/.env" ]; then
@@ -106,6 +213,27 @@ export AI_API_KEY=${AI_API_KEY:-$DEEPSEEK_API_KEY}
 export AI_API_URL=${AI_API_URL:-$DEEPSEEK_API_URL}
 export AI_MODEL=${AI_MODEL:-$DEEPSEEK_MODEL}
 
+if [ ! -x "$PYTHON_BIN" ] || [ ! -x "$CELERY_BIN" ]; then
+    echo "❌ 项目虚拟环境不完整，缺少 python 或 celery 可执行文件"
+    exit 1
+fi
+if [ "$DEV_MODE" = false ] && [ ! -x "$GUNICORN_BIN" ]; then
+    echo "❌ 项目虚拟环境中缺少 gunicorn: $GUNICORN_BIN"
+    exit 1
+fi
+
+# start.sh 和 stop.sh 统一以 PID 文件并核对真实命令，避免两边判断矛盾。
+ALREADY_RUNNING=false
+for service_name in celery django vite; do
+    if service_is_running "$service_name"; then
+        ALREADY_RUNNING=true
+    fi
+done
+if [ "$ALREADY_RUNNING" = true ]; then
+    echo "   启动已取消；如需重启，请先执行 ./stop.sh"
+    exit 1
+fi
+
 # ── 前端构建（非开发模式） ─────────────────────────────────
 if [ "$SKIP_BUILD" = false ]; then
     WEB_DIR="$SCRIPT_DIR/web"
@@ -150,19 +278,28 @@ else
 fi
 
 # 2. 启动 Celery Worker（后台）
-# 先清理旧的 worker 进程，避免重启后出现双 worker 抢任务的问题
-OLD_PIDS=$(pgrep -f "celery.*platform_backend" 2>/dev/null)
-if [ -n "$OLD_PIDS" ]; then
-    echo "⚠️  发现旧 Celery Worker 进程 (PID: $OLD_PIDS)，正在终止..."
-    kill $OLD_PIDS 2>/dev/null
-    sleep 2
-    echo "✅ 旧进程已终止"
+if ! run_manage migrate --check; then
+    echo "❌ 检测到未执行的数据库迁移，请先运行："
+    echo "   $SCRIPT_DIR/venv/bin/python manage.py migrate"
+    exit 1
 fi
 
-nohup celery -A platform_backend worker --loglevel=info -P threads -c 16 \
+# 此时已确认没有旧 Worker，可安全修复上次异常退出遗留的 running/stopping 状态。
+if ! run_manage reconcile_interrupted_tasks --apply; then
+    echo "❌ 中断任务核对失败，本次启动已取消"
+    exit 1
+fi
+
+nohup "$CELERY_BIN" -A platform_backend worker --loglevel=info -P threads -c 16 \
     >> "$CELERY_LOG" 2>&1 &
 CELERY_PID=$!
 echo $CELERY_PID > "$PID_DIR/celery.pid"
+sleep 1
+if ! is_running "$CELERY_PID" || ! matches_service_process "celery" "$CELERY_PID"; then
+    echo "❌ Celery Worker 启动失败，请查看: $CELERY_LOG"
+    rollback_started_services
+    exit 1
+fi
 echo "✅ Celery Worker 已在后台启动 (PID: $CELERY_PID, 并发槽: 16, 模式: threads)"
 echo "   日志: $CELERY_LOG"
 
@@ -204,14 +341,14 @@ fi
 if [ "$DAEMON_MODE" = true ]; then
     if [ "$DEV_MODE" = true ]; then
         # ── 守护模式 + 开发模式：仍用 runserver ──────────────
-        nohup python3 manage.py runserver 0.0.0.0:8000 \
+        nohup "$PYTHON_BIN" manage.py runserver 0.0.0.0:8000 \
             >> "$DJANGO_LOG" 2>> "$DJANGO_ERR" &
         DJANGO_PID=$!
         echo $DJANGO_PID > "$PID_DIR/django.pid"
         echo "✅ Django (runserver) 已在后台启动 (PID: $DJANGO_PID)"
     else
         # ── 守护模式：Gunicorn 后台运行，自行写 PID 文件 ──────
-        gunicorn platform_backend.wsgi:application \
+        if ! "$GUNICORN_BIN" platform_backend.wsgi:application \
             --bind 0.0.0.0:8000 \
             --workers 4 \
             --threads 2 \
@@ -219,9 +356,19 @@ if [ "$DAEMON_MODE" = true ]; then
             --daemon \
             --pid "$PID_DIR/django.pid" \
             --access-logfile "$DJANGO_LOG" \
-            --error-logfile "$DJANGO_ERR"
+            --error-logfile "$DJANGO_ERR"; then
+            echo "❌ Gunicorn 启动失败，请查看: $DJANGO_ERR"
+            rollback_started_services
+            exit 1
+        fi
         sleep 1
-        DJANGO_PID=$(cat "$PID_DIR/django.pid" 2>/dev/null)
+        DJANGO_PID=$(read_pid "django")
+        if [ -z "$DJANGO_PID" ] || ! is_running "$DJANGO_PID" \
+            || ! matches_service_process "django" "$DJANGO_PID"; then
+            echo "❌ Gunicorn 未能保持运行，请查看: $DJANGO_ERR"
+            rollback_started_services
+            exit 1
+        fi
         echo "✅ Gunicorn 已在后台启动 (PID: $DJANGO_PID, workers: 4×2线程)"
     fi
     echo "   访问日志 : $DJANGO_LOG"
@@ -233,21 +380,29 @@ if [ "$DAEMON_MODE" = true ]; then
     if [ "$DEV_MODE" = true ]; then
         echo "👉 前端日志  : tail -f $VITE_LOG"
     fi
+    # 守护模式启动后确认 Web 存活，再恢复维护暂停的任务并开放平台。
+    if ! restore_platform_after_health; then
+        rollback_started_services
+        exit 1
+    fi
 else
+    # 前台模式的 Gunicorn/runserver 会阻塞当前 Shell，因此后台等待健康检查。
+    restore_platform_after_health &
     if [ "$DEV_MODE" = true ]; then
         # ── 前台开发模式：runserver 前台阻塞 ─────────────────
         echo "   (前台模式，Ctrl+C 可停止；Celery 仍在后台运行)"
         echo "   如需后台常驻，请使用: ./start.sh --dev -d"
-        python3 manage.py runserver 0.0.0.0:8000
+        "$PYTHON_BIN" manage.py runserver 0.0.0.0:8000
     else
         # ── 前台生产模式：Gunicorn 前台阻塞 ──────────────────
         echo "   (前台模式，Ctrl+C 可停止；Celery 仍在后台运行)"
         echo "   如需后台常驻，请使用: ./start.sh -d"
-        gunicorn platform_backend.wsgi:application \
+        "$GUNICORN_BIN" platform_backend.wsgi:application \
             --bind 0.0.0.0:8000 \
             --workers 4 \
             --threads 2 \
             --timeout 300 \
+            --pid "$PID_DIR/django.pid" \
             --access-logfile "$DJANGO_LOG" \
             --error-logfile "$DJANGO_ERR"
     fi

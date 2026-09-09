@@ -22,6 +22,10 @@ export function createPoller(task, options = {}) {
 
   const tick = async currentGeneration => {
     if (!active || currentGeneration !== generation) return
+    if (globalThis.__SYSTEM_MAINTENANCE__) {
+      schedule(currentGeneration)
+      return
+    }
     try {
       const result = await task()
       if (!active || currentGeneration !== generation) return
@@ -57,6 +61,10 @@ export async function pollUntil(task, shouldStop, options = {}) {
   const maxAttempts = options.maxAttempts ?? 120
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     if (options.signal?.aborted) throw new DOMException('Polling cancelled', 'AbortError')
+    if (globalThis.__SYSTEM_MAINTENANCE__) {
+      await new Promise(resolve => setTimeout(resolve, interval))
+      continue
+    }
     const result = await task(attempt)
     if (shouldStop(result)) return result
     await new Promise((resolve, reject) => {

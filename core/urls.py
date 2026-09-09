@@ -22,6 +22,10 @@ from .quality.api.review_views import signal_items_list, signal_item_confirm, si
 from .quality.api.chart_views import chart_generate, chart_preview, chart_info, chart_settings_get, chart_settings_save
 from .quality.api.export_views import export_excel, export_status
 from .api.schema_views import openapi_schema
+from .operations.api_views import (
+    health_live, health_ready, operations_pause_tasks, operations_resume_tasks,
+    operations_state, operations_status, presence_heartbeat, system_status,
+)
 
 # 注册 ViewSets
 router = DefaultRouter()
@@ -34,6 +38,14 @@ router.register(r'users', api.UserViewSet, basename='user')
 router.register(r'activity-logs', api.ActivityLogViewSet, basename='activity-log')
 
 urlpatterns = [
+    path('health/live/', health_live, name='health_live'),
+    path('health/ready/', health_ready, name='health_ready'),
+    path('system/status/', system_status, name='system_status'),
+    path('presence/heartbeat/', presence_heartbeat, name='presence_heartbeat'),
+    path('operations/status/', operations_status, name='operations_status'),
+    path('operations/state/', operations_state, name='operations_state'),
+    path('operations/tasks/pause/', operations_pause_tasks, name='operations_pause_tasks'),
+    path('operations/tasks/resume/', operations_resume_tasks, name='operations_resume_tasks'),
     # 机器可读 API 契约
     path('schema/', openapi_schema, name='openapi_schema'),
     # 认证 API

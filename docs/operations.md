@@ -26,6 +26,104 @@ venv/bin/python manage.py check
 venv/bin/python manage.py migrate --check
 ```
 
+## 在线状态与维护模式
+
+管理员登录平台后，可从顶部「运维」入口查看：
+
+- 最近 90 秒有页面心跳的在线用户及其当前页面；
+- 最近 5 分钟活跃用户和未过期登录会话；
+- 数据库中的 pending、queuing、running、stopping 任务；
+- Celery active、reserved、scheduled 数量；
+- 综合判断的「可以安全停机」状态。
+
+登录会话只代表用户尚未退出，不代表用户正在操作。没有普通在线用户且没有活动业务任务时，即可开始停机；Celery、Gunicorn 和 Vite 正是 `stop.sh` 后续负责关闭的对象。管理员自己的心跳不会阻止停机。
+
+运维页每 15 秒自动刷新一次，自动刷新不调用 Celery 远程检查。在线状态来自 Redis，任务查询只读取状态统计和最早 100 条活动任务的必要字段，不会载入任务的配置、结果或日志大字段。手工点击「刷新」时才会额外检查 Celery。
+
+命令行也可以查看相同信息：
+
+```bash
+venv/bin/python manage.py operations_status
+venv/bin/python manage.py operations_status --json
+```
+
+平台具有三种运行状态：
+
+- `normal`：正常开放；
+- `draining`：允许查看、下载和保存人工审阅，但禁止创建项目、上传文件以及启动或恢复任务；
+- `maintenance`：普通用户业务 API 返回 503，仅管理员和健康检查可继续访问。
+
+可以通过 Django 管理界面、平台运维页面或命令切换。平台运维页只修改运行状态，不会直接关闭 Gunicorn 或 Celery 进程：
+
+```bash
+venv/bin/python manage.py maintenance status
+venv/bin/python manage.py maintenance draining --message "平台将在 20:30 升级"
+venv/bin/python manage.py maintenance maintenance --message "平台正在升级"
+venv/bin/python manage.py maintenance normal
+```
+
+## 优雅停机与升级
+
+生产环境建议使用守护模式启动，服务器无 Node 环境继续使用已提交的 `web/dist`：
+
+```bash
+./start.sh -d --no-build
+```
+
+正常升级执行：
+
+```bash
+./stop.sh
+git pull
+venv/bin/pip install -r requirements.txt
+venv/bin/python manage.py migrate
+./start.sh -d --no-build
+```
+
+`stop.sh` 默认执行以下流程：
+
+1. 进入 `draining`，停止接收新工作；
+2. 等待在线用户离开和短任务自然完成；
+3. 进入 `maintenance`；
+4. 协作式暂停 AI 初筛和 AI 质量评价，并等待断点及状态写入完成；
+5. 向 Celery 发送 TERM，执行 warm shutdown；
+6. 向 Gunicorn 发送 TERM，等待正在处理的 HTTP 请求结束；
+7. MySQL 和 Redis 保持运行。
+
+默认等待时间可以调整：
+
+```bash
+./stop.sh --drain-timeout=600 --task-timeout=1200 --web-timeout=300
+```
+
+超过等待时间时，脚本会取消停机并保留维护状态，不会自动执行 `kill -9`。只有明确接受任务中断或中间文件损坏风险时才能使用：
+
+```bash
+./stop.sh --force
+```
+
+启动时会拒绝与旧 Gunicorn/Celery 进程并行运行，检查数据库迁移，修复异常退出遗留的孤儿任务；健康检查通过后恢复维护暂停的 AI 任务并重新开放平台。
+
+AI 初筛通过 checkpoint 继续执行。AI 质量评价保留已经完成的文献，只重新处理未完成文献，避免重复评价和重复结算。解析、去重等没有断点能力的任务若因异常退出中断，会标记为失败并提示重新执行。
+
+如需手工核对或恢复：
+
+```bash
+venv/bin/python manage.py reconcile_interrupted_tasks
+venv/bin/python manage.py reconcile_interrupted_tasks --apply
+venv/bin/python manage.py maintenance_tasks pause
+venv/bin/python manage.py maintenance_tasks resume
+```
+
+健康检查接口：
+
+```text
+GET /api/health/live/
+GET /api/health/ready/
+```
+
+`live` 只表示 Web 进程存活；`ready` 同时检查 MySQL、Redis及维护状态。
+
 ## 数据库备份与恢复
 
 备份前停止写任务或进入维护窗口：

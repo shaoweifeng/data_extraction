@@ -24,6 +24,10 @@
       <!-- 主页时显示新建项目按钮 -->
       <slot name="actions" />
 
+      <button v-if="auth.isAdmin" @click="router.push('/operations')" class="header-ops" title="系统运维">
+        <i class="fas fa-gauge-high"></i><span>运维</span>
+      </button>
+
       <!-- 余额展示（点击进个人中心充值） -->
       <div class="header-balance" @click="onUserClick" title="查看个人中心 / 充值">
         <i class="fas fa-coins header-balance-icon"></i>
@@ -218,4 +222,10 @@ async function handleLogout() {
   transition: all 0.15s;
 }
 .header-logout:hover { background: #fee2e2; border-color: #fca5a5; }
+.header-ops {
+  display: flex; align-items: center; gap: 5px; padding: 5px 11px;
+  border: 1px solid #c7d2fe; border-radius: 999px; background: #eef2ff;
+  color: #4f46e5; font-size: .78rem; font-weight: 600; cursor: pointer;
+}
+.header-ops:hover { background: #e0e7ff; }
 </style>

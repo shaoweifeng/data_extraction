@@ -386,9 +386,44 @@ class Task(models.Model):
         verbose_name = "任务"
         verbose_name_plural = "任务"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at'], name='task_status_created_idx'),
+        ]
 
     def __str__(self):
         return f"{self.task_type} - {self.get_status_display()}"
+
+
+class SystemOperationState(models.Model):
+    """Singleton operational switch used while draining or maintaining the platform."""
+
+    MODE_CHOICES = [
+        ('normal', '正常运行'),
+        ('draining', '正在排空'),
+        ('maintenance', '维护中'),
+    ]
+
+    singleton_id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    mode = models.CharField(max_length=20, choices=MODE_CHOICES, default='normal')
+    message = models.CharField(max_length=500, blank=True, default='')
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    updated_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='system_operation_updates',
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'plat_system_operation_state'
+        verbose_name = '系统运行状态'
+        verbose_name_plural = '系统运行状态'
+
+    def save(self, *args, **kwargs):
+        self.singleton_id = 1
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.get_mode_display()
 
 
 # ============================================================================

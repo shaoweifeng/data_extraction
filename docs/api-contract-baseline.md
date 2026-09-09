@@ -13,6 +13,7 @@
 - QA 函数视图成功响应：`{"ok": true, "data": ...}`。
 - QA 函数视图失败响应：`{"ok": false, "error": ...}`。
 - 初筛复核视图保留原有顶层响应字段，错误为 `{"error": ...}`。
+- 排空和维护期间被阻止的接口返回 `503`，并携带 `SYSTEM_DRAINING` 或 `SYSTEM_MAINTENANCE` 错误码。
 
 ## 3. 核心项目资源
 
@@ -54,14 +55,27 @@
 | GET/PATCH | `/api/qa/chart/settings...` | 读写项目图表标签设置 |
 | POST | `/api/qa/export/excel/` | `project_id`, `quality_method`, `include_unconfirmed` |
 
-## 6. 自动化门禁
+## 6. 运维接口
+
+| 方法 | 路径 | 核心契约 |
+|---|---|---|
+| GET | `/api/health/live/` | Web 进程存活检查 |
+| GET | `/api/health/ready/` | MySQL、Redis和维护状态就绪检查 |
+| GET | `/api/system/status/` | 公开的 normal/draining/maintenance 状态与通知 |
+| POST | `/api/presence/heartbeat/` | 登录用户页面心跳 |
+| GET | `/api/operations/status/` | 仅管理员；在线用户、任务、Celery和安全停机判断 |
+| POST | `/api/operations/state/` | 仅管理员；切换系统运行状态 |
+| POST | `/api/operations/tasks/pause/` | 仅管理员；协作式暂停可恢复的长任务 |
+| POST | `/api/operations/tasks/resume/` | 仅管理员；恢复维护暂停任务 |
+
+## 7. 自动化门禁
 
 - Python 3.9、Django 4.2 兼容。
 - `manage.py check`、迁移漂移检查和 `core.tests` 必须通过。
 - 前端使用 Node 22 仅在本地/持续集成构建；服务器可继续使用 `--no-build` 和已提交的 `web/dist`。
 - CI 检查构建后 `web/dist` 无差异，确保提交的产物与源码一致。
 
-## 7. 机器可读 Schema
+## 8. 机器可读 Schema
 
 - OpenAPI 3.0 基线文件：`docs/openapi.json`。
 - 运行时地址：`GET /api/schema/`。

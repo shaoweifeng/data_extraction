@@ -12,7 +12,8 @@
     {"name": "Workflow"},
     {"name": "Screening Review"},
     {"name": "Quality Assessment"},
-    {"name": "Billing"}
+    {"name": "Billing"},
+    {"name": "Operations"}
   ],
   "paths": {
     "/auth/register/": {"post": {"tags": ["Auth"], "responses": {"201": {"description": "Registered"}, "400": {"$ref": "#/components/responses/BadRequest"}}}},
@@ -20,6 +21,14 @@
     "/auth/logout/": {"post": {"tags": ["Auth"], "responses": {"200": {"description": "Logged out"}}}},
     "/auth/me/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Current user"}}}},
     "/ai-models/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Configured model catalog"}}}},
+    "/health/live/": {"get": {"tags": ["Operations"], "responses": {"200": {"description": "Web process is alive"}}}},
+    "/health/ready/": {"get": {"tags": ["Operations"], "responses": {"200": {"description": "Database and Redis are ready"}, "503": {"description": "A dependency is unavailable or maintenance is active"}}}},
+    "/system/status/": {"get": {"tags": ["Operations"], "responses": {"200": {"description": "Public maintenance state"}}}},
+    "/presence/heartbeat/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Presence recorded"}}}},
+    "/operations/status/": {"get": {"tags": ["Operations"], "responses": {"200": {"description": "Administrator operations snapshot"}, "403": {"description": "Administrator required"}}}},
+    "/operations/state/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Operational state changed"}, "400": {"$ref": "#/components/responses/BadRequest"}, "403": {"description": "Administrator required"}}}},
+    "/operations/tasks/pause/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Long-running tasks asked to pause"}, "403": {"description": "Administrator required"}}}},
+    "/operations/tasks/resume/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Maintenance-paused tasks resumed"}, "403": {"description": "Administrator required"}}}},
     "/projects/": {
       "get": {"tags": ["Projects"], "responses": {"200": {"description": "Visible projects", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedProjects"}}}}}},
       "post": {"tags": ["Projects"], "responses": {"201": {"description": "Created"}}}
