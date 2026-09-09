@@ -22,7 +22,10 @@ def _normalize_record(rec: Dict[str, List[str]], source_file: str, position: int
     ep = clean(rec.get("EP", [""])[0]) if rec.get("EP") else ""
     page = f"{bp}-{ep}" if bp and ep else (bp or ep)
     date = clean(rec.get("PD", [""])[0]) if rec.get("PD") else ""
-    address = "; ".join(a for a in rec.get("C1", []) if a).strip()
+    # C1 是作者地址，部分 Web of Science 导出仅提供 RP（通讯/重印地址）。
+    # 优先保留完整 C1；缺失时使用 RP，避免导出阶段出现空 Address。
+    address_values = rec.get("C1", []) or rec.get("RP", [])
+    address = "; ".join(a for a in address_values if a).strip()
     doi = clean(rec.get("DI", [""])[0]).rstrip(".").rstrip(";").strip() if rec.get("DI") else ""
     abstract = " ".join(rec.get("AB", [])).strip()
     pmid = clean(rec.get("PM", [""])[0]) if rec.get("PM") else ""

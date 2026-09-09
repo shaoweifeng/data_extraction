@@ -84,6 +84,7 @@ export const useScreeningStore = defineStore('screening', () => {
   const aiModelsLoading = ref(false)
   const selectedAiModel  = ref(null)    // 兼容旧单选
   const selectedAiModels = ref([])       // 多选列表（新）
+  const enableThinking = ref(false)      // 深度思考默认关闭，可在启动初筛前开启
 
   // Prompt
   const promptPanelOpen = ref(false)
@@ -149,6 +150,7 @@ export const useScreeningStore = defineStore('screening', () => {
     processedCount.value = 0
     screeningProgressValue.value = 0
     totalRefs.value = 0
+    enableThinking.value = false
     promptPanelOpen.value = false
     useCustomPrompt.value = false
     customPromptText.value = ''
@@ -181,7 +183,7 @@ export const useScreeningStore = defineStore('screening', () => {
     pendingTotal, screenedTotal, PAGE_SIZE, latestTask, latestAiScreenTask, isProcessing,
     aiScreenStats, screeningResults, screeningProgress, aiScreenLogContent, processedCount,
     screeningProgressValue, totalRefs,
-    aiModelsList, aiModelsLoading, selectedAiModel, selectedAiModels,
+    aiModelsList, aiModelsLoading, selectedAiModel, selectedAiModels, enableThinking,
     promptPanelOpen, useCustomPrompt, customPromptText, promptSaveStatus, defaultPromptPreview,
     exportFiles, exportStepId, isExporting, exportingType,
     selectedExcelVersion, selectedRisVersion, selectedExcelAllVersion,

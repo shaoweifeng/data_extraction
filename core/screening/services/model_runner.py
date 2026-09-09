@@ -38,9 +38,14 @@ class ScreeningModelRunner:
                     self.logger.warning(f"[AI] 模型 {model_id} 未配置 API Key，跳过该模型")
                     continue
 
-                provider = get_provider(model_id)
+                thinking_enabled = self.config.get('enable_thinking') is True
+                provider = get_provider(model_id, thinking_enabled=thinking_enabled)
                 model_display = get_model_display_name(model_id)
-                self.logger.info(f"[AI] 模型 {model_display} 开始筛选，批次: {len(batch)} 篇，并发: {concurrency}")
+                thinking_label = '开启' if thinking_enabled else '关闭'
+                self.logger.info(
+                    f"[AI] 模型 {model_display} 开始筛选，批次: {len(batch)} 篇，"
+                    f"并发: {concurrency}，深度思考: {thinking_label}"
+                )
                 try:
                     screening_results = provider.screen_batch(batch, criteria, prompt_template, concurrency=concurrency)
                 except Exception as e:

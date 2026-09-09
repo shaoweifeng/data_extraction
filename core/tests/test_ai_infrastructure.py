@@ -1,6 +1,6 @@
 """Shared AI quota, provider and usage-settlement contracts."""
 
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -111,3 +111,60 @@ class SharedAIInfrastructureTests(TestCase):
             result = provider.generate_text('prompt')
         self.assertEqual(result, ('answer', {'total': 3}))
         call.assert_called_once_with('prompt')
+
+    def test_reasoning_provider_disables_thinking_by_default(self):
+        provider = OpenAICompatibleProvider({
+            'api_key': 'test', 'api_url': 'https://example.invalid/v1',
+            'model': 'example', 'provider': 'deepseek',
+            'timeout': 1, 'is_reasoning': True,
+        })
+        response = Mock(status_code=200)
+        response.json.return_value = {
+            'choices': [{'message': {'content': 'answer'}}],
+            'usage': {'prompt_tokens': 1, 'completion_tokens': 1, 'total_tokens': 2},
+        }
+
+        with patch(
+            'core.executors.ai_providers.openai_compatible.requests.post',
+            return_value=response,
+        ) as post:
+            provider.generate_text('prompt')
+
+        self.assertEqual(post.call_args.kwargs['json']['thinking'], {'type': 'disabled'})
+
+    def test_reasoning_provider_can_enable_thinking_explicitly(self):
+        provider = OpenAICompatibleProvider({
+            'api_key': 'test', 'api_url': 'https://example.invalid/v1',
+            'model': 'example', 'provider': 'deepseek',
+            'timeout': 1, 'is_reasoning': True,
+            'thinking_enabled': True,
+        })
+        response = Mock(status_code=200)
+        response.json.return_value = {'choices': [{'message': {'content': 'answer'}}]}
+
+        with patch(
+            'core.executors.ai_providers.openai_compatible.requests.post',
+            return_value=response,
+        ) as post:
+            provider.generate_text('prompt')
+
+        self.assertEqual(post.call_args.kwargs['json']['thinking'], {'type': 'enabled'})
+
+    def test_qwen_uses_vendor_specific_thinking_parameter(self):
+        provider = OpenAICompatibleProvider({
+            'api_key': 'test', 'api_url': 'https://example.invalid/v1',
+            'model': 'qwen-example', 'provider': 'qwen',
+            'timeout': 1, 'is_reasoning': True,
+        })
+        response = Mock(status_code=200)
+        response.json.return_value = {'choices': [{'message': {'content': 'answer'}}]}
+
+        with patch(
+            'core.executors.ai_providers.openai_compatible.requests.post',
+            return_value=response,
+        ) as post:
+            provider.generate_text('prompt')
+
+        payload = post.call_args.kwargs['json']
+        self.assertIs(payload['enable_thinking'], False)
+        self.assertNotIn('thinking', payload)

@@ -30,7 +30,7 @@ AI_PROVIDERS = [
                 "name": "DeepSeek V4 Flash",
                 "model": "deepseek-v4-flash",
                 "description": "高速版，价格极低",
-                "is_default": False,
+                "is_default": True,
                 "is_reasoning": True,   # 推理模型，需禁用 thinking 以直接输出结构化内容
             },
             {
@@ -38,7 +38,7 @@ AI_PROVIDERS = [
                 "name": "DeepSeek V4 Pro",
                 "model": "deepseek-v4-pro",
                 "description": "旗舰版，效果最佳",
-                "is_default": True,
+                "is_default": False,
                 "is_reasoning": True,   # 推理模型，需禁用 thinking 以直接输出结构化内容
             },
         ],
@@ -54,32 +54,12 @@ AI_PROVIDERS = [
         "timeout": int(os.environ.get("AI_TIMEOUT", "120")),
         "sub_models": [
             {
-                "id": "doubao-seed-1.8",
-                "name": "Doubao-Seed-1.8",
-                "model": "ep-20260509162819-bvjfj",
-                "description": "旗舰版，效果最强",
+                "id": "doubao-seed-2-1-turbo",
+                "name": "Doubao-Seed-2.1-Turbo",
+                "model": "doubao-seed-2-1-turbo-260628",
+                "description": "Seed 2.1 低价高速版，适合大批量初筛",
                 "is_default": True,
-            },
-            {
-                "id": "doubao-seed-2.0-lite",
-                "name": "Doubao-Seed-2.0-Lite",
-                "model": "ep-20260509162644-jjj7m",
-                "description": "轻量版，速度更快",
-                "is_default": False,
-            },
-            {
-                "id": "seedance-1.6-flash",
-                "name": "Seedance-1.6-Flash",
-                "model": "ep-20260509155532-9pqjx",
-                "description": "闪速版，延迟最低",
-                "is_default": False,
-            },
-            {
-                "id": "seedance-2.0-mini",
-                "name": "Seedance-2.0-Mini",
-                "model": "ep-20260509155132-22n88",
-                "description": "迷你版，成本极低",
-                "is_default": False,
+                "is_reasoning": True,
             },
         ],
     },
@@ -94,36 +74,45 @@ AI_PROVIDERS = [
         "timeout": int(os.environ.get("AI_TIMEOUT", "120")),
         "sub_models": [
             {
-                "id": "qwen3-6-flash",
-                "name": "Qwen3.6-Flash",
-                "model": "qwen3.6-flash",
+                "id": "qwen3-7-flash",
+                "name": "Qwen3.7-Flash",
+                "model": "qwen3.7-flash",
                 "description": "闪速版，价格极低",
                 "is_default": False,
+                "is_reasoning": True,
             },
             {
-                "id": "qwen3-6-plus",
-                "name": "Qwen3.6-Plus",
-                "model": "qwen3.6-plus",
+                "id": "qwen3-7-plus",
+                "name": "Qwen3.7-Plus",
+                "model": "qwen3.7-plus",
                 "description": "增强版，均衡性价比",
                 "is_default": False,
+                "is_reasoning": True,
             },
             {
-                "id": "qwen3-6-max-preview",
-                "name": "Qwen3.6-Max-Preview",
-                "model": "qwen3.6-max-preview",
-                "description": "旗舰预览版，效果最强",
+                "id": "qwen3-7-max",
+                "name": "Qwen3.7-Max",
+                "model": "qwen3.7-max",
+                "description": "旗舰稳定版，效果最强",
                 "is_default": True,
-            },
-            {
-                "id": "qwen3-coder-plus",
-                "name": "Qwen3-Coder-Plus",
-                "model": "qwen3-coder-plus",
-                "description": "代码增强版",
-                "is_default": False,
+                "is_reasoning": True,
             },
         ],
     },
 ]
+
+
+# 已保存的筛选/质量评价任务可能仍引用旧 ID。旧 ID 仅用于兼容读取，
+# 不再出现在前端模型列表中，实际请求统一路由到当前的 Qwen/豆包模型。
+MODEL_ID_ALIASES = {
+    "qwen3-6-flash": "qwen3-7-flash",
+    "qwen3-6-plus": "qwen3-7-plus",
+    "qwen3-6-max-preview": "qwen3-7-max",
+    "doubao-seed-1.8": "doubao-seed-2-1-turbo",
+    "doubao-seed-2.0-lite": "doubao-seed-2-1-turbo",
+    "seedance-1.6-flash": "doubao-seed-2-1-turbo",
+    "seedance-2.0-mini": "doubao-seed-2-1-turbo",
+}
 
 
 # ── 内部工具 ──────────────────────────────────────────────────────────────────
@@ -140,6 +129,7 @@ def get_model_config(model_id: str) -> Optional[dict]:
     按子模型 id 查找完整配置（含 api_key、api_url、model 字符串）。
     向后兼容：model_id 可以是旧格式的 provider id（如 'deepseek'）。
     """
+    model_id = MODEL_ID_ALIASES.get(model_id, model_id)
     for provider, sm in _iter_sub_models():
         if sm["id"] == model_id:
             return {

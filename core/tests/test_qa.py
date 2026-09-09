@@ -240,7 +240,7 @@ class TestQAEvaluationStartService(TestCase):
             quality_method='QUADAS2',
         )
         queued_task = MagicMock(id=91)
-        model_ids = ['deepseek-v4-pro', 'qwen3-6-plus']
+        model_ids = ['deepseek-v4-pro', 'qwen3-7-plus']
 
         with patch(
             'core.quality.services.evaluation_service.AIQuotaService.preflight',

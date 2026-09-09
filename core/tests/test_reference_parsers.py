@@ -49,6 +49,25 @@ class ParserFixtureTests(TestCase):
             },
         )
 
+    def test_ris_addresses_survive_xml_conversion(self):
+        content = """TY  - JOUR
+TI  - RIS address example
+AD  - Department A, University X
+AD  - Department B, Hospital Y
+ER  -
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / 'address.ris'
+            output_path = Path(temp_dir) / 'address.xml'
+            input_path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(input_path))
+            convert_to_xml(parsed, str(output_path))
+            round_tripped = parse_file(str(output_path))
+
+        expected = 'Department A, University X; Department B, Hospital Y'
+        self.assertEqual(parsed[0]['address'], expected)
+        self.assertEqual(round_tripped[0]['address'], expected)
+
     def test_internal_xml_fixture_normalizes_core_fields(self):
         result = parse_file(str(FIXTURES / 'references' / 'sample.xml'))
         self.assertEqual(len(result), 1)
@@ -133,6 +152,32 @@ ER
         self.assertEqual(parsed[0]['abstract'], 'First line continued text')
         self.assertEqual(parsed[0]['source_position'], 1)
         self.assertEqual(parsed[1]['url'], 'https://doi.org/10.1000/example')
+
+    def test_ciw_c1_and_rp_addresses_survive_xml_conversion(self):
+        content = """PT J
+TI C1 address
+C1 Department A, University X
+C1 Department B, Hospital Y
+ER
+
+PT J
+TI RP fallback address
+RP Corresponding Author, Institute Z
+ER
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / 'address.ciw'
+            output_path = Path(temp_dir) / 'address.xml'
+            input_path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(input_path))
+            convert_to_xml(parsed, str(output_path))
+            round_tripped = parse_file(str(output_path))
+
+        expected_c1 = 'Department A, University X; Department B, Hospital Y'
+        self.assertEqual(parsed[0]['address'], expected_c1)
+        self.assertEqual(round_tripped[0]['address'], expected_c1)
+        self.assertEqual(parsed[1]['address'], 'Corresponding Author, Institute Z')
+        self.assertEqual(round_tripped[1]['address'], 'Corresponding Author, Institute Z')
 
     def test_endnote_xml_stream_parser_preserves_nested_fields(self):
         content = """<?xml version="1.0" encoding="UTF-8"?>

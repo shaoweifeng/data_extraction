@@ -43,6 +43,7 @@ class OpenAICompatibleProvider(BaseAIProvider):
             self.config.get("model")
             or os.environ.get("AI_MODEL", "deepseek-chat")
         )
+        self.provider_id = self.config.get("provider", "")
         self.timeout = int(
             self.config.get("timeout")
             or os.environ.get("AI_TIMEOUT", "120")
@@ -54,6 +55,8 @@ class OpenAICompatibleProvider(BaseAIProvider):
         # 是否为推理模型（思维链模型）：完全依赖配置文件中的 is_reasoning 字段。
         # 不再用模型名关键词猜测，避免误判非 DeepSeek 的 flash/think 命名模型。
         self.is_reasoning: bool = bool(self.config.get("is_reasoning", False))
+        # 初筛默认关闭深度思考；只有任务配置显式传入 true 才开启。
+        self.thinking_enabled: bool = self.config.get("thinking_enabled") is True
 
     @property
     def name(self) -> str:
@@ -132,10 +135,15 @@ class OpenAICompatibleProvider(BaseAIProvider):
             "temperature": 0.1,
             "max_tokens": 4000,
         }
-        # 推理模型（思维链模型）默认在 content 里混入推理过程，
-        # 用 thinking.disabled 禁用，使其直接输出结构化 JSON。
+        # 各厂商的 OpenAI 兼容接口使用不同扩展字段：Qwen 使用顶层布尔值，
+        # DeepSeek 与豆包使用 thinking.type。初筛默认关闭，任务可显式开启。
         if self.is_reasoning:
-            payload["thinking"] = {"type": "disabled"}
+            if self.provider_id == "qwen":
+                payload["enable_thinking"] = self.thinking_enabled
+            else:
+                payload["thinking"] = {
+                    "type": "enabled" if self.thinking_enabled else "disabled",
+                }
 
         try:
             response = requests.post(

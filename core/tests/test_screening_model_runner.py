@@ -10,8 +10,11 @@ from core.screening.services.model_runner import ScreeningModelRunner
 
 
 class _Handler:
-    def __init__(self, model_ids):
-        self.config = {'ai_models': model_ids}
+    def __init__(self, model_ids, enable_thinking=False):
+        self.config = {
+            'ai_models': model_ids,
+            'enable_thinking': enable_thinking,
+        }
         self.logger = Mock()
 
     def _get_prompt_template(self):
@@ -59,3 +62,23 @@ class ScreeningModelRunnerTests(SimpleTestCase):
         self.assertEqual(results[0]['decision'], 'included')
         self.assertEqual(results[0]['token_usage']['total'], 5)
         datetime.fromisoformat(results[0]['timestamp'])
+        get_provider.assert_called_once_with('deepseek', thinking_enabled=False)
+
+    @patch('core.ai.providers.provider_is_configured', return_value=True)
+    @patch('core.ai.providers.get_provider')
+    def test_task_can_enable_thinking_for_provider(self, get_provider, _configured):
+        provider = Mock()
+        provider.screen_batch.return_value = [SimpleNamespace(
+            decision='included',
+            exclusion_reason='',
+            exclusion_criterion_no='',
+            token_usage={},
+            error='',
+            extracted_fields={},
+        )]
+        get_provider.return_value = provider
+
+        runner = ScreeningModelRunner(_Handler(['deepseek'], enable_thinking=True))
+        runner._call_multi_model_api([self.entry], ['criterion'], concurrency=1)
+
+        get_provider.assert_called_once_with('deepseek', thinking_enabled=True)

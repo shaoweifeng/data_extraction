@@ -99,7 +99,7 @@ export DOUBAO_MODEL=${DOUBAO_MODEL:-ep-20260509162819-bvjfj}
 # 千问（阿里云 DashScope）配置
 export QWEN_API_KEY=${QWEN_API_KEY:-}
 export QWEN_API_URL=${QWEN_API_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
-export QWEN_MODEL=${QWEN_MODEL:-qwen-plus}
+export QWEN_MODEL=${QWEN_MODEL:-qwen3.7-plus}
 
 # 兼容旧环境变量（保留，优先级低于上方）
 export AI_API_KEY=${AI_API_KEY:-$DEEPSEEK_API_KEY}

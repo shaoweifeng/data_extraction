@@ -87,7 +87,40 @@
       <!-- 模型选择区 -->
       <div class="ai-model-section">
         <div class="ai-section-label">
-          <i class="fas fa-brain text-indigo-400 mr-1.5"></i>选择模型
+          <span class="ai-section-label-title">
+            <i class="fas fa-brain text-indigo-400 mr-1.5"></i>选择模型
+          </span>
+          <span class="ai-thinking-inline">
+            <span class="ai-thinking-inline-label">深度思考</span>
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="s.enableThinking"
+              :aria-label="s.enableThinking ? '关闭深度思考' : '开启深度思考'"
+              :disabled="thinkingToggleDisabled"
+              class="ai-thinking-switch"
+              :class="{ active: s.enableThinking }"
+              @click="s.enableThinking = !s.enableThinking"
+            >
+              <span class="ai-thinking-switch-knob"></span>
+            </button>
+            <button
+              type="button"
+              class="ai-thinking-help"
+              aria-label="查看深度思考模式说明"
+              aria-describedby="ai-thinking-tooltip"
+            >
+              <i class="fas fa-question-circle"></i>
+              <span id="ai-thinking-tooltip" role="tooltip" class="ai-thinking-tooltip">
+                <span class="ai-thinking-tooltip-row benefit">
+                  <b>收益：</b>可能提高复杂纳排条件、隐含关系和边界案例的判断质量。
+                </span>
+                <span class="ai-thinking-tooltip-row cost">
+                  <b>代价：</b>筛选速度可能慢 2～5 倍，并消耗更多输出 Token 和额度。
+                </span>
+              </span>
+            </button>
+          </span>
           <span v-if="selectedModels.length > 1" class="ml-2 text-xs text-amber-600">
             <i class="fas fa-info-circle mr-0.5"></i>已选 {{ selectedModels.length }} 个，预估消耗 ×{{ selectedModels.length }}
           </span>
@@ -473,6 +506,11 @@ const selectedModels = computed(() => {
   return ids.map(id => flatModels.value.find(m => m.id === id)).filter(Boolean)
 })
 
+const thinkingToggleDisabled = computed(() => {
+  const status = s.latestAiScreenTask?.status
+  return ['queuing', 'pending', 'running', 'stopping', 'stopped'].includes(status)
+})
+
 function isModelSelected(id) {
   if (s.selectedAiModels?.length) return s.selectedAiModels.includes(id)
   return s.selectedAiModel === id
@@ -733,6 +771,7 @@ async function loadScreenedFiles({ page, resetPage = true } = {}) {
 function syncLatestAiTask() {
   const aiTask = taskStore.recentTasks.find((t) => t.task_type === 'ai_screen')
   if (!aiTask) {
+    s.enableThinking = false
     // 重置到默认模型
     for (const provider of (s.aiModelsList || [])) {
       const def = provider.sub_models?.find(sm => sm.is_default && sm.configured)
@@ -746,6 +785,11 @@ function syncLatestAiTask() {
     return
   }
   s.latestAiScreenTask = aiTask
+  // 已结束任务不继承上次选择，保证下一次初筛仍以“关闭”为默认值；
+  // 运行中或暂停中的任务则展示它实际使用的模式。
+  s.enableThinking = ['queuing', 'pending', 'running', 'stopping', 'stopped'].includes(aiTask.status)
+    ? aiTask.config?.enable_thinking === true
+    : false
   const lastModels = aiTask.config?.ai_models
   if (lastModels?.length && flatModels.value.length) {
     const validIds = lastModels.filter(id => flatModels.value.find(m => m.id === id && m.configured))
@@ -791,6 +835,7 @@ async function startScreening() {
         criteria:  s.criteriaList,
         ai_model:  modelIds[0],
         ai_models: modelIds,
+        enable_thinking: s.enableThinking === true,
       },
     })
     s.latestAiScreenTask = res.data
@@ -836,6 +881,7 @@ async function abandonTask() {
     if (!await clearAiScreenResults()) return
     await controller.deleteTask(taskId)
     s.latestAiScreenTask = null
+    s.enableThinking = false
     s.aiScreenStats = null
     await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
     alert('任务已放弃，筛选结果已清除')
@@ -897,6 +943,8 @@ async function pollAiScreening(taskId) {
         aiPollTimer = setTimeout(poll, interval)
       } else {
         s.isProcessing = false
+        // 暂停任务恢复时必须沿用原配置；其余终态回到新任务的默认关闭状态。
+        if (status !== 'stopped') s.enableThinking = false
         await taskStore.fetchRecentTasks(projectId, project.stagesData)
         if (generation !== aiPollGeneration || !isCurrentProject(projectId)) return
         await project.fetchStages(projectId)
@@ -1131,7 +1179,9 @@ onUnmounted(() => {
   margin-bottom: 10px;
   display: flex;
   align-items: center;
+  gap: 8px;
 }
+.ai-section-label-title { white-space: nowrap; }
 .ai-provider-list {
   display: flex;
   flex-direction: column;
@@ -1200,6 +1250,93 @@ onUnmounted(() => {
   color: #6366f1;
   margin-left: 2px;
 }
+
+/* 标题行内的深度思考开关及说明 */
+.ai-thinking-inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.ai-thinking-inline-label {
+  font-size: .72rem;
+  font-weight: 500;
+  color: #64748b;
+}
+.ai-thinking-switch {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  padding: 0;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background .18s;
+}
+.ai-thinking-switch.active { background: #7c3aed; }
+.ai-thinking-switch:disabled { opacity: .55; cursor: not-allowed; }
+.ai-thinking-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .25);
+  transition: transform .18s;
+}
+.ai-thinking-switch.active .ai-thinking-switch-knob { transform: translateX(14px); }
+.ai-thinking-help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  cursor: help;
+  font-size: .76rem;
+}
+.ai-thinking-help:hover,
+.ai-thinking-help:focus-visible { color: #6366f1; outline: none; }
+.ai-thinking-tooltip {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  left: 50%;
+  width: 310px;
+  max-width: calc(100vw - 48px);
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
+  color: #475569;
+  font-size: .7rem;
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: normal;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-3px);
+  transition: opacity .15s, transform .15s, visibility .15s;
+}
+.ai-thinking-help:hover .ai-thinking-tooltip,
+.ai-thinking-help:focus-visible .ai-thinking-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+.ai-thinking-tooltip-row { display: block; }
+.ai-thinking-tooltip-row + .ai-thinking-tooltip-row { margin-top: 6px; }
+.ai-thinking-tooltip-row.benefit b { color: #15803d; }
+.ai-thinking-tooltip-row.cost b { color: #c2410c; }
 
 /* 进度区 */
 .ai-progress-section {

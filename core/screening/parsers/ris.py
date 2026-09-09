@@ -5,8 +5,10 @@ from typing import Dict, List
 
 try:
     import rispy
+    from rispy.config import LIST_TYPE_TAGS
 except ImportError:  # pragma: no cover - optional dependency guard
     rispy = None
+    LIST_TYPE_TAGS = []
 
 
 def parse_ris(file_path: str) -> List[Dict]:
@@ -23,7 +25,9 @@ def parse_ris(file_path: str) -> List[Dict]:
         raise ImportError("rispy 未安装，请运行: pip install rispy")
 
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-        entries = rispy.load(f)
+        # rispy 默认把 AD 映射为 author_address，且按单值字段处理，重复的
+        # AD 会被覆盖。显式将其声明为列表，确保多机构地址全部保留下来。
+        entries = rispy.load(f, list_tags=[*LIST_TYPE_TAGS, 'AD'])
 
     def first_value(d, keys):
         """获取第一个非空值"""
@@ -35,6 +39,18 @@ def parse_ris(file_path: str) -> List[Dict]:
                 return v.strip()
             if isinstance(v, (int, float)):
                 return str(v)
+        return None
+
+    def joined_values(d, keys):
+        """合并 RIS 单值/多值字段，同时兼容不同 rispy 版本的字段名。"""
+        for k in keys:
+            value = d.get(k)
+            if isinstance(value, (list, tuple)):
+                parts = [str(item).strip() for item in value if str(item).strip()]
+                if parts:
+                    return '; '.join(parts)
+            elif value is not None and str(value).strip():
+                return str(value).strip()
         return None
 
     parsed_entries = []
@@ -85,7 +101,7 @@ def parse_ris(file_path: str) -> List[Dict]:
             'pmcid': first_value(entry, ['pmcid', 'PMCID']),
             'abstract': entry.get('abstract'),
             'url': url,
-            'address': first_value(entry, ['address', 'AD']),
+            'address': joined_values(entry, ['author_address', 'address', 'AD']),
             'reference_type': first_value(entry, ['type_of_reference', 'type', 'TY']),
             'source_file': os.path.basename(file_path),
             'source_position': i,

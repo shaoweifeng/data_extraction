@@ -10,13 +10,15 @@ from .base import BaseAIProvider, ScreeningResult
 from .openai_compatible import OpenAICompatibleProvider
 
 
-def get_provider(name: str = None, config: dict = None) -> BaseAIProvider:
+def get_provider(name: str = None, config: dict = None,
+                 thinking_enabled: bool = False) -> BaseAIProvider:
     """
     Provider 工厂函数
 
     Args:
         name:   sub_model id（如 "deepseek-v4-pro"）或 provider id（如 "deepseek"）
         config: 额外配置，None 时从 ai_models_config 读取对应配置
+        thinking_enabled: 是否启用深度思考；默认关闭，适合结构化初筛
     """
     import os
     from core.services.ai_models_config import get_model_config
@@ -30,11 +32,16 @@ def get_provider(name: str = None, config: dict = None) -> BaseAIProvider:
                 "api_url":      model_cfg["api_url"],
                 "api_key":      model_cfg["api_key"],
                 "model":        model_cfg["model"],
+                "provider":     model_cfg.get("provider", ""),
                 "timeout":      model_cfg["timeout"],
                 "is_reasoning": model_cfg.get("is_reasoning", False),  # 推理模型标志
+                "thinking_enabled": thinking_enabled is True,
             }
         else:
             config = {}
+    else:
+        config = dict(config)
+        config.setdefault("thinking_enabled", thinking_enabled is True)
 
     # 所有厂商均兼容 OpenAI 接口，不再按 provider id 匹配，直接返回 OpenAICompatibleProvider
     return OpenAICompatibleProvider(config)
