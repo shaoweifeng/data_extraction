@@ -30,6 +30,10 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (res) => res,
   (err) => {
+    const code = err.response?.data?.code
+    if (err.response?.status === 503 && (code === 'SYSTEM_MAINTENANCE' || code === 'SYSTEM_DRAINING')) {
+      window.dispatchEvent(new CustomEvent('app:maintenance', { detail: err.response.data }))
+    }
     if (err.response?.status === 401 || err.response?.status === 403) {
       // 用全局事件通知 auth store，避免循环 import
       window.dispatchEvent(new CustomEvent('app:unauthorized'))
@@ -55,6 +59,10 @@ httpNoTimeout.interceptors.request.use((config) => {
 httpNoTimeout.interceptors.response.use(
   (res) => res,
   (err) => {
+    const code = err.response?.data?.code
+    if (err.response?.status === 503 && (code === 'SYSTEM_MAINTENANCE' || code === 'SYSTEM_DRAINING')) {
+      window.dispatchEvent(new CustomEvent('app:maintenance', { detail: err.response.data }))
+    }
     if (err.response?.status === 401 || err.response?.status === 403) {
       window.dispatchEvent(new CustomEvent('app:unauthorized'))
     }

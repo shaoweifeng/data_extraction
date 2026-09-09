@@ -34,6 +34,14 @@ class OpenApiContractTests(TestCase):
         '/qa/chart/generate/',
         '/qa/export/excel/',
         '/billing/balance/',
+        '/health/live/',
+        '/health/ready/',
+        '/system/status/',
+        '/presence/heartbeat/',
+        '/operations/status/',
+        '/operations/state/',
+        '/operations/tasks/pause/',
+        '/operations/tasks/resume/',
     }
 
     def test_schema_is_public_valid_json_and_covers_frontend_paths(self):

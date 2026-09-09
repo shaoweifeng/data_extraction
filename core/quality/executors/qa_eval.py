@@ -646,6 +646,8 @@ class QAEvalStepHandler(BaseStepHandler):
         ).exclude(quality_method='')
         if ref_ids:
             qs = qs.filter(pk__in=ref_ids)
+        if cfg.get('resume_incomplete_only'):
+            qs = qs.exclude(ai_eval_status='completed')
 
         ref_ids_to_eval = list(qs.values_list('pk', flat=True))
         total = len(ref_ids_to_eval)
@@ -693,9 +695,14 @@ class QAEvalStepHandler(BaseStepHandler):
             quality_method__in=AI_SUPPORTED_METHODS,
         ).select_related('fulltext_file'))
 
-        for ref in refs:
+        for ref_index, ref in enumerate(refs):
             if self.executor.check_stop_signal():
                 self.logger.warning('[QA] 检测到停止信号，中断评价')
+                remaining_ids = [item.id for item in refs[ref_index:]]
+                QAReference.objects.filter(
+                    pk__in=remaining_ids,
+                    ai_eval_status='running',
+                ).update(ai_eval_status='pending')
                 break
             try:
                 ref_token = engine._eval_one_ref(ref)

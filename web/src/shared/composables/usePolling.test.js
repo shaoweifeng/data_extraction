@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createPoller, pollUntil } from './usePolling'
 
 describe('polling', () => {
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => {
+    globalThis.__SYSTEM_MAINTENANCE__ = false
+    vi.useRealTimers()
+  })
 
   it('stops scheduling after cancel', async () => {
     vi.useFakeTimers()
@@ -41,5 +44,20 @@ describe('polling', () => {
     await Promise.resolve()
     expect(task).toHaveBeenCalledTimes(2)
     expect(poller.isActive()).toBe(false)
+  })
+
+  it('does not issue polling requests while maintenance is active', async () => {
+    vi.useFakeTimers()
+    globalThis.__SYSTEM_MAINTENANCE__ = true
+    const task = vi.fn().mockResolvedValue(null)
+    const poller = createPoller(task, { interval: 100 })
+    poller.start()
+    await vi.advanceTimersByTimeAsync(500)
+    expect(task).not.toHaveBeenCalled()
+
+    globalThis.__SYSTEM_MAINTENANCE__ = false
+    await vi.advanceTimersByTimeAsync(100)
+    expect(task).toHaveBeenCalledTimes(1)
+    poller.cancel()
   })
 })

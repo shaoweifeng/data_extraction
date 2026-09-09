@@ -27,6 +27,12 @@ const routes = [
     component: () => import('@/features/account/views/ProfileView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/operations',
+    name: 'Operations',
+    component: () => import('@/features/operations/views/OperationsView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
 ]
 
 const router = createRouter({
@@ -45,6 +51,10 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAuth && !auth.user) {
     return { name: 'Login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
+    return { name: 'Home' }
   }
 
   // 已登录时访问 /login 跳转首页

@@ -249,7 +249,7 @@ class TaskScheduler:
 
         return True
 
-    def resume_task(self, task_id: int) -> Task:
+    def resume_task(self, task_id: int, *, maintenance_resume: bool = False) -> Task:
         """
         恢复任务（断点续传）
 
@@ -284,7 +284,7 @@ class TaskScheduler:
         # 决定最终的 checkpoint 路径
         resume_cp = checkpoint_path_from_config or checkpoint_from_log
 
-        if not resume_cp:
+        if not resume_cp and old_task.task_type == 'ai_screen':
             # 可能 worker 还没来得及写（竞争条件），最多等 10 秒
             if old_task.log_file:
                 from pathlib import Path
@@ -306,7 +306,7 @@ class TaskScheduler:
                 else:
                     logger.warning(f"[续传] 等待超时，未找到 checkpoint.json，将从头开始")
 
-        if resume_cp:
+        if resume_cp and old_task.task_type == 'ai_screen':
             config["resume_checkpoint_path"] = resume_cp
 
         # 记录旧进度，让新任务初始化时能直接写入正确 progress
@@ -333,6 +333,12 @@ class TaskScheduler:
             elif resume_cp:
                 locked_config["resume_checkpoint_path"] = resume_cp
             locked_config["resume_progress"] = old_task.progress
+            if maintenance_resume:
+                locked_config.pop('paused_by_maintenance', None)
+                locked_config.pop('maintenance_paused_at', None)
+                locked_config['resumed_after_maintenance'] = True
+                if step_key == 'qa_eval':
+                    locked_config['resume_incomplete_only'] = True
 
             new_task = create_step_task(
                 self.project_id,
@@ -340,6 +346,7 @@ class TaskScheduler:
                 old_task.created_by_id,
                 locked_config,
                 exclusive=mode != "manual",
+                allow_during_maintenance=maintenance_resume,
             )
 
             # 将旧 stopped 任务标记为 superseded（已被续传替代），避免最近任务列表显示两条
