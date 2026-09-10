@@ -577,7 +577,7 @@ onMounted(async () => {
   if (s.criteriaList.length === 0) {
     const stage = project.stagesData.find((st) => st.stage_key === 'SCREEN_1')
     const step  = stage?.steps?.find((st) => st.step_key === 'criteria')
-    if (step?.metadata?.criteria?.length) s.criteriaList = step.metadata.criteria
+    if (step?.metadata?.criteria?.length) s.criteriaList = [...step.metadata.criteria]
   }
   await Promise.all([
     loadAiModels(),

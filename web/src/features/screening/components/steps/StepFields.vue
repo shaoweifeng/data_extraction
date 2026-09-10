@@ -98,11 +98,13 @@ async function saveFields() {
   const step = stage.steps.find((st) => st.step_key === 'field_extraction')
   if (!step) return
   try {
-    await workflowApi.updateStepMetadata(step.id, { fields: s.extractionFields })
+    const fields = s.extractionFields.map((field) => ({ ...field }))
+    const metadataResponse = await workflowApi.updateStepMetadata(step.id, { fields })
+    project.replaceStep(metadataResponse.data)
     // 有提取字段时，标记步骤为 completed（或字段为空时可保持 skipped/completed 不变）
-    if (s.extractionFields.length > 0 && step.status !== 'completed') {
-      await workflowApi.completeStep(step.id)
-      await project.fetchStages(project.currentProject.id)
+    if (fields.length > 0 && step.status !== 'completed') {
+      const completeResponse = await workflowApi.completeStep(step.id)
+      project.replaceStep(completeResponse.data)
     }
   } catch (err) {
     console.error('保存提取字段失败', err)
@@ -130,9 +132,7 @@ async function loadFields() {
   const stage = project.stagesData.find((st) => st.stage_key === 'SCREEN_1')
   if (!stage) return
   const step = stage.steps.find((st) => st.step_key === 'field_extraction')
-  if (step?.metadata?.fields) {
-    s.extractionFields = step.metadata.fields
-  }
+  s.extractionFields = (step?.metadata?.fields || []).map((field) => ({ ...field }))
 }
 
 onMounted(loadFields)

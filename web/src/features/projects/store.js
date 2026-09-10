@@ -67,6 +67,24 @@ export const useProjectStore = defineStore('project', () => {
     return await projectApi.skipStep(stepId)
   }
 
+  function replaceStep(updatedStep) {
+    if (!updatedStep?.id) return false
+    let replaced = false
+    stagesData.value = stagesData.value.map((stage) => {
+      if (!stage.steps?.some((step) => step.id === updatedStep.id)) return stage
+      replaced = true
+      return {
+        ...stage,
+        steps: stage.steps.map((step) => (
+          step.id === updatedStep.id
+            ? { ...step, ...updatedStep, metadata: { ...(updatedStep.metadata || {}) } }
+            : step
+        )),
+      }
+    })
+    return replaced
+  }
+
   function reset() {
     stageRequestGeneration++
     currentProject.value = null
@@ -85,6 +103,7 @@ export const useProjectStore = defineStore('project', () => {
     selectProject,
     fetchStages,
     skipStep,
+    replaceStep,
     reset,
   }
 })

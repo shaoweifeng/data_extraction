@@ -202,11 +202,13 @@ async function saveCriteria() {
   const step = stage.steps.find((st) => st.step_key === 'criteria')
   if (!step) return
   try {
-    await workflowApi.updateStepMetadata(step.id, { criteria: s.criteriaList })
+    const criteria = [...s.criteriaList]
+    const metadataResponse = await workflowApi.updateStepMetadata(step.id, { criteria })
+    project.replaceStep(metadataResponse.data)
     // 有纳排标准时，将步骤标记为 completed
-    if (s.criteriaList.length > 0 && step.status !== 'completed') {
-      await workflowApi.completeStep(step.id)
-      await project.fetchStages(project.currentProject.id)
+    if (criteria.length > 0 && step.status !== 'completed') {
+      const completeResponse = await workflowApi.completeStep(step.id)
+      project.replaceStep(completeResponse.data)
     }
   } catch (err) {
     console.error('保存纳排标准失败', err)
@@ -243,9 +245,7 @@ async function loadCriteria() {
   const stage = project.stagesData.find((st) => st.stage_key === 'SCREEN_1')
   if (!stage) return
   const step = stage.steps.find((st) => st.step_key === 'criteria')
-  if (step?.metadata?.criteria) {
-    s.criteriaList = step.metadata.criteria
-  }
+  s.criteriaList = [...(step?.metadata?.criteria || [])]
 }
 
 onMounted(loadCriteria)

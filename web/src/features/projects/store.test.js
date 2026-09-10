@@ -43,4 +43,30 @@ describe('project store request isolation', () => {
     expect(store.currentProject.id).toBe(2)
     expect(store.stagesData.map(stage => stage.id)).toEqual([22])
   })
+
+  it('replaces a saved step without leaving stale metadata in stagesData', () => {
+    const store = useProjectStore()
+    store.stagesData = [{
+      id: 10,
+      stage_key: 'SCREEN_1',
+      steps: [
+        { id: 31, step_key: 'criteria', status: 'pending', metadata: { criteria: ['标准 A'] } },
+        { id: 32, step_key: 'ai_screen', status: 'pending', metadata: {} },
+      ],
+    }]
+
+    const replaced = store.replaceStep({
+      id: 31,
+      step_key: 'criteria',
+      status: 'completed',
+      metadata: { criteria: ['标准 A', '标准 B', '标准 C'] },
+    })
+
+    expect(replaced).toBe(true)
+    expect(store.stagesData[0].steps[0]).toMatchObject({
+      status: 'completed',
+      metadata: { criteria: ['标准 A', '标准 B', '标准 C'] },
+    })
+    expect(store.stagesData[0].steps[1].step_key).toBe('ai_screen')
+  })
 })
