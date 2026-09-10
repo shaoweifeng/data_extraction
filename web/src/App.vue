@@ -1,6 +1,7 @@
 <template>
   <SystemStatusBanner />
   <router-view />
+  <FeedbackWidget />
   <div v-if="operations.isMaintenance && !auth.isAdmin" class="maintenance-overlay">
     <div class="maintenance-card">
       <i class="fas fa-screwdriver-wrench"></i>
@@ -17,6 +18,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/account/store'
 import { useOperationsStore } from '@/features/operations/store'
 import SystemStatusBanner from '@/shared/components/SystemStatusBanner.vue'
+import FeedbackWidget from '@/features/feedback/FeedbackWidget.vue'
 
 const auth = useAuthStore()
 const operations = useOperationsStore()

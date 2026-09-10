@@ -12,6 +12,11 @@
 | `CELERY_RESULT_BACKEND` | 可选 | 默认使用 Django 数据库 |
 | `DEEPSEEK_* / DOUBAO_* / QWEN_*` | 按需 | AI Provider 地址、模型与密钥 |
 | `MPLCONFIGDIR` | 可选 | Matplotlib 缓存目录；启动脚本默认使用项目 `.cache` |
+| `FEEDBACK_UPLOAD_ROOT` | 可选 | 用户反馈私有图片目录；默认 `private_media/feedback`，不能映射到公开静态 URL |
+| `FEEDBACK_DAILY_LIMIT` | 可选 | 普通用户每日反馈上限，默认 5 |
+| `FEEDBACK_MAX_IMAGES` | 可选 | 单条反馈图片数上限，默认 3 |
+| `FEEDBACK_MAX_IMAGE_BYTES` | 可选 | 单张反馈图片字节上限，默认 5 MiB |
+| `FEEDBACK_MAX_TOTAL_IMAGE_BYTES` | 可选 | 单条反馈图片总字节上限，默认 10 MiB |
 
 完整示例见 `.env.example`。
 
@@ -140,4 +145,11 @@ python manage.py migrate
 python manage.py check
 ```
 
-项目文件位于 `media/` 与任务工作目录中，数据库备份必须与对应文件快照一起保存。删除项目按产品规则直接清空，不保留应用内回收站。
+项目文件位于 `media/` 与任务工作目录中，反馈图片位于 `FEEDBACK_UPLOAD_ROOT`。数据库备份必须与这些目录的对应文件快照一起保存。删除项目按产品规则直接清空，不保留应用内回收站；用户反馈不会因关联项目或提交用户删除而自动丢失。
+
+异常退出可能留下未完成数据库提交的孤立反馈图片。命令默认只预览，确认后再执行删除：
+
+```bash
+python manage.py cleanup_feedback_orphans
+python manage.py cleanup_feedback_orphans --apply --older-than-hours=24
+```

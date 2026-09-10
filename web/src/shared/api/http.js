@@ -26,7 +26,7 @@ http.interceptors.request.use((config) => {
   return config
 })
 
-// 响应拦截：401 → 清空用户状态（由 router 守卫负责重定向）
+// 响应拦截：仅 401 表示会话失效；普通 403 是业务权限拒绝，不能误登出。
 http.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -34,7 +34,7 @@ http.interceptors.response.use(
     if (err.response?.status === 503 && (code === 'SYSTEM_MAINTENANCE' || code === 'SYSTEM_DRAINING')) {
       window.dispatchEvent(new CustomEvent('app:maintenance', { detail: err.response.data }))
     }
-    if (err.response?.status === 401 || err.response?.status === 403) {
+    if (err.response?.status === 401) {
       // 用全局事件通知 auth store，避免循环 import
       window.dispatchEvent(new CustomEvent('app:unauthorized'))
     }
@@ -63,7 +63,7 @@ httpNoTimeout.interceptors.response.use(
     if (err.response?.status === 503 && (code === 'SYSTEM_MAINTENANCE' || code === 'SYSTEM_DRAINING')) {
       window.dispatchEvent(new CustomEvent('app:maintenance', { detail: err.response.data }))
     }
-    if (err.response?.status === 401 || err.response?.status === 403) {
+    if (err.response?.status === 401) {
       window.dispatchEvent(new CustomEvent('app:unauthorized'))
     }
     return Promise.reject(err)

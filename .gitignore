@@ -33,6 +33,7 @@ db.sqlite3-journal
 /static/
 /staticfiles/
 /media/
+/private_media/
 
 # Task workspaces
 /workspaces/

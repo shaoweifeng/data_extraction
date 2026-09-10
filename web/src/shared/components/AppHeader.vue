@@ -28,6 +28,17 @@
         <i class="fas fa-gauge-high"></i><span>运维</span>
       </button>
 
+      <button
+        v-if="auth.user && !auth.isAdmin"
+        class="header-feedback"
+        type="button"
+        title="提交使用反馈"
+        aria-label="提交使用反馈"
+        @click="openFeedback"
+      >
+        <i class="fas fa-comment-dots"></i><span>反馈</span>
+      </button>
+
       <!-- 余额展示（点击进个人中心充值） -->
       <div class="header-balance" @click="onUserClick" title="查看个人中心 / 充值">
         <i class="fas fa-coins header-balance-icon"></i>
@@ -112,6 +123,10 @@ function goHome() {
 
 function onUserClick() {
   router.push('/profile')
+}
+
+function openFeedback() {
+  window.dispatchEvent(new CustomEvent('app:feedback-open'))
 }
 
 async function handleLogout() {
@@ -228,4 +243,17 @@ async function handleLogout() {
   color: #4f46e5; font-size: .78rem; font-weight: 600; cursor: pointer;
 }
 .header-ops:hover { background: #e0e7ff; }
+.header-feedback {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  min-width: 32px; height: 32px; padding: 0 11px;
+  border: 1px solid #bfdbfe; border-radius: 999px;
+  color: #2563eb; background: #eff6ff;
+  font-size: .78rem; font-weight: 600; cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.header-feedback:hover { color: #1d4ed8; background: #dbeafe; border-color: #93c5fd; }
+@media (max-width: 900px) {
+  .header-feedback { width: 32px; padding: 0; }
+  .header-feedback span { display: none; }
+}
 </style>

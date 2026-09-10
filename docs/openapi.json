@@ -13,7 +13,8 @@
     {"name": "Screening Review"},
     {"name": "Quality Assessment"},
     {"name": "Billing"},
-    {"name": "Operations"}
+    {"name": "Operations"},
+    {"name": "Feedback"}
   ],
   "paths": {
     "/auth/register/": {"post": {"tags": ["Auth"], "responses": {"201": {"description": "Registered"}, "400": {"$ref": "#/components/responses/BadRequest"}}}},
@@ -29,6 +30,47 @@
     "/operations/state/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Operational state changed"}, "400": {"$ref": "#/components/responses/BadRequest"}, "403": {"description": "Administrator required"}}}},
     "/operations/tasks/pause/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Long-running tasks asked to pause"}, "403": {"description": "Administrator required"}}}},
     "/operations/tasks/resume/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Maintenance-paused tasks resumed"}, "403": {"description": "Administrator required"}}}},
+    "/feedback/": {
+      "post": {
+        "tags": ["Feedback"],
+        "parameters": [{"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["category", "content"],
+                "properties": {
+                  "category": {"type": "string", "enum": ["problem", "suggestion"]},
+                  "content": {"type": "string", "minLength": 5, "maxLength": 2000},
+                  "project_id": {"type": "integer", "nullable": true},
+                  "page_path": {"type": "string"},
+                  "route_name": {"type": "string"},
+                  "context": {"type": "string", "description": "JSON object"},
+                  "images": {"type": "array", "maxItems": 3, "items": {"type": "string", "format": "binary"}}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Feedback persisted"},
+          "200": {"description": "Idempotent retry returned the original feedback"},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "413": {"description": "Request body too large"},
+          "422": {"description": "Invalid image"},
+          "429": {"description": "Daily or burst limit exceeded"}
+        }
+      }
+    },
+    "/feedback/attachments/{attachment_id}/": {
+      "get": {
+        "tags": ["Feedback"],
+        "parameters": [{"name": "attachment_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {"200": {"description": "Private feedback image"}, "404": {"$ref": "#/components/responses/NotFound"}}
+      }
+    },
     "/projects/": {
       "get": {"tags": ["Projects"], "responses": {"200": {"description": "Visible projects", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedProjects"}}}}}},
       "post": {"tags": ["Projects"], "responses": {"201": {"description": "Created"}}}

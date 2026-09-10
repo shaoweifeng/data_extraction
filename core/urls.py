@@ -61,6 +61,9 @@ urlpatterns = [
     path('billing/redeem/',       billing_redeem,       name='billing_redeem'),
     path('billing/transactions/', billing_transactions, name='billing_transactions'),
 
+    # 用户反馈
+    path('feedback/', include('core.feedback.urls')),
+
     # 人工审阅 API
     path('review/list/',          review_list,    name='review_list'),
     path('review/submit/',        review_submit,  name='review_submit'),

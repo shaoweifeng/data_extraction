@@ -14,7 +14,7 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 
-// 监听 http.js 发出的 401/403 事件，清空用户状态并跳转登录页
+// 监听 http.js 发出的会话失效事件，清空用户状态并跳转登录页
 window.addEventListener('app:unauthorized', () => {
   const auth = useAuthStore()
   auth.user = null

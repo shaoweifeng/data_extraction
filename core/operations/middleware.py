@@ -10,6 +10,7 @@ _ALWAYS_ALLOWED_PREFIXES = (
     '/api/operations/',
     '/api/auth/logout/',
     '/api/auth/me/',
+    '/api/feedback/',
     '/admin/',
     '/static/',
     '/assets/',

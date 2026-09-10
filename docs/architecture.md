@@ -11,6 +11,7 @@ core/
 ├── ai/                 # AI Provider、额度预检、用量记录与结算
 ├── api/                # 账户、项目、文件、任务等公共 API
 ├── artifacts/          # 产物类型与产物服务
+├── feedback/           # 用户反馈、并发配额与私有附件
 ├── screening/          # 初筛 API、领域规则、执行器、解析器、导出器与服务
 ├── quality/            # 质量评价 API、方法配置、执行器、图表与导出
 ├── workflow/           # 状态机、任务启动边界与执行运行时
@@ -22,6 +23,7 @@ web/src/
 ├── features/
 │   ├── account/        # 登录与个人账户
 │   ├── billing/        # 额度接口
+│   ├── feedback/       # 全局用户反馈组件、校验与提交 API
 │   ├── projects/       # 项目列表和工作区
 │   ├── screening/      # 初筛组件、API、Store 与交互控制器
 │   ├── quality/        # 质量评价组件、API 与能力 Store
@@ -37,6 +39,7 @@ web/src/
 - `core/screening` 与 `core/quality` 可依赖 `core/ai`、`core/artifacts`、`core/workflow` 和公共服务；公共层不得反向依赖具体前端 feature。
 - AI 初筛与 AI 质量评价共用 Provider、额度预检、Token 用量累计和结算基础设施，但保留各自的 Prompt、响应解析和领域结果。
 - 前端 feature 通过自身 API 模块访问后端；`shared` 不直接读取初筛或质量评价 Store。跨 feature 的页面级重置由应用装配层处理。
+- 用户反馈由独立 Django 子应用 `core.feedback` 承载，反馈附件使用私有存储并仅通过鉴权接口读取；Vue 根组件只负责装配 `features/feedback`。
 - 异步任务由统一任务启动服务创建，由 Worker 认领和执行；解析、去重、AI 初筛、图表生成等轮询在组件卸载或项目切换时可取消。
 
 ## 正式接口与旧代码判定

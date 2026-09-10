@@ -42,6 +42,8 @@ class OpenApiContractTests(TestCase):
         '/operations/state/',
         '/operations/tasks/pause/',
         '/operations/tasks/resume/',
+        '/feedback/',
+        '/feedback/attachments/{attachment_id}/',
     }
 
     def test_schema_is_public_valid_json_and_covers_frontend_paths(self):

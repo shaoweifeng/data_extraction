@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_celery_results',
     'core',
+    'core.feedback.apps.FeedbackConfig',
 ]
 
 MIDDLEWARE = [
@@ -180,6 +181,19 @@ WHITENOISE_MAX_AGE = 3600
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# 用户反馈附件是私有数据，不通过 MEDIA_URL 暴露。
+FEEDBACK_UPLOAD_ROOT = os.getenv('FEEDBACK_UPLOAD_ROOT') or os.path.join(BASE_DIR, 'private_media', 'feedback')
+FEEDBACK_DAILY_LIMIT = int(os.getenv('FEEDBACK_DAILY_LIMIT', '5'))
+FEEDBACK_BURST_LIMIT = int(os.getenv('FEEDBACK_BURST_LIMIT', '3'))
+FEEDBACK_BURST_WINDOW_SECONDS = int(os.getenv('FEEDBACK_BURST_WINDOW_SECONDS', '60'))
+FEEDBACK_CONTENT_MIN_LENGTH = int(os.getenv('FEEDBACK_CONTENT_MIN_LENGTH', '5'))
+FEEDBACK_CONTENT_MAX_LENGTH = int(os.getenv('FEEDBACK_CONTENT_MAX_LENGTH', '2000'))
+FEEDBACK_MAX_IMAGES = int(os.getenv('FEEDBACK_MAX_IMAGES', '3'))
+FEEDBACK_MAX_IMAGE_BYTES = int(os.getenv('FEEDBACK_MAX_IMAGE_BYTES', str(5 * 1024 * 1024)))
+FEEDBACK_MAX_TOTAL_IMAGE_BYTES = int(os.getenv('FEEDBACK_MAX_TOTAL_IMAGE_BYTES', str(10 * 1024 * 1024)))
+FEEDBACK_MAX_REQUEST_BYTES = int(os.getenv('FEEDBACK_MAX_REQUEST_BYTES', str(12 * 1024 * 1024)))
+FEEDBACK_MAX_IMAGE_PIXELS = int(os.getenv('FEEDBACK_MAX_IMAGE_PIXELS', str(25_000_000)))
 
 # 允许同源 iframe 加载（PDF 在 <iframe> 中预览需要 SAMEORIGIN 而非 DENY）
 X_FRAME_OPTIONS = 'SAMEORIGIN'

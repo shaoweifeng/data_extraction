@@ -68,14 +68,23 @@
 | POST | `/api/operations/tasks/pause/` | 仅管理员；协作式暂停可恢复的长任务 |
 | POST | `/api/operations/tasks/resume/` | 仅管理员；恢复维护暂停任务 |
 
-## 7. 自动化门禁
+## 7. 用户反馈
+
+| 方法 | 路径 | 核心契约 |
+|---|---|---|
+| POST | `/api/feedback/` | 仅普通登录用户；multipart，必须携带 UUID 格式的 `Idempotency-Key`；返回反馈编号和当日剩余次数 |
+| GET | `/api/feedback/attachments/{uuid}/` | 仅附件所属用户或管理员；图片来自私有存储，不暴露真实文件路径 |
+
+反馈正文、图片数量/大小、分钟频率和每日次数均由服务端校验。相同用户使用相同幂等键重试时返回原反馈且不重复计数。反馈提交接口在排空或维护模式下仍可用。
+
+## 8. 自动化门禁
 
 - Python 3.9、Django 4.2 兼容。
 - `manage.py check`、迁移漂移检查和 `core.tests` 必须通过。
 - 前端使用 Node 22 仅在本地/持续集成构建；服务器可继续使用 `--no-build` 和已提交的 `web/dist`。
 - CI 检查构建后 `web/dist` 无差异，确保提交的产物与源码一致。
 
-## 8. 机器可读 Schema
+## 9. 机器可读 Schema
 
 - OpenAPI 3.0 基线文件：`docs/openapi.json`。
 - 运行时地址：`GET /api/schema/`。
