@@ -83,7 +83,7 @@ function handleBackToList() {
   project.currentStage = 'SCREEN_1'
   taskStore.reset()
   window.dispatchEvent(new CustomEvent('app:project-left'))
-  router.push('/')
+  router.push('/projects')
 }
 </script>
 

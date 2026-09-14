@@ -42,7 +42,7 @@
           <div class="cc-hint">AI 筛选时最多同时使用的线程数</div>
         </div>
 
-        <button class="back-btn" @click="router.push('/')">
+        <button class="back-btn" @click="router.push('/projects')">
           <i class="fas fa-arrow-left"></i> 返回项目列表
         </button>
       </aside>

@@ -191,7 +191,7 @@ async function initializeWorkspace(projectId) {
     await project.fetchProjects()
     if (generation !== workspaceGeneration) return
     const found = project.projects.find((p) => p.id === projectId)
-    if (!found) { router.push('/'); return }
+    if (!found) { router.push('/projects'); return }
     // 切换项目时先清空所有项目级状态，防止旧项目数据短暂显示。
     screening.reset()
     taskStore.reset()

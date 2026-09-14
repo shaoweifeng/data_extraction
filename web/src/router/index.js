@@ -3,13 +3,19 @@ import { useAuthStore } from '@/features/account/store'
 
 const routes = [
   {
+    path: '/',
+    name: 'Landing',
+    component: () => import('@/features/landing/views/LandingView.vue'),
+    meta: { requiresAuth: false },
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('@/features/account/views/LoginView.vue'),
     meta: { requiresAuth: false },
   },
   {
-    path: '/',
+    path: '/projects',
     name: 'Home',
     component: () => import('@/features/projects/views/HomeView.vue'),
     meta: { requiresAuth: true },
@@ -40,7 +46,7 @@ const router = createRouter({
   routes,
 })
 
-// 路由守卫：未登录跳转 /login
+// 路由守卫：公开首页始终可访问，业务页面未登录时跳转 /login
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 

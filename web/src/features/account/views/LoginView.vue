@@ -145,7 +145,7 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
-const tab = ref('login')
+const tab = ref(route.query.mode === 'register' ? 'register' : 'login')
 const error = ref('')
 const success = ref('')
 const loading = ref(false)
@@ -159,7 +159,7 @@ async function handleLogin() {
   loading.value = true
   try {
     await auth.login(loginForm.value)
-    const redirect = route.query.redirect || '/'
+    const redirect = route.query.redirect || '/projects'
     router.push(redirect)
   } catch (e) {
     error.value = e.message || '登录失败'

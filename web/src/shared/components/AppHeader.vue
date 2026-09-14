@@ -118,7 +118,7 @@ function goHome() {
   project.currentProject = null
   project.currentStage = 'SCREEN_1'
   window.dispatchEvent(new CustomEvent('app:project-left'))
-  router.push('/')
+  router.push('/projects')
 }
 
 function onUserClick() {
