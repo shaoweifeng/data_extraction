@@ -79,7 +79,7 @@
 
 ## 8. 自动化门禁
 
-- Python 3.9、Django 4.2 兼容。
+- Python 3.12、Django 5.2 兼容。
 - `manage.py check`、迁移漂移检查和 `core.tests` 必须通过。
 - 前端使用 Node 22 仅在本地/持续集成构建；服务器可继续使用 `--no-build` 和已提交的 `web/dist`。
 - CI 检查构建后 `web/dist` 无差异，确保提交的产物与源码一致。

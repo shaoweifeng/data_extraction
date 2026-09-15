@@ -296,7 +296,10 @@ class SystemOperationStateAdmin(admin.ModelAdmin):
 class CreditTransactionInline(admin.TabularInline):
     model = CreditTransaction
     extra = 0
-    readonly_fields = ['txn_type', 'amount', 'balance_after', 'note', 'created_at', 'created_by']
+    readonly_fields = [
+        'txn_type', 'amount', 'balance_after', 'idempotency_key',
+        'note', 'created_at', 'created_by',
+    ]
     ordering = ['-created_at']
     can_delete = False
     max_num = 20
@@ -317,10 +320,13 @@ class CreditAccountAdmin(admin.ModelAdmin):
 
 @admin.register(CreditTransaction)
 class CreditTransactionAdmin(admin.ModelAdmin):
-    list_display  = ['account', 'txn_type', 'amount', 'balance_after', 'note', 'created_at', 'created_by']
+    list_display  = [
+        'account', 'txn_type', 'amount', 'balance_after',
+        'idempotency_key', 'note', 'created_at', 'created_by',
+    ]
     list_filter   = ['txn_type', 'created_at']
-    search_fields = ['account__user__username', 'note']
-    readonly_fields = ['created_at']
+    search_fields = ['account__user__username', 'idempotency_key', 'note']
+    readonly_fields = ['idempotency_key', 'created_at']
     raw_id_fields = ['account', 'task', 'created_by']
 
 

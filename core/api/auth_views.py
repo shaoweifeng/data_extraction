@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from datetime import timedelta
@@ -10,6 +11,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from ..serializers import UserSerializer
+from core.account.services.client_ip import get_client_ip
+from core.account.services.rate_limit import consume_rate_limit, refund_rate_limit
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -17,14 +20,8 @@ from ..serializers import UserSerializer
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _get_client_ip(request) -> str:
-    """
-    从请求中提取真实客户端 IP。
-    优先读 X-Forwarded-For 最左侧地址（反向代理场景），兜底用 REMOTE_ADDR。
-    """
-    xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    if xff:
-        return xff.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR', '0.0.0.0')
+    """Compatibility alias for the trusted-proxy-aware resolver."""
+    return get_client_ip(request)
 
 
 def _check_ip_register_limit(ip: str) -> tuple[bool, int]:
@@ -69,9 +66,8 @@ def _log_registration(ip: str, username: str, email: str,
 # 注册
 # ──────────────────────────────────────────────────────────────────────────────
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def register(request):
+def legacy_register(request):
+    """Temporary compatibility path used while account registration v2 is dark."""
     username = request.data.get('username', '').strip()
     password = request.data.get('password', '')
     email    = request.data.get('email', '').strip()
@@ -121,9 +117,18 @@ def register(request):
         )
 
     # ── 创建用户 ──────────────────────────────────────────────────────────────
-    # UserProfile 由 post_save 信号自动创建（role=user, is_approved=True），免审核
-    # CreditAccount（200 credits 赠送）由 models_billing.py 的 post_save 信号自动创建
-    user = User.objects.create_user(username=username, password=password, email=email)
+    # UserProfile/CreditAccount 由信号兜底创建；赠送通过显式计费 Service 完成。
+    with transaction.atomic():
+        user = User.objects.create_user(username=username, password=password, email=email)
+        free_credits = getattr(settings, 'BILLING_FREE_CREDITS_ON_REGISTER', 200)
+        if free_credits > 0:
+            from core.services.billing_service import grant_credits
+            grant_credits(
+                user,
+                free_credits,
+                note='注册赠送（兼容注册链路）',
+                idempotency_key=f'legacy_welcome_grant:{user.pk}',
+            )
     # 重新查询确保 profile 反向关系完整加载后再序列化（避免信号建 Profile 后缓存未刷新报 500）
     user = User.objects.select_related('profile').get(pk=user.pk)
 
@@ -134,6 +139,12 @@ def register(request):
         {"message": "注册成功，请登录", "user": UserSerializer(user).data},
         status=status.HTTP_201_CREATED,
     )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    return legacy_register(request)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -152,6 +163,44 @@ def login_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    login_limits = []
+    if getattr(settings, 'ACCOUNT_RATE_LIMIT_ENABLED', False):
+        ip_address = get_client_ip(request)
+        window = getattr(settings, 'LOGIN_FAILURE_WINDOW_SECONDS', 600)
+        ip_limit = consume_rate_limit(
+            'login:ip',
+            ip_address,
+            limit=getattr(settings, 'LOGIN_IP_FAILURE_LIMIT', 50),
+            window_seconds=window,
+            fail_closed=False,
+        )
+        login_limits.append(ip_limit)
+        if not ip_limit.allowed:
+            response = Response(
+                {"error": "登录尝试过于频繁，请稍后再试", "code": "rate_limited"},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+            if ip_limit.retry_after:
+                response['Retry-After'] = str(ip_limit.retry_after)
+            return response
+
+        identifier_limit = consume_rate_limit(
+            'login:identifier',
+            str(username).strip().lower(),
+            limit=getattr(settings, 'LOGIN_IDENTIFIER_FAILURE_LIMIT', 10),
+            window_seconds=window,
+            fail_closed=False,
+        )
+        login_limits.append(identifier_limit)
+        if not identifier_limit.allowed:
+            response = Response(
+                {"error": "登录尝试过于频繁，请稍后再试", "code": "rate_limited"},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+            if identifier_limit.retry_after:
+                response['Retry-After'] = str(identifier_limit.retry_after)
+            return response
+
     user = authenticate(request, username=username, password=password)
 
     if user is None:
@@ -159,6 +208,9 @@ def login_view(request):
             {"error": "用户名或密码错误"},
             status=status.HTTP_401_UNAUTHORIZED,
         )
+
+    for decision in login_limits:
+        refund_rate_limit(decision)
 
     # 封禁检查
     profile = getattr(user, 'profile', None)

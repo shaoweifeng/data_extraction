@@ -4,7 +4,7 @@
 
 ## 环境
 
-- Python 3.9
+- Python 3.12
 - MySQL 8（或兼容版本）
 - Redis
 - Node.js 仅用于本地开发和构建；服务器可直接使用已提交的 `web/dist`
@@ -14,7 +14,7 @@
 ## 安装与启动
 
 ```bash
-python3.9 -m venv venv
+python3.12 -m venv venv
 venv/bin/pip install -r requirements.txt
 venv/bin/python manage.py migrate
 ./start.sh
@@ -30,7 +30,7 @@ venv/bin/python manage.py migrate
 
 ```bash
 MPLCONFIGDIR=/tmp/data-extraction-mpl venv/bin/python manage.py check
-MPLCONFIGDIR=/tmp/data-extraction-mpl venv/bin/python manage.py test core.tests --settings=platform_backend.test_settings
+MPLCONFIGDIR=/tmp/data-extraction-mpl venv/bin/python manage.py test core.tests core.account.tests --settings=platform_backend.test_settings
 cd web && npm ci && npm test && npm run lint -- --quiet && npm run build
 ```
 

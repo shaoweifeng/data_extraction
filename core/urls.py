@@ -48,8 +48,8 @@ urlpatterns = [
     path('operations/tasks/resume/', operations_resume_tasks, name='operations_resume_tasks'),
     # 机器可读 API 契约
     path('schema/', openapi_schema, name='openapi_schema'),
-    # 认证 API
-    path('auth/register/', api.register, name='register'),
+    # 认证 API；注册领域由 core.account 独立维护
+    path('auth/', include('core.account.urls')),
     path('auth/login/', api.login_view, name='login'),
     path('auth/logout/', api.logout_view, name='logout'),
     path('auth/me/', api.current_user, name='current_user'),

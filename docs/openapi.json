@@ -17,8 +17,22 @@
     {"name": "Feedback"}
   ],
   "paths": {
-    "/auth/register/": {"post": {"tags": ["Auth"], "responses": {"201": {"description": "Registered"}, "400": {"$ref": "#/components/responses/BadRequest"}}}},
-    "/auth/login/": {"post": {"tags": ["Auth"], "responses": {"200": {"description": "Logged in"}, "401": {"description": "Invalid credentials"}}}},
+    "/auth/register/": {
+      "post": {
+        "tags": ["Auth"],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RegistrationRequest"}}}},
+        "responses": {
+          "201": {"description": "Registered"},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"description": "Registration is closed"},
+          "413": {"description": "Request body is too large"},
+          "415": {"description": "Content-Type must be application/json"},
+          "429": {"description": "Registration rate limit exceeded"},
+          "503": {"description": "Account security dependency unavailable"}
+        }
+      }
+    },
+    "/auth/login/": {"post": {"tags": ["Auth"], "responses": {"200": {"description": "Logged in"}, "401": {"description": "Invalid credentials"}, "429": {"description": "Login failure limit exceeded"}}}},
     "/auth/logout/": {"post": {"tags": ["Auth"], "responses": {"200": {"description": "Logged out"}}}},
     "/auth/me/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Current user"}}}},
     "/ai-models/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Configured model catalog"}}}},
@@ -161,6 +175,16 @@
       "NotFound": {"description": "Resource unavailable or not visible"}
     },
     "schemas": {
+      "RegistrationRequest": {
+        "type": "object",
+        "required": ["username", "email", "password", "password_confirm"],
+        "properties": {
+          "username": {"type": "string", "maxLength": 150},
+          "email": {"type": "string", "format": "email", "maxLength": 254},
+          "password": {"type": "string", "format": "password", "minLength": 8, "maxLength": 128},
+          "password_confirm": {"type": "string", "format": "password", "minLength": 8, "maxLength": 128}
+        }
+      },
       "QaEnvelope": {
         "type": "object",
         "required": ["ok", "data"],

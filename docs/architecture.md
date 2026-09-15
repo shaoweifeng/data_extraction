@@ -9,6 +9,7 @@
 ```text
 core/
 ├── ai/                 # AI Provider、额度预检、用量记录与结算
+├── account/            # 注册、可信邮箱身份、限流与账户领域服务
 ├── api/                # 账户、项目、文件、任务等公共 API
 ├── artifacts/          # 产物类型与产物服务
 ├── feedback/           # 用户反馈、并发配额与私有附件
@@ -56,12 +57,12 @@ web/src/
 - 未人工审阅的初筛文件默认采用 AI 判断。
 - 删除项目为直接清空，不保留软删除或回收站。
 - 图表由 Python/Matplotlib 异步生成，不依赖 R 或 robvis。
-- 兼容 Python 3.9；服务器可使用 `./start.sh --no-build`，前端 `web/dist` 必须提交。
+- 运行于 Python 3.12 和 Django 5.2；服务器可使用 `./start.sh --no-build`，前端 `web/dist` 必须提交。
 
 ## 验证入口
 
 ```bash
 MPLCONFIGDIR=/tmp/data-extraction-mpl venv/bin/python manage.py check
-MPLCONFIGDIR=/tmp/data-extraction-mpl venv/bin/python manage.py test core.tests --settings=platform_backend.test_settings
+MPLCONFIGDIR=/tmp/data-extraction-mpl venv/bin/python manage.py test core.tests core.account.tests --settings=platform_backend.test_settings
 cd web && npm test && npm run lint -- --quiet && npm run build
 ```

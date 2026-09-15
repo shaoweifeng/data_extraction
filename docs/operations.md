@@ -10,6 +10,10 @@
 | `DB_NAME/DB_USER/DB_PASSWORD/DB_HOST/DB_PORT` | 必需 | MySQL 连接参数 |
 | `CELERY_BROKER_URL` | 必需 | Redis Broker 地址 |
 | `CELERY_RESULT_BACKEND` | 可选 | 默认使用 Django 数据库 |
+| `ACCOUNT_REGISTRATION_V2_ENABLED` | 可选 | 阶段 1 新注册链路开关；完成邮箱验证前保持 `False` |
+| `ACCOUNT_RATE_LIMIT_ENABLED` | 生产必需 | 公开注册或登录保护启用时设为 `True` |
+| `RATE_LIMIT_REDIS_URL` | 生产必需 | 账户限流专用 Redis 地址，建议使用独立逻辑库 |
+| `TRUSTED_PROXY_IPS` | 生产必需 | 可信 CDN/Nginx 地址或 CIDR，逗号分隔 |
 | `DEEPSEEK_* / DOUBAO_* / QWEN_*` | 按需 | AI Provider 地址、模型与密钥 |
 | `MPLCONFIGDIR` | 可选 | Matplotlib 缓存目录；启动脚本默认使用项目 `.cache` |
 | `FEEDBACK_UPLOAD_ROOT` | 可选 | 用户反馈私有图片目录；默认 `private_media/feedback`，不能映射到公开静态 URL |
@@ -29,6 +33,23 @@ bash -n start.sh
 test -f web/dist/index.html
 python manage.py check
 python manage.py migrate --check
+```
+
+阶段 1 部署会新增 `account.0001_initial` 和 `core.0022_credittransaction_idempotency_key`。
+部署 migration 后仍保持 `ACCOUNT_REGISTRATION_V2_ENABLED=false`，旧注册入口继续兼容；新链路完成预发布验证后再切换。账户限流启用前必须确认 `RATE_LIMIT_REDIS_URL` 可用，注册限流在 Redis 故障时会拒绝请求，登录限流则降级放行并告警。
+
+部署前后可以执行只读账户审计；命令只输出数量，不输出完整邮箱：
+
+```bash
+python manage.py audit_accounts
+python manage.py audit_accounts --json
+python manage.py audit_accounts --fail-on-issues
+```
+
+MySQL 预发布环境使用独立测试库执行账户并发契约；不要把测试命令指向生产数据库：
+
+```bash
+python manage.py test core.account.tests.test_mysql_concurrency
 ```
 
 ## 在线状态与维护模式

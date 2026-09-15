@@ -11,14 +11,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
           cache: pip
       - run: pip install -r requirements.txt
       - run: python manage.py check --settings=platform_backend.test_settings
         env:
           MPLCONFIGDIR: /tmp/matplotlib
       - run: python manage.py makemigrations --check --dry-run --settings=platform_backend.test_settings
-      - run: python manage.py test core.tests --settings=platform_backend.test_settings -v 2
+      - run: python manage.py test core.tests core.account.tests --settings=platform_backend.test_settings -v 2
         env:
           MPLCONFIGDIR: /tmp/matplotlib
 

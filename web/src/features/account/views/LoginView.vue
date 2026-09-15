@@ -42,19 +42,13 @@
             autocomplete="username"
           />
         </div>
-        <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-lock form-icon"></i> 密码
-          </label>
-          <input
-            v-model="loginForm.password"
-            type="password"
-            required
-            class="input-base"
-            placeholder="请输入密码"
-            autocomplete="current-password"
-          />
-        </div>
+        <PasswordField
+          id="login-password"
+          v-model="loginForm.password"
+          label="密码"
+          placeholder="请输入密码"
+          autocomplete="current-password"
+        />
         <p v-if="error" class="form-error">
           <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
         </p>
@@ -74,34 +68,46 @@
             v-model="registerForm.username"
             type="text"
             required
+            maxlength="150"
             class="input-base"
             placeholder="设置用户名"
+            autocomplete="username"
           />
         </div>
         <div class="form-group">
           <label class="form-label">
-            <i class="fas fa-envelope form-icon"></i> 邮箱（可选）
+            <i class="fas fa-envelope form-icon"></i> 邮箱
           </label>
           <input
             v-model="registerForm.email"
             type="email"
+            required
+            maxlength="254"
             class="input-base"
             placeholder="your@email.com"
+            autocomplete="email"
           />
         </div>
-        <div class="form-group">
-          <label class="form-label">
-            <i class="fas fa-lock form-icon"></i> 密码
-          </label>
-          <input
-            v-model="registerForm.password"
-            type="password"
-            required
-            class="input-base"
-            placeholder="设置登录密码"
-            autocomplete="new-password"
-          />
-        </div>
+        <PasswordField
+          id="register-password"
+          v-model="registerForm.password"
+          label="密码"
+          placeholder="设置登录密码"
+          :minlength="PASSWORD_MIN_LENGTH"
+          :maxlength="PASSWORD_MAX_LENGTH"
+        />
+        <PasswordField
+          id="register-password-confirm"
+          v-model="registerForm.password_confirm"
+          label="确认密码"
+          placeholder="再次输入密码"
+          :minlength="PASSWORD_MIN_LENGTH"
+          :maxlength="PASSWORD_MAX_LENGTH"
+        />
+        <PasswordRequirements
+          :password="registerForm.password"
+          :confirm-password="registerForm.password_confirm"
+        />
         <p v-if="error" class="form-error">
           <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
         </p>
@@ -140,6 +146,13 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/account/store'
+import PasswordField from '@/features/account/components/PasswordField.vue'
+import PasswordRequirements from '@/features/account/components/PasswordRequirements.vue'
+import {
+  firstAccountError,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '@/features/account/validation'
 
 const router = useRouter()
 const route = useRoute()
@@ -152,7 +165,7 @@ const loading = ref(false)
 const registered = ref(false)  // 注册成功状态，控制按钮切换
 
 const loginForm = ref({ username: '', password: '' })
-const registerForm = ref({ username: '', email: '', password: '' })
+const registerForm = ref({ username: '', email: '', password: '', password_confirm: '' })
 
 async function handleLogin() {
   error.value = ''
@@ -171,13 +184,17 @@ async function handleLogin() {
 async function handleRegister() {
   error.value = ''
   success.value = ''
+  if (registerForm.value.password !== registerForm.value.password_confirm) {
+    error.value = '两次输入的密码不一致'
+    return
+  }
   loading.value = true
   try {
     const data = await auth.register(registerForm.value)
     success.value = data.message || '注册成功，请登录'
     registered.value = true  // 停留在注册页显示成功，不自动切 tab
   } catch (e) {
-    error.value = e.response?.data?.error || e.message || '注册失败'
+    error.value = firstAccountError(e, '注册失败')
   } finally {
     loading.value = false
   }

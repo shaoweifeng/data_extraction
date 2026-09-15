@@ -12,7 +12,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.conf import settings
 
 
 # ============================================================================
@@ -73,6 +72,13 @@ class CreditTransaction(models.Model):
         related_name='credit_transactions', verbose_name="关联任务",
     )
     note = models.CharField(max_length=255, blank=True, verbose_name="备注")
+    idempotency_key = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        unique=True,
+        verbose_name="业务幂等键",
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     created_by = models.ForeignKey(
         User, null=True, blank=True,
@@ -136,37 +142,26 @@ class TokenUsageLog(models.Model):
 
 
 # ============================================================================
-# 信号：User 创建时自动建 CreditAccount 并赠送免费额度
+# 信号：User 创建时只兜底建立零余额 CreditAccount
 # ============================================================================
 
 @receiver(post_save, sender=User)
 def ensure_credit_account(sender, instance, created, **kwargs):
     """
-    User 创建时自动建立 CreditAccount，并写入注册赠送流水。
-    赠送额度由 settings.BILLING_FREE_CREDITS_ON_REGISTER 控制（默认 200）。
-    使用 get_or_create 防止重复触发。
+    User 创建时兜底建立零余额 CreditAccount。
+
+    任何有经济价值的赠送必须由显式业务 Service 完成，不能放在信号里。
     """
     if not created:
         return
 
-    free_credits = getattr(settings, 'BILLING_FREE_CREDITS_ON_REGISTER', 200)
-
-    account, account_created = CreditAccount.objects.get_or_create(
+    CreditAccount.objects.get_or_create(
         user=instance,
         defaults={
-            'balance': free_credits,
-            'total_granted': free_credits,
+            'balance': 0,
+            'total_granted': 0,
         },
     )
-
-    if account_created and free_credits > 0:
-        CreditTransaction.objects.create(
-            account=account,
-            txn_type='grant',
-            amount=free_credits,
-            balance_after=free_credits,
-            note='注册赠送',
-        )
 
 
 # ============================================================================

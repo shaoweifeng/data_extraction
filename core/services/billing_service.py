@@ -45,13 +45,12 @@ def _get_models():
 def get_or_create_account(user) -> 'CreditAccount':
     """获取 CreditAccount，若不存在则创建（正常情况下信号已创建）。"""
     CreditAccount, _, _ = _get_models()
-    free = getattr(settings, 'BILLING_FREE_CREDITS_ON_REGISTER', 200)
     account, created = CreditAccount.objects.get_or_create(
         user=user,
-        defaults={'balance': free, 'total_granted': free},
+        defaults={'balance': 0, 'total_granted': 0},
     )
     if created:
-        logger.warning(f"[billing] 用户 {user.username} 缺少 CreditAccount，已补建（{free} credits）")
+        logger.warning(f"[billing] 用户 {user.username} 缺少 CreditAccount，已补建（零余额）")
     return account
 
 
@@ -96,7 +95,13 @@ def estimate_credits(ref_count: int, model_ids: list = None) -> int:
 # ============================================================================
 
 @transaction.atomic
-def grant_credits(user, amount: int, note: str = '', operator=None) -> 'CreditTransaction':
+def grant_credits(
+    user,
+    amount: int,
+    note: str = '',
+    operator=None,
+    idempotency_key: str | None = None,
+) -> 'CreditTransaction':
     """
     赠送/充值/管理员调额（正数加，负数减）。
     txn_type 根据 amount 和调用场景自动选择：
@@ -106,7 +111,22 @@ def grant_credits(user, amount: int, note: str = '', operator=None) -> 'CreditTr
     """
     CreditAccount, CreditTransaction, _ = _get_models()
 
+    if amount == 0:
+        raise ValueError('赠送或调整额度不能为 0')
+    if idempotency_key and len(idempotency_key) > 128:
+        raise ValueError('幂等键长度不能超过 128 个字符')
+
     account = CreditAccount.objects.select_for_update().get(user=user)
+
+    if idempotency_key:
+        existing = CreditTransaction.objects.filter(
+            idempotency_key=idempotency_key,
+        ).first()
+        if existing:
+            if existing.account_id != account.id or existing.amount != amount:
+                raise ValueError('幂等键已被其他额度操作使用')
+            return existing
+
     account.balance = F('balance') + amount
     if amount > 0:
         account.total_granted = F('total_granted') + amount
@@ -125,6 +145,7 @@ def grant_credits(user, amount: int, note: str = '', operator=None) -> 'CreditTr
         balance_after=account.balance,
         note=note or ('注册赠送' if txn_type == 'grant' else ''),
         created_by=operator,
+        idempotency_key=idempotency_key,
     )
     logger.info(f"[billing] grant {user.username} {amount:+d} credits → 余额 {account.balance}")
     return txn
