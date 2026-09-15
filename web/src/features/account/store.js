@@ -31,10 +31,17 @@ export const useAuthStore = defineStore('auth', () => {
     return await authApi.register(form)
   }
 
+  async function resendVerificationEmail(email) {
+    return await authApi.resendVerificationEmail(email)
+  }
+
   async function logout() {
     await authApi.logout()
     user.value = null
   }
 
-  return { user, initialized, isAdmin, fetchCurrentUser, login, register, logout }
+  return {
+    user, initialized, isAdmin, fetchCurrentUser, login, register,
+    resendVerificationEmail, logout,
+  }
 })

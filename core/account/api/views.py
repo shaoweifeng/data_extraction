@@ -7,10 +7,10 @@ from rest_framework.response import Response
 from core.api.auth_views import legacy_register
 from core.serializers import UserSerializer
 
+from .responses import rate_limited_response
 from .serializers import RegistrationSerializer
 from ..services.client_ip import get_client_ip
 from ..services.rate_limit import (
-    RateLimitDecision,
     RateLimitUnavailable,
     consume_rate_limit,
     refund_rate_limit,
@@ -18,18 +18,10 @@ from ..services.rate_limit import (
 from ..services.registration import (
     RegistrationConflict,
     record_registration_attempt,
+    register_pending_user,
     register_user,
 )
-
-
-def _rate_limited(decision: RateLimitDecision):
-    response = Response(
-        {'error': '请求过于频繁，请稍后再试', 'code': 'rate_limited'},
-        status=status.HTTP_429_TOO_MANY_REQUESTS,
-    )
-    if decision.retry_after:
-        response['Retry-After'] = str(decision.retry_after)
-    return response
+from ..tasks import queue_verification_email
 
 
 def _consume_registration_limit(scope, identifier, limit, window):
@@ -71,12 +63,6 @@ def register(request):
             status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
         )
 
-    if getattr(settings, 'REQUIRE_EMAIL_VERIFICATION', False):
-        return Response(
-            {'error': '邮箱验证功能尚未启用', 'code': 'email_verification_unavailable'},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
-
     ip_address = get_client_ip(request)
     request_window = getattr(settings, 'REGISTRATION_REQUEST_WINDOW_SECONDS', 600)
     daily_window = getattr(settings, 'REGISTRATION_WINDOW_HOURS', 24) * 3600
@@ -97,7 +83,7 @@ def register(request):
             ),
         ):
             if not decision.allowed:
-                return _rate_limited(decision)
+                return rate_limited_response(decision)
     except RateLimitUnavailable:
         return Response(
             {'error': '账户安全服务暂时不可用，请稍后再试', 'code': 'rate_limit_unavailable'},
@@ -135,7 +121,7 @@ def register(request):
             daily_window,
         )
         if not email_decision.allowed:
-            return _rate_limited(email_decision)
+            return rate_limited_response(email_decision)
 
         account_slot = _consume_registration_limit(
             'register:ip-account',
@@ -144,14 +130,27 @@ def register(request):
             daily_window,
         )
         if not account_slot.allowed:
-            return _rate_limited(account_slot)
+            return rate_limited_response(account_slot)
 
-        user = register_user(
-            username=data['username'],
-            email=data['email'],
-            password=data['password'],
-            is_active=True,
-        )
+        requires_verification = getattr(settings, 'REQUIRE_EMAIL_VERIFICATION', False)
+        if requires_verification:
+            pending = register_pending_user(
+                username=data['username'],
+                email=data['email'],
+                password=data['password'],
+            )
+            user = pending.user
+            email_queued = queue_verification_email(
+                pending.verification.record.pk,
+                pending.verification.raw_token,
+            )
+        else:
+            user = register_user(
+                username=data['username'],
+                email=data['email'],
+                password=data['password'],
+                is_active=True,
+            )
     except RateLimitUnavailable:
         return Response(
             {'error': '账户安全服务暂时不可用，请稍后再试', 'code': 'rate_limit_unavailable'},
@@ -187,8 +186,28 @@ def register(request):
         email=data['email'],
         success=True,
     )
+    if requires_verification:
+        return Response(
+            {
+                'message': (
+                    '验证邮件正在发送，请查收邮件完成账号激活'
+                    if email_queued
+                    else '账号已创建，但验证邮件暂时未能发送，请稍后重新发送'
+                ),
+                'requires_email_verification': True,
+                'email': data['email'],
+                'resend_after': getattr(settings, 'EMAIL_RESEND_INTERVAL_SECONDS', 60),
+                'email_delivery_queued': email_queued,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
     user = type(user).objects.select_related('profile').get(pk=user.pk)
     return Response(
-        {'message': '注册成功，请登录', 'user': UserSerializer(user).data},
+        {
+            'message': '注册成功，请登录',
+            'requires_email_verification': False,
+            'user': UserSerializer(user).data,
+        },
         status=status.HTTP_201_CREATED,
     )

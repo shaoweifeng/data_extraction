@@ -10,7 +10,11 @@
 | `DB_NAME/DB_USER/DB_PASSWORD/DB_HOST/DB_PORT` | 必需 | MySQL 连接参数 |
 | `CELERY_BROKER_URL` | 必需 | Redis Broker 地址 |
 | `CELERY_RESULT_BACKEND` | 可选 | 默认使用 Django 数据库 |
-| `ACCOUNT_REGISTRATION_V2_ENABLED` | 可选 | 阶段 1 新注册链路开关；完成邮箱验证前保持 `False` |
+| `ACCOUNT_REGISTRATION_V2_ENABLED` | 可选 | 新注册链路开关；阶段 2 依赖该开关 |
+| `REQUIRE_EMAIL_VERIFICATION` | 可选 | 新用户是否必须通过邮件激活；真实邮件链路验收前保持 `False` |
+| `EMAIL_BACKEND` | 阶段 2 必需 | 本地使用 console，生产使用 SMTP backend |
+| `DEFAULT_FROM_EMAIL` | 阶段 2 必需 | 默认“循证智筛 <account@localhost>”，生产替换为已验证发件地址 |
+| `PUBLIC_BASE_URL` | 阶段 2 必需 | 激活链接基地址；生产必须使用公开 HTTPS 域名 |
 | `ACCOUNT_RATE_LIMIT_ENABLED` | 生产必需 | 公开注册或登录保护启用时设为 `True` |
 | `RATE_LIMIT_REDIS_URL` | 生产必需 | 账户限流专用 Redis 地址，建议使用独立逻辑库 |
 | `TRUSTED_PROXY_IPS` | 生产必需 | 可信 CDN/Nginx 地址或 CIDR，逗号分隔 |
@@ -50,6 +54,24 @@ MySQL 预发布环境使用独立测试库执行账户并发契约；不要把�
 
 ```bash
 python manage.py test core.account.tests.test_mysql_concurrency
+```
+
+阶段 2 新增 `account.0002_email_verification`。迁移会创建验证 Token 表，并只为格式合法且不存在冲突的历史邮箱回填未验证 `AccountEmail`；不会停用历史用户，也不会自动处理空邮箱、非法邮箱或重复邮箱。
+
+本地邮件联调使用：
+
+```dotenv
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+ACCOUNT_EMAIL_SENDER_NAME=循证智筛
+DEFAULT_FROM_EMAIL='循证智筛 <account@localhost>'
+PUBLIC_BASE_URL=http://127.0.0.1:8000
+```
+
+本地确认验证链接、激活和欢迎积分后，再接入 SMTP 并开启 `REQUIRE_EMAIL_VERIFICATION=true`。清理过期待激活账户必须先预览：
+
+```bash
+python manage.py cleanup_pending_accounts
+python manage.py cleanup_pending_accounts --delete
 ```
 
 ## 在线状态与维护模式

@@ -37,6 +37,18 @@ export async function register(form) {
   return res.data
 }
 
+/** 验证邮箱激活 Token */
+export async function verifyEmail(token) {
+  const res = await http.post('/auth/email/verify/', { token })
+  return res.data
+}
+
+/** 重新发送验证邮件；响应不会暴露邮箱是否存在 */
+export async function resendVerificationEmail(email) {
+  const res = await http.post('/auth/email/resend/', { email })
+  return res.data
+}
+
 /** 登出 */
 export async function logout() {
   await http.post('/auth/logout/')

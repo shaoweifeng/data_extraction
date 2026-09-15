@@ -1,13 +1,13 @@
 # 商业化注册与账户体系改造方案
 
-> 文档状态：阶段 0 已完成，阶段 1 已完成本地验证
+> 文档状态：阶段 0～2 已完成本地验证；阶段 2 已通过真实 SMTP 注册、投递与激活链路验收
 > 修订日期：2026-09-15  
 > 适用范围：运行时安全基线、平台注册、邮箱验证、注册防刷、注册赠送、登录保护、密码找回、协议接受及账户后台管理  
 > 关联文档：[`architecture.md`](./architecture.md)、[`operations.md`](./operations.md)、[`commercialization-plan-2026-09-10/report.html`](./commercialization-plan-2026-09-10/report.html)
 
 ## 1. 结论摘要
 
-当前注册功能适合内部使用或小范围受控测试，不适合直接开放商业注册。Python 3.12 与 Django 5.2 LTS 升级已经完成；阶段 1 已建立独立账户模块、注册安全基础和积分幂等能力，并已完成 V2 注册链路的本地功能验证。MySQL/Redis 生产同类环境和正式部署仍需继续验收；邮箱验证、密码找回和协议能力仍需按后续阶段完成。
+当前注册功能适合内部使用或小范围受控测试，不适合直接开放商业注册。Python 3.12、Django 5.2 LTS、阶段 1 注册安全基础均已完成本地验证；阶段 2 已实现邮箱验证 Token、待激活账户、异步邮件、激活与重发、欢迎积分幂等发放和安全清理能力，并已通过真实 SMTP 本地端到端验收。生产域名发信身份、SPF/DKIM/DMARC、MySQL/Redis 生产同类环境与正式部署仍需在阶段 4 验收。密码找回和协议能力仍需按后续阶段完成。
 
 本方案作出以下核心决策：
 
@@ -38,24 +38,28 @@
 - Django REST Framework 为 3.16.1。
 - 生产数据库为 MySQL，自动化测试默认使用内存 SQLite。
 - Redis 已用于 Celery Broker、在线状态和 AI 并发控制。
-- Celery 已具备异步任务能力，但账户邮件任务尚未接入。
+- Celery 已接入账户验证邮件任务，本地默认使用控制台邮件后端。
 
 运行时升级已独立完成，后续账户功能以 Python 3.12 和 Django 5.2 为唯一开发、测试和部署基线。
 
 ### 2.2 当前注册链路
 
-1. 用户输入用户名、可选邮箱和密码。
+1. 用户输入用户名、必填邮箱、密码和确认密码。
 2. 前端向 `POST /api/auth/register/` 提交 JSON。
-3. 后端只主动检查用户名和密码是否为空。
-4. 后端先查询用户名是否存在，再调用 `User.objects.create_user()`。
-5. 默认关闭邮箱验证；打开 `REQUIRE_EMAIL_VERIFICATION` 会返回 `501`。
-6. 当前只统计同 IP 在窗口期内的成功注册数，默认 24 小时最多 3 个账户。
-7. `post_save` 信号创建 `UserProfile`、`CreditAccount` 和注册赠送流水。
-8. 注册成功后用户自行登录。
+3. V2 后端执行邮箱规范化与唯一性、Django 密码规则、请求体和 Redis 多维限流校验。
+4. `REQUIRE_EMAIL_VERIFICATION=false` 时创建已激活零余额账户，用于兼容和受控测试。
+5. `REQUIRE_EMAIL_VERIFICATION=true` 时原子创建未激活用户、Profile、零余额积分账户、邮箱身份和单次验证 Token。
+6. 事务完成后通过 Celery 投递验证邮件；数据库只保存 Token 摘要。
+7. 用户通过验证页面激活账户，激活 Service 使用行锁和幂等键发放欢迎积分。
+8. 重发邮件会废弃旧 Token；未激活账户不能登录，历史用户不被自动停用。
 
 主要实现位置：
 
-- `core/api/auth_views.py`：注册、登录、IP 获取和注册日志。
+- `core/account/api/views.py`：V2 注册入口。
+- `core/account/api/verification_views.py`：邮箱验证与重发入口。
+- `core/account/services/registration.py`、`verification.py`：注册、Token 和激活事务。
+- `core/account/tasks.py`：验证邮件异步投递与重试。
+- `core/api/auth_views.py`：旧注册兼容链路与登录。
 - `core/models.py`：`UserProfile`、`RegistrationLog` 和 Profile 创建信号。
 - `core/models_billing.py`：积分账户、流水和注册赠送信号。
 - `core/services/billing_service.py`：积分账户兜底创建与积分服务。
@@ -76,16 +80,11 @@
 
 | 问题 | 当前表现 | 风险等级 |
 |---|---|---:|
-| 新注册链路尚未正式启用 | 阶段 1 代码通过功能开关暗部署 | 中 |
-| 密码验证器未执行 | `create_user()` 不会自动调用 `validate_password()` | 高 |
-| 邮箱不可信 | 选填、不唯一、未验证 | 高 |
+| 生产邮件链路尚未验收 | 真实 SMTP 本地验收已通过，但生产域名发信身份、SPF/DKIM/DMARC、退信和送达率尚未验证 | 中高 |
+| 强制邮箱验证默认关闭 | 打开 `REQUIRE_EMAIL_VERIFICATION` 前，新注册仍直接激活 | 高 |
 | 无密码找回 | 忘记密码只能联系管理员 | 高 |
-| 赠送由信号完成 | 创建 User 即发放 200 credits | 高 |
-| 积分兜底带赠送 | 缺少账户时可能再次按免费额度创建 | 高 |
-| 注册缺少统一事务 | 用户、Profile、账户、流水由多个位置产生 | 中高 |
-| 注册竞态 | “先查再创建”可能在并发下触发数据库错误 | 中高 |
-| IP 可伪造 | 无条件信任 `X-Forwarded-For` 最左项 | 中高 |
-| 失败请求不限流 | 可以无限提交非法注册或登录请求 | 中高 |
+| 邮件投递缺少 Outbox | Broker 在事务提交后瞬时不可用时依赖用户重发恢复 | 中 |
+| 历史邮箱存在脏数据 | 空邮箱、非法邮箱和重复邮箱需管理员依据审计报告处理 | 中 |
 | 测试数据库不同 | SQLite 测试不能证明 MySQL 并发和锁语义 | 中高 |
 | 协议接受无记录 | 商业注册缺少协议和隐私闭环 | 中高 |
 | 认证日志无留存策略 | 邮箱、IP 等个人信息可能长期保留 | 中 |
@@ -353,6 +352,8 @@ core/account/
 ├── urls.py
 ├── api/
 │   ├── serializers.py
+│   ├── responses.py
+│   ├── verification_views.py
 │   └── views.py
 ├── models/
 │   ├── email.py
@@ -360,7 +361,7 @@ core/account/
 │   └── agreements.py
 ├── services/
 │   ├── registration.py
-│   ├── activation.py
+│   ├── verification.py
 │   ├── authentication.py
 │   ├── password_reset.py
 │   ├── rate_limit.py
@@ -436,6 +437,7 @@ Migration 只能使用历史模型或稳定纯数据函数；MySQL 唯一约束�
 
 ```dotenv
 REGISTRATION_ENABLED=true
+ACCOUNT_REGISTRATION_V2_ENABLED=true
 REQUIRE_EMAIL_VERIFICATION=true
 ACCOUNT_PASSWORD_MIN_LENGTH=8
 ACCOUNT_PASSWORD_MAX_LENGTH=128
@@ -445,7 +447,11 @@ EMAIL_VERIFICATION_TTL_HOURS=24
 PASSWORD_RESET_TTL_MINUTES=30
 EMAIL_RESEND_INTERVAL_SECONDS=60
 EMAIL_DAILY_SEND_LIMIT=10
+EMAIL_RESEND_IP_LIMIT=20
+EMAIL_TOKEN_FAILURE_LIMIT=10
+EMAIL_TOKEN_FAILURE_WINDOW_SECONDS=600
 
+ACCOUNT_RATE_LIMIT_ENABLED=true
 RATE_LIMIT_REDIS_URL=redis://127.0.0.1:6379/2
 REGISTRATION_IP_REQUEST_LIMIT=20
 REGISTRATION_IP_ACCOUNT_LIMIT=3
@@ -460,7 +466,9 @@ EMAIL_PORT=587
 EMAIL_HOST_USER=
 EMAIL_HOST_PASSWORD=
 EMAIL_USE_TLS=true
-DEFAULT_FROM_EMAIL=
+EMAIL_USE_SSL=false
+ACCOUNT_EMAIL_SENDER_NAME=循证智筛
+DEFAULT_FROM_EMAIL='循证智筛 <account@example.com>'
 PUBLIC_BASE_URL=https://example.com
 
 SESSION_COOKIE_SECURE=true
@@ -559,7 +567,7 @@ SQLite 继续用于快速回归，但不能作为并发正确性的唯一证据�
 
 交付门槛：适合内部或邀请制试用，不建议公开收费。
 
-### 阶段 2：邮箱验证与账户激活，5～7 个工作日
+### 阶段 2：邮箱验证与账户激活，5～7 个工作日（已完成本地及真实 SMTP 验收）
 
 - 在已有 `AccountEmail` 基础上创建验证 Token 模型。
 - 完成历史邮箱审计与安全回填。
@@ -571,7 +579,7 @@ SQLite 继续用于快速回归，但不能作为并发正确性的唯一证据�
 - 增加待激活账户清理命令。
 - 实现前端查收邮件和验证结果页面。
 
-先部署表结构和关闭状态的功能，验证真实邮件链路后再打开 `REQUIRE_EMAIL_VERIFICATION`。
+本地已完成增量迁移、真实 SMTP 投递、验证链接激活、未激活登录拦截和欢迎积分幂等发放验收，并已开启 `REQUIRE_EMAIL_VERIFICATION`。生产部署仍应先迁移表结构并保持功能开关关闭，完成生产邮件与域名配置验证后再开启强制邮箱验证。
 
 ### 阶段 3：密码找回与账户自助安全，3～5 个工作日
 

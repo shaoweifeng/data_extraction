@@ -256,6 +256,32 @@ REGISTER_IP_WINDOW_HOURS = int(os.getenv('REGISTER_IP_WINDOW_HOURS', '24'))
 # 邮箱验证开关（True=注册时必须填写并发送验证邮件，False=邮箱选填跳过验证）
 # 当前默认关闭，后续接入 SMTP 后再开启
 REQUIRE_EMAIL_VERIFICATION = os.getenv('REQUIRE_EMAIL_VERIFICATION', 'false').lower() == 'true'
+ACCOUNT_PENDING_RETENTION_DAYS = int(os.getenv('ACCOUNT_PENDING_RETENTION_DAYS', '7'))
+EMAIL_VERIFICATION_TTL_HOURS = int(os.getenv('EMAIL_VERIFICATION_TTL_HOURS', '24'))
+EMAIL_RESEND_INTERVAL_SECONDS = int(os.getenv('EMAIL_RESEND_INTERVAL_SECONDS', '60'))
+EMAIL_DAILY_SEND_LIMIT = int(os.getenv('EMAIL_DAILY_SEND_LIMIT', '10'))
+EMAIL_RESEND_IP_LIMIT = int(os.getenv('EMAIL_RESEND_IP_LIMIT', '20'))
+EMAIL_TOKEN_FAILURE_LIMIT = int(os.getenv('EMAIL_TOKEN_FAILURE_LIMIT', '10'))
+EMAIL_TOKEN_FAILURE_WINDOW_SECONDS = int(os.getenv('EMAIL_TOKEN_FAILURE_WINDOW_SECONDS', '600'))
+
+# 账户事务邮件；开发环境默认输出到控制台，生产环境显式切换 SMTP。
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend',
+)
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'false').lower() == 'true'
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '30'))
+ACCOUNT_EMAIL_SENDER_NAME = os.getenv('ACCOUNT_EMAIL_SENDER_NAME', '循证智筛')
+DEFAULT_FROM_EMAIL = os.getenv(
+    'DEFAULT_FROM_EMAIL',
+    f'{ACCOUNT_EMAIL_SENDER_NAME} <account@localhost>',
+)
+PUBLIC_BASE_URL = os.getenv('PUBLIC_BASE_URL', 'http://127.0.0.1:8000')
 
 # ============================================================================
 # 阶段四：全局 AI 筛选并发控制

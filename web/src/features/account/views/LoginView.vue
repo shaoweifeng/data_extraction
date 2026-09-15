@@ -114,15 +114,26 @@
         <p v-if="success" class="form-success">
           <i class="fas fa-check-circle mr-1"></i>{{ success }}
         </p>
-        <!-- 注册成功后按钮变为「前往登录」 -->
-        <button
-          v-if="registered"
-          type="button"
-          @click="tab = 'login'; registered = false"
-          class="btn-primary w-full justify-center py-2.5 mt-2"
-        >
-          <i class="fas fa-sign-in-alt mr-1"></i>前往登录
-        </button>
+        <template v-if="registered">
+          <button
+            v-if="requiresEmailVerification"
+            type="button"
+            :disabled="resending || resendCountdown > 0"
+            class="btn-secondary w-full justify-center py-2.5 mt-2"
+            @click="handleResend"
+          >
+            <span v-if="resending"><i class="fas fa-spinner fa-spin mr-1"></i>发送中...</span>
+            <span v-else-if="resendCountdown > 0">{{ resendCountdown }} 秒后可重新发送</span>
+            <span v-else><i class="fas fa-envelope mr-1"></i>重新发送验证邮件</span>
+          </button>
+          <button
+            type="button"
+            @click="tab = 'login'; registered = false"
+            class="btn-primary w-full justify-center py-2.5 mt-2"
+          >
+            <i class="fas fa-sign-in-alt mr-1"></i>前往登录
+          </button>
+        </template>
         <button
           v-else
           type="submit"
@@ -143,7 +154,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/account/store'
 import PasswordField from '@/features/account/components/PasswordField.vue'
@@ -163,6 +174,11 @@ const error = ref('')
 const success = ref('')
 const loading = ref(false)
 const registered = ref(false)  // 注册成功状态，控制按钮切换
+const requiresEmailVerification = ref(false)
+const pendingEmail = ref('')
+const resending = ref(false)
+const resendCountdown = ref(0)
+let resendTimer = null
 
 const loginForm = ref({ username: '', password: '' })
 const registerForm = ref({ username: '', email: '', password: '', password_confirm: '' })
@@ -192,13 +208,47 @@ async function handleRegister() {
   try {
     const data = await auth.register(registerForm.value)
     success.value = data.message || '注册成功，请登录'
+    requiresEmailVerification.value = data.requires_email_verification === true
+    pendingEmail.value = registerForm.value.email
     registered.value = true  // 停留在注册页显示成功，不自动切 tab
+    if (requiresEmailVerification.value) startResendCountdown(data.resend_after)
   } catch (e) {
     error.value = firstAccountError(e, '注册失败')
   } finally {
     loading.value = false
   }
 }
+
+function startResendCountdown(seconds = 60) {
+  resendCountdown.value = Number.isFinite(Number(seconds)) ? Math.max(1, Number(seconds)) : 60
+  if (resendTimer) window.clearInterval(resendTimer)
+  resendTimer = window.setInterval(() => {
+    resendCountdown.value -= 1
+    if (resendCountdown.value <= 0) {
+      window.clearInterval(resendTimer)
+      resendTimer = null
+    }
+  }, 1000)
+}
+
+async function handleResend() {
+  if (!pendingEmail.value || resending.value || resendCountdown.value > 0) return
+  error.value = ''
+  resending.value = true
+  try {
+    const data = await auth.resendVerificationEmail(pendingEmail.value)
+    success.value = data.message
+    startResendCountdown(data.resend_after)
+  } catch (e) {
+    error.value = firstAccountError(e, '验证邮件发送失败')
+  } finally {
+    resending.value = false
+  }
+}
+
+onBeforeUnmount(() => {
+  if (resendTimer) window.clearInterval(resendTimer)
+})
 </script>
 
 <style scoped>

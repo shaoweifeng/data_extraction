@@ -69,3 +69,17 @@ class RegistrationSerializer(serializers.Serializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError({'password': list(exc.messages)}) from exc
         return attrs
+
+
+class EmailVerificationSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=256, trim_whitespace=True)
+
+
+class VerificationResendSerializer(serializers.Serializer):
+    email = serializers.CharField(max_length=254, trim_whitespace=True)
+
+    def validate_email(self, value):
+        try:
+            return normalize_email_address(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError('请输入有效的邮箱地址') from exc

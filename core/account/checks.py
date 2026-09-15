@@ -1,4 +1,5 @@
 import ipaddress
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core import checks
@@ -28,10 +29,53 @@ def check_account_security_settings(app_configs, **kwargs):
             hint='生产环境请配置 RATE_LIMIT_REDIS_URL 并启用 ACCOUNT_RATE_LIMIT_ENABLED。',
             id='account.W001',
         ))
-    if registration_v2_enabled and getattr(settings, 'REQUIRE_EMAIL_VERIFICATION', False):
+    verification_enabled = getattr(settings, 'REQUIRE_EMAIL_VERIFICATION', False)
+    if verification_enabled and not registration_v2_enabled:
         messages.append(checks.Error(
-            '阶段 2 邮箱激活尚未实现，不能同时开启新注册和强制邮箱验证。',
+            '启用邮箱验证必须同时启用 ACCOUNT_REGISTRATION_V2_ENABLED。',
+            id='account.E007',
+        ))
+    public_base_url = getattr(settings, 'PUBLIC_BASE_URL', '')
+    parsed_base_url = urlparse(public_base_url)
+    if verification_enabled and (
+        parsed_base_url.scheme not in {'http', 'https'} or not parsed_base_url.netloc
+    ):
+        messages.append(checks.Error(
+            '启用邮箱验证时 PUBLIC_BASE_URL 必须是完整的 HTTP(S) 地址。',
             id='account.E003',
+        ))
+    if getattr(settings, 'EMAIL_USE_TLS', False) and getattr(settings, 'EMAIL_USE_SSL', False):
+        messages.append(checks.Error(
+            'EMAIL_USE_TLS 与 EMAIL_USE_SSL 不能同时启用。',
+            id='account.E005',
+        ))
+    email_backend = getattr(settings, 'EMAIL_BACKEND', '')
+    if (
+        verification_enabled
+        and getattr(settings, 'APP_ENV', 'development') == 'production'
+        and email_backend in {
+            'django.core.mail.backends.console.EmailBackend',
+            'django.core.mail.backends.locmem.EmailBackend',
+        }
+    ):
+        messages.append(checks.Error(
+            '生产环境启用邮箱验证时不能使用 console 或 locmem 邮件后端。',
+            id='account.E008',
+        ))
+    positive_settings = (
+        'ACCOUNT_PENDING_RETENTION_DAYS',
+        'EMAIL_VERIFICATION_TTL_HOURS',
+        'EMAIL_RESEND_INTERVAL_SECONDS',
+        'EMAIL_DAILY_SEND_LIMIT',
+        'EMAIL_TOKEN_FAILURE_LIMIT',
+    )
+    invalid_positive_settings = [
+        name for name in positive_settings if getattr(settings, name, 0) <= 0
+    ]
+    if invalid_positive_settings:
+        messages.append(checks.Error(
+            f'{", ".join(invalid_positive_settings)} 必须大于 0。',
+            id='account.E006',
         ))
 
     for value in getattr(settings, 'TRUSTED_PROXY_IPS', []):

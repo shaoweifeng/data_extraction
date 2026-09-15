@@ -32,6 +32,30 @@
         }
       }
     },
+    "/auth/email/verify/": {
+      "post": {
+        "tags": ["Auth"],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmailVerificationRequest"}}}},
+        "responses": {
+          "200": {"description": "Email verified or already verified"},
+          "400": {"description": "Token invalid or expired"},
+          "429": {"description": "Verification failure limit exceeded"},
+          "503": {"description": "Account security dependency unavailable"}
+        }
+      }
+    },
+    "/auth/email/resend/": {
+      "post": {
+        "tags": ["Auth"],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VerificationResendRequest"}}}},
+        "responses": {
+          "200": {"description": "Generic resend response"},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "429": {"description": "Resend limit exceeded"},
+          "503": {"description": "Account security dependency unavailable"}
+        }
+      }
+    },
     "/auth/login/": {"post": {"tags": ["Auth"], "responses": {"200": {"description": "Logged in"}, "401": {"description": "Invalid credentials"}, "429": {"description": "Login failure limit exceeded"}}}},
     "/auth/logout/": {"post": {"tags": ["Auth"], "responses": {"200": {"description": "Logged out"}}}},
     "/auth/me/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Current user"}}}},
@@ -184,6 +208,16 @@
           "password": {"type": "string", "format": "password", "minLength": 8, "maxLength": 128},
           "password_confirm": {"type": "string", "format": "password", "minLength": 8, "maxLength": 128}
         }
+      },
+      "EmailVerificationRequest": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {"token": {"type": "string", "maxLength": 256}}
+      },
+      "VerificationResendRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {"email": {"type": "string", "format": "email", "maxLength": 254}}
       },
       "QaEnvelope": {
         "type": "object",

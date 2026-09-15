@@ -15,5 +15,10 @@ DATABASES = {
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+PUBLIC_BASE_URL = 'http://testserver'
+ACCOUNT_REGISTRATION_V2_ENABLED = False
+ACCOUNT_RATE_LIMIT_ENABLED = False
+REQUIRE_EMAIL_VERIFICATION = False
 LOGGING = {}
 FEEDBACK_UPLOAD_ROOT = tempfile.mkdtemp(prefix='data-extraction-feedback-tests-')

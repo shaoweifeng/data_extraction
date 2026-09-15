@@ -2,12 +2,13 @@ from collections import Counter
 
 from django.contrib.auth import get_user_model
 from django.db import connection
+from django.utils import timezone
 
 from core.models import UserProfile
 from core.models_billing import CreditAccount
 
 from .email import normalize_email_address
-from .models import AccountEmail
+from .models import AccountEmail, AccountVerificationToken
 
 User = get_user_model()
 
@@ -47,6 +48,17 @@ def build_account_audit_report() -> dict:
             if user_email != identity.normalized_email:
                 account_email_mismatches += 1
 
+    verification_table_present = (
+        AccountVerificationToken._meta.db_table in connection.introspection.table_names()
+    )
+    verification_tokens_active = 0
+    if verification_table_present:
+        verification_tokens_active = AccountVerificationToken.objects.filter(
+            used_at__isnull=True,
+            revoked_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        ).count()
+
     report = {
         'users_total': User.objects.count(),
         'users_missing_profile': User.objects.exclude(
@@ -62,6 +74,9 @@ def build_account_audit_report() -> dict:
         'account_emails_total': account_emails_total,
         'account_emails_unverified': account_emails_unverified,
         'account_email_mismatches': account_email_mismatches,
+        'pending_users': User.objects.filter(is_active=False, is_staff=False).count(),
+        'verification_table_present': verification_table_present,
+        'verification_tokens_active': verification_tokens_active,
         'negative_credit_accounts': CreditAccount.objects.filter(balance__lt=0).count(),
     }
     issue_fields = (

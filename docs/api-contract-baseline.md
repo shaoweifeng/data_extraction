@@ -15,7 +15,18 @@
 - 初筛复核视图保留原有顶层响应字段，错误为 `{"error": ...}`。
 - 排空和维护期间被阻止的接口返回 `503`，并携带 `SYSTEM_DRAINING` 或 `SYSTEM_MAINTENANCE` 错误码。
 
-## 3. 核心项目资源
+## 3. 账户认证
+
+| 方法 | 路径 | 核心契约 |
+|---|---|---|
+| POST | `/api/auth/register/` | V2 注册；启用邮箱验证时创建未激活零余额账户并异步发送验证邮件 |
+| POST | `/api/auth/email/verify/` | 消费单次 Token；激活邮箱和账户，使用幂等键发放欢迎积分 |
+| POST | `/api/auth/email/resend/` | 重发验证邮件；无论邮箱是否存在均返回相同成功提示 |
+| POST | `/api/auth/login/` | 未激活用户使用统一的用户名或密码错误响应 |
+
+验证 Token 的原文只进入邮件和 Celery 消息，数据库只保存 SHA-256 摘要。邮件链接使用 URL Fragment，避免 Token 进入 Web 访问日志；前端读取后再通过 POST 提交。重发会作废同用途旧 Token；重复访问已经成功使用的 Token 返回幂等成功。
+
+## 4. 核心项目资源
 
 | 方法 | 路径 | 核心契约 |
 |---|---|---|
@@ -26,7 +37,7 @@
 | POST | `/api/tasks/` | `project`, `task_type`, `config`；项目必须可访问 |
 | POST | `/api/files/` | 文件必须归属可访问项目，`stage/step/project` 关系必须一致 |
 
-## 4. 初筛人工复核
+## 5. 初筛人工复核
 
 | 方法 | 路径 | 输入 / 输出要点 |
 |---|---|---|
@@ -37,7 +48,7 @@
 | POST | `/api/review/complete/` | `project`, `step` |
 | POST/GET | `/api/review/note(s)/{source_xml}/` | 追加 / 读取项目内文献备注 |
 
-## 5. QA
+## 6. QA
 
 | 方法 | 路径 | 输入 / 输出要点 |
 |---|---|---|
@@ -55,7 +66,7 @@
 | GET/PATCH | `/api/qa/chart/settings...` | 读写项目图表标签设置 |
 | POST | `/api/qa/export/excel/` | `project_id`, `quality_method`, `include_unconfirmed` |
 
-## 6. 运维接口
+## 7. 运维接口
 
 | 方法 | 路径 | 核心契约 |
 |---|---|---|
@@ -68,7 +79,7 @@
 | POST | `/api/operations/tasks/pause/` | 仅管理员；协作式暂停可恢复的长任务 |
 | POST | `/api/operations/tasks/resume/` | 仅管理员；恢复维护暂停任务 |
 
-## 7. 用户反馈
+## 8. 用户反馈
 
 | 方法 | 路径 | 核心契约 |
 |---|---|---|
@@ -77,14 +88,14 @@
 
 反馈正文、图片数量/大小、分钟频率和每日次数均由服务端校验。相同用户使用相同幂等键重试时返回原反馈且不重复计数。反馈提交接口在排空或维护模式下仍可用。
 
-## 8. 自动化门禁
+## 9. 自动化门禁
 
 - Python 3.12、Django 5.2 兼容。
 - `manage.py check`、迁移漂移检查和 `core.tests` 必须通过。
 - 前端使用 Node 22 仅在本地/持续集成构建；服务器可继续使用 `--no-build` 和已提交的 `web/dist`。
 - CI 检查构建后 `web/dist` 无差异，确保提交的产物与源码一致。
 
-## 9. 机器可读 Schema
+## 10. 机器可读 Schema
 
 - OpenAPI 3.0 基线文件：`docs/openapi.json`。
 - 运行时地址：`GET /api/schema/`。

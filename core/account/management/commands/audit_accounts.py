@@ -28,6 +28,9 @@ class Command(BaseCommand):
                 'account_emails_total': '邮箱身份总数',
                 'account_emails_unverified': '未验证邮箱身份',
                 'account_email_mismatches': '邮箱身份不一致',
+                'pending_users': '未激活普通用户',
+                'verification_table_present': '验证 Token 表已创建',
+                'verification_tokens_active': '有效验证 Token',
                 'negative_credit_accounts': '负余额账户',
             }
             for field, label in labels.items():

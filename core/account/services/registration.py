@@ -7,6 +7,7 @@ from core.models import RegistrationLog, UserProfile
 from core.models_billing import CreditAccount
 
 from ..models import AccountEmail
+from .verification import IssuedVerificationToken, issue_email_activation_token
 
 User = get_user_model()
 
@@ -14,6 +15,12 @@ User = get_user_model()
 @dataclass(frozen=True)
 class RegistrationConflict(Exception):
     field: str
+
+
+@dataclass(frozen=True)
+class PendingRegistration:
+    user: object
+    verification: IssuedVerificationToken
 
 
 def record_registration_attempt(
@@ -81,3 +88,15 @@ def register_user(*, username: str, email: str, password: str, is_active: bool =
         if AccountEmail.objects.filter(normalized_email=email).exists():
             raise RegistrationConflict('email') from exc
         raise
+
+
+@transaction.atomic
+def register_pending_user(*, username: str, email: str, password: str) -> PendingRegistration:
+    user = register_user(
+        username=username,
+        email=email,
+        password=password,
+        is_active=False,
+    )
+    verification = issue_email_activation_token(user)
+    return PendingRegistration(user=user, verification=verification)

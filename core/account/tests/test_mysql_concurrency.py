@@ -5,7 +5,10 @@ from unittest import skipUnless
 from django.db import close_old_connections, connection
 from django.test import TransactionTestCase
 
-from ..services.registration import RegistrationConflict, register_user
+from core.models_billing import CreditTransaction
+
+from ..services.registration import RegistrationConflict, register_pending_user, register_user
+from ..services.verification import activate_email
 
 STRONG_PASSWORD = 'Correct-Horse-Battery-Staple-2026'
 
@@ -48,3 +51,30 @@ class MySQLRegistrationConcurrencyTests(TransactionTestCase):
 
         self.assertEqual(sum(result[0] == 'created' for result in results), 1)
         self.assertIn(('conflict', 'username'), results)
+
+    def test_concurrent_activation_grants_welcome_credit_once(self):
+        pending = register_pending_user(
+            username='activation-race',
+            email='activation-race@example.com',
+            password=STRONG_PASSWORD,
+        )
+        barrier = Barrier(2)
+
+        def activate(_index):
+            close_old_connections()
+            try:
+                barrier.wait(timeout=5)
+                return activate_email(pending.verification.raw_token).already_verified
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(activate, range(2)))
+
+        self.assertEqual(sorted(results), [False, True])
+        self.assertEqual(
+            CreditTransaction.objects.filter(
+                idempotency_key=f'welcome_grant:{pending.user.pk}',
+            ).count(),
+            1,
+        )

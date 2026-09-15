@@ -1,25 +1,31 @@
 import json
+import importlib
+from datetime import timedelta
 from io import StringIO
 from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.core.management import call_command
+from django.core import mail
 from django.urls import reverse
 from django.test import RequestFactory, TestCase, override_settings
+from django.utils import timezone
 
 from core.models import UserProfile
 from core.models_billing import CreditAccount, CreditTransaction
 from core.services.billing_service import get_or_create_account, grant_credits
 
-from ..models import AccountEmail
+from ..models import AccountEmail, AccountVerificationToken
 from ..services.client_ip import get_client_ip
 from ..services.rate_limit import (
     RateLimitDecision,
     RateLimitUnavailable,
     consume_rate_limit,
 )
-from ..services.registration import register_user
+from ..services.registration import register_pending_user, register_user
+from ..services.verification import activate_email, digest_token, issue_email_activation_token
+from ..tasks import send_verification_email
 
 User = get_user_model()
 
@@ -76,6 +82,32 @@ class AccountFoundationTests(TestCase):
         self.assertTrue(report['account_email_table_present'])
         self.assertGreaterEqual(report['users_without_email'], 1)
         self.assertNotIn('audit-empty-email', output.getvalue())
+
+    def test_phase_two_backfill_only_claims_valid_unique_historical_emails(self):
+        unique = User.objects.create_user(
+            'backfill-unique', email=' Unique@Example.COM ', password=STRONG_PASSWORD,
+        )
+        duplicate_a = User.objects.create_user(
+            'backfill-duplicate-a', email='duplicate@example.com', password=STRONG_PASSWORD,
+        )
+        duplicate_b = User.objects.create_user(
+            'backfill-duplicate-b', email='DUPLICATE@example.com', password=STRONG_PASSWORD,
+        )
+        invalid = User.objects.create_user(
+            'backfill-invalid', email='not-an-email', password=STRONG_PASSWORD,
+        )
+        migration = importlib.import_module('core.account.migrations.0002_email_verification')
+        from django.apps import apps
+
+        migration.backfill_unique_account_emails(apps, None)
+
+        self.assertEqual(
+            AccountEmail.objects.get(user=unique).normalized_email,
+            'unique@example.com',
+        )
+        self.assertFalse(AccountEmail.objects.filter(user=duplicate_a).exists())
+        self.assertFalse(AccountEmail.objects.filter(user=duplicate_b).exists())
+        self.assertFalse(AccountEmail.objects.filter(user=invalid).exists())
 
 
 class RegistrationServiceTests(TestCase):
@@ -209,11 +241,22 @@ class RegistrationApiTests(TestCase):
         self.assertEqual(response.json()['code'], 'validation_error')
 
     @override_settings(REQUIRE_EMAIL_VERIFICATION=True)
-    def test_verification_cannot_be_enabled_before_phase_two(self):
+    @patch('core.account.api.views.queue_verification_email', return_value=True)
+    def test_verification_registration_creates_inactive_zero_balance_user(self, queue_email):
         response = self.post(self.valid_payload())
 
-        self.assertEqual(response.status_code, 503)
-        self.assertEqual(response.json()['code'], 'email_verification_unavailable')
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.json()['requires_email_verification'])
+        self.assertTrue(response.json()['email_delivery_queued'])
+        self.assertEqual(response.json()['resend_after'], 60)
+        user = User.objects.get(username='api-researcher')
+        self.assertFalse(user.is_active)
+        self.assertEqual(user.credit_account.balance, 0)
+        self.assertIsNone(user.account_email.verified_at)
+        token = AccountVerificationToken.objects.get(user=user)
+        queue_email.assert_called_once()
+        self.assertEqual(queue_email.call_args.args[0], token.pk)
+        self.assertNotEqual(queue_email.call_args.args[1], token.token_digest)
 
     @override_settings(REGISTRATION_ENABLED=False)
     def test_registration_can_be_closed(self):
@@ -252,6 +295,158 @@ class LegacyRegistrationCompatibilityTests(TestCase):
         transaction = CreditTransaction.objects.get(account=user.credit_account)
         self.assertEqual(transaction.idempotency_key, f'legacy_welcome_grant:{user.pk}')
         self.assertFalse(AccountEmail.objects.filter(user=user).exists())
+
+
+@override_settings(
+    ACCOUNT_REGISTRATION_V2_ENABLED=True,
+    ACCOUNT_RATE_LIMIT_ENABLED=False,
+    REQUIRE_EMAIL_VERIFICATION=True,
+    BILLING_FREE_CREDITS_ON_REGISTER=200,
+)
+class EmailVerificationTests(TestCase):
+    def setUp(self):
+        self.pending = register_pending_user(
+            username='pending-user',
+            email='pending@example.com',
+            password=STRONG_PASSWORD,
+        )
+
+    def verify(self, token=None):
+        return self.client.post(
+            '/api/auth/email/verify/',
+            {'token': token or self.pending.verification.raw_token},
+            content_type='application/json',
+        )
+
+    def test_raw_token_is_not_persisted(self):
+        record = self.pending.verification.record
+        self.assertEqual(record.token_digest, digest_token(self.pending.verification.raw_token))
+        self.assertNotEqual(record.token_digest, self.pending.verification.raw_token)
+
+    def test_activation_verifies_email_activates_user_and_grants_once(self):
+        response = self.verify()
+
+        self.assertEqual(response.status_code, 200)
+        self.pending.user.refresh_from_db()
+        self.pending.user.account_email.refresh_from_db()
+        self.pending.user.credit_account.refresh_from_db()
+        self.assertTrue(self.pending.user.is_active)
+        self.assertIsNotNone(self.pending.user.account_email.verified_at)
+        self.assertEqual(self.pending.user.credit_account.balance, 200)
+        self.assertEqual(
+            CreditTransaction.objects.filter(
+                idempotency_key=f'welcome_grant:{self.pending.user.pk}',
+            ).count(),
+            1,
+        )
+
+        repeated = self.verify()
+        self.assertEqual(repeated.status_code, 200)
+        self.assertEqual(repeated.json()['code'], 'already_verified')
+        self.pending.user.credit_account.refresh_from_db()
+        self.assertEqual(self.pending.user.credit_account.balance, 200)
+
+    def test_pending_user_cannot_login(self):
+        response = self.client.post(
+            '/api/auth/login/',
+            {'username': 'pending-user', 'password': STRONG_PASSWORD},
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_invalid_and_expired_tokens_are_rejected(self):
+        invalid = self.verify('not-a-real-token')
+        self.assertEqual(invalid.status_code, 400)
+        self.assertEqual(invalid.json()['code'], 'invalid_token')
+
+        AccountVerificationToken.objects.filter(
+            pk=self.pending.verification.record.pk,
+        ).update(expires_at=timezone.now() - timedelta(seconds=1))
+        expired = self.verify()
+        self.assertEqual(expired.status_code, 400)
+        self.assertEqual(expired.json()['code'], 'expired_token')
+
+    def test_resend_revokes_old_token_and_keeps_generic_response(self):
+        response = self.client.post(
+            '/api/auth/email/resend/',
+            {'email': 'Pending@Example.COM'},
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('exists', response.json())
+        self.pending.verification.record.refresh_from_db()
+        self.assertIsNotNone(self.pending.verification.record.revoked_at)
+        self.assertEqual(AccountVerificationToken.objects.filter(user=self.pending.user).count(), 2)
+
+        unknown = self.client.post(
+            '/api/auth/email/resend/',
+            {'email': 'unknown@example.com'},
+            content_type='application/json',
+        )
+        self.assertEqual(unknown.status_code, 200)
+        self.assertEqual(unknown.json(), response.json())
+
+    def test_email_task_sends_activation_link_and_records_delivery(self):
+        record = self.pending.verification.record
+        result = send_verification_email.run(record.pk, self.pending.verification.raw_token)
+
+        self.assertEqual(result['status'], 'sent')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('/verify-email#token=', mail.outbox[0].body)
+        self.assertIn(self.pending.verification.raw_token, mail.outbox[0].body)
+        record.refresh_from_db()
+        self.assertEqual(record.send_attempts, 1)
+        self.assertIsNotNone(record.sent_at)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend')
+    @patch('core.account.tasks.EmailMultiAlternatives')
+    def test_console_email_task_logs_activation_link(self, message_class):
+        record = self.pending.verification.record
+
+        with self.assertLogs('core.account.tasks', level='INFO') as captured:
+            result = send_verification_email.run(
+                record.pk,
+                self.pending.verification.raw_token,
+            )
+
+        self.assertEqual(result['status'], 'sent')
+        message_class.return_value.send.assert_called_once_with(fail_silently=False)
+        output = '\n'.join(captured.output)
+        self.assertIn('[本地调试] 验证链接:', output)
+        self.assertIn(self.pending.verification.raw_token, output)
+
+    def test_service_activation_is_idempotent(self):
+        first = activate_email(self.pending.verification.raw_token)
+        second = activate_email(self.pending.verification.raw_token)
+        self.assertFalse(first.already_verified)
+        self.assertTrue(second.already_verified)
+
+    def test_cleanup_pending_accounts_defaults_to_preview(self):
+        historical = User.objects.create_user(
+            'historical-inactive',
+            email='historical-inactive@example.com',
+            password=STRONG_PASSWORD,
+            is_active=False,
+        )
+        AccountEmail.objects.create(
+            user=historical,
+            email=historical.email,
+            normalized_email=historical.email,
+        )
+        User.objects.filter(pk=self.pending.user.pk).update(
+            date_joined=timezone.now() - timedelta(days=8),
+        )
+        User.objects.filter(pk=historical.pk).update(
+            date_joined=timezone.now() - timedelta(days=30),
+        )
+        output = StringIO()
+        call_command('cleanup_pending_accounts', stdout=output)
+        self.assertTrue(User.objects.filter(pk=self.pending.user.pk).exists())
+        self.assertIn('预览模式', output.getvalue())
+
+        call_command('cleanup_pending_accounts', '--delete', stdout=StringIO())
+        self.assertFalse(User.objects.filter(pk=self.pending.user.pk).exists())
+        self.assertTrue(User.objects.filter(pk=historical.pk).exists())
 
 
 class LoginRateLimitTests(TestCase):
