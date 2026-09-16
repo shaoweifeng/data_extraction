@@ -19,7 +19,9 @@
 
 | 方法 | 路径 | 核心契约 |
 |---|---|---|
-| POST | `/api/auth/register/` | V2 注册；启用邮箱验证时创建未激活零余额账户并异步发送验证邮件 |
+| GET | `/api/auth/legal/current/` | 当前服务协议和隐私政策版本、日期及正文摘要 |
+| GET | `/api/auth/legal/{terms|privacy}/` | 获取当前版本协议正文；匿名可访问 |
+| POST | `/api/auth/register/` | V2 注册；必须分别同意当前服务协议和隐私政策，接受记录与账户原子创建 |
 | POST | `/api/auth/email/verify/` | 消费单次 Token；激活邮箱和账户，使用幂等键发放欢迎积分 |
 | POST | `/api/auth/email/resend/` | 重发验证邮件；无论邮箱是否存在均返回相同成功提示 |
 | POST | `/api/auth/login/` | 支持用户名或已验证邮箱；未激活用户使用统一的用户名或密码错误响应 |
@@ -30,6 +32,8 @@
 | POST | `/api/auth/email/change/confirm/` | 验证新邮箱后原子替换可信邮箱，并通知旧邮箱 |
 
 验证和密码重置 Token 的原文只进入邮件和 Celery 消息，数据库只保存 SHA-256 摘要。邮件链接使用 URL Fragment，避免 Token 进入 Web 访问日志；前端读取后再通过 POST 提交。重发会作废同用途旧 Token。邮箱激活重复访问返回幂等成功；密码重置和邮箱变更 Token 使用后不可再次消费。
+
+注册请求还必须提交 `accept_terms=true`、`accept_privacy=true`、`terms_version` 和 `privacy_version`。后端拒绝旧版本或未显式同意，并保存正文 SHA-256、接受时间及不可逆请求摘要；不得仅依赖前端勾选状态。
 
 ## 4. 核心项目资源
 

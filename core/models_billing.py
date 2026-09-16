@@ -205,7 +205,12 @@ class RechargeCode(models.Model):
         ordering        = ['-created_at']
 
     def __str__(self):
-        status_str = f"已被 {self.used_by.username} 使用" if self.is_used else "未使用"
+        if not self.is_used:
+            status_str = "未使用"
+        elif self.used_by_id and self.used_by:
+            status_str = f"已被 {self.used_by.username} 使用"
+        else:
+            status_str = "已使用（原用户已删除）"
         return f"{self.code} | {self.credits} credits | {status_str}"
 
     def is_valid(self) -> bool:

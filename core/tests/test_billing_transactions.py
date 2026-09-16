@@ -66,3 +66,22 @@ class BillingTransactionTests(TestCase):
             CreditTransaction.objects.filter(account=self.account, txn_type='recharge').count(),
             1,
         )
+
+    def test_admin_list_handles_used_code_after_user_deletion(self):
+        code = RechargeCode.objects.create(
+            code='USED-BY-DELETED-USER',
+            credits=8,
+            is_used=True,
+            used_by=self.user,
+        )
+        self.user.delete()
+        code.refresh_from_db()
+        self.assertIsNone(code.used_by)
+        self.assertIn('已使用（原用户已删除）', str(code))
+
+        admin_user = User.objects.create_superuser('billing-admin', password='pw')
+        self.client.force_login(admin_user)
+        response = self.client.get('/admin/core/rechargecode/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'USED-BY-DELETED-USER')
+        self.assertContains(response, '已使用（原用户已删除）')

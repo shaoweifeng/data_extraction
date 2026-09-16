@@ -5,7 +5,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from ..email import normalize_email_address
-from ..models import AccountEmail
+from ..models import AccountEmail, LegalDocumentType
+from ..services.legal import get_current_legal_document
 
 User = get_user_model()
 
@@ -21,6 +22,10 @@ class RegistrationSerializer(serializers.Serializer):
         write_only=True,
         trim_whitespace=False,
     )
+    accept_terms = serializers.BooleanField(write_only=True)
+    accept_privacy = serializers.BooleanField(write_only=True)
+    terms_version = serializers.CharField(max_length=32, write_only=True)
+    privacy_version = serializers.CharField(max_length=32, write_only=True)
 
     def validate_username(self, value):
         value = value.strip()
@@ -44,6 +49,15 @@ class RegistrationSerializer(serializers.Serializer):
         return normalized
 
     def validate(self, attrs):
+        for accepted_field, version_field, document_type in (
+            ('accept_terms', 'terms_version', LegalDocumentType.TERMS),
+            ('accept_privacy', 'privacy_version', LegalDocumentType.PRIVACY),
+        ):
+            if attrs.get(accepted_field) is not True:
+                raise serializers.ValidationError({accepted_field: '必须阅读并同意后才能注册'})
+            current = get_current_legal_document(document_type)
+            if attrs.get(version_field) != current.version:
+                raise serializers.ValidationError({version_field: '协议版本已更新，请重新阅读并同意'})
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError(
                 {'password_confirm': '两次输入的密码不一致'},

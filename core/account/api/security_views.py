@@ -23,6 +23,7 @@ from ..services.email_change import (
 )
 from ..services.password_reset import change_password, issue_password_reset_token, reset_password
 from ..services.rate_limit import RateLimitUnavailable, consume_rate_limit, refund_rate_limit
+from ..services.security_audit import record_security_event
 from ..services.verification import ExpiredVerificationToken, InvalidVerificationToken
 from ..tasks import (
     queue_email_change_confirmation,
@@ -100,6 +101,10 @@ def forgot_password(request):
     if identity and not getattr(profile, 'is_banned', False):
         issued = issue_password_reset_token(identity.user)
         queue_password_reset_email(issued.record.pk, issued.raw_token)
+    record_security_event(
+        request=request, event_type='password_reset_request', outcome='accepted',
+        identifier=email,
+    )
     return Response({
         'message': '如果该邮箱对应有效账号，我们会发送密码重置邮件',
         'resend_after': getattr(settings, 'PASSWORD_RESET_RESEND_INTERVAL_SECONDS', 60),
@@ -155,6 +160,9 @@ def reset_password_view(request):
     if decision:
         refund_rate_limit(decision)
     queue_password_changed_notice(result.user.pk)
+    record_security_event(
+        request=request, event_type='password_reset', outcome='success', user=result.user,
+    )
     return Response({'message': '密码已重置，请使用新密码登录'})
 
 
@@ -183,6 +191,9 @@ def change_password_view(request):
     identity = AccountEmail.objects.filter(user=user, verified_at__isnull=False).first()
     if identity:
         queue_password_changed_notice(user.pk)
+    record_security_event(
+        request=request, event_type='password_change', outcome='success', user=user,
+    )
     return Response({'message': '密码修改成功'})
 
 
@@ -237,6 +248,10 @@ def request_email_change(request):
     for decision in security_decisions:
         refund_rate_limit(decision)
     queued = queue_email_change_confirmation(issued.record.pk, issued.raw_token)
+    record_security_event(
+        request=request, event_type='email_change_request', outcome='accepted',
+        user=request.user, identifier=email,
+    )
     return Response({
         'message': (
             '验证邮件已发送到新邮箱，验证完成前原邮箱保持有效'
@@ -290,4 +305,8 @@ def confirm_email_change_view(request):
     if result.old_verified_email and result.old_verified_email != result.new_email:
         from ..tasks import queue_email_changed_notice
         queue_email_changed_notice(result.user.pk, result.old_verified_email, result.new_email)
+    record_security_event(
+        request=request, event_type='email_change', outcome='success',
+        user=result.user, identifier=result.new_email,
+    )
     return Response({'message': '可信邮箱已更新', 'email': result.new_email})

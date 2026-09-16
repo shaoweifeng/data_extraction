@@ -21,6 +21,12 @@
 | `PASSWORD_RESET_*` | 可选 | 密码重置链接有效期、重发间隔及邮箱/IP 每日限额；默认 30 分钟、60 秒、10 次、20 次 |
 | `EMAIL_CHANGE_*` | 可选 | 邮箱变更链接有效期、重发间隔及用户/IP 每日限额；默认 24 小时、60 秒、10 次、20 次 |
 | `ACCOUNT_SECURITY_CHANGE_*` | 可选 | 修改密码/邮箱的用户和 IP 防爆破窗口与次数；默认 10 分钟、用户 10 次、IP 30 次 |
+| `ACCOUNT_LEGAL_VERSION` | 阶段 4 必需 | 当前服务协议和隐私政策版本；正文变化必须同步升级版本 |
+| `LEGAL_OPERATOR_NAME` | 生产必需 | 营业执照上的经营主体全称 |
+| `LEGAL_CONTACT_EMAIL` | 生产必需 | 客服、协议说明和个人信息权利请求邮箱 |
+| `LEGAL_CONTACT_ADDRESS` | 生产必需 | 经营主体有效联系地址 |
+| `ACCOUNT_SECURITY_EVENT_RETENTION_DAYS` | 可选 | 脱敏账户安全事件保留天数，默认 180 |
+| `SECURE_SSL_REDIRECT/SECURE_HSTS_*` | 生产必需 | HTTPS 强制跳转和 HSTS；确认全站 HTTPS 后开启 |
 | `DEEPSEEK_* / DOUBAO_* / QWEN_*` | 按需 | AI Provider 地址、模型与密钥 |
 | `MPLCONFIGDIR` | 可选 | Matplotlib 缓存目录；启动脚本默认使用项目 `.cache` |
 | `FEEDBACK_UPLOAD_ROOT` | 可选 | 用户反馈私有图片目录；默认 `private_media/feedback`，不能映射到公开静态 URL |
@@ -42,8 +48,7 @@ python manage.py check
 python manage.py migrate --check
 ```
 
-阶段 1 部署会新增 `account.0001_initial` 和 `core.0022_credittransaction_idempotency_key`。
-部署 migration 后仍保持 `ACCOUNT_REGISTRATION_V2_ENABLED=false`，旧注册入口继续兼容；新链路完成预发布验证后再切换。账户限流启用前必须确认 `RATE_LIMIT_REDIS_URL` 可用，注册限流在 Redis 故障时会拒绝请求，登录限流则降级放行并告警。
+账户系统的生产变量、域名、邮件、法律主体及完整验收步骤统一维护在 [注册、账户与生产上线手册](./account-production-readiness.md)。账户限流启用前必须确认 `RATE_LIMIT_REDIS_URL` 可用；注册限流在 Redis 故障时会拒绝请求，登录限流则降级放行并告警。
 
 部署前后可以执行只读账户审计；命令只输出数量，不输出完整邮箱：
 
@@ -59,9 +64,7 @@ MySQL 预发布环境使用独立测试库执行账户并发契约；不要把�
 python manage.py test core.account.tests.test_mysql_concurrency
 ```
 
-阶段 2 新增 `account.0002_email_verification`。迁移会创建验证 Token 表，并只为格式合法且不存在冲突的历史邮箱回填未验证 `AccountEmail`；不会停用历史用户，也不会自动处理空邮箱、非法邮箱或重复邮箱。
-
-阶段 3 新增 `account.0003_alter_accountverificationtoken_purpose_and_more`。迁移会扩展验证 Token 用途并创建邮箱变更请求表，不修改历史用户、密码、邮箱或现有验证记录。部署顺序为：备份数据库、部署代码、执行 migration、重启 Web/Celery，再验证登录与邮件链路：
+账户 migration 均为增量迁移，不修改历史 migration。部署顺序为：备份数据库、部署代码、查看并执行 migration、重启 Web/Celery，再验证登录与邮件链路：
 
 ```bash
 python manage.py migrate --plan
@@ -69,7 +72,17 @@ python manage.py migrate
 python manage.py showmigrations account
 ```
 
-阶段 3 上线前必须确认 Celery worker 已加载最新任务，且 `PUBLIC_BASE_URL`、SMTP、Redis 限流均可用。验收至少覆盖：用户名登录、已验证邮箱登录、忘记密码的通用响应、单次重置链接、旧会话失效、登录态修改密码、新邮箱确认后切换，以及旧邮箱通知。控制台邮件后端只适合本地联调，不能用于生产。
+上线前必须确认 Celery worker 已加载最新任务，且 `PUBLIC_BASE_URL`、SMTP、Redis 限流均可用。控制台邮件后端只适合本地联调，不能用于生产。安全事件清理默认仅预览：
+
+```bash
+python manage.py cleanup_account_security_events
+python manage.py cleanup_account_security_events --delete
+python manage.py account_security_status --minutes 15 --json --fail-on-alert
+```
+
+最后一条命令在超过认证失败或邮件错误阈值时返回非零状态，可接入 cron、systemd、Prometheus exporter 或现有告警平台；项目本身不臆造尚未提供的短信/企业微信接收地址。
+
+公开上线前执行 `python manage.py check --deploy`。域名、HTTPS、HSTS、发信身份和法律文本的待办不在本文重复维护，按 [注册、账户与生产上线手册](./account-production-readiness.md) 执行。
 
 本地邮件联调使用：
 

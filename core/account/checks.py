@@ -51,8 +51,7 @@ def check_account_security_settings(app_configs, **kwargs):
         ))
     email_backend = getattr(settings, 'EMAIL_BACKEND', '')
     if (
-        verification_enabled
-        and getattr(settings, 'APP_ENV', 'development') == 'production'
+        getattr(settings, 'APP_ENV', 'development') == 'production'
         and email_backend in {
             'django.core.mail.backends.console.EmailBackend',
             'django.core.mail.backends.locmem.EmailBackend',
@@ -79,6 +78,9 @@ def check_account_security_settings(app_configs, **kwargs):
         'ACCOUNT_SECURITY_CHANGE_WINDOW_SECONDS',
         'ACCOUNT_SECURITY_CHANGE_USER_LIMIT',
         'ACCOUNT_SECURITY_CHANGE_IP_LIMIT',
+        'ACCOUNT_SECURITY_EVENT_RETENTION_DAYS',
+        'ACCOUNT_SECURITY_ALERT_FAILURE_THRESHOLD',
+        'ACCOUNT_SECURITY_ALERT_MAIL_THRESHOLD',
     )
     invalid_positive_settings = [
         name for name in positive_settings if getattr(settings, name, 0) <= 0
@@ -88,6 +90,37 @@ def check_account_security_settings(app_configs, **kwargs):
             f'{", ".join(invalid_positive_settings)} 必须大于 0。',
             id='account.E006',
         ))
+
+    if getattr(settings, 'APP_ENV', 'development') == 'production':
+        if getattr(settings, 'REGISTRATION_ENABLED', True) and not registration_v2_enabled:
+            messages.append(checks.Error(
+                '生产开放注册必须启用 ACCOUNT_REGISTRATION_V2_ENABLED。', id='account.E012',
+            ))
+        if getattr(settings, 'REGISTRATION_ENABLED', True) and not verification_enabled:
+            messages.append(checks.Error(
+                '生产开放注册必须启用 REQUIRE_EMAIL_VERIFICATION。', id='account.E013',
+            ))
+        if parsed_base_url.scheme != 'https':
+            messages.append(checks.Error(
+                '生产环境 PUBLIC_BASE_URL 必须使用 HTTPS。', id='account.E014',
+            ))
+        for name in ('LEGAL_OPERATOR_NAME', 'LEGAL_CONTACT_EMAIL', 'LEGAL_CONTACT_ADDRESS'):
+            value = getattr(settings, name, '')
+            if not value or '待配置' in value or '请替换' in value:
+                messages.append(checks.Error(
+                    f'生产环境必须配置真实的 {name}。',
+                    id='account.E009',
+                ))
+        if not getattr(settings, 'SESSION_COOKIE_SECURE', False) or not getattr(
+            settings, 'CSRF_COOKIE_SECURE', False,
+        ):
+            messages.append(checks.Error(
+                '生产环境必须启用 Secure Session/CSRF Cookie。', id='account.E010',
+            ))
+        if getattr(settings, 'SECURE_HSTS_SECONDS', 0) <= 0:
+            messages.append(checks.Error(
+                '生产环境必须配置 SECURE_HSTS_SECONDS。', id='account.E011',
+            ))
 
     for value in getattr(settings, 'TRUSTED_PROXY_IPS', []):
         try:

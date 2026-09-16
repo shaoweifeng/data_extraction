@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <p>该操作会立即改变下列账户的登录权限，并写入不可编辑的管理员审计记录。</p>
+  <ul>
+    {% for user in users %}<li>{{ user.username }}（ID: {{ user.pk }}）</li>{% endfor %}
+  </ul>
+  <form method="post">
+    {% csrf_token %}
+    {% for user in users %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ user.pk }}">
+    {% endfor %}
+    <input type="hidden" name="action" value="{{ action_name }}">
+    <input type="hidden" name="confirmed" value="yes">
+    <div style="margin: 1rem 0">
+      <label for="id_reason"><strong>操作原因（必填）</strong></label><br>
+      <textarea id="id_reason" name="reason" required maxlength="500" rows="4" style="width: min(100%, 640px)"></textarea>
+    </div>
+    <input type="submit" value="确认执行" class="default">
+    <a href="../" class="button cancel-link">取消</a>
+  </form>
+{% endblock %}

@@ -11,6 +11,7 @@ from ..models import UserPermission
 from ..serializers import UserSerializer
 from .common import require_permission
 from ..services.access_policy import ProjectAccessPolicy
+from core.account.services.security_audit import record_admin_event
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,6 +37,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         profile.approved_at = timezone.now()
         profile.approved_by = request.user
         profile.save()
+        record_admin_event(
+            request=request, action='account_approve', target_user=user,
+            reason=(request.data.get('reason') or '管理员 API 审核账户')[:500],
+            after={'is_approved': True},
+        )
         return Response({"message": "用户审核已通过", "user": UserSerializer(user).data})
 
     @action(detail=True, methods=['post'])
@@ -46,8 +52,14 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         if user.is_superuser:
             return Response({"error": "不能封禁超级用户"}, status=400)
         profile = user.profile
+        before = {'is_banned': profile.is_banned}
         profile.is_banned = True
         profile.save(update_fields=['is_banned', 'updated_at'])
+        record_admin_event(
+            request=request, action='account_ban', target_user=user,
+            reason=(request.data.get('reason') or '管理员 API 封禁账户')[:500],
+            before=before, after={'is_banned': True},
+        )
         return Response({"message": "用户已封禁", "user": UserSerializer(user).data})
 
     @action(detail=True, methods=['post'])
@@ -56,8 +68,14 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         """解封用户。"""
         user = self.get_object()
         profile = user.profile
+        before = {'is_banned': profile.is_banned}
         profile.is_banned = False
         profile.save(update_fields=['is_banned', 'updated_at'])
+        record_admin_event(
+            request=request, action='account_unban', target_user=user,
+            reason=(request.data.get('reason') or '管理员 API 解除封禁')[:500],
+            before=before, after={'is_banned': False},
+        )
         return Response({"message": "用户已解封", "user": UserSerializer(user).data})
 
     @action(detail=True, methods=['post'])
@@ -122,6 +140,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 balance_after=acct.balance,
                 note=note,
                 created_by=request.user,
+            )
+            record_admin_event(
+                request=request, action='credit_adjust', target_user=target_user,
+                reason=note, before={'balance': acct.balance - amount},
+                after={'balance': acct.balance, 'amount': amount},
             )
 
         sign = '+' if amount > 0 else ''

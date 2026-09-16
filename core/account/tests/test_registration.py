@@ -155,6 +155,10 @@ class RegistrationApiTests(TestCase):
             'email': 'Researcher@Example.COM',
             'password': STRONG_PASSWORD,
             'password_confirm': STRONG_PASSWORD,
+            'accept_terms': True,
+            'accept_privacy': True,
+            'terms_version': '2026-09-16',
+            'privacy_version': '2026-09-16',
         }
         payload.update(overrides)
         return payload
@@ -184,6 +188,30 @@ class RegistrationApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('email', response.json()['fields'])
+
+    def test_v2_registration_requires_explicit_current_agreements(self):
+        response = self.post(self.valid_payload(accept_terms=False))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('accept_terms', response.json()['fields'])
+
+        response = self.post(self.valid_payload(terms_version='outdated'))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('terms_version', response.json()['fields'])
+
+    def test_registration_records_both_agreement_snapshots(self):
+        response = self.post(self.valid_payload(), HTTP_USER_AGENT='Test Browser')
+        self.assertEqual(response.status_code, 201)
+        user = User.objects.get(username='api-researcher')
+        self.assertEqual(user.agreement_acceptances.count(), 2)
+        self.assertTrue(all(item.content_sha256 for item in user.agreement_acceptances.all()))
+
+    def test_legal_documents_are_public_and_versioned(self):
+        response = self.client.get('/api/auth/legal/current/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({item['type'] for item in response.json()['documents']}, {'terms', 'privacy'})
+        detail = self.client.get('/api/auth/legal/privacy/')
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn('个人信息', detail.json()['content'])
 
     def test_v2_registration_rejects_short_password(self):
         response = self.post(self.valid_payload(password='short7!', password_confirm='short7!'))

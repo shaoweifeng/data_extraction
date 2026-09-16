@@ -10,6 +10,7 @@ from core.serializers import UserSerializer
 from ..services.authentication import authenticate_identifier
 from ..services.client_ip import get_client_ip
 from ..services.rate_limit import consume_rate_limit, refund_rate_limit
+from ..services.security_audit import record_security_event
 
 User = get_user_model()
 
@@ -35,6 +36,7 @@ def login_view(request):
         )
         decisions.append(ip_decision)
         if not ip_decision.allowed:
+            record_security_event(request=request, event_type='login_rate_limited', outcome='denied', identifier=identifier)
             response = Response(
                 {'error': '登录尝试过于频繁，请稍后再试', 'code': 'rate_limited'},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -49,6 +51,7 @@ def login_view(request):
         )
         decisions.append(identifier_decision)
         if not identifier_decision.allowed:
+            record_security_event(request=request, event_type='login_rate_limited', outcome='denied', identifier=identifier)
             response = Response(
                 {'error': '登录尝试过于频繁，请稍后再试', 'code': 'rate_limited'},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -59,14 +62,17 @@ def login_view(request):
 
     user = authenticate_identifier(request, identifier, password)
     if user is None:
+        record_security_event(request=request, event_type='login', outcome='failure', identifier=identifier)
         return Response({'error': '用户名或密码错误'}, status=status.HTTP_401_UNAUTHORIZED)
     profile = getattr(user, 'profile', None)
     if profile and profile.is_banned:
+        record_security_event(request=request, event_type='login', outcome='banned', user=user, identifier=identifier)
         return Response({'error': '账号已被封禁，请联系管理员'}, status=status.HTTP_403_FORBIDDEN)
 
     for decision in decisions:
         refund_rate_limit(decision)
     login(request, user)
+    record_security_event(request=request, event_type='login', outcome='success', user=user, identifier=identifier)
     user = User.objects.select_related('profile').get(pk=user.pk)
     return Response(
         {'message': '登录成功', 'user': UserSerializer(user).data},

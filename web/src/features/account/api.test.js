@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const http = vi.hoisted(() => ({ post: vi.fn() }))
+const http = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
 vi.mock('@/shared/api/http', () => ({ default: http }))
 
 import {
   changePassword,
   confirmEmailChange,
+  fetchCurrentLegalDocuments,
+  fetchLegalDocument,
   forgotPassword,
   requestEmailChange,
   resendVerificationEmail,
@@ -65,5 +67,16 @@ describe('account verification API', () => {
     expect(http.post).toHaveBeenNthCalledWith(2, '/auth/email/change/confirm/', {
       token: 'change-token',
     })
+  })
+
+  it('loads current legal versions and document content', async () => {
+    http.get
+      .mockResolvedValueOnce({ data: { documents: [{ type: 'terms', version: 'v1' }] } })
+      .mockResolvedValueOnce({ data: { type: 'privacy', content: 'policy' } })
+
+    expect(await fetchCurrentLegalDocuments()).toEqual([{ type: 'terms', version: 'v1' }])
+    expect(await fetchLegalDocument('privacy')).toEqual({ type: 'privacy', content: 'policy' })
+    expect(http.get).toHaveBeenNthCalledWith(1, '/auth/legal/current/')
+    expect(http.get).toHaveBeenNthCalledWith(2, '/auth/legal/privacy/')
   })
 })

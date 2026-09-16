@@ -39,6 +39,18 @@ const routes = [
     meta: { requiresAuth: false },
   },
   {
+    path: '/legal/terms',
+    name: 'service-terms',
+    component: () => import('@/features/account/views/LegalDocumentView.vue'),
+    meta: { public: true, legalType: 'terms' },
+  },
+  {
+    path: '/legal/privacy',
+    name: 'privacy-policy',
+    component: () => import('@/features/account/views/LegalDocumentView.vue'),
+    meta: { public: true, legalType: 'privacy' },
+  },
+  {
     path: '/projects',
     name: 'Home',
     component: () => import('@/features/projects/views/HomeView.vue'),

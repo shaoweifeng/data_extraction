@@ -332,10 +332,21 @@ class CreditTransactionAdmin(admin.ModelAdmin):
 
 @admin.register(RechargeCode)
 class RechargeCodeAdmin(admin.ModelAdmin):
-    list_display  = ['code', 'credits', 'is_used', 'used_by', 'used_at', 'expires_at', 'note', 'created_at']
+    list_display  = [
+        'code', 'credits', 'is_used', 'used_by_display', 'used_at',
+        'expires_at', 'note', 'created_at',
+    ]
     list_filter   = ['is_used', 'created_at']
     search_fields = ['code', 'note', 'used_by__username']
     readonly_fields = ['is_used', 'used_by', 'used_at', 'created_at']
+
+    @admin.display(description='使用者', ordering='used_by__username')
+    def used_by_display(self, obj):
+        if obj.used_by_id and obj.used_by:
+            return obj.used_by.username
+        if obj.is_used:
+            return '已使用（原用户已删除）'
+        return '-'
 
     fieldsets = (
         ('兑换码信息', {

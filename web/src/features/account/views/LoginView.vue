@@ -111,6 +111,17 @@
           :password="registerForm.password"
           :confirm-password="registerForm.password_confirm"
         />
+        <div class="agreement-box">
+          <label>
+            <input v-model="registerForm.accept_terms" type="checkbox" />
+            <span>我已阅读并同意 <RouterLink target="_blank" to="/legal/terms">《服务协议》</RouterLink></span>
+          </label>
+          <label>
+            <input v-model="registerForm.accept_privacy" type="checkbox" />
+            <span>我已阅读并同意 <RouterLink target="_blank" to="/legal/privacy">《隐私政策》</RouterLink></span>
+          </label>
+          <small v-if="legalLoading">正在确认当前协议版本…</small>
+        </div>
         <p v-if="error" class="form-error">
           <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
         </p>
@@ -140,7 +151,7 @@
         <button
           v-else
           type="submit"
-          :disabled="loading"
+          :disabled="loading || legalLoading"
           class="btn-primary w-full justify-center py-2.5 mt-2"
           style="background: linear-gradient(135deg,#10b981,#059669)"
         >
@@ -157,9 +168,10 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/account/store'
+import { fetchCurrentLegalDocuments } from '@/features/account/api'
 import PasswordField from '@/features/account/components/PasswordField.vue'
 import PasswordRequirements from '@/features/account/components/PasswordRequirements.vue'
 import {
@@ -184,7 +196,23 @@ const resendCountdown = ref(0)
 let resendTimer = null
 
 const loginForm = ref({ username: '', password: '' })
-const registerForm = ref({ username: '', email: '', password: '', password_confirm: '' })
+const registerForm = ref({
+  username: '', email: '', password: '', password_confirm: '',
+  accept_terms: false, accept_privacy: false, terms_version: '', privacy_version: '',
+})
+const legalLoading = ref(true)
+
+onMounted(async () => {
+  try {
+    const documents = await fetchCurrentLegalDocuments()
+    registerForm.value.terms_version = documents.find((item) => item.type === 'terms')?.version || ''
+    registerForm.value.privacy_version = documents.find((item) => item.type === 'privacy')?.version || ''
+  } catch {
+    error.value = '暂时无法加载服务协议，请稍后再试。'
+  } finally {
+    legalLoading.value = false
+  }
+})
 
 async function handleLogin() {
   error.value = ''
@@ -205,6 +233,10 @@ async function handleRegister() {
   success.value = ''
   if (registerForm.value.password !== registerForm.value.password_confirm) {
     error.value = '两次输入的密码不一致'
+    return
+  }
+  if (!registerForm.value.accept_terms || !registerForm.value.accept_privacy) {
+    error.value = '请阅读并同意《服务协议》和《隐私政策》'
     return
   }
   loading.value = true
@@ -255,6 +287,11 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.agreement-box { display: grid; gap: .55rem; padding: .8rem; border: 1px solid #ddd6fe; border-radius: 9px; background: #fafafa; }
+.agreement-box label { display: flex; gap: .5rem; align-items: flex-start; color: #475569; font-size: .8rem; line-height: 1.5; }
+.agreement-box input { margin-top: .2rem; }
+.agreement-box a { color: #6366f1; font-weight: 600; }
+.agreement-box small { color: #64748b; }
 .login-bg {
   min-height: 100vh;
   background: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4c1d95 60%, #6d28d9 100%);

@@ -32,6 +32,8 @@
         }
       }
     },
+    "/auth/legal/current/": {"get": {"tags": ["Auth"], "description": "Current legal-document metadata required for registration", "responses": {"200": {"description": "Current service terms and privacy policy versions"}}}},
+    "/auth/legal/{document_type}/": {"get": {"tags": ["Auth"], "parameters": [{"name": "document_type", "in": "path", "required": true, "schema": {"type": "string", "enum": ["terms", "privacy"]}}], "responses": {"200": {"description": "Versioned legal document including content"}, "404": {"$ref": "#/components/responses/NotFound"}}}},
     "/auth/email/verify/": {
       "post": {
         "tags": ["Auth"],
@@ -206,12 +208,16 @@
     "schemas": {
       "RegistrationRequest": {
         "type": "object",
-        "required": ["username", "email", "password", "password_confirm"],
+        "required": ["username", "email", "password", "password_confirm", "accept_terms", "accept_privacy", "terms_version", "privacy_version"],
         "properties": {
           "username": {"type": "string", "maxLength": 150},
           "email": {"type": "string", "format": "email", "maxLength": 254},
           "password": {"type": "string", "format": "password", "minLength": 8, "maxLength": 128},
-          "password_confirm": {"type": "string", "format": "password", "minLength": 8, "maxLength": 128}
+          "password_confirm": {"type": "string", "format": "password", "minLength": 8, "maxLength": 128},
+          "accept_terms": {"type": "boolean", "enum": [true]},
+          "accept_privacy": {"type": "boolean", "enum": [true]},
+          "terms_version": {"type": "string", "maxLength": 32},
+          "privacy_version": {"type": "string", "maxLength": 32}
         }
       },
       "EmailVerificationRequest": {

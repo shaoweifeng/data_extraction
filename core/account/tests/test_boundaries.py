@@ -14,11 +14,13 @@ class AccountModuleBoundaryTests(SimpleTestCase):
             'api/verification_views.py',
             'api/authentication_views.py',
             'api/security_views.py',
+            'api/legal_views.py',
             'api/responses.py',
             'checks.py',
             'models/email.py',
             'models/verification.py',
             'models/email_change.py',
+            'models/compliance.py',
             'selectors.py',
             'tasks.py',
             'services/client_ip.py',
@@ -28,6 +30,8 @@ class AccountModuleBoundaryTests(SimpleTestCase):
             'services/authentication.py',
             'services/password_reset.py',
             'services/email_change.py',
+            'services/legal.py',
+            'services/security_audit.py',
         )
         for relative_path in expected:
             with self.subTest(path=relative_path):
@@ -50,3 +54,18 @@ class AccountModuleBoundaryTests(SimpleTestCase):
     def test_production_verification_rejects_console_email_backend(self):
         message_ids = {message.id for message in checks.run_checks(tags=[checks.Tags.security])}
         self.assertIn('account.E008', message_ids)
+
+    @override_settings(
+        APP_ENV='production',
+        REGISTRATION_ENABLED=True,
+        ACCOUNT_REGISTRATION_V2_ENABLED=True,
+        REQUIRE_EMAIL_VERIFICATION=True,
+        EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend',
+        PUBLIC_BASE_URL='https://example.com',
+        LEGAL_OPERATOR_NAME='待配置的平台运营主体',
+        LEGAL_CONTACT_EMAIL='待配置',
+        LEGAL_CONTACT_ADDRESS='待配置',
+    )
+    def test_production_requires_real_legal_identity(self):
+        message_ids = {message.id for message in checks.run_checks(tags=[checks.Tags.security])}
+        self.assertIn('account.E009', message_ids)

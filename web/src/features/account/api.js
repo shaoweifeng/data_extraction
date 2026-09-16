@@ -37,6 +37,16 @@ export async function register(form) {
   return res.data
 }
 
+export async function fetchCurrentLegalDocuments() {
+  const res = await http.get('/auth/legal/current/')
+  return res.data.documents
+}
+
+export async function fetchLegalDocument(type) {
+  const res = await http.get(`/auth/legal/${type}/`)
+  return res.data
+}
+
 /** 验证邮箱激活 Token */
 export async function verifyEmail(token) {
   const res = await http.post('/auth/email/verify/', { token })

@@ -34,4 +34,4 @@ MPLCONFIGDIR=/tmp/data-extraction-mpl venv/bin/python manage.py test core.tests 
 cd web && npm ci && npm test && npm run lint -- --quiet && npm run build
 ```
 
-架构入口见 [当前架构说明](docs/architecture.md)，接口见 [API 契约](docs/api-contract-baseline.md)，部署、备份与恢复见 [运行维护说明](docs/operations.md)。
+文档统一入口见 [文档导航](docs/README.md)。架构入口见 [当前架构说明](docs/architecture.md)，接口见 [API 契约](docs/api-contract-baseline.md)，部署、备份与恢复见 [运行维护说明](docs/operations.md)。

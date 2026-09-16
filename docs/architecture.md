@@ -22,7 +22,7 @@ core/
 
 web/src/
 ├── features/
-│   ├── account/        # 登录、注册、邮箱验证/变更、密码找回与个人账户安全
+│   ├── account/        # 登录、注册、协议、邮箱/密码安全及账户审计
 │   ├── billing/        # 额度接口
 │   ├── feedback/       # 全局用户反馈组件、校验与提交 API
 │   ├── projects/       # 项目列表和工作区

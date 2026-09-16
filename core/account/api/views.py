@@ -21,6 +21,7 @@ from ..services.registration import (
     register_pending_user,
     register_user,
 )
+from ..services.security_audit import record_security_event, request_fingerprints
 from ..tasks import queue_verification_email
 
 
@@ -99,6 +100,10 @@ def register(request):
 
     serializer = RegistrationSerializer(data=payload)
     if not serializer.is_valid():
+        record_security_event(
+            request=request, event_type='registration', outcome='failure',
+            identifier=payload.get('email', ''), detail={'reason': 'validation'},
+        )
         record_registration_attempt(
             ip_address=ip_address,
             username=payload.get('username', ''),
@@ -112,6 +117,11 @@ def register(request):
         )
 
     data = serializer.validated_data
+    fingerprints = request_fingerprints(request)
+    acceptance_context = {
+        'ip_hash': fingerprints['ip_hash'],
+        'user_agent_hash': fingerprints['user_agent_hash'],
+    }
     account_slot = None
     try:
         email_decision = _consume_registration_limit(
@@ -138,6 +148,7 @@ def register(request):
                 username=data['username'],
                 email=data['email'],
                 password=data['password'],
+                acceptance_context=acceptance_context,
             )
             user = pending.user
             email_queued = queue_verification_email(
@@ -150,6 +161,7 @@ def register(request):
                 email=data['email'],
                 password=data['password'],
                 is_active=True,
+                acceptance_context=acceptance_context,
             )
     except RateLimitUnavailable:
         return Response(
@@ -185,6 +197,10 @@ def register(request):
         username=data['username'],
         email=data['email'],
         success=True,
+    )
+    record_security_event(
+        request=request, event_type='registration', outcome='success',
+        user=user, identifier=data['email'],
     )
     if requires_verification:
         return Response(
