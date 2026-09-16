@@ -12,16 +12,22 @@ class AccountModuleBoundaryTests(SimpleTestCase):
             'api/serializers.py',
             'api/views.py',
             'api/verification_views.py',
+            'api/authentication_views.py',
+            'api/security_views.py',
             'api/responses.py',
             'checks.py',
             'models/email.py',
             'models/verification.py',
+            'models/email_change.py',
             'selectors.py',
             'tasks.py',
             'services/client_ip.py',
             'services/rate_limit.py',
             'services/registration.py',
             'services/verification.py',
+            'services/authentication.py',
+            'services/password_reset.py',
+            'services/email_change.py',
         )
         for relative_path in expected:
             with self.subTest(path=relative_path):

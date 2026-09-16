@@ -21,6 +21,24 @@ const routes = [
     meta: { requiresAuth: false },
   },
   {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/features/account/views/ForgotPasswordView.vue'),
+    meta: { requiresAuth: false },
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('@/features/account/views/ResetPasswordView.vue'),
+    meta: { requiresAuth: false },
+  },
+  {
+    path: '/verify-email-change',
+    name: 'VerifyEmailChange',
+    component: () => import('@/features/account/views/EmailChangeVerifyView.vue'),
+    meta: { requiresAuth: false },
+  },
+  {
     path: '/projects',
     name: 'Home',
     component: () => import('@/features/projects/views/HomeView.vue'),

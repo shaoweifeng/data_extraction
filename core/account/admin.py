@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AccountEmail, AccountVerificationToken
+from .models import AccountEmail, AccountEmailChangeRequest, AccountVerificationToken
 
 
 @admin.register(AccountEmail)
@@ -25,3 +25,18 @@ class AccountVerificationTokenAdmin(admin.ModelAdmin):
         'used_at', 'revoked_at', 'sent_at', 'send_attempts', 'last_error', 'created_at',
     ]
     raw_id_fields = ['user', 'account_email']
+
+
+@admin.register(AccountEmailChangeRequest)
+class AccountEmailChangeRequestAdmin(admin.ModelAdmin):
+    list_display = [
+        'user', 'new_email', 'expires_at', 'used_at', 'revoked_at',
+        'sent_at', 'send_attempts', 'created_at',
+    ]
+    list_filter = ['used_at', 'revoked_at', 'created_at']
+    search_fields = ['user__username', 'new_email', 'normalized_new_email']
+    readonly_fields = [
+        'user', 'new_email', 'normalized_new_email', 'token_digest', 'expires_at',
+        'used_at', 'revoked_at', 'sent_at', 'send_attempts', 'last_error', 'created_at',
+    ]
+    raw_id_fields = ['user']

@@ -50,6 +50,8 @@
       <!-- ── 右侧：内容区 ─────────────────────────── -->
       <main class="profile-main">
 
+        <AccountSecurityPanel />
+
         <!-- 兑换码充值 -->
         <section class="profile-section">
           <h2 class="section-title"><i class="fas fa-ticket-alt"></i> 兑换码充值</h2>
@@ -156,6 +158,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/account/store'
 import AppHeader from '@/shared/components/AppHeader.vue'
+import AccountSecurityPanel from '@/features/account/components/AccountSecurityPanel.vue'
 import * as billingApi from '@/features/billing/api'
 
 const router    = useRouter()

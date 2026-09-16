@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from PIL import Image
 
 from core.feedback.models import FeedbackAttachment, FeedbackDailyQuota, UserFeedback
@@ -184,3 +185,44 @@ class FeedbackApiTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['code'], 'INVALID_IDEMPOTENCY_KEY')
+
+
+class FeedbackAdminDeletionTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            'feedback-delete-admin',
+            email='feedback-delete-admin@example.com',
+            password='pw',
+        )
+        self.user = User.objects.create_user('feedback-delete-target', password='pw')
+        self.quota = FeedbackDailyQuota.objects.create(
+            user=self.user,
+            quota_date=timezone.localdate(),
+            used_count=1,
+        )
+        self.client.force_login(self.admin)
+
+    def test_user_admin_bulk_delete_cascades_daily_quota(self):
+        url = '/admin/auth/user/'
+        selection = {
+            'action': 'delete_selected',
+            '_selected_action': [str(self.user.pk)],
+        }
+
+        confirmation = self.client.post(url, selection)
+
+        self.assertEqual(confirmation.status_code, 200)
+        self.assertEqual(confirmation.context['perms_lacking'], set())
+
+        response = self.client.post(url, {**selection, 'post': 'yes'})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.filter(pk=self.user.pk).exists())
+        self.assertFalse(FeedbackDailyQuota.objects.filter(pk=self.quota.pk).exists())
+
+    def test_daily_quota_still_cannot_be_deleted_directly(self):
+        response = self.client.get(
+            f'/admin/feedback/feedbackdailyquota/{self.quota.pk}/delete/',
+        )
+
+        self.assertEqual(response.status_code, 403)

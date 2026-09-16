@@ -1,0 +1,1 @@
+function e(e,t=`操作失败`){let n=e?.response?.data;if(n?.fields&&typeof n.fields==`object`)for(let e of Object.values(n.fields)){if(Array.isArray(e)&&e.length)return String(e[0]);if(typeof e==`string`&&e)return e}return n?.error||e?.message||t}export{e as t};

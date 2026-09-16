@@ -454,8 +454,8 @@ class LoginRateLimitTests(TestCase):
         self.user = User.objects.create_user('login-user', password=STRONG_PASSWORD)
 
     @override_settings(ACCOUNT_RATE_LIMIT_ENABLED=True)
-    @patch('core.api.auth_views.refund_rate_limit')
-    @patch('core.api.auth_views.consume_rate_limit')
+    @patch('core.account.api.authentication_views.refund_rate_limit')
+    @patch('core.account.api.authentication_views.consume_rate_limit')
     def test_successful_login_refunds_failure_reservations(self, consume, refund):
         consume.side_effect = [
             RateLimitDecision(True, key='ip-key'),
@@ -472,7 +472,7 @@ class LoginRateLimitTests(TestCase):
         self.assertEqual(refund.call_count, 2)
 
     @override_settings(ACCOUNT_RATE_LIMIT_ENABLED=True)
-    @patch('core.api.auth_views.consume_rate_limit')
+    @patch('core.account.api.authentication_views.consume_rate_limit')
     def test_blocked_ip_does_not_consume_identifier_bucket(self, consume):
         consume.return_value = RateLimitDecision(False, retry_after=25, key='ip-key')
 
@@ -487,8 +487,8 @@ class LoginRateLimitTests(TestCase):
         self.assertEqual(consume.call_count, 1)
 
     @override_settings(ACCOUNT_RATE_LIMIT_ENABLED=True)
-    @patch('core.api.auth_views.refund_rate_limit')
-    @patch('core.api.auth_views.consume_rate_limit')
+    @patch('core.account.api.authentication_views.refund_rate_limit')
+    @patch('core.account.api.authentication_views.consume_rate_limit')
     def test_failed_login_keeps_failure_reservations(self, consume, refund):
         consume.return_value = RateLimitDecision(True, key='rate-key')
 

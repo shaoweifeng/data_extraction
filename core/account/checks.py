@@ -68,6 +68,17 @@ def check_account_security_settings(app_configs, **kwargs):
         'EMAIL_RESEND_INTERVAL_SECONDS',
         'EMAIL_DAILY_SEND_LIMIT',
         'EMAIL_TOKEN_FAILURE_LIMIT',
+        'PASSWORD_RESET_TTL_MINUTES',
+        'PASSWORD_RESET_RESEND_INTERVAL_SECONDS',
+        'PASSWORD_RESET_DAILY_SEND_LIMIT',
+        'PASSWORD_RESET_IP_LIMIT',
+        'EMAIL_CHANGE_TOKEN_TTL_HOURS',
+        'EMAIL_CHANGE_RESEND_INTERVAL_SECONDS',
+        'EMAIL_CHANGE_DAILY_SEND_LIMIT',
+        'EMAIL_CHANGE_IP_LIMIT',
+        'ACCOUNT_SECURITY_CHANGE_WINDOW_SECONDS',
+        'ACCOUNT_SECURITY_CHANGE_USER_LIMIT',
+        'ACCOUNT_SECURITY_CHANGE_IP_LIMIT',
     )
     invalid_positive_settings = [
         name for name in positive_settings if getattr(settings, name, 0) <= 0

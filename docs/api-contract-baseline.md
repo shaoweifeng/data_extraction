@@ -22,9 +22,14 @@
 | POST | `/api/auth/register/` | V2 注册；启用邮箱验证时创建未激活零余额账户并异步发送验证邮件 |
 | POST | `/api/auth/email/verify/` | 消费单次 Token；激活邮箱和账户，使用幂等键发放欢迎积分 |
 | POST | `/api/auth/email/resend/` | 重发验证邮件；无论邮箱是否存在均返回相同成功提示 |
-| POST | `/api/auth/login/` | 未激活用户使用统一的用户名或密码错误响应 |
+| POST | `/api/auth/login/` | 支持用户名或已验证邮箱；未激活用户使用统一的用户名或密码错误响应 |
+| POST | `/api/auth/password/forgot/` | 申请重置邮件；无论邮箱是否存在均返回相同成功提示 |
+| POST | `/api/auth/password/reset/` | 消费 30 分钟单次 Token、设置新密码并使已有会话失效 |
+| POST | `/api/auth/password/change/` | 登录用户验证当前密码后改密；保留当前会话并使其他会话失效 |
+| POST | `/api/auth/email/change/request/` | 验证当前密码，向新邮箱发送验证链接；原邮箱继续有效 |
+| POST | `/api/auth/email/change/confirm/` | 验证新邮箱后原子替换可信邮箱，并通知旧邮箱 |
 
-验证 Token 的原文只进入邮件和 Celery 消息，数据库只保存 SHA-256 摘要。邮件链接使用 URL Fragment，避免 Token 进入 Web 访问日志；前端读取后再通过 POST 提交。重发会作废同用途旧 Token；重复访问已经成功使用的 Token 返回幂等成功。
+验证和密码重置 Token 的原文只进入邮件和 Celery 消息，数据库只保存 SHA-256 摘要。邮件链接使用 URL Fragment，避免 Token 进入 Web 访问日志；前端读取后再通过 POST 提交。重发会作废同用途旧 Token。邮箱激活重复访问返回幂等成功；密码重置和邮箱变更 Token 使用后不可再次消费。
 
 ## 4. 核心项目资源
 

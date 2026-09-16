@@ -10,6 +10,7 @@
 
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg
 from django.utils import timezone
 
@@ -70,10 +71,14 @@ class PermissionSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
     permissions = serializers.SerializerMethodField()
+    email_verified = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'is_superuser', 'date_joined', 'profile', 'permissions']
+        fields = [
+            'id', 'username', 'email', 'email_verified', 'is_superuser',
+            'date_joined', 'profile', 'permissions',
+        ]
         read_only_fields = ['date_joined']
 
     def get_permissions(self, obj):
@@ -89,6 +94,12 @@ class UserSerializer(serializers.ModelSerializer):
         ).values_list('permission__code', flat=True)
 
         return list(perms)
+
+    def get_email_verified(self, obj):
+        try:
+            return obj.account_email.verified_at is not None
+        except ObjectDoesNotExist:
+            return False
 
 
 # ============================================================================

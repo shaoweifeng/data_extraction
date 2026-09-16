@@ -1,13 +1,13 @@
 # 商业化注册与账户体系改造方案
 
-> 文档状态：阶段 0～2 已完成本地验证；阶段 2 已通过真实 SMTP 注册、投递与激活链路验收
-> 修订日期：2026-09-15  
+> 文档状态：阶段 0～2 已完成验收；阶段 3 已完成开发、本地自动化回归与 MySQL 并发验证，真实 SMTP 人工验收待执行
+> 修订日期：2026-09-16
 > 适用范围：运行时安全基线、平台注册、邮箱验证、注册防刷、注册赠送、登录保护、密码找回、协议接受及账户后台管理  
 > 关联文档：[`architecture.md`](./architecture.md)、[`operations.md`](./operations.md)、[`commercialization-plan-2026-09-10/report.html`](./commercialization-plan-2026-09-10/report.html)
 
 ## 1. 结论摘要
 
-当前注册功能适合内部使用或小范围受控测试，不适合直接开放商业注册。Python 3.12、Django 5.2 LTS、阶段 1 注册安全基础均已完成本地验证；阶段 2 已实现邮箱验证 Token、待激活账户、异步邮件、激活与重发、欢迎积分幂等发放和安全清理能力，并已通过真实 SMTP 本地端到端验收。生产域名发信身份、SPF/DKIM/DMARC、MySQL/Redis 生产同类环境与正式部署仍需在阶段 4 验收。密码找回和协议能力仍需按后续阶段完成。
+当前注册功能适合内部使用或小范围受控测试，不适合直接开放商业注册。Python 3.12、Django 5.2 LTS、阶段 1 注册安全基础均已完成本地验证；阶段 2 已实现邮箱验证 Token、待激活账户、异步邮件、激活与重发、欢迎积分幂等发放和安全清理能力，并已通过真实 SMTP 本地端到端验收。阶段 3 已实现用户名或已验证邮箱登录、密码找回、登录态改密和可信邮箱变更闭环，并通过本地自动化与 MySQL 并发验证；真实 SMTP 人工验收仍待执行。生产域名发信身份、SPF/DKIM/DMARC、MySQL/Redis 生产同类环境与正式部署，以及协议能力仍需在阶段 4 完成。
 
 本方案作出以下核心决策：
 
@@ -57,9 +57,10 @@
 
 - `core/account/api/views.py`：V2 注册入口。
 - `core/account/api/verification_views.py`：邮箱验证与重发入口。
-- `core/account/services/registration.py`、`verification.py`：注册、Token 和激活事务。
+- `core/account/api/authentication_views.py`、`security_views.py`：统一登录、密码与邮箱自助安全入口。
+- `core/account/services/registration.py`、`verification.py`、`password_reset.py`、`email_change.py`：注册、Token、激活及账户安全事务。
 - `core/account/tasks.py`：验证邮件异步投递与重试。
-- `core/api/auth_views.py`：旧注册兼容链路与登录。
+- `core/api/auth_views.py`：旧注册兼容链路及 `me/logout/csrf` 等既有认证接口。
 - `core/models.py`：`UserProfile`、`RegistrationLog` 和 Profile 创建信号。
 - `core/models_billing.py`：积分账户、流水和注册赠送信号。
 - `core/services/billing_service.py`：积分账户兜底创建与积分服务。
@@ -82,7 +83,7 @@
 |---|---|---:|
 | 生产邮件链路尚未验收 | 真实 SMTP 本地验收已通过，但生产域名发信身份、SPF/DKIM/DMARC、退信和送达率尚未验证 | 中高 |
 | 强制邮箱验证默认关闭 | 打开 `REQUIRE_EMAIL_VERIFICATION` 前，新注册仍直接激活 | 高 |
-| 无密码找回 | 忘记密码只能联系管理员 | 高 |
+| 账户自助安全待生产验收 | 密码找回、改密和邮箱变更已实现，但仍需在生产同类环境验证邮件、Redis 和 MySQL 并发行为 | 中高 |
 | 邮件投递缺少 Outbox | Broker 在事务提交后瞬时不可用时依赖用户重发恢复 | 中 |
 | 历史邮箱存在脏数据 | 空邮箱、非法邮箱和重复邮箱需管理员依据审计报告处理 | 中 |
 | 测试数据库不同 | SQLite 测试不能证明 MySQL 并发和锁语义 | 中高 |
@@ -581,7 +582,7 @@ SQLite 继续用于快速回归，但不能作为并发正确性的唯一证据�
 
 本地已完成增量迁移、真实 SMTP 投递、验证链接激活、未激活登录拦截和欢迎积分幂等发放验收，并已开启 `REQUIRE_EMAIL_VERIFICATION`。生产部署仍应先迁移表结构并保持功能开关关闭，完成生产邮件与域名配置验证后再开启强制邮箱验证。
 
-### 阶段 3：密码找回与账户自助安全，3～5 个工作日
+### 阶段 3：密码找回与账户自助安全，3～5 个工作日（开发及自动化验证已完成）
 
 - 忘记密码申请接口和页面。
 - 单次、短时密码重置 Token。
@@ -591,6 +592,8 @@ SQLite 继续用于快速回归，但不能作为并发正确性的唯一证据�
 - 用户名或已验证邮箱登录。
 - 可信邮箱修改与重新验证。
 - 旧邮箱变更通知。
+
+已实现对应后端 Service/API、增量 migration、邮件模板、前端找回/重置/邮箱确认页面及个人中心安全组件。密码重置会使既有会话失效；登录态修改密码保留当前会话；邮箱在新地址验证成功前不替换，成功后通知旧邮箱。后端全量测试、前端测试/Lint/构建、迁移漂移检查和 MySQL 并发契约均已通过；使用真实 SMTP 对密码重置、新邮箱确认和旧邮箱通知进行人工端到端验收后，即可将本阶段标记为完整本地验收通过。
 
 交付门槛：形成注册、登录、找回和邮箱维护闭环。
 

@@ -1,0 +1,7 @@
+您好：
+
+您的 {{ platform_name }} 登录邮箱已经变更为：{{ new_email }}
+
+如果这不是您的操作，请立即联系平台管理员。
+
+{{ platform_name }}

@@ -31,14 +31,14 @@
       <form v-if="tab === 'login'" @submit.prevent="handleLogin" class="form-body">
         <div class="form-group">
           <label class="form-label">
-            <i class="fas fa-user form-icon"></i> 用户名
+            <i class="fas fa-user form-icon"></i> 用户名或邮箱
           </label>
           <input
             v-model="loginForm.username"
             type="text"
             required
             class="input-base"
-            placeholder="请输入用户名"
+            placeholder="请输入用户名或已验证邮箱"
             autocomplete="username"
           />
         </div>
@@ -49,6 +49,9 @@
           placeholder="请输入密码"
           autocomplete="current-password"
         />
+        <div class="forgot-row">
+          <RouterLink to="/forgot-password">忘记密码？</RouterLink>
+        </div>
         <p v-if="error" class="form-error">
           <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
         </p>
@@ -359,6 +362,8 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   margin: 0;
 }
+.forgot-row { margin-top: -0.45rem; text-align: right; }
+.forgot-row a { color: #6366f1; font-size: 0.78rem; text-decoration: none; }
 
 .login-footer {
   text-align: center;

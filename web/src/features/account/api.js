@@ -49,6 +49,36 @@ export async function resendVerificationEmail(email) {
   return res.data
 }
 
+/** 申请密码重置；响应不暴露邮箱是否存在 */
+export async function forgotPassword(email) {
+  const res = await http.post('/auth/password/forgot/', { email })
+  return res.data
+}
+
+/** 使用单次 Token 重置密码 */
+export async function resetPassword(form) {
+  const res = await http.post('/auth/password/reset/', form)
+  return res.data
+}
+
+/** 登录状态下修改密码 */
+export async function changePassword(form) {
+  const res = await http.post('/auth/password/change/', form)
+  return res.data
+}
+
+/** 申请绑定或修改可信邮箱 */
+export async function requestEmailChange(form) {
+  const res = await http.post('/auth/email/change/request/', form)
+  return res.data
+}
+
+/** 验证并确认可信邮箱变更 */
+export async function confirmEmailChange(token) {
+  const res = await http.post('/auth/email/change/confirm/', { token })
+  return res.data
+}
+
 /** 登出 */
 export async function logout() {
   await http.post('/auth/logout/')

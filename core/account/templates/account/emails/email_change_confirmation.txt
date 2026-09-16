@@ -1,0 +1,9 @@
+您好：
+
+您正在将此邮箱绑定为 {{ platform_name }} 的可信邮箱。请在 {{ ttl_hours }} 小时内打开下面的链接：
+
+{{ confirmation_url }}
+
+如果这不是您的操作，请忽略本邮件。
+
+{{ platform_name }}

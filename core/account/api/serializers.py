@@ -83,3 +83,69 @@ class VerificationResendSerializer(serializers.Serializer):
             return normalize_email_address(value)
         except DjangoValidationError as exc:
             raise serializers.ValidationError('请输入有效的邮箱地址') from exc
+
+
+def validate_account_password(password: str, user) -> str:
+    min_length = getattr(settings, 'ACCOUNT_PASSWORD_MIN_LENGTH', 8)
+    max_length = getattr(settings, 'ACCOUNT_PASSWORD_MAX_LENGTH', 128)
+    if len(password) < min_length:
+        raise serializers.ValidationError(f'密码长度不能少于 {min_length} 个字符')
+    if len(password) > max_length:
+        raise serializers.ValidationError(f'密码长度不能超过 {max_length} 个字符')
+    try:
+        validate_password(password, user=user)
+    except DjangoValidationError as exc:
+        raise serializers.ValidationError(list(exc.messages)) from exc
+    return password
+
+
+class PasswordForgotSerializer(VerificationResendSerializer):
+    pass
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=256, trim_whitespace=True)
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    password_confirm = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({'password_confirm': '两次输入的密码不一致'})
+        candidate = self.context.get('user') or User()
+        attrs['password'] = validate_account_password(attrs['password'], candidate)
+        return attrs
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_password_confirm = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if not user.check_password(attrs['current_password']):
+            raise serializers.ValidationError({'current_password': '当前密码不正确'})
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({'new_password_confirm': '两次输入的新密码不一致'})
+        attrs['new_password'] = validate_account_password(attrs['new_password'], user)
+        return attrs
+
+
+class EmailChangeRequestSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_email = serializers.CharField(max_length=254, trim_whitespace=True)
+
+    def validate_current_password(self, value):
+        if not self.context['request'].user.check_password(value):
+            raise serializers.ValidationError('当前密码不正确')
+        return value
+
+    def validate_new_email(self, value):
+        try:
+            return normalize_email_address(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError('请输入有效的邮箱地址') from exc
+
+
+class EmailChangeConfirmSerializer(EmailVerificationSerializer):
+    pass

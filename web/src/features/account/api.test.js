@@ -3,7 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const http = vi.hoisted(() => ({ post: vi.fn() }))
 vi.mock('@/shared/api/http', () => ({ default: http }))
 
-import { resendVerificationEmail, verifyEmail } from './api'
+import {
+  changePassword,
+  confirmEmailChange,
+  forgotPassword,
+  requestEmailChange,
+  resendVerificationEmail,
+  resetPassword,
+  verifyEmail,
+} from './api'
 
 describe('account verification API', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -24,6 +32,38 @@ describe('account verification API', () => {
 
     expect(http.post).toHaveBeenCalledWith('/auth/email/resend/', {
       email: 'user@example.com',
+    })
+  })
+
+  it('uses dedicated password recovery endpoints', async () => {
+    http.post.mockResolvedValue({ data: { message: 'ok' } })
+
+    await forgotPassword('user@example.com')
+    await resetPassword({ token: 'reset-token', password: 'new', password_confirm: 'new' })
+    await changePassword({ current_password: 'old', new_password: 'new' })
+
+    expect(http.post).toHaveBeenNthCalledWith(1, '/auth/password/forgot/', {
+      email: 'user@example.com',
+    })
+    expect(http.post).toHaveBeenNthCalledWith(2, '/auth/password/reset/', {
+      token: 'reset-token', password: 'new', password_confirm: 'new',
+    })
+    expect(http.post).toHaveBeenNthCalledWith(3, '/auth/password/change/', {
+      current_password: 'old', new_password: 'new',
+    })
+  })
+
+  it('uses dedicated trusted-email change endpoints', async () => {
+    http.post.mockResolvedValue({ data: { message: 'ok' } })
+
+    await requestEmailChange({ current_password: 'password', new_email: 'new@example.com' })
+    await confirmEmailChange('change-token')
+
+    expect(http.post).toHaveBeenNthCalledWith(1, '/auth/email/change/request/', {
+      current_password: 'password', new_email: 'new@example.com',
+    })
+    expect(http.post).toHaveBeenNthCalledWith(2, '/auth/email/change/confirm/', {
+      token: 'change-token',
     })
   })
 })

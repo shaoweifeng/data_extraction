@@ -4,6 +4,7 @@ from django.db import models
 
 class VerificationPurpose(models.TextChoices):
     EMAIL_ACTIVATION = 'email_activation', '邮箱激活'
+    PASSWORD_RESET = 'password_reset', '密码重置'
 
 
 class AccountVerificationToken(models.Model):

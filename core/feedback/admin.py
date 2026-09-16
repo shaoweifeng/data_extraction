@@ -93,4 +93,11 @@ class FeedbackDailyQuotaAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        # 配额不能在自身 Admin 中单独删除，否则会变相重置用户当日额度。
+        # 但 Django 删除用户时会检查所有级联对象的删除权限；此时允许
+        # quota 随 User 正常级联清理，UserAdmin 仍负责校验用户删除权限。
+        route_name = getattr(getattr(request, 'resolver_match', None), 'url_name', '')
+        return obj is not None and route_name in {
+            'auth_user_delete',
+            'auth_user_changelist',
+        }

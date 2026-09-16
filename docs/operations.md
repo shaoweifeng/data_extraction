@@ -11,13 +11,16 @@
 | `CELERY_BROKER_URL` | 必需 | Redis Broker 地址 |
 | `CELERY_RESULT_BACKEND` | 可选 | 默认使用 Django 数据库 |
 | `ACCOUNT_REGISTRATION_V2_ENABLED` | 可选 | 新注册链路开关；阶段 2 依赖该开关 |
-| `REQUIRE_EMAIL_VERIFICATION` | 可选 | 新用户是否必须通过邮件激活；真实邮件链路验收前保持 `False` |
-| `EMAIL_BACKEND` | 阶段 2 必需 | 本地使用 console，生产使用 SMTP backend |
-| `DEFAULT_FROM_EMAIL` | 阶段 2 必需 | 默认“循证智筛 <account@localhost>”，生产替换为已验证发件地址 |
-| `PUBLIC_BASE_URL` | 阶段 2 必需 | 激活链接基地址；生产必须使用公开 HTTPS 域名 |
+| `REQUIRE_EMAIL_VERIFICATION` | 可选 | 新用户是否必须通过邮件激活；本地真实 SMTP 链路已验收，生产在发信域名验收后开启 |
+| `EMAIL_BACKEND` | 阶段 2～3 必需 | 本地可使用 console，生产必须使用可用的 SMTP backend |
+| `DEFAULT_FROM_EMAIL` | 阶段 2～3 必需 | 默认“循证智筛 <account@localhost>”，生产替换为已验证发件地址 |
+| `PUBLIC_BASE_URL` | 阶段 2～3 必需 | 激活、重置密码和邮箱变更链接的基地址；生产必须使用公开 HTTPS 域名 |
 | `ACCOUNT_RATE_LIMIT_ENABLED` | 生产必需 | 公开注册或登录保护启用时设为 `True` |
 | `RATE_LIMIT_REDIS_URL` | 生产必需 | 账户限流专用 Redis 地址，建议使用独立逻辑库 |
 | `TRUSTED_PROXY_IPS` | 生产必需 | 可信 CDN/Nginx 地址或 CIDR，逗号分隔 |
+| `PASSWORD_RESET_*` | 可选 | 密码重置链接有效期、重发间隔及邮箱/IP 每日限额；默认 30 分钟、60 秒、10 次、20 次 |
+| `EMAIL_CHANGE_*` | 可选 | 邮箱变更链接有效期、重发间隔及用户/IP 每日限额；默认 24 小时、60 秒、10 次、20 次 |
+| `ACCOUNT_SECURITY_CHANGE_*` | 可选 | 修改密码/邮箱的用户和 IP 防爆破窗口与次数；默认 10 分钟、用户 10 次、IP 30 次 |
 | `DEEPSEEK_* / DOUBAO_* / QWEN_*` | 按需 | AI Provider 地址、模型与密钥 |
 | `MPLCONFIGDIR` | 可选 | Matplotlib 缓存目录；启动脚本默认使用项目 `.cache` |
 | `FEEDBACK_UPLOAD_ROOT` | 可选 | 用户反馈私有图片目录；默认 `private_media/feedback`，不能映射到公开静态 URL |
@@ -57,6 +60,16 @@ python manage.py test core.account.tests.test_mysql_concurrency
 ```
 
 阶段 2 新增 `account.0002_email_verification`。迁移会创建验证 Token 表，并只为格式合法且不存在冲突的历史邮箱回填未验证 `AccountEmail`；不会停用历史用户，也不会自动处理空邮箱、非法邮箱或重复邮箱。
+
+阶段 3 新增 `account.0003_alter_accountverificationtoken_purpose_and_more`。迁移会扩展验证 Token 用途并创建邮箱变更请求表，不修改历史用户、密码、邮箱或现有验证记录。部署顺序为：备份数据库、部署代码、执行 migration、重启 Web/Celery，再验证登录与邮件链路：
+
+```bash
+python manage.py migrate --plan
+python manage.py migrate
+python manage.py showmigrations account
+```
+
+阶段 3 上线前必须确认 Celery worker 已加载最新任务，且 `PUBLIC_BASE_URL`、SMTP、Redis 限流均可用。验收至少覆盖：用户名登录、已验证邮箱登录、忘记密码的通用响应、单次重置链接、旧会话失效、登录态修改密码、新邮箱确认后切换，以及旧邮箱通知。控制台邮件后端只适合本地联调，不能用于生产。
 
 本地邮件联调使用：
 
