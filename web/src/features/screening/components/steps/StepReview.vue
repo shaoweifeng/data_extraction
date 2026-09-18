@@ -73,14 +73,47 @@
         </div>
 
         <!-- 分页控件 -->
-        <div class="pagination" v-if="totalPages > 1">
-          <button class="pg-btn" :disabled="page <= 1" @click="goPage(page - 1)">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <span class="pg-info">{{ page }} / {{ totalPages }}</span>
-          <button class="pg-btn" :disabled="page >= totalPages" @click="goPage(page + 1)">
-            <i class="fas fa-chevron-right"></i>
-          </button>
+        <div v-if="totalPages > 1" class="pagination">
+          <div class="pagination-nav">
+            <button class="pg-btn" :disabled="loading || page <= 1" title="上一页" @click="goPage(page - 1)">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="pg-info">{{ page }} / {{ totalPages }}</span>
+            <button class="pg-btn" :disabled="loading || page >= totalPages" title="下一页" @click="goPage(page + 1)">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+          <span class="pagination-divider" aria-hidden="true"></span>
+          <form class="page-jump" novalidate @submit.prevent="submitPageJump">
+            <label for="review-page-jump">跳至</label>
+            <input
+              id="review-page-jump"
+              v-model="jumpPageInput"
+              class="page-jump-input"
+              :class="{ invalid: pageJumpError }"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="off"
+              :placeholder="String(page)"
+              :aria-invalid="Boolean(pageJumpError)"
+              :aria-describedby="pageJumpError ? 'review-page-jump-error' : undefined"
+              @input="pageJumpError = ''"
+            />
+            <span>页</span>
+            <button
+              class="page-jump-btn"
+              type="submit"
+              :disabled="loading || !jumpPageInput.trim()"
+              title="跳转到指定页"
+              aria-label="跳转到指定页"
+            >
+              <i class="fas fa-arrow-right"></i>
+            </button>
+            <span v-if="pageJumpError" id="review-page-jump-error" class="page-jump-error" role="alert">
+              {{ pageJumpError }}
+            </span>
+          </form>
         </div>
       </div>
 
@@ -333,6 +366,8 @@ const searchQ      = ref('')
 const page         = ref(1)
 const pageSize     = 30
 const totalCount   = ref(0)
+const jumpPageInput = ref('')
+const pageJumpError = ref('')
 
 const selected      = ref(null)
 const localDecision = ref('')
@@ -421,7 +456,7 @@ async function loadStats() {
 }
 
 async function loadItems(targetPage = 1) {
-  if (loading.value) return
+  if (loading.value) return false
   loading.value = true
   try {
     const res = await reviewController.loadItems({
@@ -433,7 +468,11 @@ async function loadItems(targetPage = 1) {
     totalCount.value   = res.data.total
     displayItems.value = res.data.results
     page.value         = targetPage
-  } catch (e) { console.error('[review] loadItems error', e) }
+    return true
+  } catch (e) {
+    console.error('[review] loadItems error', e)
+    return false
+  }
   finally { loading.value = false }
 }
 
@@ -497,25 +536,59 @@ function goNextItem() {
     selectItem(displayItems.value[nextIdx])
   } else if (page.value < totalPages.value) {
     // 当前页末尾，加载下一页后选第一篇
-    loadItems(page.value + 1).then(() => {
-      if (displayItems.value.length) selectItem(displayItems.value[0])
+    loadItems(page.value + 1).then((loaded) => {
+      if (loaded && displayItems.value.length) selectItem(displayItems.value[0])
     })
   }
 }
 
 // ── 交互 ──────────────────────────────────────────────────────────────────────
-function switchTab(key) { activeTab.value = key; loadItems(1) }
+function resetPageJump() {
+  jumpPageInput.value = ''
+  pageJumpError.value = ''
+}
+
+function switchTab(key) {
+  activeTab.value = key
+  resetPageJump()
+  loadItems(1)
+}
 
 let searchTimer = null
 function onSearch() {
   clearTimeout(searchTimer)
+  resetPageJump()
   searchTimer = setTimeout(() => loadItems(1), 300)
 }
 
-function goPage(p) {
-  if (p < 1 || p > totalPages.value) return
-  loadItems(p)
-  selected.value = null
+async function goPage(p) {
+  if (loading.value || p < 1 || p > totalPages.value) return false
+  const loaded = await loadItems(p)
+  if (loaded) selected.value = null
+  return loaded
+}
+
+async function submitPageJump() {
+  if (loading.value) return
+
+  const rawValue = jumpPageInput.value.trim()
+  if (!/^\d+$/.test(rawValue)) {
+    pageJumpError.value = `请输入 1–${totalPages.value}`
+    return
+  }
+
+  const targetPage = Number(rawValue)
+  if (!Number.isSafeInteger(targetPage) || targetPage < 1 || targetPage > totalPages.value) {
+    pageJumpError.value = `请输入 1–${totalPages.value}`
+    return
+  }
+
+  if (targetPage === page.value) {
+    resetPageJump()
+    return
+  }
+
+  if (await goPage(targetPage)) resetPageJump()
 }
 
 function selectItem(item) {
@@ -724,9 +797,10 @@ onMounted(async () => {
 /* 分页 */
 .pagination {
   display: flex; align-items: center; justify-content: center;
-  gap: .5rem; padding: .5rem .75rem;
+  gap: .45rem; padding: .5rem .6rem;
   border-top: 1px solid #e2e8f0; flex-shrink: 0; background: #fff;
 }
+.pagination-nav { display: flex; align-items: center; gap: .38rem; }
 .pg-btn {
   width: 26px; height: 26px; border-radius: 5px;
   border: 1px solid #e2e8f0; background: #fff;
@@ -735,7 +809,51 @@ onMounted(async () => {
 }
 .pg-btn:disabled { opacity: .35; cursor: not-allowed; }
 .pg-btn:hover:not(:disabled) { background: #ede9fe; border-color: #6366f1; }
-.pg-info { font-size: .8rem; color: #64748b; }
+.pg-info { min-width: 42px; text-align: center; font-size: .76rem; color: #64748b; white-space: nowrap; }
+.pagination-divider { width: 1px; height: 18px; background: #e2e8f0; }
+.page-jump {
+  position: relative;
+  display: flex; align-items: center; gap: .24rem;
+  color: #94a3b8; font-size: .72rem; white-space: nowrap;
+}
+.page-jump-input {
+  width: 38px; height: 26px; box-sizing: border-box;
+  border: 1px solid #e2e8f0; border-radius: 5px;
+  background: #f8fafc; color: #334155;
+  text-align: center; font-size: .76rem; outline: none;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.page-jump-input::placeholder { color: #cbd5e1; }
+.page-jump-input:focus::placeholder { color: transparent; }
+.page-jump-input:focus {
+  border-color: #818cf8; background: #fff;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, .12);
+}
+.page-jump-input.invalid {
+  border-color: #f87171; background: #fff7f7;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, .1);
+}
+.page-jump-btn {
+  width: 26px; height: 26px; padding: 0;
+  border: none; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  background: #eef2ff; color: #6366f1;
+  font-size: .68rem; cursor: pointer;
+  transition: color .15s, background .15s, transform .15s;
+}
+.page-jump-btn:hover:not(:disabled) { background: #6366f1; color: #fff; transform: translateX(1px); }
+.page-jump-btn:disabled { opacity: .4; cursor: not-allowed; }
+.page-jump-error {
+  position: absolute; right: 0; bottom: calc(100% + 7px); z-index: 5;
+  padding: .28rem .45rem; border-radius: 5px;
+  background: #fff; border: 1px solid #fecaca;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .1);
+  color: #dc2626; font-size: .68rem;
+}
+.page-jump-error::after {
+  content: ''; position: absolute; right: 32px; top: 100%;
+  border: 4px solid transparent; border-top-color: #fecaca;
+}
 
 .list-loading, .list-empty { text-align: center; padding: 1.2rem; color: #94a3b8; font-size: .8rem; }
 
