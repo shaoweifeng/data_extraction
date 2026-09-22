@@ -14,7 +14,7 @@
   <div class="proportion-chart">
     <div class="chart-title" v-if="title">{{ title }}</div>
     <div class="bar-list">
-      <div v-for="item in data.proportions" :key="item.domain_name" class="bar-row">
+      <div v-for="item in data.proportions" :key="item.key || item.domain_name" class="bar-row">
         <div class="bar-label">{{ item.domain_name }}</div>
         <div class="bar-track">
           <div
@@ -42,12 +42,12 @@
             <span v-if="item.high >= 0.08">{{ pctStr(item.high) }}</span>
           </div>
           <div
-            v-if="item.na > 0"
-            class="bar-seg seg-na"
-            :style="{ width: pct(item.na) }"
-            :title="`不适用 ${pctStr(item.na)}`"
+            v-if="item.pending > 0"
+            class="bar-seg seg-pending"
+            :style="{ width: pct(item.pending) }"
+            :title="`待定 ${pctStr(item.pending)}`"
           >
-            <span v-if="item.na >= 0.08">{{ pctStr(item.na) }}</span>
+            <span v-if="item.pending >= 0.08">{{ pctStr(item.pending) }}</span>
           </div>
         </div>
         <div class="bar-total">n={{ item.total || 0 }}</div>
@@ -58,7 +58,7 @@
       <span class="legend-item"><span class="leg-dot seg-low"></span>低风险</span>
       <span class="legend-item"><span class="leg-dot seg-unclear"></span>不清楚</span>
       <span class="legend-item"><span class="leg-dot seg-high"></span>高风险</span>
-      <span class="legend-item"><span class="leg-dot seg-na"></span>不适用</span>
+      <span class="legend-item"><span class="leg-dot seg-pending"></span>待定</span>
     </div>
   </div>
 </template>
@@ -84,7 +84,7 @@ function pctStr(v) { return (v * 100).toFixed(0) + '%' }
 .seg-low     { background: #059669; }
 .seg-unclear { background: #d97706; }
 .seg-high    { background: #dc2626; }
-.seg-na      { background: #94a3b8; }
+.seg-pending { background: #94a3b8; }
 .bar-total { font-size: 0.68rem; color: #94a3b8; width: 40px; flex-shrink: 0; }
 .chart-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
 .legend-item { font-size: 0.72rem; color: #475569; display: flex; align-items: center; gap: 4px; }

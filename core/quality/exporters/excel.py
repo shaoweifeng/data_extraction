@@ -7,10 +7,13 @@ import openpyxl
 from openpyxl.styles import PatternFill
 
 from core.models import QAReference
+from core.quality.domain.methods import get_method_config
 
 
 def export_qa_excel(project, quality_method, include_unconfirmed=False):
     refs = QAReference.objects.filter(project=project, quality_method=quality_method).prefetch_related('signal_items__confirmed_by', 'domain_results')
+    if not include_unconfirmed:
+        refs = refs.filter(review_status='confirmed')
 
     wb = openpyxl.Workbook()
 
@@ -31,7 +34,7 @@ def export_qa_excel(project, quality_method, include_unconfirmed=False):
 
     for ref in refs:
         for item in ref.signal_items.all():
-            if not include_unconfirmed and not item.is_confirmed:
+            if include_unconfirmed and not item.is_confirmed:
                 row_color = 'F5F5F5'
             else:
                 row_color = None
@@ -70,23 +73,29 @@ def export_qa_excel(project, quality_method, include_unconfirmed=False):
     # ── Sheet 2: 汇总统计 ──────────────────────────────────
     ws2 = wb.create_sheet('汇总统计')
     wb.move_sheet(ws2, offset=-1)
-    ws2.append(['文献标题', '第一作者', '年份', '患者选择_偏倚', '待评价试验_偏倚', '参考标准_偏倚', '流程与时间_偏倚',
-                '患者选择_适用', '待评价试验_适用', '参考标准_适用', '整体审阅状态'])
+    method_cfg = get_method_config(quality_method)
+    summary_columns = []
+    for domain in method_cfg['domains']:
+        if domain['has_bias_risk']:
+            summary_columns.append((f"{domain['name']}_偏倚", domain['key'], 'bias_risk_result'))
+    for domain in method_cfg['domains']:
+        if domain['has_applicability']:
+            summary_columns.append((f"{domain['name']}_适用性", domain['key'], 'applicability_result'))
+
+    ws2.append([
+        '文献标题', '第一作者', '年份',
+        *(header for header, _, _ in summary_columns),
+        '整体审阅状态',
+    ])
     for ref in refs:
         dr_map = {dr.domain: dr for dr in ref.domain_results.all()}
-        ps  = dr_map.get('patient_selection')
-        it  = dr_map.get('index_test')
-        rs  = dr_map.get('reference_standard')
-        ft  = dr_map.get('flow_timing')
+        summary_values = []
+        for _, domain_key, result_field in summary_columns:
+            domain_result = dr_map.get(domain_key)
+            summary_values.append(getattr(domain_result, result_field, '') if domain_result else '')
         ws2.append([
             ref.title, ref.first_author, ref.year,
-            ps.bias_risk_result if ps else '',
-            it.bias_risk_result if it else '',
-            rs.bias_risk_result if rs else '',
-            ft.bias_risk_result if ft else '',
-            ps.applicability_result if ps else '',
-            it.applicability_result if it else '',
-            rs.applicability_result if rs else '',
+            *summary_values,
             ref.review_status,
         ])
 

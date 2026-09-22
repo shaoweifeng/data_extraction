@@ -184,10 +184,11 @@ def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizonta
             ax.text(col_idx, -0.6, row["label"],
                     ha="center", va="bottom", rotation=45, fontsize=7)
 
-        # bias / applic 纵向分隔线
-        ax.plot([n_bias - 0.5, n_bias - 0.5],
-                [-0.5, n_studies - 0.5],
-                color="black", linewidth=1)
+        # 只有两个分组都存在时才绘制分隔线。
+        if 0 < n_bias < n_domains:
+            ax.plot([n_bias - 0.5, n_bias - 0.5],
+                    [-0.5, n_studies - 0.5],
+                    color="black", linewidth=1)
 
         # 圆 + 符号
         for row_idx, study in enumerate(studies):
@@ -198,9 +199,10 @@ def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizonta
                 _draw_judgment_marker(ax, col_idx, row_idx, value)
 
         # 底部横排组名
-        ax.text((n_bias - 1) / 2, n_studies + 0.2,
-                i18n['risk_of_bias'],
-                ha="center", va="top", fontsize=8)
+        if n_bias:
+            ax.text((n_bias - 1) / 2, n_studies + 0.2,
+                    i18n['risk_of_bias'],
+                    ha="center", va="top", fontsize=8)
         if n_domains > n_bias:
             ax.text(n_bias + (n_domains - n_bias - 1) / 2, n_studies + 0.2,
                     i18n['applicability_concerns'],
@@ -220,10 +222,11 @@ def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizonta
             ax.text(i, -0.8, study, ha="center", va="bottom",
                     rotation=90, fontsize=7)
 
-        # bias / applic 水平分隔线
-        ax.plot([-0.5, n_cols - 0.5],
-                [n_bias - 0.5, n_bias - 0.5],
-                color="black", linewidth=1)
+        # 只有两个分组都存在时才绘制分隔线。
+        if 0 < n_bias < n_rows:
+            ax.plot([-0.5, n_cols - 0.5],
+                    [n_bias - 0.5, n_bias - 0.5],
+                    color="black", linewidth=1)
 
         # 圆 + 符号 + 行标签
         for row_idx, row in enumerate(rows):
@@ -233,12 +236,14 @@ def _draw_traffic_light_matrix(ax, studies, rows, n_bias, orientation='horizonta
                     ha="left", va="center", fontsize=8)
 
         # 右侧竖排组名
-        ax.text(n_cols + 2.2, (n_bias - 1) / 2,
-                i18n['risk_of_bias'],
-                ha="center", va="center", rotation=270, fontsize=8)
-        ax.text(n_cols + 2.2, n_bias + (n_rows - n_bias - 1) / 2,
-                i18n['applicability_concerns'],
-                ha="center", va="center", rotation=270, fontsize=8)
+        if n_bias:
+            ax.text(n_cols + 2.2, (n_bias - 1) / 2,
+                    i18n['risk_of_bias'],
+                    ha="center", va="center", rotation=270, fontsize=8)
+        if n_rows > n_bias:
+            ax.text(n_cols + 2.2, n_bias + (n_rows - n_bias - 1) / 2,
+                    i18n['applicability_concerns'],
+                    ha="center", va="center", rotation=270, fontsize=8)
 
 
 def _draw_legend(ax, i18n=None):
@@ -331,14 +336,14 @@ def render_proportion(proportion_data, method_name, quality_method='',
         return None
 
     # ── 用原脚本的 _draw_summary_bar + _draw_legend ───────────────────────────
-    bias_keys   = {d['key'] for d in (bias_domains   or [])}
-    applic_keys = {d['key'] for d in (applic_domains or [])}
-
-    def _make_summary_df(domain_list, key_set):
+    def _make_summary_df(domain_list, result_type):
         records = []
         for d in (domain_list or []):
             k = d['key']
-            item = proportion_data.get(k) or proportion_data.get('app_' + k)
+            # QUADAS-2 的偏倚风险和适用性使用相同的 domain key。
+            # 必须按结果类型精确取值，不能在两组 key 之间做兜底。
+            data_key = k if result_type == 'bias_risk' else f'app_{k}'
+            item = proportion_data.get(data_key)
             if item is None:
                 continue
             total = max(1, sum(item['counts'].values()))
@@ -352,8 +357,8 @@ def render_proportion(proportion_data, method_name, quality_method='',
         return pd.DataFrame(records) if records else pd.DataFrame(
             columns=["domain", "High", "Unclear", "Low"])
 
-    rob_summary = _make_summary_df(bias_domains,   bias_keys)
-    app_summary = _make_summary_df(applic_domains, applic_keys)
+    rob_summary = _make_summary_df(bias_domains, 'bias_risk')
+    app_summary = _make_summary_df(applic_domains, 'applicability')
 
     has_applic = len(app_summary) > 0
 

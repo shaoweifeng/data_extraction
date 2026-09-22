@@ -231,15 +231,18 @@ const proportionData = computed(() => {
   const d = qa.chartData
   if (!d || !d.proportion || typeof d.proportion !== 'object') return null
 
-  const proportions = Object.values(d.proportion).map(item => {
+  const proportions = Object.entries(d.proportion).map(([key, item]) => {
     const counts = item.counts || {}
     const total  = Object.values(counts).reduce((s, v) => s + v, 0) || 1
     return {
-      domain_name: item.domain_name,
+      key,
+      domain_name: item.result_type === 'applicability'
+        ? `${item.domain_name}（适用性）`
+        : item.domain_name,
       low:     (counts.low     || 0) / total,
       high:    (counts.high    || 0) / total,
       unclear: (counts.unclear || 0) / total,
-      na:      (counts.pending || 0) / total,
+      pending: (counts.pending || 0) / total,
       total:   Object.values(counts).reduce((s, v) => s + v, 0),
     }
   })

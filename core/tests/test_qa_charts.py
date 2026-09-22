@@ -177,6 +177,66 @@ class QaChartDataGoldenTests(TestCase):
         self.assertTrue(all(call.kwargs['fontsize'] == _SYMBOL_FONT_SIZE for call in symbol_calls))
         self.assertGreaterEqual(_SYMBOL_FONT_SIZE, 12)
 
+    def test_proportion_renderer_keeps_bias_and_applicability_separate(self):
+        import matplotlib.pyplot as plt
+
+        from core.quality.renderers.matplotlib_charts import render_proportion
+
+        domain = {'key': 'patient_selection', 'name': '患者选择'}
+        proportion = {
+            'patient_selection': {
+                'result_type': 'bias_risk',
+                'counts': {'high': 0, 'unclear': 0, 'low': 2, 'pending': 0},
+            },
+            'app_patient_selection': {
+                'result_type': 'applicability',
+                'counts': {'high': 2, 'unclear': 0, 'low': 0, 'pending': 0},
+            },
+        }
+
+        try:
+            with (
+                patch('core.quality.renderers.matplotlib_charts._init_cjk_font'),
+                patch('core.quality.renderers.matplotlib_charts._draw_summary_bar') as draw_bar,
+                patch('core.quality.renderers.matplotlib_charts._draw_legend'),
+                patch('core.quality.renderers.matplotlib_charts._fig_to_b64', return_value='image'),
+            ):
+                result = render_proportion(
+                    proportion,
+                    'QUADAS-2',
+                    bias_domains=[domain],
+                    applic_domains=[domain],
+                )
+        finally:
+            plt.close('all')
+
+        self.assertEqual(result, 'image')
+        self.assertEqual(draw_bar.call_count, 2)
+        bias_summary = draw_bar.call_args_list[0].args[1].iloc[0]
+        applic_summary = draw_bar.call_args_list[1].args[1].iloc[0]
+        self.assertEqual((bias_summary['Low'], bias_summary['High']), (1, 0))
+        self.assertEqual((applic_summary['Low'], applic_summary['High']), (0, 1))
+
+    def test_traffic_light_omits_applicability_group_when_method_has_none(self):
+        from core.quality.renderers.matplotlib_charts import _draw_traffic_light_matrix
+
+        for orientation in ('horizontal', 'vertical'):
+            with self.subTest(orientation=orientation):
+                axis = MagicMock()
+                _draw_traffic_light_matrix(
+                    axis,
+                    studies=['Study'],
+                    rows=[{'label': 'Selection', 'values': ['Low']}],
+                    n_bias=1,
+                    orientation=orientation,
+                )
+                labels = [
+                    call.args[2] for call in axis.text.call_args_list
+                    if len(call.args) >= 3
+                ]
+                self.assertNotIn('适用性问题', labels)
+                axis.plot.assert_not_called()
+
     def test_traffic_light_markers_stay_circular_for_all_layouts_and_label_lengths(self):
         import matplotlib.pyplot as plt
 
