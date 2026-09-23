@@ -22,6 +22,7 @@ class ReferenceRecord(TypedDict, total=False):
     reference_type: str
     source_file: str
     source_position: int
+    source_identifier: str
     source_type: str
 
 

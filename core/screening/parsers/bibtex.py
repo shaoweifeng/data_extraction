@@ -60,6 +60,7 @@ def parse_bib(file_path: str) -> List[Dict]:
             'reference_type': entry.get('ENTRYTYPE') or entry.get('type'),
             'source_file': os.path.basename(file_path),
             'source_position': i,
+            'source_identifier': entry.get('ID'),
             'source_type': 'BIB'
         })
 

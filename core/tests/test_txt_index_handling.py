@@ -1,6 +1,7 @@
 """TXT/ENW 索引解析与原始文件下载回归测试。"""
 
 import hashlib
+import json
 import tempfile
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 
 from core.models import DataFile, Project
+from core.artifacts.types import ArtifactType
 from core.screening.parsers import convert_to_xml, parse_file
 from core.screening.parsers.enw import parse_enw
 
@@ -122,3 +124,35 @@ class OriginalFileDownloadTests(TestCase):
         response = self.client.get(f'/api/files/{self.data_file.id}/download/')
 
         self.assertEqual(response.status_code, 404)
+
+    def test_parse_report_endpoint_returns_latest_diagnostics(self):
+        payload = {
+            'filename': self.data_file.filename,
+            'status': 'warning',
+            'detected_entries': 2,
+            'parsed_entries': 2,
+            'missing_abstract_entries': 1,
+            'issues': [{'code': 'missing_abstract', 'severity': 'warning'}],
+        }
+        DataFile.objects.create(
+            project=self.project,
+            filename=f'parse_report_{self.data_file.id}.json',
+            file=SimpleUploadedFile(
+                f'parse_report_{self.data_file.id}.json',
+                json.dumps(payload).encode('utf-8'),
+                content_type='application/json',
+            ),
+            data_category='output',
+            metadata={
+                'artifact_type': ArtifactType.SCREENING_PARSE_REPORT_JSON,
+                'source_file_id': self.data_file.id,
+            },
+            created_by=self.user,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(f'/api/files/{self.data_file.id}/parse-report/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['missing_abstract_entries'], 1)
+        self.assertEqual(response.json()['issues'][0]['code'], 'missing_abstract')

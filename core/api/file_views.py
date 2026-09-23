@@ -1,3 +1,5 @@
+import json
+
 from django.http import FileResponse
 from rest_framework import serializers as drf_serializers, status, viewsets
 from rest_framework.decorators import action
@@ -6,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import ActivityLog, DataFile, ProjectStage, StageStep
+from ..artifacts.types import ArtifactType
 from ..serializers import DataFileSerializer
 from ..services.access_policy import ProjectAccessPolicy
 
@@ -93,6 +96,34 @@ class DataFileViewSet(viewsets.ModelViewSet):
             filename=data_file.filename,
             content_type='application/octet-stream',
         )
+
+    @action(detail=True, methods=['get'], url_path='parse-report')
+    def parse_report(self, request, pk=None):
+        """Return the latest full parse diagnostics for one uploaded index file."""
+        source_file = self.get_object()
+        report_file = (
+            DataFile.objects.filter(
+                project=source_file.project,
+                data_category='output',
+                metadata__artifact_type=ArtifactType.SCREENING_PARSE_REPORT_JSON,
+                metadata__source_file_id=source_file.id,
+            )
+            .order_by('-created_at')
+            .first()
+        )
+        if report_file is None or not report_file.file:
+            return Response({'error': '尚无解析报告'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            report_file.file.open('rb')
+            return Response(json.load(report_file.file))
+        except (OSError, ValueError, TypeError):
+            return Response({'error': '解析报告不可读取'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        finally:
+            try:
+                report_file.file.close()
+            except Exception:
+                pass
 
     def perform_create(self, serializer):
         user = self.request.user

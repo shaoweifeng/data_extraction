@@ -195,6 +195,22 @@ def reset_downstream_on_input_delete(project, user):
         if deleted_qs.exists():
             deleted_qs.delete()
 
+        if step_key == 'parse':
+            DataFile.objects.filter(
+                project=project,
+                step=step,
+                data_category='output',
+                metadata__artifact_type=ArtifactType.SCREENING_PARSE_REPORT_JSON,
+            ).delete()
+            for source_file in DataFile.objects.filter(
+                project=project,
+                data_category='input',
+            ).only('id', 'metadata'):
+                metadata = dict(source_file.metadata or {})
+                if metadata.pop('parse_summary', None) is not None:
+                    source_file.metadata = metadata
+                    source_file.save(update_fields=['metadata', 'updated_at'])
+
         # 重置步骤状态
         if step.status in (
             StageStepStatus.COMPLETED,

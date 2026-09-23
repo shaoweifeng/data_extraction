@@ -10,6 +10,7 @@ export const resumeTask = taskId => httpNoTimeout.post(`/tasks/${taskId}/resume/
 export const fetchActivityLogs = (projectId, page = 1) =>
   http.get('/activity-logs/', { params: { project: projectId, page } })
 export const fetchFiles = (params, config = {}) => http.get('/files/', { ...config, params })
+export const fetchParseReport = (fileId) => http.get(`/files/${fileId}/parse-report/`)
 export const deleteFile = (fileId) => http.delete(`/files/${fileId}/`)
 export const updateStepMetadata = (stepId, metadata) =>
   http.patch(`/steps/${stepId}/update_metadata/`, { metadata })

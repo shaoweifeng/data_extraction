@@ -10,6 +10,7 @@ class ArtifactTypeTests(SimpleTestCase):
         values = [
             ArtifactType.SCREENING_PARSED_REFERENCES_XML,
             ArtifactType.SCREENING_PARSED_REFERENCE_XML,
+            ArtifactType.SCREENING_PARSE_REPORT_JSON,
             ArtifactType.SCREENING_DEDUP_REFERENCE_XML,
             ArtifactType.SCREENING_DEDUP_REPORT_JSON,
             ArtifactType.SCREENING_RESULT_JSON,

@@ -13,6 +13,7 @@ from core.screening.parsers import (
     write_xml_stream,
 )
 from core.screening.parsers.registry import get_parser
+from core.screening.parsers.diagnostics import build_parse_report
 from core.screening.executors.parse_handler import ParseHandler
 
 
@@ -20,6 +21,56 @@ FIXTURES = Path(__file__).parent / 'fixtures'
 
 
 class ParserFixtureTests(TestCase):
+    def test_bibtex_diagnostics_report_silently_skipped_invalid_key(self):
+        content = """@article{ValidKey,
+title = {Valid title},
+abstract = {Present},
+}
+@article{Invalid Key,
+title = {Silently skipped title},
+abstract = {Present},
+}
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'sample.bib'
+            path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(path))
+            report = build_parse_report(str(path), parsed)
+
+        self.assertEqual(len(parsed), 1)
+        self.assertEqual(report['detected_entries'], 2)
+        self.assertEqual(report['parsed_entries'], 1)
+        self.assertEqual(report['skipped_entries'], 1)
+        self.assertEqual(report['status'], 'partial')
+        issue = next(item for item in report['issues'] if item['code'] == 'invalid_citation_key')
+        self.assertEqual(issue['position'], 2)
+        self.assertEqual(issue['line'], 5)
+        self.assertEqual(issue['identifier'], 'Invalid Key')
+
+    def test_diagnostics_count_missing_abstract_without_marking_record_skipped(self):
+        content = """TY  - JOUR
+TI  - Has abstract
+AB  - Abstract text
+ER  -
+TY  - JOUR
+TI  - Missing abstract
+ER  -
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'sample.ris'
+            path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(path))
+            report = build_parse_report(str(path), parsed)
+
+        self.assertEqual(report['detected_entries'], 2)
+        self.assertEqual(report['parsed_entries'], 2)
+        self.assertEqual(report['skipped_entries'], 0)
+        self.assertEqual(report['missing_abstract_entries'], 1)
+        self.assertEqual(report['status'], 'warning')
+        missing = [item for item in report['issues'] if item['code'] == 'missing_abstract']
+        self.assertEqual(len(missing), 1)
+        self.assertEqual(missing[0]['position'], 2)
+
     def test_registry_exposes_all_supported_extensions(self):
         self.assertEqual(
             supported_extensions(),

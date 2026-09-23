@@ -4,6 +4,7 @@
 class ArtifactType:
     SCREENING_PARSED_REFERENCES_XML = 'screening_parsed_references_xml'
     SCREENING_PARSED_REFERENCE_XML = 'screening_parsed_reference_xml'
+    SCREENING_PARSE_REPORT_JSON = 'screening_parse_report_json'
     SCREENING_DEDUP_REFERENCE_XML = 'screening_dedup_reference_xml'
     SCREENING_DEDUP_REPORT_JSON = 'screening_dedup_report_json'
     SCREENING_RESULT_JSON = 'screening_result_json'

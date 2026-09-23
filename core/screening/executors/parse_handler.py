@@ -8,6 +8,7 @@
 - 保存产物到 DataFile
 """
 
+import json
 import shutil
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -20,6 +21,7 @@ from core.executors.step_handler import BaseStepHandler
 from core.executors.base import safe_title
 from core.artifacts.types import ArtifactType
 from core.screening import parsers as _parser
+from core.screening.parsers.diagnostics import build_parse_report
 
 
 @register("parse")
@@ -70,7 +72,20 @@ class ParseHandler(BaseStepHandler):
         if total_entries is None:
             return False
 
+        parse_reports = getattr(self, '_parse_reports', [])
+        parse_summary = self._aggregate_parse_reports(parse_reports)
+
         self.logger.info(f"[解析] 成功解析 {total_entries} 条文献")
+        if parse_summary['skipped_entries']:
+            self.logger.warning(
+                f"[解析警告] 检测到 {parse_summary['detected_entries']} 条，"
+                f"成功 {parse_summary['parsed_entries']} 条，"
+                f"异常跳过 {parse_summary['skipped_entries']} 条"
+            )
+        if parse_summary['missing_abstract_entries']:
+            self.logger.warning(
+                f"[质量提示] {parse_summary['missing_abstract_entries']} 条文献缺少摘要"
+            )
         split_count = total_entries
         self.logger.info(f"[拆分] 生成 {split_count} 个单篇XML")
 
@@ -78,12 +93,13 @@ class ParseHandler(BaseStepHandler):
         self.logger.info("[保存] 保存输出文件到数据库...")
         self._clear_old_intermediate()
         saved_count = self._save_outputs(merged_xml, split_dir)
+        self._save_parse_reports(input_files, parse_reports)
         self.logger.info(f"[完成] 已保存 {saved_count} 个文件")
 
         # 6. 写最终统计到 Task.config
         self._update_parse_progress("done", 99, 100,
                                     f"解析完成，共 {split_count} 篇文献，等待收尾...")
-        self._write_final_stats(total_entries, split_count, total_files)
+        self._write_final_stats(total_entries, split_count, total_files, parse_summary)
         return True
 
     # ── 私有方法 ─────────────────────────────────────────────────────────
@@ -105,6 +121,26 @@ class ParseHandler(BaseStepHandler):
     def _run_parser(self, input_dir: Path, output_dir: Path, split_dir: Path):
         """单遍解析并同时生成合并 XML 和单篇 XML。"""
         merged_xml = output_dir / "references.xml"
+        self._parse_reports = []
+
+        def iter_entries_with_reports():
+            for file_path in sorted(input_dir.iterdir()):
+                if not file_path.is_file():
+                    continue
+                entries = []
+                parser_error = None
+                try:
+                    entries = list(_parser.parse_file(str(file_path)))
+                except Exception as exc:
+                    parser_error = exc
+                    self.logger.warning(f"[警告] 解析失败 {file_path.name}: {exc}")
+
+                report = build_parse_report(
+                    str(file_path), entries, parser_error=parser_error,
+                )
+                self._parse_reports.append(report)
+                for entry in entries:
+                    yield entry
 
         def write_split(entry, position):
             title = entry.get('title') or f'unknown_{position}'
@@ -132,7 +168,7 @@ class ParseHandler(BaseStepHandler):
 
         try:
             count = _parser.write_xml_stream(
-                _parser.iter_directory(str(input_dir)),
+                iter_entries_with_reports(),
                 str(merged_xml),
                 on_entry=write_split,
             )
@@ -145,6 +181,34 @@ class ParseHandler(BaseStepHandler):
             return None, None
 
         return count, merged_xml
+
+    @staticmethod
+    def _aggregate_parse_reports(reports):
+        summary = {
+            'status': 'success',
+            'total_files': len(reports),
+            'detected_entries': 0,
+            'parsed_entries': 0,
+            'skipped_entries': 0,
+            'missing_abstract_entries': 0,
+            'error_count': 0,
+            'warning_count': 0,
+        }
+        for report in reports:
+            for key in (
+                'detected_entries', 'parsed_entries', 'skipped_entries',
+                'missing_abstract_entries', 'error_count', 'warning_count',
+            ):
+                summary[key] += int(report.get(key) or 0)
+
+        statuses = {report.get('status') for report in reports}
+        if statuses and statuses <= {'failed'}:
+            summary['status'] = 'failed'
+        elif 'failed' in statuses or 'partial' in statuses:
+            summary['status'] = 'partial'
+        elif 'warning' in statuses:
+            summary['status'] = 'warning'
+        return summary
 
     def _clear_old_intermediate(self) -> None:
         """清除本步骤旧的 intermediate DataFile 记录，避免重复运行时累加。
@@ -159,6 +223,17 @@ class ParseHandler(BaseStepHandler):
         if old_count > 0:
             old_qs.delete()
             self.logger.info(f"[清理] 已清除 {old_count} 条旧的 intermediate 记录")
+
+        old_reports = DataFile.objects.filter(
+            project=self.project_obj,
+            step=self.step_obj,
+            data_category='output',
+            metadata__artifact_type=ArtifactType.SCREENING_PARSE_REPORT_JSON,
+        )
+        report_count = old_reports.count()
+        if report_count:
+            old_reports.delete()
+            self.logger.info(f"[清理] 已清除 {report_count} 份旧解析报告")
 
         # 重新解析意味着文献集完全更换，后续所有流程数据均无效，一并清除
         from core.models import ManualReview
@@ -213,6 +288,42 @@ class ParseHandler(BaseStepHandler):
                 )
         return saved
 
+    def _save_parse_reports(self, input_files: List[DataFile], reports) -> None:
+        """Persist compact summaries on inputs and full diagnostics as artifacts."""
+        files_by_name = {}
+        for data_file in input_files:
+            files_by_name.setdefault(data_file.filename, []).append(data_file)
+
+        report_dir = self.workspace / 'parse_reports'
+        report_dir.mkdir(parents=True, exist_ok=True)
+        parsed_at = datetime.now().isoformat()
+
+        for report_index, report in enumerate(reports, 1):
+            matches = files_by_name.get(report.get('filename'), [])
+            source_file = matches.pop(0) if matches else None
+            report['parsed_at'] = parsed_at
+            report['source_file_id'] = source_file.id if source_file else None
+
+            summary = {key: value for key, value in report.items() if key != 'issues'}
+            if source_file:
+                metadata = dict(source_file.metadata or {})
+                metadata['parse_summary'] = summary
+                source_file.metadata = metadata
+                source_file.save(update_fields=['metadata', 'updated_at'])
+
+            report_name = f"parse_report_{source_file.id if source_file else report_index}.json"
+            report_path = report_dir / report_name
+            with open(report_path, 'w', encoding='utf-8') as output:
+                json.dump(report, output, ensure_ascii=False, indent=2)
+            self.save_output_file(
+                report_path,
+                report_name,
+                '文献解析诊断报告',
+                'output',
+                ArtifactType.SCREENING_PARSE_REPORT_JSON,
+                metadata={'source_file_id': source_file.id if source_file else None},
+            )
+
     def _update_parse_progress(self, phase: str, current: int, total: int, message: str) -> None:
         """更新 Task.config 中的 parse_progress 字段（供前端轮询）。"""
         from core.models import Task as _Task
@@ -224,7 +335,10 @@ class ParseHandler(BaseStepHandler):
         }
         _Task.objects.filter(id=self.executor.task_id).update(config=cfg)
 
-    def _write_final_stats(self, total_entries: int, split_count: int, total_files: int) -> None:
+    def _write_final_stats(
+        self, total_entries: int, split_count: int, total_files: int,
+        parse_summary=None,
+    ) -> None:
         """将最终统计回写到 Task.config 和 StageStep.metadata。"""
         from core.models import Task as _Task
         row = _Task.objects.filter(id=self.executor.task_id).values('config').first()
@@ -232,6 +346,7 @@ class ParseHandler(BaseStepHandler):
         cfg.update({
             "total_entries": total_entries,
             "split_files": split_count,
+            "parse_summary": parse_summary or {},
             "parse_progress": {
                 "phase": "done", "current": 99, "total": 100,
                 "message": f"解析完成，共 {split_count} 篇文献，等待收尾...",
@@ -243,5 +358,6 @@ class ParseHandler(BaseStepHandler):
             "total_files": total_files,
             "total_entries": total_entries,
             "split_files": split_count,
+            "parse_summary": parse_summary or {},
             "completion_time": datetime.now().isoformat(),
         }
