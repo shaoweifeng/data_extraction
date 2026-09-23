@@ -9,8 +9,9 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 
-from core.models import DataFile, Project
+from core.models import DataFile, Project, ProjectStage, StageStep
 from core.artifacts.types import ArtifactType
+from core.artifacts.services import reset_downstream_on_input_delete
 from core.screening.parsers import convert_to_xml, parse_file
 from core.screening.parsers.enw import parse_enw
 
@@ -156,3 +157,103 @@ class OriginalFileDownloadTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['missing_abstract_entries'], 1)
         self.assertEqual(response.json()['issues'][0]['code'], 'missing_abstract')
+
+
+class InputDeletionStatisticsTests(TestCase):
+    def setUp(self):
+        self.media_dir = tempfile.TemporaryDirectory(prefix='input-delete-test-')
+        self.settings_override = override_settings(MEDIA_ROOT=self.media_dir.name)
+        self.settings_override.enable()
+        self.addCleanup(self.settings_override.disable)
+        self.addCleanup(self.media_dir.cleanup)
+
+        self.user = get_user_model().objects.create_user(
+            username='delete-owner', password='test-pass'
+        )
+        self.project = Project.objects.create(name='Delete statistics', owner=self.user)
+        self.stage = ProjectStage.objects.create(
+            project=self.project,
+            stage_key='SCREEN_1',
+            name='文献初筛',
+        )
+        self.parse_step = StageStep.objects.create(
+            stage=self.stage,
+            step_key='parse',
+            name='文献解析',
+            status='completed',
+            metadata={'total_entries': 5},
+        )
+        self.dedup_step = StageStep.objects.create(
+            stage=self.stage,
+            step_key='dedup',
+            name='文献去重',
+            status='completed',
+            metadata={'unique_count': 5},
+        )
+
+    def _file(self, filename, *, category='input', step=None, metadata=None):
+        return DataFile.objects.create(
+            project=self.project,
+            stage=self.stage,
+            step=step,
+            filename=filename,
+            file=SimpleUploadedFile(filename, b'test'),
+            data_category=category,
+            metadata=metadata or {},
+            created_by=self.user,
+        )
+
+    def test_deleting_one_input_preserves_other_input_summary_and_report(self):
+        removed = self._file(
+            'removed.enw',
+            metadata={'parse_summary': {'parsed_entries': 2, 'detected_entries': 2}},
+        )
+        retained = self._file(
+            'retained.enw',
+            metadata={'parse_summary': {'parsed_entries': 3, 'detected_entries': 3}},
+        )
+        removed_report = self._file(
+            f'parse_report_{removed.id}.json',
+            category='output',
+            step=self.parse_step,
+            metadata={
+                'artifact_type': ArtifactType.SCREENING_PARSE_REPORT_JSON,
+                'source_file_id': removed.id,
+            },
+        )
+        retained_report = self._file(
+            f'parse_report_{retained.id}.json',
+            category='output',
+            step=self.parse_step,
+            metadata={
+                'artifact_type': ArtifactType.SCREENING_PARSE_REPORT_JSON,
+                'source_file_id': retained.id,
+            },
+        )
+        self._file(
+            'parsed.xml',
+            category='intermediate',
+            step=self.parse_step,
+            metadata={'artifact_type': ArtifactType.SCREENING_PARSED_REFERENCE_XML},
+        )
+        self._file(
+            'dedup.xml',
+            category='intermediate',
+            step=self.dedup_step,
+            metadata={'artifact_type': ArtifactType.SCREENING_DEDUP_REFERENCE_XML},
+        )
+
+        reset_downstream_on_input_delete(removed, self.user)
+        removed.delete()
+
+        retained.refresh_from_db()
+        self.parse_step.refresh_from_db()
+        self.dedup_step.refresh_from_db()
+        self.assertEqual(retained.metadata['parse_summary']['parsed_entries'], 3)
+        self.assertFalse(DataFile.objects.filter(id=removed_report.id).exists())
+        self.assertTrue(DataFile.objects.filter(id=retained_report.id).exists())
+        self.assertFalse(DataFile.objects.filter(data_category='intermediate').exists())
+        self.assertEqual(self.parse_step.status, 'pending')
+        self.assertEqual(self.parse_step.metadata, {})
+        self.assertEqual(self.dedup_step.status, 'pending')
+        self.assertEqual(self.dedup_step.metadata, {})

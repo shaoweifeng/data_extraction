@@ -165,18 +165,30 @@ def clear_ai_screen_outputs(project, user) -> Dict:
 # 输入文件删除时的联动清理
 # ============================================================================
 
-def reset_downstream_on_input_delete(project, user):
+def reset_downstream_on_input_delete(source_file, user):
     """
     删除输入文件时，联动清理下游中间产物并重置步骤状态。
 
     业务规则：
     - 删除 input 文件 → 清空 parse / dedup 的 intermediate DataFile
     - 将 parse / dedup 步骤状态重置为 pending
+    - 仅删除当前输入文件的解析报告，保留其余输入文件的解析统计
 
     Args:
-        project: 被操作的项目
+        source_file: 被删除的输入 DataFile
         user: 操作用户（保留用于将来写 ActivityLog）
     """
+    project = source_file.project
+
+    DataFile.objects.filter(
+        project=project,
+        data_category='output',
+        metadata__artifact_type=ArtifactType.SCREENING_PARSE_REPORT_JSON,
+    ).filter(
+        Q(metadata__source_file_id=source_file.id)
+        | Q(filename=f'parse_report_{source_file.id}.json')
+    ).delete()
+
     for step_key in ['parse', 'dedup']:
         step = StageStep.objects.filter(
             stage__project=project,
@@ -194,22 +206,6 @@ def reset_downstream_on_input_delete(project, user):
         )
         if deleted_qs.exists():
             deleted_qs.delete()
-
-        if step_key == 'parse':
-            DataFile.objects.filter(
-                project=project,
-                step=step,
-                data_category='output',
-                metadata__artifact_type=ArtifactType.SCREENING_PARSE_REPORT_JSON,
-            ).delete()
-            for source_file in DataFile.objects.filter(
-                project=project,
-                data_category='input',
-            ).only('id', 'metadata'):
-                metadata = dict(source_file.metadata or {})
-                if metadata.pop('parse_summary', None) is not None:
-                    source_file.metadata = metadata
-                    source_file.save(update_fields=['metadata', 'updated_at'])
 
         # 重置步骤状态
         if step.status in (

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bibdataset xmlns:ce="http://www.elsevier.com/xml/ani/common">
+  <item fulltexturl="http://dx.doi.org/10.1000/embase.1">
+    <bibrecord>
+      <item-info>
+        <itemidlist>
+          <ce:doi>10.1000/embase.1</ce:doi>
+          <itemid idtype="PUI">100001</itemid>
+        </itemidlist>
+      </item-info>
+      <head>
+        <citation-info><citation-type code="ar" /></citation-info>
+        <citation-title><titletext>Embase diagnostic study</titletext></citation-title>
+        <author-group>
+          <author seq="1"><ce:indexed-name>Alpha A.</ce:indexed-name></author>
+          <author seq="2"><ce:indexed-name>Beta B.</ce:indexed-name></author>
+          <affiliation><organization>Hospital One</organization></affiliation>
+        </author-group>
+        <author-group>
+          <author seq="1"><ce:indexed-name>Alpha A.</ce:indexed-name></author>
+          <author seq="3"><ce:indexed-name>Gamma C.</ce:indexed-name></author>
+          <affiliation><organization>University Two</organization></affiliation>
+        </author-group>
+        <abstracts><abstract><ce:para>First abstract paragraph.</ce:para></abstract></abstracts>
+        <source type="j">
+          <sourcetitle>Evidence Journal</sourcetitle>
+          <volisspag><voliss volume="12" issue="3" /></volisspag>
+          <article-number>101</article-number>
+          <publicationyear first="2026" />
+          <publicationdate><year>2026</year><month>2</month><day>8</day></publicationdate>
+        </source>
+      </head>
+    </bibrecord>
+  </item>
+  <item>
+    <bibrecord>
+      <item-info>
+        <itemidlist>
+          <ce:doi>10.1000/embase.2</ce:doi>
+          <itemid idtype="PUI">100002</itemid>
+        </itemidlist>
+      </item-info>
+      <head>
+        <citation-title><titletext>Embase study without abstract</titletext></citation-title>
+        <author-group>
+          <author seq="1"><ce:indexed-name>Delta D.</ce:indexed-name></author>
+        </author-group>
+        <source type="j">
+          <sourcetitle>Clinical Journal</sourcetitle>
+          <publicationyear first="2025" />
+        </source>
+      </head>
+    </bibrecord>
+  </item>
+</bibdataset>

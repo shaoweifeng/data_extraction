@@ -61,7 +61,7 @@ class DedupHandler(BaseStepHandler):
 
         if not input_files:
             self.logger.error("[错误] 未找到文献解析步骤的输出文件")
-            self.logger.error("[提示] 请先完成步骤1（文献解析）再运行去重")
+            self.logger.error("[提示] 解析步骤未生成可用于去重的单篇文献，请先查看解析诊断报告")
             return False
 
         total_files = len(input_files)

@@ -191,7 +191,7 @@ class DataFileViewSet(viewsets.ModelViewSet):
         from ..services import reset_downstream_on_input_delete
 
         if instance.data_category == 'input' and instance.project:
-            reset_downstream_on_input_delete(instance.project, self.request.user)
+            reset_downstream_on_input_delete(instance, self.request.user)
 
         ActivityLog.objects.create(
             project=instance.project,

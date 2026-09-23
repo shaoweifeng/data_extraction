@@ -138,9 +138,6 @@
           <i class="fas fa-layer-group mr-1.5 text-blue-400"></i>
           已导入的索引
         </h4>
-        <span v-if="s.parsedCount > 0 && !s.isParsing" class="badge badge-green">
-          已解析 {{ s.parsedCount }} 条文献
-        </span>
       </div>
       <div class="step-list-box" style="max-height:16rem">
         <div v-if="s.referenceFiles.length === 0" class="text-gray-400 text-sm text-center py-6">
@@ -277,10 +274,10 @@ const parseOverview = computed(() => {
 })
 
 const overviewStatusText = computed(() => {
-  if (parseOverview.value.status === 'failed') return '解析失败'
-  if (parseOverview.value.status === 'partial') return '解析完成，存在异常'
-  if (parseOverview.value.status === 'warning') return '解析完成，存在字段缺失'
-  return '解析完成'
+  if (parseOverview.value.status === 'failed') return '存在解析失败'
+  if (parseOverview.value.status === 'partial') return '部分文件存在异常'
+  if (parseOverview.value.status === 'warning') return '存在字段缺失'
+  return '统计正常'
 })
 
 function issueLocation(issue) {
@@ -373,7 +370,6 @@ async function loadScreen1Files() {
 }
 async function triggerParsingTask(fileIds) {
   s.isParsing = true
-  s.parsedCount = 0
   s.uploadPhase = 'parsing'
   s.parseProgressMsg = '正在启动解析任务...'
   try {
@@ -411,12 +407,10 @@ async function pollParsingStatus(taskId) {
         s.parseProgressTotal = pp.total || 100
       }
       if (status === 'running' || status === 'pending') {
-        s.parsedCount = task.config.total_entries || task.config.split_files || 0
         parsePollTimer = setTimeout(poll, 500)
       } else if (status === 'completed') {
         s.isParsing = false
         s.uploadPhase = 'idle'
-        s.parsedCount = task.config?.split_files || task.config?.total_entries || 0
         s.parseProgressMsg = '解析完成'
         await project.fetchStages(project.currentProject.id)
         await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
@@ -425,7 +419,8 @@ async function pollParsingStatus(taskId) {
         s.isParsing = false
         s.uploadPhase = 'idle'
         await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
-        alert(`解析失败: ${task.error_message || '任务执行失败'}`)
+        await loadScreen1Files()
+        alert(`解析失败: ${task.error_message || pp?.message || '任务执行失败'}`)
       }
     } catch {
       errorCount++

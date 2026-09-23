@@ -2,6 +2,8 @@
 
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 from django.test import TestCase
 
@@ -14,6 +16,7 @@ from core.screening.parsers import (
 )
 from core.screening.parsers.registry import get_parser
 from core.screening.parsers.diagnostics import build_parse_report
+from core.screening.executors.dedup_handler import DedupHandler
 from core.screening.executors.parse_handler import ParseHandler
 
 
@@ -248,6 +251,99 @@ ER
         self.assertEqual(parsed[0]['authors'], ['Zhang, San'])
         self.assertEqual(parsed[0]['year'], '2025')
         self.assertEqual(parsed[0]['doi'], '10.1000/endnote')
+
+    def test_embase_xml_normalizes_namespaced_fields_and_deduplicates_authors(self):
+        path = FIXTURES / 'references' / 'sample_embase.xml'
+        parsed = parse_file(str(path))
+        report = build_parse_report(str(path), parsed)
+
+        self.assertEqual(len(parsed), 2)
+        self.assertEqual(parsed[0]['title'], 'Embase diagnostic study')
+        self.assertEqual(parsed[0]['authors'], ['Alpha A.', 'Beta B.', 'Gamma C.'])
+        self.assertEqual(parsed[0]['journal'], 'Evidence Journal')
+        self.assertEqual(parsed[0]['year'], '2026')
+        self.assertEqual(parsed[0]['volume'], '12')
+        self.assertEqual(parsed[0]['issue'], '3')
+        self.assertEqual(parsed[0]['page'], '101')
+        self.assertEqual(parsed[0]['date'], '2026-02-08')
+        self.assertEqual(parsed[0]['doi'], '10.1000/embase.1')
+        self.assertEqual(parsed[0]['source_identifier'], '100001')
+        self.assertEqual(parsed[0]['source_type'], 'EMBASE_XML')
+        self.assertEqual(parsed[0]['abstract'], 'First abstract paragraph.')
+        self.assertEqual(report['detected_entries'], 2)
+        self.assertEqual(report['parsed_entries'], 2)
+        self.assertEqual(report['skipped_entries'], 0)
+        self.assertEqual(report['missing_abstract_entries'], 1)
+        self.assertEqual(report['status'], 'warning')
+        self.assertEqual(report['issues'][0]['position'], 2)
+
+    def test_parse_handler_generates_outputs_and_matching_diagnostics_for_embase_xml(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            input_dir = root / 'input'
+            output_dir = root / 'output'
+            split_dir = root / 'split'
+            input_dir.mkdir()
+            output_dir.mkdir()
+            split_dir.mkdir()
+            source = FIXTURES / 'references' / 'sample_embase.xml'
+            (input_dir / source.name).write_bytes(source.read_bytes())
+            handler = ParseHandler.__new__(ParseHandler)
+            handler.logger = MagicMock()
+            handler._update_parse_progress = lambda *args, **kwargs: None
+
+            count, merged_path = handler._run_parser(input_dir, output_dir, split_dir)
+            split_paths = sorted(split_dir.glob('*.xml'))
+            merged = parse_file(str(merged_path))
+            dedup_handler = DedupHandler.__new__(DedupHandler)
+            dedup_titles = [
+                dedup_handler._extract_xml_meta(path)['title'] for path in split_paths
+            ]
+
+        self.assertEqual(count, 2)
+        self.assertEqual(len(split_paths), 2)
+        self.assertEqual([entry['title'] for entry in merged], [
+            'Embase diagnostic study',
+            'Embase study without abstract',
+        ])
+        self.assertEqual(dedup_titles, [
+            'Embase diagnostic study',
+            'Embase study without abstract',
+        ])
+        self.assertEqual(len(handler._parse_reports), 1)
+        self.assertEqual(handler._parse_reports[0]['detected_entries'], 2)
+        self.assertEqual(handler._parse_reports[0]['parsed_entries'], 2)
+
+    def test_parse_handler_fails_when_no_usable_records_are_generated(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / 'unsupported.xml'
+            source.write_text('<unsupported><entry /></unsupported>', encoding='utf-8')
+
+            handler = ParseHandler.__new__(ParseHandler)
+            handler.workspace = root / 'workspace'
+            handler.logger = MagicMock()
+            handler._get_upload_files = lambda: [SimpleNamespace(
+                filename=source.name,
+                file=SimpleNamespace(path=str(source)),
+            )]
+            handler.check_stop_signal = lambda: False
+            handler._clear_old_intermediate = MagicMock()
+            handler._save_outputs = MagicMock()
+            handler._save_parse_reports = MagicMock()
+            handler._write_final_stats = MagicMock()
+            handler._update_parse_progress = MagicMock()
+
+            success = handler.execute()
+
+        self.assertFalse(success)
+        handler._clear_old_intermediate.assert_called_once_with()
+        handler._save_outputs.assert_not_called()
+        handler._save_parse_reports.assert_called_once()
+        self.assertEqual(handler._parse_reports[0]['status'], 'failed')
+        self.assertEqual(handler._parse_reports[0]['parsed_entries'], 0)
+        self.assertEqual(handler._update_parse_progress.call_args.args[0], 'failed')
+        self.assertEqual(handler._write_final_stats.call_args.kwargs['progress_phase'], 'failed')
 
     def test_directory_and_output_pipeline_visits_each_record_once(self):
         ris = """TY  - JOUR

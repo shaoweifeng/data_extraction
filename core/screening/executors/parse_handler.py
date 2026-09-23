@@ -92,9 +92,23 @@ class ParseHandler(BaseStepHandler):
         # 5. 保存产物
         self.logger.info("[保存] 保存输出文件到数据库...")
         self._clear_old_intermediate()
-        saved_count = self._save_outputs(merged_xml, split_dir)
+        saved_count = self._save_outputs(merged_xml, split_dir) if total_entries else 0
         self._save_parse_reports(input_files, parse_reports)
         self.logger.info(f"[完成] 已保存 {saved_count} 个文件")
+
+        if total_entries == 0:
+            failure_message = '未解析到可用文献，请查看解析诊断报告并确认文件格式'
+            self.logger.error(f"[错误] {failure_message}")
+            self._update_parse_progress('failed', 100, 100, failure_message)
+            self._write_final_stats(
+                total_entries,
+                split_count,
+                total_files,
+                parse_summary,
+                progress_phase='failed',
+                progress_message=failure_message,
+            )
+            return False
 
         # 6. 写最终统计到 Task.config
         self._update_parse_progress("done", 99, 100,
@@ -338,18 +352,22 @@ class ParseHandler(BaseStepHandler):
     def _write_final_stats(
         self, total_entries: int, split_count: int, total_files: int,
         parse_summary=None,
+        progress_phase='done', progress_message=None,
     ) -> None:
         """将最终统计回写到 Task.config 和 StageStep.metadata。"""
         from core.models import Task as _Task
         row = _Task.objects.filter(id=self.executor.task_id).values('config').first()
         cfg = (row['config'] if row and row['config'] else {})
+        progress_message = progress_message or f"解析完成，共 {split_count} 篇文献，等待收尾..."
         cfg.update({
             "total_entries": total_entries,
             "split_files": split_count,
             "parse_summary": parse_summary or {},
             "parse_progress": {
-                "phase": "done", "current": 99, "total": 100,
-                "message": f"解析完成，共 {split_count} 篇文献，等待收尾...",
+                "phase": progress_phase,
+                "current": 99 if progress_phase == 'done' else 100,
+                "total": 100,
+                "message": progress_message,
             },
         })
         _Task.objects.filter(id=self.executor.task_id).update(config=cfg)

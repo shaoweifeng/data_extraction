@@ -60,20 +60,42 @@ def _bibtex_candidates(path: Path) -> List[Dict[str, Any]]:
 
 
 def _xml_candidates(path: Path) -> List[Dict[str, Any]]:
+    def local_name(tag: str) -> str:
+        return tag.rsplit('}', 1)[-1].lower()
+
+    def embase_identifier(item) -> str:
+        pui = ''
+        doi = ''
+        for child in item.iter():
+            name = local_name(child.tag)
+            text = ''.join(child.itertext()).strip()
+            if name == 'doi' and text and not doi:
+                doi = text
+            elif name == 'itemid' and (child.get('idtype') or '').upper() == 'PUI' and text:
+                pui = text
+        return pui or doi
+
     candidates = []
     root_tag = None
     for event, elem in ET.iterparse(path, events=('start', 'end')):
         if root_tag is None and event == 'start':
-            root_tag = elem.tag.lower()
+            root_tag = local_name(elem.tag)
             continue
         if event != 'end':
             continue
-        tag = elem.tag.lower()
-        is_record = (root_tag == 'xml' and tag == 'record') or (root_tag != 'xml' and tag == 'reference')
+        tag = local_name(elem.tag)
+        is_embase_item = root_tag == 'bibdataset' and tag == 'item'
+        is_record = (
+            (root_tag == 'xml' and tag == 'record')
+            or (root_tag != 'xml' and tag == 'reference')
+            or is_embase_item
+        )
         if is_record:
             identifier = ''
             if tag == 'record':
                 identifier = (elem.findtext('./rec-number') or '').strip()
+            elif is_embase_item:
+                identifier = embase_identifier(elem)
             candidates.append({
                 'position': len(candidates) + 1,
                 'line': None,

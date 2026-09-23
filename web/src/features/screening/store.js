@@ -13,7 +13,6 @@ export const useScreeningStore = defineStore('screening', () => {
   const referenceFiles = ref([])
   const uploadingFiles = ref([])
   const isParsing = ref(false)
-  const parsedCount = ref(0)
   const uploadPhase = ref('idle') // idle | uploading | parsing
   const uploadProgress = ref(0)
   const uploadCurrentFile = ref('')
@@ -114,7 +113,6 @@ export const useScreeningStore = defineStore('screening', () => {
     referenceFiles.value = []
     uploadingFiles.value = []
     isParsing.value = false
-    parsedCount.value = 0
     uploadPhase.value = 'idle'
     uploadProgress.value = 0
     uploadCurrentFile.value = ''
@@ -172,7 +170,7 @@ export const useScreeningStore = defineStore('screening', () => {
 
   return {
     currentStep,
-    referenceFiles, uploadingFiles, isParsing, parsedCount,
+    referenceFiles, uploadingFiles, isParsing,
     uploadPhase, uploadProgress, uploadCurrentFile, uploadFileIndex,
     uploadTotalFiles, parseProgressCurrent, parseProgressTotal, parseProgressMsg,
     isDeduplicating, dedupCompleted, dedupStats, showDuplicateDetails, showSkipDedupModal,
