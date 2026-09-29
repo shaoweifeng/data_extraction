@@ -1,7 +1,9 @@
 """Web of Science CIW reference parser."""
 
 import os
-from typing import Dict, List
+from typing import Dict, Iterator, List
+
+from .enw import _detect_text_encoding
 
 
 def _normalize_record(rec: Dict[str, List[str]], source_file: str, position: int) -> Dict:
@@ -43,7 +45,7 @@ def _normalize_record(rec: Dict[str, List[str]], source_file: str, position: int
     else:
         url = ""
 
-    return {
+    normalized = {
         "title": title,
         "authors": authors,
         "journal": journal,
@@ -63,9 +65,11 @@ def _normalize_record(rec: Dict[str, List[str]], source_file: str, position: int
         "record_number": ut,
         "source_type": "CIW",
     }
+    normalized['_raw_metadata'] = rec
+    return normalized
 
 
-def parse_ciw(file_path: str) -> List[Dict]:
+def parse_ciw(file_path: str) -> Iterator[Dict]:
     """
     解析 CIW 格式文献（Web of Science 导出格式）
 
@@ -89,23 +93,23 @@ def parse_ciw(file_path: str) -> List[Dict]:
             d[key] = []
         d[key].append(value)
 
-    parsed_entries = []
     current = {}
     current_tag = None
     record_position = 0
     source_file = os.path.basename(file_path)
 
-    def flush_record():
+    def take_record():
         nonlocal current, current_tag, record_position
+        normalized = None
         if current:
             record_position += 1
             normalized = _normalize_record(current, source_file, record_position)
-            if normalized:
-                parsed_entries.append(normalized)
         current = {}
         current_tag = None
+        return normalized
 
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+    encoding = _detect_text_encoding(file_path)
+    with open(file_path, "r", encoding=encoding, errors="strict") as f:
         for raw_line in f:
             line = raw_line.rstrip("\n").rstrip("\r")
             if not line.strip():
@@ -113,7 +117,9 @@ def parse_ciw(file_path: str) -> List[Dict]:
 
             # 记录结束
             if line.strip() == "ER":
-                flush_record()
+                normalized = take_record()
+                if normalized:
+                    yield normalized
                 continue
 
             # 续行（以两个空格开头）
@@ -130,6 +136,6 @@ def parse_ciw(file_path: str) -> List[Dict]:
                     add_to_field(current, tag, value)
                 continue
 
-    flush_record()
-
-    return parsed_entries
+    normalized = take_record()
+    if normalized:
+        yield normalized

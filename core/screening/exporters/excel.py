@@ -22,7 +22,7 @@ class ScreeningExcelExporter:
         """生成 Excel 文件，返回文件路径；失败返回 None。
 
         Args:
-            manual_reviews:  source_xml → ManualReview 对象的映射，显式传入避免闭包问题。
+            manual_reviews:  仅保留旧调用签名；数据库导出通过结果携带审阅对象。
             criteria_list:   纳排标准文本列表（按序），用于人工理由反查编号。
         """
         if criteria_list is None:
@@ -34,7 +34,7 @@ class ScreeningExcelExporter:
                 "id", "include_or_not", "manual_override", "exclusion_reason_id", "exclusion_reason",
                 "ReferenceType", "Title", "Author", "Year", "Journal",
                 "Volume", "Issue", "Page", "Date", "Doi", "PMCID", "Abstract", "URL", "Address",
-                "source_xml",
+                "reference_id",
             ]
             # 追加自定义提取字段
             extraction_field_names = self._load_extraction_field_names()
@@ -48,8 +48,8 @@ class ScreeningExcelExporter:
 
             row_count = 0
             for result in results:
-                source_xml = result.get("source_xml", "")
-                mr = result.get('_export_manual_review') or manual_reviews.get(source_xml)
+                reference_id = result.get('reference_id')
+                mr = result.get('_export_manual_review') or manual_reviews.get(reference_id)
 
                 # ── 最终纳排决定（与 QA 导入共用同一领域规则）──────────────
                 final_decision = result.get('_export_final_decision') or ScreeningDecisionService.resolve(result, mr)
@@ -89,7 +89,7 @@ class ScreeningExcelExporter:
 
                 xml_fields = result.get('_export_xml_fields')
                 if xml_fields is None:
-                    xml_fields = self._load_xml_fields(source_xml) if source_xml else {}
+                    xml_fields = {}
 
                 # ── 自定义提取字段（从 JSON extracted_fields 读取）──────────
                 extracted = result.get("extracted_fields", {})
@@ -123,7 +123,7 @@ class ScreeningExcelExporter:
                     "Abstract": xml_fields.get("Abstract", "") or result.get("abstract", ""),
                     "URL": xml_fields.get("URL", "") or result.get("url", ""),
                     "Address": xml_fields.get("Address", result.get("address", "")),
-                    "source_xml": source_xml,
+                    "reference_id": reference_id,
                 }
                 for fn in extraction_field_names:
                     row[fn] = extracted.get(fn, "")

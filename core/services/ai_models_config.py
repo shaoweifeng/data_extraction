@@ -57,7 +57,7 @@ AI_PROVIDERS = [
                 "id": "doubao-seed-2-1-turbo",
                 "name": "Doubao-Seed-2.1-Turbo",
                 "model": "doubao-seed-2-1-turbo-260628",
-                "description": "Seed 2.1 低价高速版，适合大批量初筛",
+                "description": "低价高速版",
                 "is_default": True,
                 "is_reasoning": True,
             },

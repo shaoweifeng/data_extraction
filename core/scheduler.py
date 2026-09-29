@@ -162,25 +162,9 @@ class TaskScheduler:
 
     def _execute_async(self, task: Task, step_key: str) -> Task:
         """异步执行（Celery）"""
-        from .executors.celery_tasks import execute_async_step
+        from core.workflow.services.task_launcher import dispatch_step_task
 
-        # 启动 Celery；broker 不可用时不能留下永久 pending 的幽灵任务。
-        try:
-            result = execute_async_step.delay(task.id, step_key, self.project_id)
-        except Exception as exc:
-            transition_task(
-                task,
-                TaskStatus.FAILED,
-                updates={'error_message': f'任务派发失败: {exc}', 'completed_at': timezone.now()},
-                expected_from={TaskStatus.PENDING},
-            )
-            raise
-
-        # 调度器只保存 broker id；RUNNING 只能由真正开始执行的 worker 写入。
-        task.celery_task_id = result.id
-        task.save(update_fields=['celery_task_id', 'updated_at'])
-
-        return task
+        return dispatch_step_task(task, step_key)
 
     def _create_manual_task(self, stage_key: str, user_id: int, **kwargs) -> Task:
         """创建手动任务"""

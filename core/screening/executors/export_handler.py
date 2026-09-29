@@ -2,10 +2,10 @@
 结果归纳步骤 Handler
 
 负责：
-- 获取 ai_screen 步骤输出的 JSON 结果
+- 获取 ai_screen 步骤持久化的数据库结果
 - 合并人工审阅（ManualReview）覆写 —— 人工决定 > AI 共识
 - 按 export_type（all/included/excluded）过滤
-- 生成 Excel 和 RIS 文件
+- 生成 Excel、RIS 和 XML 文件
 - 保存产物到 DataFile
 
 多模型说明：
@@ -14,7 +14,7 @@
     1. 人工审阅过 → 使用 ManualReview.reason（纯文本，reason_id 置空）
     2. AI 共识排除 → 使用 number_exclusion_reason / exclusion_reason（JSON 里的合并结果）
 - manual_override：ManualReview.is_override=True 时填 'yes'，否则 'no'
-- extracted_fields：从 JSON 的 extracted_fields 读取（ai_screen_handler 在多模型时已合并）
+- extracted_fields：从数据库结果的 extracted_fields 读取
 """
 
 from datetime import datetime
@@ -24,10 +24,8 @@ from typing import List, Dict, Optional
 import logging
 logger = logging.getLogger(__name__)
 
-from core.models import DataFile
 from core.executors.registry import register
 from core.executors.step_handler import BaseStepHandler
-from core.screening.services.decision_service import ScreeningDecisionService
 from core.artifacts.types import ArtifactType
 
 @register("export")
@@ -39,10 +37,10 @@ class ExportHandler(BaseStepHandler):
     def execute(self) -> bool:
         """
         导出流程：
-        1. 获取 ai_screen 输出的 JSON 结果
+        1. 获取 ai_screen 持久化的数据库结果
         2. 按 export_type 过滤
         3. 生成 Excel
-        4. 生成 RIS（仅 included 条目）
+        4. 同一遍遍历生成 RIS（仅 included 条目）和 XML
         5. 保存产物
         """
         self.logger.info("[步骤] 开始结果归纳...")
@@ -55,14 +53,16 @@ class ExportHandler(BaseStepHandler):
             self.logger.error("[错误] 未找到 ai_screen 步骤")
             return False
 
-        result_files = DataFile.objects.filter(
-            project=self.project_obj,
-            step=ai_step,
-            data_category='output',
-            metadata__artifact_type=ArtifactType.SCREENING_RESULT_JSON,
+        from core.screening.services.screening_run_service import current_completed_screening_run
+
+        screening_run = current_completed_screening_run(self.project_id)
+        if screening_run is None:
+            self.logger.error('[错误] 当前文献集没有已完成的数据库初筛运行')
+            return False
+        result_file_count = screening_run.results.count()
+        self.logger.info(
+            f"[输入] 使用数据库初筛运行 #{screening_run.id}，共 {result_file_count} 条结果"
         )
-        result_file_count = result_files.count()
-        self.logger.info(f"[输入] 找到 {result_file_count} 个结果文件")
         if result_file_count == 0:
             self.logger.warning("[警告] 没有筛选结果，将生成空报告")
 
@@ -79,13 +79,14 @@ class ExportHandler(BaseStepHandler):
             'manual_overrides': 0,
             'exported': 0,
         }
-        prepared_results = self._iter_prepared_results(
-            result_files, export_type, stats, total_count=result_file_count,
+        prepared_results = self._iter_prepared_database_results(
+            screening_run, export_type, stats, total_count=result_file_count,
         )
 
-        # Excel 使用 openpyxl write-only 模式逐行写；同一遍遍历中同步追加 RIS，
-        # 避免为了生成第二种格式重新扫描数据库和结果文件。
+        # Excel 使用 openpyxl write-only 模式逐行写；同一遍遍历中同步追加 RIS/XML，
+        # 避免为了生成其他格式重新扫描数据库和结果文件。
         from core.screening.exporters.ris import ScreeningRisExporter
+        from core.screening.exporters.xml import ScreeningXmlExporter
         ris_exporter = ScreeningRisExporter(self)
         ris_path = self.workspace / f"screening_results_included_{model_suffix}_{ts}.ris"
         ris_output = None
@@ -93,8 +94,13 @@ class ExportHandler(BaseStepHandler):
         if export_type != 'excluded':
             ris_output = open(ris_path, 'w', encoding='utf-8')
 
-        def append_ris(result, xml_fields, final_decision):
-            nonlocal ris_count
+        xml_path = self.workspace / f"screening_results_{export_type}_{model_suffix}_{ts}.xml"
+        xml_output = open(xml_path, 'w', encoding='utf-8')
+        ScreeningXmlExporter.write_header(xml_output)
+        xml_count = 0
+
+        def append_stream_exports(result, xml_fields, final_decision):
+            nonlocal ris_count, xml_count
             include_conflict = (
                 final_decision == 'conflict'
                 and self.config.get('include_conflicts_in_ris') is True
@@ -102,6 +108,11 @@ class ExportHandler(BaseStepHandler):
             if ris_output is not None and (final_decision == 'included' or include_conflict):
                 ris_exporter._write_record(ris_output, result, xml_fields)
                 ris_count += 1
+            if result.get('_export_include_excel', True):
+                ScreeningXmlExporter.write_record(
+                    xml_output, result, xml_fields, final_decision,
+                )
+                xml_count += 1
 
         try:
             excel_path = self._generate_excel(
@@ -111,15 +122,19 @@ class ExportHandler(BaseStepHandler):
                 ts,
                 {},
                 criteria_list,
-                on_record=append_ris,
+                on_record=append_stream_exports,
             )
         finally:
             if ris_output is not None:
                 ris_output.close()
+            ScreeningXmlExporter.write_footer(xml_output)
+            xml_output.close()
 
         if excel_path is None:
             if ris_path.exists():
                 ris_path.unlink()
+            if xml_path.exists():
+                xml_path.unlink()
             return False
 
         if ris_count == 0:
@@ -133,15 +148,28 @@ class ExportHandler(BaseStepHandler):
         self.logger.info(f"[过滤] {export_type} → {stats['exported']} 条")
 
         # 6. 保存产物
+        scope_label = {
+            'all': '所有文献',
+            'included': '纳入文献',
+            'excluded': '排除文献',
+        }.get(export_type, export_type)
         if excel_path and excel_path.exists():
             self.save_output_file(
-                excel_path, excel_path.name, "初筛结果Excel", "output",
+                excel_path, excel_path.name, f"初筛结果 Excel（{scope_label}）", "output",
                 ArtifactType.SCREENING_EXPORT_XLSX,
+                metadata={'export_type': export_type},
             )
         if ris_path and ris_path.exists():
             self.save_output_file(
-                ris_path, ris_path.name, "初筛结果RIS", "output",
+                ris_path, ris_path.name, "初筛结果 RIS（纳入文献）", "output",
                 ArtifactType.SCREENING_EXPORT_RIS,
+                metadata={'export_type': 'included'},
+            )
+        if xml_path.exists():
+            self.save_output_file(
+                xml_path, xml_path.name, f"初筛结果 XML（{scope_label}）", "output",
+                ArtifactType.SCREENING_EXPORT_XML,
+                metadata={'record_count': xml_count, 'export_type': export_type},
             )
 
         # 7. 更新步骤元数据
@@ -150,6 +178,8 @@ class ExportHandler(BaseStepHandler):
             "included_count": stats['included'],
             "excluded_count": stats['excluded'],
             "manual_override_count": stats['manual_overrides'],
+            "exported_count": stats['exported'],
+            "export_formats": ["xlsx", "xml"] + (["ris"] if ris_count else []),
             "completion_time": datetime.now().isoformat(),
         }
         return True
@@ -212,81 +242,66 @@ class ExportHandler(BaseStepHandler):
             joined = f"{len(display_names)}models"
         return joined
 
-    def _iter_prepared_results(self, result_files, export_type: str,
-                               stats: Dict, batch_size: int = 200,
-                               total_count: Optional[int] = None):
-        """按主键翻页读取并补齐一批导出记录，内存占用受 batch_size 限制。"""
-        from core.models import ManualReview
-        from core.screening.selectors import load_ai_result_file, load_xml_fields_bulk
+    def _iter_prepared_database_results(
+        self,
+        screening_run,
+        export_type: str,
+        stats: Dict,
+        batch_size: int = 200,
+        total_count: Optional[int] = None,
+    ):
+        """Stream the current database run without materializing result files."""
+        from core.screening.services.final_results import iter_resolved_screening_records
 
-        last_pk = 0
-        while True:
+        for resolved in iter_resolved_screening_records(screening_run, batch_size=batch_size):
             if self.check_stop_signal():
                 raise RuntimeError('用户已停止导出任务')
-            batch = list(
-                result_files.filter(pk__gt=last_pk)
-                .order_by('pk')
-                .only('pk', 'file', 'filename', 'metadata')[:batch_size]
+            result = resolved.as_payload()
+            reference = resolved.reference
+            manual_review = resolved.manual_review
+            final_decision = resolved.final_decision
+            is_included = final_decision == 'included'
+            if final_decision == 'pending':
+                raise RuntimeError(f'仍有待定文献，不能导出：文献 #{reference.id}')
+            if (
+                final_decision == 'conflict'
+                and self.config.get('allow_unresolved_conflicts') is not True
+            ):
+                raise RuntimeError(
+                    '仍有 AI 分歧文献未经人工裁定；如需继续，请勾选“允许豁免分歧文献”'
+                )
+
+            stats['total'] += 1
+            stats['included' if is_included else 'excluded'] += 1
+            if manual_review and manual_review.is_override:
+                stats['manual_overrides'] += 1
+            should_export = (
+                export_type == 'all'
+                or (export_type == 'included' and is_included)
+                or (export_type == 'excluded' and not is_included)
             )
-            if not batch:
-                return
-            last_pk = batch[-1].pk
-
-            loaded = []
-            for data_file in batch:
-                result = load_ai_result_file(data_file)
-                result.setdefault(
-                    'source_xml',
-                    (data_file.metadata or {}).get('source_xml', ''),
-                )
-                loaded.append(result)
-
-            sources = [result.get('source_xml', '') for result in loaded]
-            manual_reviews = {
-                review.source_xml: review
-                for review in ManualReview.objects.filter(
-                    project=self.project_obj,
-                    source_xml__in=[source for source in sources if source],
-                ).only('source_xml', 'decision', 'reason', 'is_override')
+            result['_export_manual_review'] = manual_review
+            result['_export_final_decision'] = final_decision
+            result['_export_xml_fields'] = {
+                'ReferenceType': reference.publication_type,
+                'Title': reference.title,
+                'Author': '; '.join(reference.authors or []),
+                'Year': reference.publication_year,
+                'Journal': reference.journal,
+                'Volume': reference.volume,
+                'Issue': reference.issue,
+                'Page': reference.pages,
+                'Date': reference.publication_date,
+                'Doi': reference.doi,
+                'PMCID': reference.pmcid,
+                'Abstract': reference.abstract,
+                'URL': reference.url,
+                'Address': reference.address,
             }
-            xml_fields_by_source = load_xml_fields_bulk(sources, self.project_id)
-
-            for result in loaded:
-                source_xml = result.get('source_xml', '')
-                manual_review = manual_reviews.get(source_xml)
-                final_decision = ScreeningDecisionService.resolve(result, manual_review)
-                is_included = final_decision == 'included'
-
-                if final_decision == 'pending':
-                    raise RuntimeError(
-                        f'仍有待定文献，不能导出：{source_xml or "未知文献"}'
-                    )
-                if (
-                    final_decision == 'conflict'
-                    and self.config.get('allow_unresolved_conflicts') is not True
-                ):
-                    raise RuntimeError(
-                        '仍有 AI 分歧文献未经人工裁定；如需继续，请勾选“允许豁免分歧文献”'
-                    )
-
-                stats['total'] += 1
-                stats['included' if is_included else 'excluded'] += 1
-                if manual_review and manual_review.is_override:
-                    stats['manual_overrides'] += 1
-
-                should_export = (
-                    export_type == 'all'
-                    or (export_type == 'included' and is_included)
-                    or (export_type == 'excluded' and not is_included)
-                )
-                prepared = dict(result)
-                prepared['_export_manual_review'] = manual_review
-                prepared['_export_final_decision'] = final_decision
-                prepared['_export_xml_fields'] = xml_fields_by_source.get(source_xml, {})
-                prepared['_export_include_excel'] = should_export
-                if should_export:
-                    stats['exported'] += 1
-                yield prepared
+            result['_export_include_excel'] = should_export
+            if should_export:
+                stats['exported'] += 1
+            yield result
 
             if total_count:
                 self.logger.update_progress(stats['total'], total_count, 'refs')
@@ -335,8 +350,3 @@ class ExportHandler(BaseStepHandler):
         except Exception as e:
             logger.warning(f"[导出] 加载提取字段失败: {e}")
         return []
-
-    def _load_xml_fields(self, xml_path: str) -> Dict:
-        """兼容单条导出调用；生产导出使用批量版本避免逐条查询。"""
-        from core.screening.selectors import load_xml_fields
-        return load_xml_fields(xml_path, self.project_id)

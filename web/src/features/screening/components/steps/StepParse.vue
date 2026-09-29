@@ -64,7 +64,7 @@
         type="file"
         class="hidden"
         multiple
-        accept=".ris,.bib,.nbib,.xml,.ciw,.enw,.txt,.doc,.docx"
+        accept=".ris,.bib,.bibtex,.nbib,.medline,.xml,.ciw,.enw,.txt,.doc,.docx"
         @change="handleUpload"
       />
 
@@ -81,7 +81,7 @@
           <i v-else class="fas fa-upload"></i>
           {{ s.uploadPhase === 'uploading' ? '上传中...' : s.isParsing ? '正在解析...' : '上传 Reference 文件' }}
         </button>
-        <p class="upload-hint">点击选择或将文件拖拽到此处</p>
+        <p class="upload-hint">点击选择或将文件拖拽到此处；单次最多 100 个文件、总计 200 MiB</p>
         <!-- 紧凑格式行 -->
         <div class="fmt-inline">
           <span class="fmt-inline-label">支持格式：</span>
@@ -113,13 +113,13 @@
       </div>
     </div>
 
-    <!-- 已导入文件列表 -->
+    <!-- 索引批次与文件列表 -->
     <div class="mt-6">
       <div v-if="parseOverview.totalFiles > 0" class="parse-overview mb-4">
         <div class="parse-overview__head">
           <div>
             <h4>解析结果</h4>
-            <p>以下统计按当前已导入的索引文件汇总</p>
+            <p>仅统计已经成功发布到当前文献集的索引文件</p>
           </div>
           <span class="parse-health" :class="`parse-health--${parseOverview.status}`">
             {{ overviewStatusText }}
@@ -136,93 +136,123 @@
       <div class="flex items-center justify-between mb-3">
         <h4 class="font-semibold text-gray-700 text-sm">
           <i class="fas fa-layer-group mr-1.5 text-blue-400"></i>
-          已导入的索引
+          已上传的索引文件
         </h4>
       </div>
       <div class="step-list-box" style="max-height:16rem">
         <div v-if="s.referenceFiles.length === 0" class="text-gray-400 text-sm text-center py-6">
           <i class="fas fa-inbox text-2xl mb-2 opacity-40 block"></i>
-          暂无已导入的索引
+          暂无已上传的索引
         </div>
-        <div v-else class="space-y-2">
-          <div
-            v-for="file in s.referenceFiles"
-            :key="file.id"
-            class="parse-file-card"
-          >
-            <div class="step-list-item parse-file-row">
-              <button class="parse-file-main" @click="toggleParseReport(file)">
-                <i class="fas fa-bookmark text-blue-400 flex-shrink-0"></i>
-                <span class="truncate text-sm text-gray-700">{{ file.filename }}</span>
-              </button>
-              <div class="parse-file-actions">
-                <template v-if="file.metadata?.parse_summary">
-                  <span v-if="file.metadata.parse_summary.status === 'failed'" class="parse-badge parse-badge--error">
-                    解析失败
-                  </span>
-                  <span v-else class="parse-badge parse-badge--success">
-                    成功 {{ file.metadata.parse_summary.parsed_entries }}/{{ file.metadata.parse_summary.detected_entries }}
-                  </span>
-                  <span v-if="file.metadata.parse_summary.skipped_entries" class="parse-badge parse-badge--error">
-                    异常 {{ file.metadata.parse_summary.skipped_entries }}
-                  </span>
-                  <span v-if="file.metadata.parse_summary.missing_abstract_entries" class="parse-badge parse-badge--warning">
-                    缺摘要 {{ file.metadata.parse_summary.missing_abstract_entries }}
-                  </span>
-                  <button class="parse-expand-btn" title="查看解析详情" @click="toggleParseReport(file)">
-                    <i class="fas" :class="expandedFileId === file.id ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                  </button>
-                </template>
-                <span v-else-if="s.isParsing" class="parse-badge parse-badge--pending">等待统计</span>
-                <a
-                  :href="`/api/files/${file.id}/download/`"
-                  :download="file.filename"
-                  class="text-blue-400 hover:text-blue-600 transition"
-                  title="下载原始文件"
+        <div v-else class="space-y-3">
+          <section v-for="group in batchGroups" :key="group.key" class="parse-batch">
+            <div class="parse-batch__head">
+              <div class="parse-batch__identity">
+                <span class="parse-batch__title">{{ group.title }}</span>
+                <span
+                  class="parse-batch__status"
+                  :class="`parse-batch__status--${batchStatusMeta(group.batch).tone}`"
                 >
-                  <i class="fas fa-download text-sm"></i>
-                </a>
-                <button class="text-gray-300 hover:text-red-400 transition" @click="handleDeleteFile(file.id)">
-                  <i class="fas fa-trash text-sm"></i>
+                  {{ batchStatusMeta(group.batch).label }}
+                </span>
+                <span v-if="group.batch?.published_revision" class="parse-batch__revision">
+                  文献集 r{{ group.batch.published_revision }}
+                </span>
+              </div>
+              <div v-if="isRetryableBatch(group.batch)" class="parse-batch__actions">
+                <button
+                  class="batch-action batch-action--retry"
+                  :disabled="batchBusy[group.batch.id] || s.isParsing"
+                  @click="handleRetryBatch(group.batch)"
+                >
+                  <i class="fas" :class="batchBusy[group.batch.id] === 'retry' ? 'fa-spinner fa-spin' : 'fa-redo-alt'"></i>
+                  重新解析
+                </button>
+                <button
+                  class="batch-action batch-action--delete"
+                  :disabled="batchBusy[group.batch.id] || s.isParsing"
+                  @click="handleDeleteBatch(group.batch)"
+                >
+                  <i class="fas" :class="batchBusy[group.batch.id] === 'delete' ? 'fa-spinner fa-spin' : 'fa-trash-alt'"></i>
+                  整批删除
                 </button>
               </div>
             </div>
-
-            <div v-if="expandedFileId === file.id" class="parse-detail">
-              <div v-if="reportLoading[file.id]" class="parse-detail__empty">
-                <i class="fas fa-spinner fa-spin"></i> 正在加载解析报告...
-              </div>
-              <template v-else-if="reportByFile[file.id]">
-                <div class="parse-detail__summary">
-                  <span>格式 <strong>{{ reportByFile[file.id].format?.toUpperCase() }}</strong></span>
-                  <span>检测 <strong>{{ reportByFile[file.id].detected_entries }}</strong></span>
-                  <span>成功 <strong>{{ reportByFile[file.id].parsed_entries }}</strong></span>
-                  <span>跳过 <strong>{{ reportByFile[file.id].skipped_entries }}</strong></span>
-                  <span>摘要缺失 <strong>{{ reportByFile[file.id].missing_abstract_entries }}</strong></span>
-                </div>
-                <div v-if="reportByFile[file.id].issues?.length" class="parse-issues">
-                  <div v-for="(issue, index) in reportByFile[file.id].issues" :key="`${issue.code}-${index}`" class="parse-issue">
-                    <span class="parse-issue__level" :class="`parse-issue__level--${issue.severity}`">
-                      {{ issue.severity === 'error' ? '错误' : '警告' }}
-                    </span>
-                    <div class="parse-issue__body">
-                      <div class="parse-issue__location">
-                        {{ issueLocation(issue) }}
-                        <span v-if="issue.identifier"> · {{ issue.identifier }}</span>
-                      </div>
-                      <div class="parse-issue__message">{{ issue.message }}</div>
-                      <div v-if="issue.title" class="parse-issue__title">{{ issue.title }}</div>
-                      <div v-if="issue.suggestion" class="parse-issue__suggestion">建议：{{ issue.suggestion }}</div>
-                    </div>
+            <div v-if="group.batch?.status === 'failed'" class="parse-batch__notice">
+              本批次未发布，解析出的文献没有计入项目。修复问题后可直接重新解析，无需再次上传。
+            </div>
+            <div class="space-y-2 parse-batch__files">
+              <div v-for="file in group.files" :key="file.id" class="parse-file-card">
+                <div class="step-list-item parse-file-row">
+                  <button class="parse-file-main" @click="toggleParseReport(file)">
+                    <i class="fas fa-bookmark text-blue-400 flex-shrink-0"></i>
+                    <span class="truncate text-sm text-gray-700">{{ file.filename }}</span>
+                  </button>
+                  <div class="parse-file-actions">
+                    <template v-if="file.metadata?.parse_summary">
+                      <span v-if="file.metadata.parse_summary.status === 'failed'" class="parse-badge parse-badge--error">解析失败</span>
+                      <span v-else class="parse-badge parse-badge--success">
+                        成功 {{ file.metadata.parse_summary.parsed_entries }}/{{ file.metadata.parse_summary.detected_entries }}
+                      </span>
+                      <span v-if="file.metadata.parse_summary.skipped_entries" class="parse-badge parse-badge--error">
+                        异常 {{ file.metadata.parse_summary.skipped_entries }}
+                      </span>
+                      <span v-if="file.metadata.parse_summary.missing_abstract_entries" class="parse-badge parse-badge--warning">
+                        缺摘要 {{ file.metadata.parse_summary.missing_abstract_entries }}
+                      </span>
+                      <button class="parse-expand-btn" title="查看解析详情" @click="toggleParseReport(file)">
+                        <i class="fas" :class="expandedFileId === file.id ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                      </button>
+                    </template>
+                    <span v-else-if="s.isParsing" class="parse-badge parse-badge--pending">等待统计</span>
+                    <a :href="`/api/files/${file.id}/download/`" :download="file.filename" class="text-blue-400 hover:text-blue-600 transition" title="下载原始文件">
+                      <i class="fas fa-download text-sm"></i>
+                    </a>
+                    <button
+                      v-if="!isRetryableBatch(group.batch)"
+                      class="text-gray-300 hover:text-red-400 transition"
+                      title="删除该索引"
+                      @click="handleDeleteFile(file.id)"
+                    >
+                      <i class="fas fa-trash text-sm"></i>
+                    </button>
                   </div>
                 </div>
-                <div v-else class="parse-detail__empty parse-detail__empty--success">
-                  <i class="fas fa-check-circle"></i> 未发现解析异常或字段缺失
+                <div v-if="expandedFileId === file.id" class="parse-detail">
+                  <div v-if="reportLoading[file.id]" class="parse-detail__empty">
+                    <i class="fas fa-spinner fa-spin"></i> 正在加载解析报告...
+                  </div>
+                  <template v-else-if="reportByFile[file.id]">
+                    <div class="parse-detail__summary">
+                      <span>格式 <strong>{{ reportByFile[file.id].format?.toUpperCase() }}</strong></span>
+                      <span>检测 <strong>{{ reportByFile[file.id].detected_entries }}</strong></span>
+                      <span>成功 <strong>{{ reportByFile[file.id].parsed_entries }}</strong></span>
+                      <span>跳过 <strong>{{ reportByFile[file.id].skipped_entries }}</strong></span>
+                      <span>摘要缺失 <strong>{{ reportByFile[file.id].missing_abstract_entries }}</strong></span>
+                    </div>
+                    <div v-if="reportByFile[file.id].issues?.length" class="parse-issues">
+                      <div v-for="(issue, index) in reportByFile[file.id].issues" :key="`${issue.code}-${index}`" class="parse-issue">
+                        <span class="parse-issue__level" :class="`parse-issue__level--${issue.severity}`">{{ issue.severity === 'error' ? '错误' : '警告' }}</span>
+                        <div class="parse-issue__body">
+                          <div class="parse-issue__location">
+                            {{ issueLocation(issue) }}
+                            <span v-if="issue.identifier"> · {{ issue.identifier }}</span>
+                          </div>
+                          <div class="parse-issue__message">{{ issue.message }}</div>
+                          <div v-if="issue.title" class="parse-issue__title">{{ issue.title }}</div>
+                          <div v-if="issue.suggestion" class="parse-issue__suggestion">建议：{{ issue.suggestion }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="parse-detail__empty parse-detail__empty--success">
+                      <i class="fas fa-check-circle"></i> 未发现解析异常或字段缺失
+                    </div>
+                  </template>
+                  <div v-else class="parse-detail__empty">暂无可用的解析报告</div>
                 </div>
-              </template>
-              <div v-else class="parse-detail__empty">暂无可用的解析报告</div>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>
@@ -246,11 +276,59 @@ const isDragOver = ref(false)
 const expandedFileId = ref(null)
 const reportByFile = reactive({})
 const reportLoading = reactive({})
+const importBatches = ref([])
+const batchBusy = reactive({})
 let parsePollGeneration = 0
 let parsePollTimer = null
 
+const importStatusText = {
+  uploaded: '文件已安全保存，等待解析任务启动...',
+  validating: '正在校验索引文件...',
+  importing: '正在解析并写入本批次...',
+  ready: '解析完成，等待发布...',
+  publishing: '正在发布新的文献集版本...',
+  completed: '导入已完成',
+  failed: '导入失败，可在稍后重试',
+  cancelled: '导入已取消',
+}
+
+const batchById = computed(() => Object.fromEntries(
+  importBatches.value.map(batch => [String(batch.id), batch]),
+))
+
+const batchGroups = computed(() => {
+  const filesByBatch = new Map()
+  const legacyFiles = []
+  for (const file of s.referenceFiles) {
+    const batchId = file.metadata?.import_batch_id
+    if (!batchId) {
+      legacyFiles.push(file)
+      continue
+    }
+    const key = String(batchId)
+    if (!filesByBatch.has(key)) filesByBatch.set(key, [])
+    filesByBatch.get(key).push(file)
+  }
+  const groups = importBatches.value
+    .filter(batch => batch.operation === 'add' && filesByBatch.has(String(batch.id)))
+    .map(batch => ({
+      key: `batch-${batch.id}`,
+      title: `导入批次 #${batch.id} · ${filesByBatch.get(String(batch.id)).length} 个文件`,
+      batch,
+      files: filesByBatch.get(String(batch.id)),
+    }))
+  if (legacyFiles.length) {
+    groups.push({ key: 'legacy', title: '历史索引文件', batch: null, files: legacyFiles })
+  }
+  return groups
+})
+
 const parseOverview = computed(() => {
   const summaries = s.referenceFiles
+    .filter(file => {
+      const batchId = file.metadata?.import_batch_id
+      return !batchId || batchById.value[String(batchId)]?.status === 'completed'
+    })
     .map(file => file.metadata?.parse_summary)
     .filter(Boolean)
   const overview = {
@@ -272,6 +350,25 @@ const parseOverview = computed(() => {
   else if (summaries.some(summary => summary.status === 'warning')) overview.status = 'warning'
   return overview
 })
+
+function batchStatusMeta(batch) {
+  if (!batch) return { label: '历史记录', tone: 'neutral' }
+  const status = {
+    completed: { label: '已发布', tone: 'success' },
+    failed: { label: '导入失败 · 未发布', tone: 'error' },
+    cancelled: { label: '已取消 · 未发布', tone: 'neutral' },
+    uploaded: { label: '等待解析', tone: 'pending' },
+    validating: { label: '正在校验', tone: 'pending' },
+    importing: { label: '正在解析', tone: 'pending' },
+    ready: { label: '等待发布', tone: 'pending' },
+    publishing: { label: '正在发布', tone: 'pending' },
+  }
+  return status[batch.status] || { label: batch.status, tone: 'neutral' }
+}
+
+function isRetryableBatch(batch) {
+  return ['failed', 'cancelled'].includes(batch?.status)
+}
 
 const overviewStatusText = computed(() => {
   if (parseOverview.value.status === 'failed') return '存在解析失败'
@@ -321,11 +418,11 @@ function onDrop(event) {
   if (!files.length) return
   handleFiles(files)
 }
-function uploadFileXHR(file, index) {
-  s.uploadCurrentFile = file.name
-  s.uploadFileIndex = index
+function uploadFilesXHR(files) {
+  s.uploadCurrentFile = files.length === 1 ? files[0].name : `${files.length} 个索引文件`
+  s.uploadFileIndex = files.length
   s.uploadProgress = 0
-  return screeningApi.uploadReferenceFile(file, project.currentProject.id, ratio => {
+  return screeningApi.uploadReferenceFiles(files, project.currentProject.id, ratio => {
     s.uploadProgress = Math.round(ratio * 100)
   })
 }
@@ -339,55 +436,77 @@ async function handleUpload(event) {
 async function handleFiles(files) {
   s.uploadPhase = 'uploading'
   s.uploadTotalFiles = files.length
-  const uploadedFileIds = []
-  for (let i = 0; i < files.length; i++) {
-    try {
-      const uploaded = await uploadFileXHR(files[i], i + 1)
-      uploadedFileIds.push(uploaded.id)
-    } catch (err) {
-      alert(`上传 ${files[i].name} 失败: ${err.message}`)
-    }
-  }
-  if (uploadedFileIds.length > 0) {
+  try {
+    const batch = await uploadFilesXHR(files)
     s.uploadPhase = 'parsing'
     s.uploadProgress = 100
     await loadScreen1Files()
     await taskStore.fetchActivityLogs(project.currentProject.id)
-    await triggerParsingTask(uploadedFileIds)
-  } else {
+    if (!batch.task?.id) throw new Error('服务器未返回解析任务')
+    s.isParsing = true
+    s.parseProgressMsg = '文件已安全保存，正在启动解析任务...'
+    await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
+    pollParsingStatus(batch.task.id, batch.id)
+  } catch (err) {
+    alert(`上传失败: ${err.message}`)
     s.uploadPhase = 'idle'
   }
 }
 async function loadScreen1Files() {
   try {
-    const res = await workflowApi.fetchFiles({ project: project.currentProject.id, data_category: 'input' })
-    const files = extractListData(res.data)
-    const exts = ['.ris', '.bib', '.nbib', '.xml', '.ciw', '.enw', '.txt', '.doc', '.docx']
+    const [fileResponse, batchResponse] = await Promise.all([
+      workflowApi.fetchFiles({ project: project.currentProject.id, data_category: 'input' }),
+      screeningApi.fetchImportBatches(project.currentProject.id),
+    ])
+    const files = extractListData(fileResponse.data)
+    const exts = ['.ris', '.bib', '.bibtex', '.nbib', '.medline', '.xml', '.ciw', '.enw', '.txt', '.doc', '.docx']
     s.referenceFiles = files.filter((f) => exts.some((ext) => f.filename.endsWith(ext)))
+    importBatches.value = batchResponse.data?.results || []
   } catch (err) {
-    console.error('加载文件失败', err)
+    console.error('加载索引文件或导入批次失败', err)
   }
 }
-async function triggerParsingTask(fileIds) {
-  s.isParsing = true
-  s.uploadPhase = 'parsing'
-  s.parseProgressMsg = '正在启动解析任务...'
+
+async function handleRetryBatch(batch) {
+  if (!isRetryableBatch(batch) || batchBusy[batch.id] || s.isParsing) return
+  batchBusy[batch.id] = 'retry'
   try {
-    const res = await workflowApi.createTask({
-      project: project.currentProject.id,
-      task_type: 'parse',
-      config: { file_ids: fileIds },
-    }, { noTimeout: true })
-    const task = res.data
+    const response = await screeningApi.retryImportBatch(batch.id)
+    const retried = response.data
+    if (!retried.task?.id) throw new Error('服务器未返回重试任务')
+    s.isParsing = true
+    s.uploadPhase = 'parsing'
+    s.parseProgressMsg = '正在重新解析保留的原始索引文件...'
+    await loadScreen1Files()
     await taskStore.fetchRecentTasks(project.currentProject.id, project.stagesData)
-    pollParsingStatus(task.id)
+    pollParsingStatus(retried.task.id, retried.id)
   } catch (err) {
-    alert(`解析启动失败: ${err.response?.data?.error || err.message}`)
-    s.isParsing = false
-    s.uploadPhase = 'idle'
+    alert(`重新解析失败: ${err.response?.data?.error?.message || err.message}`)
+    await loadScreen1Files()
+  } finally {
+    delete batchBusy[batch.id]
   }
 }
-async function pollParsingStatus(taskId) {
+
+async function handleDeleteBatch(batch) {
+  if (!isRetryableBatch(batch) || batchBusy[batch.id] || s.isParsing) return
+  if (!confirm(`确定整批删除 #${batch.id} 及其 ${batch.file_count} 个原始索引文件？此操作不可恢复。`)) return
+  batchBusy[batch.id] = 'delete'
+  try {
+    await screeningApi.deleteImportBatch(batch.id)
+    for (const file of batch.files || []) {
+      delete reportByFile[file.source_file_id]
+      if (expandedFileId.value === file.source_file_id) expandedFileId.value = null
+    }
+    await loadScreen1Files()
+    await taskStore.fetchActivityLogs(project.currentProject.id)
+  } catch (err) {
+    alert(err.response?.data?.error?.message || '整批删除失败')
+  } finally {
+    delete batchBusy[batch.id]
+  }
+}
+async function pollParsingStatus(taskId, batchId = null) {
   clearTimeout(parsePollTimer)
   const generation = ++parsePollGeneration
   let pollCount = 0
@@ -396,12 +515,16 @@ async function pollParsingStatus(taskId) {
     if (generation !== parsePollGeneration) return
     pollCount++
     try {
-      const res = await workflowApi.fetchTask(taskId)
+      const [res, batchResponse] = await Promise.all([
+        workflowApi.fetchTask(taskId),
+        batchId ? screeningApi.fetchImportBatch(batchId) : Promise.resolve(null),
+      ])
       if (generation !== parsePollGeneration) return
       const task = res.data
       const status = task.status
       const pp = task.config?.parse_progress
-      s.parseProgressMsg = pp?.message || `解析中... [${pollCount}]`
+      const batchStatus = batchResponse?.data?.status
+      s.parseProgressMsg = pp?.message || importStatusText[batchStatus] || `解析中... [${pollCount}]`
       if (pp?.current != null) {
         s.parseProgressCurrent = pp.current
         s.parseProgressTotal = pp.total || 100
@@ -659,6 +782,62 @@ async function handleDeleteFile(fileId) {
 .parse-health--partial, .parse-badge--error { color: #b91c1c; background: #fee2e2; }
 .parse-health--failed { color: #991b1b; background: #fecaca; }
 .parse-badge--pending { color: #475569; background: #e2e8f0; }
+.parse-batch {
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+.parse-batch__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  border-bottom: 1px solid #eef2f7;
+}
+.parse-batch__identity, .parse-batch__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.parse-batch__title { color: #334155; font-size: .76rem; font-weight: 650; }
+.parse-batch__revision { color: #64748b; font-size: .66rem; }
+.parse-batch__status {
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: .65rem;
+  font-weight: 650;
+}
+.parse-batch__status--success { color: #15803d; background: #dcfce7; }
+.parse-batch__status--error { color: #b91c1c; background: #fee2e2; }
+.parse-batch__status--pending { color: #4338ca; background: #e0e7ff; }
+.parse-batch__status--neutral { color: #475569; background: #e2e8f0; }
+.parse-batch__notice {
+  padding: 8px 12px;
+  color: #9f1239;
+  background: #fff1f2;
+  border-bottom: 1px solid #ffe4e6;
+  font-size: .7rem;
+}
+.parse-batch__files { padding: 9px; }
+.batch-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: .68rem;
+  font-weight: 600;
+  transition: background .15s, color .15s, opacity .15s;
+}
+.batch-action:disabled { opacity: .5; cursor: not-allowed; }
+.batch-action--retry { color: #4338ca; background: #eef2ff; }
+.batch-action--retry:hover:not(:disabled) { background: #e0e7ff; }
+.batch-action--delete { color: #b91c1c; background: #fff1f2; }
+.batch-action--delete:hover:not(:disabled) { background: #ffe4e6; }
 .parse-file-card {
   border: 1px solid #eef2f7;
   border-radius: 9px;
@@ -726,6 +905,7 @@ async function handleDeleteFile(fileId) {
 
 @media (max-width: 760px) {
   .parse-overview__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .parse-batch__head { align-items: flex-start; flex-direction: column; }
   .parse-file-row { align-items: flex-start; }
   .parse-file-actions { flex-wrap: wrap; justify-content: flex-end; }
 }

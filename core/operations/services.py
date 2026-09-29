@@ -22,6 +22,10 @@ NORMAL_STATE = {
     'message': '',
     'scheduled_at': None,
     'updated_at': None,
+    'announcement_enabled': False,
+    'announcement_message': '',
+    'announcement_level': 'info',
+    'announcement_updated_at': None,
 }
 ACTIVE_TASK_STATUSES = (
     TaskStatus.QUEUING,
@@ -52,6 +56,12 @@ def _serialize_state(obj):
         'message': obj.message,
         'scheduled_at': obj.scheduled_at.isoformat() if obj.scheduled_at else None,
         'updated_at': obj.updated_at.isoformat() if obj.updated_at else None,
+        'announcement_enabled': obj.announcement_enabled,
+        'announcement_message': obj.announcement_message,
+        'announcement_level': obj.announcement_level,
+        'announcement_updated_at': (
+            obj.announcement_updated_at.isoformat() if obj.announcement_updated_at else None
+        ),
     }
 
 
@@ -77,6 +87,25 @@ def set_system_state(mode, *, message='', scheduled_at=None, user=None):
     state.mode = mode
     state.message = (message or '').strip()[:500]
     state.scheduled_at = scheduled_at
+    state.updated_by = user
+    state.save()
+    value = _serialize_state(state)
+    _state_cache.update(value=value, expires=time.monotonic() + 2.0)
+    return value
+
+
+def set_announcement(*, enabled, message='', level='info', user=None):
+    valid_levels = {'info', 'success', 'warning'}
+    if level not in valid_levels:
+        raise ValueError('无效的通知类型')
+    normalized_message = (message or '').strip()
+    if enabled and not normalized_message:
+        raise ValueError('发布通知时内容不能为空')
+    state, _ = SystemOperationState.objects.get_or_create(singleton_id=1)
+    state.announcement_enabled = bool(enabled)
+    state.announcement_message = normalized_message[:500]
+    state.announcement_level = level
+    state.announcement_updated_at = timezone.now()
     state.updated_by = user
     state.save()
     value = _serialize_state(state)

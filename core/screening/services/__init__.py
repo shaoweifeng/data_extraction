@@ -2,9 +2,9 @@
 
 from .configuration_service import ScreeningConfigurationService
 from .decision_service import ScreeningDecisionService
-from .review_service import submit_reviews, update_review
+from .review_service import submit_reviews, update_review_by_reference
 
 __all__ = [
     'ScreeningConfigurationService', 'ScreeningDecisionService',
-    'submit_reviews', 'update_review',
+    'submit_reviews', 'update_review_by_reference',
 ]

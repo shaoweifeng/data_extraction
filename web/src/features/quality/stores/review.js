@@ -62,6 +62,14 @@ export function createReviewCapability(refs) {
     return response.data.data
   }
 
+  async function batchConfirmProject(projectId, confirmMode = 'adopt_preselected') {
+    const response = await qualityApi.batchConfirmProject({
+      project_id: projectId,
+      confirm_mode: confirmMode,
+    })
+    return response.data.data
+  }
+
   function resetReview() {
     currentRef.value = null
     signalItems.value = []
@@ -69,5 +77,5 @@ export function createReviewCapability(refs) {
     signalLoading.value = false
   }
 
-  return { currentRef, signalItems, domainResults, signalLoading, selectRef, fetchSignalItems, fetchDomainResults, confirmSignalItem, batchConfirm, resetReview }
+  return { currentRef, signalItems, domainResults, signalLoading, selectRef, fetchSignalItems, fetchDomainResults, confirmSignalItem, batchConfirm, batchConfirmProject, resetReview }
 }

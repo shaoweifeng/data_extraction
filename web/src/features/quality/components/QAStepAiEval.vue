@@ -131,7 +131,11 @@
             </div>
             <div class="progress-head-text">
               <p class="progress-title">{{ isCompleted ? 'AI 评价完成' : 'AI 评价进行中...' }}</p>
-              <p class="progress-subtitle">共 {{ totalCount }} 篇，已完成 {{ doneCount }} 篇</p>
+              <p class="progress-subtitle">
+                项目共 {{ qa.evalProgress?.summary?.total ?? totalCount }} 篇 ·
+                已处理 {{ doneCount }} 篇 ·
+                待评价 {{ qa.evalProgress?.summary?.pending || 0 }} 篇
+              </p>
             </div>
             <button v-if="!isCompleted" class="btn-cancel" @click="handleCancel">
               <i class="fas fa-stop"></i> 取消
@@ -174,6 +178,7 @@
               跳过 {{ (qa.evalProgress.summary.skipped_no_fulltext || 0) + (qa.evalProgress.summary.skipped_no_method || 0) }}
             </div>
             <div class="stat-item"><span class="stat-dot dot-red"></span>失败 {{ qa.evalProgress.summary.failed || 0 }}</div>
+            <div class="stat-item"><span class="stat-dot dot-gray"></span>待评价 {{ qa.evalProgress.summary.pending || 0 }}</div>
           </div>
 
           <!-- 文献状态列表 -->
@@ -183,7 +188,11 @@
               <span class="ref-prog-title">{{ pr.title }}</span>
               <span :class="['status-badge', statusBadgeClass(pr.ai_eval_status)]">{{ statusLabel(pr.ai_eval_status) }}</span>
             </div>
+            <div v-if="qa.evalProgress.refs_truncated" class="progress-list-tip">
+              仅展示最近 200 条已处理记录，共 {{ qa.evalProgress.refs_total }} 条；待评价文献不在此处逐条展开。
+            </div>
           </div>
+          <div v-else class="progress-list-tip">暂无正在处理或已产出结果的文献。</div>
         </div>
       </div>
     </div>
@@ -425,8 +434,9 @@ const doneCount = computed(() => {
 })
 
 const progressPct = computed(() => {
-  if (!totalCount.value) return 0
-  return Math.round((doneCount.value / totalCount.value) * 100)
+  const total = qa.evalProgress?.summary?.total ?? totalCount.value
+  if (!total) return 0
+  return Math.round((doneCount.value / total) * 100)
 })
 
 const btnLabel = computed(() => {
@@ -618,6 +628,7 @@ function statusDotClass(s) {
 .progress-empty-sub { font-size: 0.73rem !important; color: #cbd5e1 !important; }
 
 .progress-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.progress-list-tip { padding: 9px 12px; color: #94a3b8; background: #f8fafc; border-radius: 8px; font-size: .72rem; text-align: center; }
 .progress-head { display: flex; align-items: center; gap: 10px; }
 .progress-status-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
 .progress-status-icon.running { background: #dbeafe; color: #2563eb; }

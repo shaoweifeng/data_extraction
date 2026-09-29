@@ -10,6 +10,7 @@
     {"name": "Auth"},
     {"name": "Projects"},
     {"name": "Workflow"},
+    {"name": "Screening Import"},
     {"name": "Screening Review"},
     {"name": "Quality Assessment"},
     {"name": "Billing"},
@@ -73,6 +74,7 @@
     "/presence/heartbeat/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Presence recorded"}}}},
     "/operations/status/": {"get": {"tags": ["Operations"], "responses": {"200": {"description": "Administrator operations snapshot"}, "403": {"description": "Administrator required"}}}},
     "/operations/state/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Operational state changed"}, "400": {"$ref": "#/components/responses/BadRequest"}, "403": {"description": "Administrator required"}}}},
+    "/operations/announcement/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Workspace announcement changed"}, "400": {"$ref": "#/components/responses/BadRequest"}, "403": {"description": "Administrator required"}}}},
     "/operations/tasks/pause/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Long-running tasks asked to pause"}, "403": {"description": "Administrator required"}}}},
     "/operations/tasks/resume/": {"post": {"tags": ["Operations"], "responses": {"200": {"description": "Maintenance-paused tasks resumed"}, "403": {"description": "Administrator required"}}}},
     "/feedback/": {
@@ -157,6 +159,38 @@
     "/tasks/{id}/tail/": {"get": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Task log tail"}}}},
     "/files/": {"get": {"tags": ["Workflow"], "responses": {"200": {"description": "Visible files"}}}, "post": {"tags": ["Workflow"], "responses": {"201": {"description": "Uploaded"}}}},
     "/files/{id}/": {"get": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "File"}}}, "delete": {"tags": ["Workflow"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"204": {"description": "Deleted"}}}},
+    "/screening-imports/": {
+      "get": {"tags": ["Screening Import"], "responses": {"200": {"description": "Visible import batches"}}},
+      "post": {
+        "tags": ["Screening Import"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["project", "files"],
+                "properties": {
+                  "project": {"type": "integer"},
+                  "files": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "items": {"type": "string", "format": "binary"}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {"201": {"description": "Import created and parse task queued"}, "409": {"description": "Conflicting import or duplicate file"}, "413": {"description": "Upload size limit exceeded"}, "422": {"description": "Invalid reference files"}, "429": {"description": "Import rate limit exceeded"}, "503": {"description": "Parse task dispatch failed; batch can be retried"}}
+      }
+    },
+    "/screening-imports/{id}/": {"get": {"tags": ["Screening Import"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Import batch"}, "404": {"$ref": "#/components/responses/NotFound"}}}},
+    "/screening-imports/{id}/cancel/": {"post": {"tags": ["Screening Import"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Import cancelled"}, "409": {"description": "Import cannot be cancelled"}}}},
+    "/screening-imports/{id}/retry/": {"post": {"tags": ["Screening Import"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"202": {"description": "Import retry queued"}, "409": {"description": "Import cannot be retried"}}}},
+    "/projects/{project_id}/dedup-runs/{run_id}/groups/": {"get": {"tags": ["Screening Dedup"], "responses": {"200": {"description": "Paginated duplicate groups"}, "404": {"$ref": "#/components/responses/NotFound"}}}},
+    "/projects/{project_id}/dedup-runs/{run_id}/groups/{group_id}/members/": {"get": {"tags": ["Screening Dedup"], "responses": {"200": {"description": "Paginated duplicate group members"}, "404": {"$ref": "#/components/responses/NotFound"}}}},
+    "/projects/{id}/ai_screen_inputs/": {"get": {"tags": ["Screening"], "description": "Paginated database references awaiting AI screening", "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Pending screening references"}}}},
     "/users/": {"get": {"tags": ["Auth"], "responses": {"200": {"description": "Users for administrators"}}}},
     "/users/{id}/": {"get": {"tags": ["Auth"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "User"}}}},
     "/users/{id}/approve/": {"post": {"tags": ["Auth"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Approved"}}}},
@@ -166,22 +200,30 @@
     "/activity-logs/": {"get": {"tags": ["Workflow"], "responses": {"200": {"description": "Visible activity logs"}}}},
     "/review/list/": {"get": {"tags": ["Screening Review"], "responses": {"200": {"description": "Review page", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ReviewList"}}}}, "404": {"$ref": "#/components/responses/NotFound"}}}},
     "/review/submit/": {"post": {"tags": ["Screening Review"], "responses": {"200": {"description": "Submitted"}, "400": {"$ref": "#/components/responses/BadRequest"}}}},
-    "/review/item/{source_xml}/": {"patch": {"tags": ["Screening Review"], "parameters": [{"$ref": "#/components/parameters/SourceXml"}], "responses": {"200": {"description": "Updated"}}}},
+    "/review/runs/{run_id}/references/{reference_id}/": {
+      "get": {"tags": ["Screening Review"], "responses": {"200": {"description": "Run-bound reference detail"}, "404": {"$ref": "#/components/responses/NotFound"}}},
+      "patch": {"tags": ["Screening Review"], "responses": {"200": {"description": "Run-bound review updated"}, "404": {"$ref": "#/components/responses/NotFound"}, "409": {"description": "Historical run is read-only"}}}
+    },
+    "/review/runs/{run_id}/references/{reference_id}/notes/": {
+      "get": {"tags": ["Screening Review"], "responses": {"200": {"description": "Run-bound review notes"}, "404": {"$ref": "#/components/responses/NotFound"}}},
+      "post": {"tags": ["Screening Review"], "responses": {"200": {"description": "Run-bound note appended"}, "404": {"$ref": "#/components/responses/NotFound"}, "409": {"description": "Historical run is read-only"}}}
+    },
     "/review/stats/": {"get": {"tags": ["Screening Review"], "responses": {"200": {"description": "Decision statistics", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ReviewStats"}}}}}}},
     "/review/complete/": {"post": {"tags": ["Screening Review"], "responses": {"200": {"description": "Step completed"}}}},
-    "/review/note/{source_xml}/": {"post": {"tags": ["Screening Review"], "parameters": [{"$ref": "#/components/parameters/SourceXml"}], "responses": {"200": {"description": "Note appended"}}}},
-    "/review/notes/{source_xml}/": {"get": {"tags": ["Screening Review"], "parameters": [{"$ref": "#/components/parameters/SourceXml"}], "responses": {"200": {"description": "Notes"}}}},
     "/qa/methods/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/refs/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}, "404": {"$ref": "#/components/responses/NotFound"}}}},
-    "/qa/refs/import/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
-    "/qa/refs/upload/": {"post": {"tags": ["Quality Assessment"], "responses": {"201": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/refs/import/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}, "409": {"description": "Current corpus has no matching completed screening run"}}}},
+    "/qa/refs/upload/": {"post": {"tags": ["Quality Assessment"], "description": "Upload private PDFs. Validates count, size, MIME, signature and per-project SHA-256 uniqueness before asynchronous processing.", "responses": {"201": {"$ref": "#/components/responses/QaSuccess"}, "400": {"$ref": "#/components/responses/BadRequest"}, "409": {"description": "Duplicate full text"}}}},
     "/qa/refs/batch-method/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/refs/{id}/": {"patch": {"tags": ["Quality Assessment"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}, "404": {"$ref": "#/components/responses/NotFound"}}}},
+    "/qa/fulltext-assets/{id}/download/": {"get": {"tags": ["Quality Assessment"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"description": "Authorized private PDF stream", "content": {"application/pdf": {"schema": {"type": "string", "format": "binary"}}}}, "404": {"$ref": "#/components/responses/NotFound"}}}},
+    "/qa/fulltext-assets/{id}/retry/": {"post": {"tags": ["Quality Assessment"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"202": {"$ref": "#/components/responses/QaSuccess"}, "409": {"description": "Asset is not retryable or its source was purged"}}}},
     "/qa/eval/start/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/eval/progress/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/signal-items/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/signal-items/{id}/confirm/": {"patch": {"tags": ["Quality Assessment"], "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/signal-items/batch-confirm/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
+    "/qa/review/batch-confirm/": {"post": {"tags": ["Quality Assessment"], "description": "Confirm only evaluated references with generated signal items.", "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/domain-results/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/chart/preview/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/qa/chart/generate/": {"post": {"tags": ["Quality Assessment"], "responses": {"202": {"$ref": "#/components/responses/QaSuccess"}}}},
@@ -197,8 +239,7 @@
   },
   "components": {
     "parameters": {
-      "Id": {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}},
-      "SourceXml": {"name": "source_xml", "in": "path", "required": true, "schema": {"type": "string"}}
+      "Id": {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
     },
     "responses": {
       "QaSuccess": {"description": "QA success envelope", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QaEnvelope"}}}},

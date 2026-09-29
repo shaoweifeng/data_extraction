@@ -1,6 +1,7 @@
 """RIS 和内部 XML 文献文件的解析契约。"""
 
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -8,15 +9,17 @@ from unittest.mock import MagicMock
 from django.test import TestCase
 
 from core.screening.parsers import (
+    ReferenceRecordValidationError,
     convert_to_xml,
     iter_directory,
+    iter_file,
     parse_file,
     supported_extensions,
+    validate_reference_record,
     write_xml_stream,
 )
 from core.screening.parsers.registry import get_parser
 from core.screening.parsers.diagnostics import build_parse_report
-from core.screening.executors.dedup_handler import DedupHandler
 from core.screening.executors.parse_handler import ParseHandler
 
 
@@ -24,6 +27,66 @@ FIXTURES = Path(__file__).parent / 'fixtures'
 
 
 class ParserFixtureTests(TestCase):
+    def test_iter_file_yields_before_a_later_xml_syntax_error(self):
+        content = """<references>
+<reference><Title>First record</Title><Abstract>Present</Abstract></reference>
+<reference><Title>Broken record</Title>
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'partial.xml'
+            path.write_text(content, encoding='utf-8')
+            records = iter_file(str(path))
+            self.assertEqual(next(records)['title'], 'First record')
+            with self.assertRaises(Exception):
+                next(records)
+
+    def test_xml_parser_rejects_dtd_and_excessive_nesting(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dtd_path = Path(temp_dir) / 'dtd.xml'
+            dtd_path.write_text(
+                '<!DOCTYPE references [<!ENTITY x "boom">]>'
+                '<references><reference><Title>&x;</Title></reference></references>',
+                encoding='utf-8',
+            )
+            with self.assertRaisesMessage(ValueError, 'DTD'):
+                parse_file(str(dtd_path))
+
+            deep_path = Path(temp_dir) / 'deep.xml'
+            deep_path.write_text(
+                '<references>' + '<node>' * 128 + '</node>' * 128 + '</references>',
+                encoding='utf-8',
+            )
+            with self.assertRaisesMessage(ValueError, '嵌套深度'):
+                parse_file(str(deep_path))
+
+    def test_streaming_report_caps_issue_payload_but_keeps_totals(self):
+        content = ''.join(
+            f'TY  - JOUR\nTI  - Record {index}\nER  -\n'
+            for index in range(3)
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'warnings.ris'
+            path.write_text(content, encoding='utf-8')
+            report = build_parse_report(
+                str(path), iter_file(str(path)), max_issues=1,
+            )
+
+        self.assertEqual(report['parsed_entries'], 3)
+        self.assertEqual(report['warning_count'], 3)
+        self.assertEqual(len(report['issues']), 1)
+        self.assertTrue(report['issues_truncated'])
+
+    def test_shared_record_validator_rejects_oversized_fields(self):
+        limits = SimpleNamespace(
+            max_title_chars=5,
+            max_abstract_chars=20,
+            max_authors=3,
+            max_record_text_chars=50,
+        )
+        with self.assertRaises(ReferenceRecordValidationError) as raised:
+            validate_reference_record({'title': '123456', 'authors': []}, limits)
+        self.assertEqual(raised.exception.code, 'title_too_long')
+
     def test_bibtex_diagnostics_report_silently_skipped_invalid_key(self):
         content = """@article{ValidKey,
 title = {Valid title},
@@ -45,6 +108,8 @@ abstract = {Present},
         self.assertEqual(report['parsed_entries'], 1)
         self.assertEqual(report['skipped_entries'], 1)
         self.assertEqual(report['status'], 'partial')
+        self.assertEqual(report['error_count'], 1)
+        self.assertEqual(report['blocking_error_count'], 0)
         issue = next(item for item in report['issues'] if item['code'] == 'invalid_citation_key')
         self.assertEqual(issue['position'], 2)
         self.assertEqual(issue['line'], 5)
@@ -277,39 +342,20 @@ ER
         self.assertEqual(report['status'], 'warning')
         self.assertEqual(report['issues'][0]['position'], 2)
 
-    def test_parse_handler_generates_outputs_and_matching_diagnostics_for_embase_xml(self):
+    def test_parse_handler_counts_records_and_collects_matching_diagnostics_for_embase_xml(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             input_dir = root / 'input'
-            output_dir = root / 'output'
-            split_dir = root / 'split'
             input_dir.mkdir()
-            output_dir.mkdir()
-            split_dir.mkdir()
             source = FIXTURES / 'references' / 'sample_embase.xml'
             (input_dir / source.name).write_bytes(source.read_bytes())
             handler = ParseHandler.__new__(ParseHandler)
             handler.logger = MagicMock()
             handler._update_parse_progress = lambda *args, **kwargs: None
 
-            count, merged_path = handler._run_parser(input_dir, output_dir, split_dir)
-            split_paths = sorted(split_dir.glob('*.xml'))
-            merged = parse_file(str(merged_path))
-            dedup_handler = DedupHandler.__new__(DedupHandler)
-            dedup_titles = [
-                dedup_handler._extract_xml_meta(path)['title'] for path in split_paths
-            ]
+            count = handler._run_parser(input_dir)
 
         self.assertEqual(count, 2)
-        self.assertEqual(len(split_paths), 2)
-        self.assertEqual([entry['title'] for entry in merged], [
-            'Embase diagnostic study',
-            'Embase study without abstract',
-        ])
-        self.assertEqual(dedup_titles, [
-            'Embase diagnostic study',
-            'Embase study without abstract',
-        ])
         self.assertEqual(len(handler._parse_reports), 1)
         self.assertEqual(handler._parse_reports[0]['detected_entries'], 2)
         self.assertEqual(handler._parse_reports[0]['parsed_entries'], 2)
@@ -328,8 +374,6 @@ ER
                 file=SimpleNamespace(path=str(source)),
             )]
             handler.check_stop_signal = lambda: False
-            handler._clear_old_intermediate = MagicMock()
-            handler._save_outputs = MagicMock()
             handler._save_parse_reports = MagicMock()
             handler._write_final_stats = MagicMock()
             handler._update_parse_progress = MagicMock()
@@ -337,8 +381,6 @@ ER
             success = handler.execute()
 
         self.assertFalse(success)
-        handler._clear_old_intermediate.assert_called_once_with()
-        handler._save_outputs.assert_not_called()
         handler._save_parse_reports.assert_called_once()
         self.assertEqual(handler._parse_reports[0]['status'], 'failed')
         self.assertEqual(handler._parse_reports[0]['parsed_entries'], 0)
@@ -371,7 +413,7 @@ ER  -
         self.assertEqual(visited, [(1, 'First'), (2, 'Second')])
         self.assertEqual([entry['title'] for entry in parsed], ['First', 'Second'])
 
-    def test_parse_handler_writes_merged_and_split_outputs_in_one_pass(self):
+    def test_parse_handler_does_not_write_merged_or_split_outputs(self):
         ris = """TY  - JOUR
 TI  - First
 ER  -
@@ -382,24 +424,18 @@ ER  -
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             input_dir = root / 'input'
-            output_dir = root / 'output'
-            split_dir = root / 'split'
             input_dir.mkdir()
-            output_dir.mkdir()
-            split_dir.mkdir()
             (input_dir / 'sample.ris').write_text(ris, encoding='utf-8')
             handler = ParseHandler.__new__(ParseHandler)
             handler._update_parse_progress = lambda *args, **kwargs: None
 
-            count, merged_path = handler._run_parser(input_dir, output_dir, split_dir)
-            split_paths = sorted(split_dir.glob('*.xml'))
-            merged = parse_file(str(merged_path))
+            count = handler._run_parser(input_dir)
 
         self.assertEqual(count, 2)
-        self.assertEqual(len(split_paths), 2)
-        self.assertEqual([entry['title'] for entry in merged], ['First', 'Second'])
+        self.assertFalse((root / 'output').exists())
+        self.assertFalse((root / 'split').exists())
 
-    def test_parse_handler_uses_fallback_filename_when_ris_title_is_missing(self):
+    def test_parse_handler_accepts_ris_record_when_title_is_missing(self):
         ris = """TY  - JOUR
 TI  - First
 ER  -
@@ -410,20 +446,12 @@ ER  -
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             input_dir = root / 'input'
-            output_dir = root / 'output'
-            split_dir = root / 'split'
             input_dir.mkdir()
-            output_dir.mkdir()
-            split_dir.mkdir()
             (input_dir / 'missing-title.ris').write_text(ris, encoding='utf-8')
             handler = ParseHandler.__new__(ParseHandler)
             handler._update_parse_progress = lambda *args, **kwargs: None
 
-            count, merged_path = handler._run_parser(input_dir, output_dir, split_dir)
-            split_names = sorted(path.name for path in split_dir.glob('*.xml'))
-            merged = parse_file(str(merged_path))
+            count = handler._run_parser(input_dir)
 
         self.assertEqual(count, 2)
-        self.assertEqual(len(split_names), 2)
-        self.assertTrue(any(name.startswith('00002_unknown_2_') for name in split_names))
-        self.assertEqual([entry['title'] for entry in merged], ['First', ''])
+        self.assertEqual(handler._parse_reports[0]['parsed_entries'], 2)

@@ -30,7 +30,6 @@ class ScreeningModelRunnerTests(SimpleTestCase):
         'authors': 'Author',
         'year': '2025',
         'journal': 'Journal',
-        'source_xml': '00001_example.xml',
     }
 
     @patch('core.screening.services.model_runner.time.sleep', return_value=None)

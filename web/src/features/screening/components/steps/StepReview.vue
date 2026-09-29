@@ -28,17 +28,17 @@
           </div>
           <template v-else>
           <div
-              v-for="(item, idx) in displayItems" :key="item.source_xml"
+              v-for="(item, idx) in displayItems" :key="itemKey(item)"
               class="ref-item"
               :class="{
-                selected: selected?.source_xml === item.source_xml,
+                selected: selected && itemKey(selected) === itemKey(item),
                 override: item.is_override,
               }"
               @click="selectItem(item)"
             >
               <div class="ref-num">{{ (page - 1) * pageSize + idx + 1 }}</div>
               <div class="ref-main">
-                <div class="ref-title">{{ item.title || item.source_xml }}</div>
+                <div class="ref-title">{{ item.title || itemLabel(item) }}</div>
                 <div class="ref-sub">
                   <span v-if="item.year">{{ item.year }}</span>
                   <span v-if="item.journal" class="ref-journal">{{ item.journal }}</span>
@@ -119,7 +119,18 @@
 
       <!-- ── 右栏：文献详情 ── -->
       <div class="detail-panel">
+        <div v-if="screeningRunId && !isCurrentRun" class="history-banner">
+          <i class="fas fa-history"></i>
+          当前显示的是历史初筛批次（语料版本 {{ corpusRevision }}），可查看但不能修改。
+        </div>
         <template v-if="selected">
+          <div v-if="detailLoading" class="detail-loading">
+            <i class="fas fa-spinner fa-spin"></i> 正在加载文献详情…
+          </div>
+          <div v-else-if="detailError" class="detail-loading detail-error">
+            <i class="fas fa-exclamation-circle"></i> {{ detailError }}
+          </div>
+          <template v-else>
           <!-- 文献基本信息（固定，不滚动）-->
           <div class="detail-meta">
             <div class="detail-title-row">
@@ -203,7 +214,7 @@
                 <button
                   v-for="opt in decisionOpts" :key="opt.value"
                   class="action-btn" :class="[opt.value, { active: localDecision === opt.value }]"
-                  @click="setDecision(opt.value)" :disabled="saving"
+                  @click="setDecision(opt.value)" :disabled="saving || !isCurrentRun"
                 >
                   <i :class="opt.icon"></i> {{ opt.label }}
                 </button>
@@ -218,9 +229,9 @@
                 <span class="text-xs text-gray-400 ml-1">（可选，按回车保存）</span>
               </div>
               <div class="note-input-row">
-                <textarea v-model="localNote" placeholder="添加备注…" rows="1"
+                <textarea v-model="localNote" placeholder="添加备注…" rows="1" :disabled="!isCurrentRun"
                   @keydown.enter.exact.prevent="localNote.trim() && saveNote()" />
-                <button class="note-save-btn" @click="saveNote" :disabled="saving || !localNote.trim()">
+                <button class="note-save-btn" @click="saveNote" :disabled="saving || !isCurrentRun || !localNote.trim()">
                   <i class="fas fa-save"></i>
                 </button>
               </div>
@@ -267,12 +278,13 @@
               </div>
               <div class="reason-panel-footer">
                 <button class="reason-cancel-btn" @click="closeReasonPanel">取消</button>
-                <button class="reason-confirm-btn" @click="confirmExclude" :disabled="saving">
+                <button class="reason-confirm-btn" @click="confirmExclude" :disabled="saving || !isCurrentRun">
                   <i class="fas fa-check mr-1"></i>确认排除 → 下一篇
                 </button>
               </div>
             </div>
           </transition>
+          </template>
         </template>
 
         <div v-else class="detail-empty">
@@ -300,13 +312,28 @@
 
     <!-- ── 备注历史弹窗 ── -->
     <div v-if="notesPanelOpen" class="popup-overlay" @click.self="notesPanelOpen = false">
-      <div class="popup-box notes-popup-box">
-        <div class="popup-header">
-          <span><i class="fas fa-sticky-note mr-2 text-amber-500"></i>备注历史</span>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-gray-400 font-normal">{{ notesPanelTitle }}</span>
-            <button @click="notesPanelOpen = false" class="popup-close"><i class="fas fa-times"></i></button>
+      <div
+        class="popup-box notes-popup-box"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-notes-title"
+      >
+        <div class="popup-header notes-popup-header">
+          <div class="notes-header-main">
+            <span class="notes-header-icon" aria-hidden="true">
+              <i class="fas fa-sticky-note"></i>
+            </span>
+            <div class="notes-header-copy">
+              <span id="review-notes-title" class="notes-header-title">备注历史</span>
+              <span class="notes-header-subtitle" :title="notesPanelTitle">{{ notesPanelTitle }}</span>
+            </div>
           </div>
+          <button
+            @click="notesPanelOpen = false"
+            class="popup-close notes-popup-close"
+            title="关闭"
+            aria-label="关闭备注历史"
+          ><i class="fas fa-times"></i></button>
         </div>
         <div class="popup-body notes-popup-body">
           <div v-if="notesLoading" class="notes-loading">
@@ -317,12 +344,21 @@
             <span>暂无备注记录</span>
           </div>
           <div v-else class="notes-list">
+            <div class="notes-list-summary">
+              <span>历史记录</span>
+              <span>{{ notesList.length }} 条</span>
+            </div>
             <div v-for="(note, i) in notesList" :key="i" class="note-history-item">
-              <div class="note-history-meta">
-                <span class="note-history-user"><i class="fas fa-user-circle mr-1"></i>{{ note.user }}</span>
-                <span class="note-history-time">{{ formatNoteTime(note.created_at) }}</span>
+              <span class="note-history-avatar" aria-hidden="true">
+                <i class="fas fa-user"></i>
+              </span>
+              <div class="note-history-main">
+                <div class="note-history-meta">
+                  <span class="note-history-user">{{ note.user || '未知用户' }}</span>
+                  <time class="note-history-time" :datetime="note.created_at">{{ formatNoteTime(note.created_at) }}</time>
+                </div>
+                <div class="note-history-content">{{ note.content }}</div>
               </div>
-              <div class="note-history-content">{{ note.content }}</div>
             </div>
           </div>
         </div>
@@ -360,6 +396,11 @@ const screening = useScreeningStore()
 const stats        = ref({ total: 0, reviewed: 0, included: 0, excluded: 0, pending: 0, overridden: 0 })
 const displayItems = ref([])
 const loading      = ref(false)
+const detailLoading = ref(false)
+const detailError   = ref('')
+const screeningRunId = ref(null)
+const corpusRevision = ref(null)
+const isCurrentRun   = ref(true)
 
 const activeTab    = ref('')
 const searchQ      = ref('')
@@ -389,7 +430,7 @@ const notesPanelOpen  = ref(false)
 const notesPanelTitle = ref('')
 const notesLoading    = ref(false)
 const notesList       = ref([])
-const notesPanelXml   = ref('')
+const notesPanelReferenceId = ref(null)
 
 // 纳排标准 + 提取字段（从 stagesData 读）
 const criteriaList = computed(() => {
@@ -447,10 +488,18 @@ function decisionLabel(v) {
   return { included: '纳入', excluded: '排除', pending: '待定', conflict: '分歧', error: '错误' }[v] || v || '—'
 }
 
+function itemKey(item) {
+  return `reference:${item?.reference_id ?? ''}`
+}
+
+function itemLabel(item) {
+  return item?.reference_id != null ? `文献 #${item.reference_id}` : '未命名文献'
+}
+
 // ── API ───────────────────────────────────────────────────────────────────────
-async function loadStats() {
+async function loadStats(runId = screeningRunId.value) {
   try {
-    const res = await reviewController.loadStats()
+    const res = await reviewController.loadStats(runId)
     stats.value = res.data
   } catch (e) { console.error('[review] loadStats error', e) }
 }
@@ -464,9 +513,14 @@ async function loadItems(targetPage = 1) {
       q: searchQ.value,
       page: targetPage,
       page_size: pageSize,
+      ...(screeningRunId.value ? { run: screeningRunId.value } : {}),
     })
     totalCount.value   = res.data.total
     displayItems.value = res.data.results
+    screeningRunId.value = res.data.screening_run_id
+    screening.reviewRunId = res.data.screening_run_id
+    corpusRevision.value = res.data.corpus_revision
+    isCurrentRun.value = res.data.is_current !== false
     page.value         = targetPage
     return true
   } catch (e) {
@@ -477,14 +531,19 @@ async function loadItems(targetPage = 1) {
 }
 
 async function saveDecision(decision, reason, autoNext = false) {
-  if (!selected.value || !reviewStepId.value) return
+  if (!selected.value || !reviewStepId.value || !isCurrentRun.value) return
   saving.value = true
   saveStatus.value = '保存中…'
   saveStatusType.value = ''
   try {
-    await reviewController.saveDecision(selected.value.source_xml, decision, reason || '')
+    await reviewController.saveDecision(
+      screeningRunId.value,
+      selected.value.reference_id,
+      decision,
+      reason || '',
+    )
     // 更新本地列表显示
-    const item = displayItems.value.find(i => i.source_xml === selected.value.source_xml)
+    const item = displayItems.value.find(i => itemKey(i) === itemKey(selected.value))
     const prevDecision = item?.human_decision ?? null   // 保存前的人工决定（null = 未审阅）
     // 保存前该文献的「最终决定」（用于从 tab_* 中扣减）
     const prevFinalDec = prevDecision !== null
@@ -530,7 +589,7 @@ async function saveDecision(decision, reason, autoNext = false) {
 /** 根据当前过滤 Tab，跳转到列表中的下一篇文献 */
 function goNextItem() {
   if (!selected.value || !displayItems.value.length) return
-  const curIdx = displayItems.value.findIndex(i => i.source_xml === selected.value.source_xml)
+  const curIdx = displayItems.value.findIndex(i => itemKey(i) === itemKey(selected.value))
   const nextIdx = curIdx + 1
   if (nextIdx < displayItems.value.length) {
     selectItem(displayItems.value[nextIdx])
@@ -564,7 +623,11 @@ function onSearch() {
 async function goPage(p) {
   if (loading.value || p < 1 || p > totalPages.value) return false
   const loaded = await loadItems(p)
-  if (loaded) selected.value = null
+  if (loaded) {
+    detailRequestId += 1
+    selected.value = null
+    detailLoading.value = false
+  }
   return loaded
 }
 
@@ -591,7 +654,9 @@ async function submitPageJump() {
   if (await goPage(targetPage)) resetPageJump()
 }
 
-function selectItem(item) {
+let detailRequestId = 0
+async function selectItem(item) {
+  const requestId = ++detailRequestId
   selected.value      = { ...item }
   localDecision.value = item.human_decision || ''
   reasonPanelOpen.value = false   // 切换文献时关闭侧边栏
@@ -606,6 +671,32 @@ function selectItem(item) {
   saveStatus.value    = ''
   // 多模型明细默认收起（分歧文献也不自动展开，用户按需查看）
   multiModelOpen.value = false
+  detailError.value = ''
+  if (!screeningRunId.value || item.reference_id == null) {
+    detailLoading.value = false
+    return
+  }
+  detailLoading.value = true
+  try {
+    const res = await reviewController.loadDetail(screeningRunId.value, item.reference_id)
+    if (requestId !== detailRequestId) return
+    selected.value = { ...item, ...res.data }
+    isCurrentRun.value = res.data.is_current !== false
+    corpusRevision.value = res.data.corpus_revision
+    localDecision.value = selected.value.human_decision || ''
+    if (selected.value.human_decision === 'excluded') {
+      localReason.value = selected.value.human_reason || ''
+      localNote.value = ''
+    } else {
+      localReason.value = ''
+      localNote.value = selected.value.human_reason || ''
+    }
+  } catch (e) {
+    if (requestId !== detailRequestId) return
+    detailError.value = e?.response?.data?.error?.message || e?.response?.data?.error || '文献详情加载失败，请重试'
+  } finally {
+    if (requestId === detailRequestId) detailLoading.value = false
+  }
 }
 
 function setDecision(value) {
@@ -643,14 +734,18 @@ function confirmExclude() {
 
 /** 保存备注（不跳转，追加到 notes 字段） */
 async function saveNote() {
-  if (!selected.value || !localNote.value.trim()) return
+  if (!selected.value || !isCurrentRun.value || !localNote.value.trim()) return
   saving.value = true
   saveStatus.value = '保存中…'
   saveStatusType.value = ''
   try {
-    await reviewController.appendNote(selected.value.source_xml, localNote.value.trim())
+    await reviewController.appendNote(
+      screeningRunId.value,
+      selected.value.reference_id,
+      localNote.value.trim(),
+    )
     // 标记该文献已有备注
-    const item = displayItems.value.find(i => i.source_xml === selected.value.source_xml)
+    const item = displayItems.value.find(i => itemKey(i) === itemKey(selected.value))
     if (item) item.has_notes = true
     selected.value.has_notes = true
     localNote.value = ''
@@ -667,13 +762,16 @@ async function saveNote() {
 
 /** 打开备注历史面板 */
 async function openNotesPanel(item) {
-  notesPanelXml.value   = item.source_xml
-  notesPanelTitle.value = item.title || item.source_xml
+  notesPanelReferenceId.value = item.reference_id ?? null
+  notesPanelTitle.value = item.title || itemLabel(item)
   notesPanelOpen.value  = true
   notesLoading.value    = true
   notesList.value       = []
   try {
-    const res = await reviewController.loadNotes(item.source_xml)
+    const res = await reviewController.loadNotes(
+      screeningRunId.value,
+      notesPanelReferenceId.value,
+    )
     notesList.value = res.data.notes || []
   } catch (e) {
     console.error('[review] load notes error', e)
@@ -880,6 +978,16 @@ onMounted(async () => {
   overflow: hidden; background: #fff;
   min-width: 0;
 }
+.history-banner {
+  flex-shrink: 0; display: flex; align-items: center; gap: .45rem;
+  padding: .55rem 1rem; color: #92400e; background: #fffbeb;
+  border-bottom: 1px solid #fde68a; font-size: .78rem;
+}
+.detail-loading {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: .5rem;
+  color: #64748b;
+}
+.detail-loading.detail-error { color: #dc2626; }
 .detail-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   height: 100%; color: #cbd5e1; gap: .8rem; font-size: .9rem;
@@ -1284,15 +1392,74 @@ onMounted(async () => {
 
 /* ── 备注历史弹窗 ── */
 .notes-popup-box {
-  width: min(480px, 92vw);
-  max-height: 70vh;
+  width: min(620px, calc(100vw - 32px));
+  max-height: min(680px, calc(100vh - 64px));
+  border-radius: 16px;
+}
+.notes-popup-header {
+  gap: 16px;
+  padding: 16px 18px;
+  background: #fff;
+}
+.notes-header-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+.notes-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #d97706;
+  font-size: .9rem;
+}
+.notes-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.notes-header-title {
+  color: #172033;
+  font-size: .94rem;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.notes-header-subtitle {
+  overflow: hidden;
+  color: #8491a6;
+  font-size: .76rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notes-popup-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  padding: 0;
+  border-radius: 8px;
 }
 .notes-popup-body {
-  padding: .7rem 1rem;
+  padding: 14px 18px 18px;
   overflow-y: auto;
+  background: #f8fafc;
 }
 .notes-loading {
-  text-align: center; padding: 1.5rem;
+  text-align: center; padding: 2rem 1.5rem;
   color: #94a3b8; font-size: .82rem;
 }
 .notes-empty {
@@ -1301,26 +1468,76 @@ onMounted(async () => {
   padding: 2rem; color: #cbd5e1; font-size: .82rem;
 }
 .notes-empty i { font-size: 1.6rem; }
-.notes-list { display: flex; flex-direction: column; gap: 8px; }
+.notes-list { display: flex; flex-direction: column; gap: 10px; }
+.notes-list-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 2px;
+  color: #94a3b8;
+  font-size: .72rem;
+  font-weight: 600;
+}
 .note-history-item {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 8px;
-  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e7ebf1;
+  border-left: 3px solid #fbbf24;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
+}
+.note-history-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: .72rem;
+}
+.note-history-main {
+  min-width: 0;
 }
 .note-history-meta {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 6px;
+  gap: 12px;
+  min-height: 20px;
+  margin-bottom: 5px;
 }
 .note-history-user {
-  font-size: .72rem; color: #92400e; font-weight: 600;
+  overflow: hidden;
+  color: #334155;
+  font-size: .78rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .note-history-time {
-  font-size: .7rem; color: #a16207;
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
 }
 .note-history-content {
-  font-size: .82rem; color: #334155; line-height: 1.6;
+  color: #334155;
+  font-size: .82rem;
+  line-height: 1.65;
   white-space: pre-wrap; word-break: break-word;
+}
+
+@media (max-width: 560px) {
+  .notes-popup-box {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 32px);
+  }
+  .notes-popup-header { padding: 13px 14px; }
+  .notes-popup-body { padding: 12px; }
+  .note-history-meta { align-items: flex-start; flex-direction: column; gap: 1px; }
 }
 
 </style>

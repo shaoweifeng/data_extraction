@@ -46,8 +46,8 @@
           <!-- 待筛 tab -->
           <template v-if="listTab === 'pending'">
             <div v-if="s.pendingFiles.length === 0" class="ai-refs-group-empty">已全部筛完 🎉</div>
-            <div v-for="f in s.pendingFiles" :key="f.id" class="ai-ref-item">
-              <div class="ai-ref-name">{{ f.filename }}</div>
+            <div v-for="f in s.pendingFiles" :key="f.reference_id" class="ai-ref-item">
+              <div class="ai-ref-name">{{ f.title || `文献 #${f.reference_id}` }}</div>
             </div>
             <div class="ai-refs-pagination" v-if="pendingTotalPages > 1">
               <button class="ai-pg-btn" :disabled="pendingListPage <= 1" @click="goPendingPage(pendingListPage - 1)">
@@ -63,8 +63,8 @@
           <!-- 已筛 tab -->
           <template v-if="listTab === 'screened'">
             <div v-if="screenedCount === 0" class="ai-refs-group-empty">暂无已筛文献</div>
-            <div v-for="f in pagedScreenedFiles" :key="f.source_xml || f.id" class="ai-ref-item ai-ref-item-done">
-              <div class="ai-ref-name">{{ f.title || f.filename || f.source_xml }}</div>
+            <div v-for="f in pagedScreenedFiles" :key="f.reference_id" class="ai-ref-item ai-ref-item-done">
+              <div class="ai-ref-name">{{ f.title || `文献 #${f.reference_id}` }}</div>
               <span class="ai-ref-decision" :class="decisionClass(f)">{{ decisionShort(f) }}</span>
             </div>
             <div class="ai-refs-pagination" v-if="screenedTotalPages > 1">
@@ -684,8 +684,6 @@ async function loadAiModels() {
 // ── 文件 + 统计 ───────────────────────────────────────────────
 async function loadPending(page) {
   if (!project.currentProject) return
-  const stage = project.stagesData.find((st) => st.stage_key === 'SCREEN_1')
-  if (!stage) return
   const pageNum = page ?? 0
   const offset = pageNum * LIST_PAGE_SIZE
   const pid = project.currentProject.id
@@ -694,26 +692,10 @@ async function loadPending(page) {
   const abortController = new AbortController()
   pendingAbortController = abortController
 
-  let sourceStep = null
-  for (const key of ['dedup', 'parse']) {
-    const step = stage.steps.find((st) => st.step_key === key)
-    if (!step) continue
-    try {
-      const probe = await controller.loadFiles(
-        { project: pid, step: step.id, data_category: 'intermediate', limit: 1, offset: 0 },
-        { signal: abortController.signal },
-      )
-      if (!isCurrentProject(pid) || requestGeneration !== pendingRequestGeneration) return
-      if ((probe.data.total ?? 0) > 0) { sourceStep = step; break }
-    } catch {}
-  }
-  if (!sourceStep) {
-    if (isCurrentProject(pid) && requestGeneration === pendingRequestGeneration) s.pendingTotal = 0
-    return
-  }
   try {
-    const res = await controller.loadFiles(
-      { project: pid, step: sourceStep.id, data_category: 'intermediate', exclude_screened: 1, limit: LIST_PAGE_SIZE, offset },
+    const res = await controller.loadInputs(
+      pid,
+      { limit: LIST_PAGE_SIZE, offset },
       { signal: abortController.signal },
     )
     if (!isCurrentProject(pid) || requestGeneration !== pendingRequestGeneration) return

@@ -1,12 +1,12 @@
 """Extension-based parser registry used by screening imports."""
 
 import os
-from typing import Callable, Dict, Iterable, List
+from typing import Callable, Dict, Iterable, Iterator, List
 
-from .common import ParserResult
+from .common import ReferenceRecord
 
 
-Parser = Callable[[str], ParserResult]
+Parser = Callable[[str], Iterable[ReferenceRecord]]
 _PARSERS: Dict[str, Parser] = {}
 
 
@@ -38,5 +38,11 @@ def supported_extensions() -> List[str]:
     return sorted(_PARSERS)
 
 
-def parse_file(file_path: str) -> ParserResult:
-    return get_parser(file_path)(file_path)
+def iter_file(file_path: str) -> Iterator[ReferenceRecord]:
+    """Stream normalized records from one source file."""
+    yield from get_parser(file_path)(file_path)
+
+
+def parse_file(file_path: str) -> List[ReferenceRecord]:
+    """Compatibility boundary for callers that still require a materialized list."""
+    return list(iter_file(file_path))

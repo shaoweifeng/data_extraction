@@ -1,13 +1,11 @@
 """Long-term contracts for screening module ownership and bulk XML loading."""
 
-import tempfile
 from pathlib import Path
 
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase
 
 from core.screening.executors.ai_screen_handler import AIScreenHandler
 from core.screening.executors.export_handler import ExportHandler
-from core.screening.selectors import load_xml_fields_bulk
 
 
 class ScreeningModuleBoundaryTests(SimpleTestCase):
@@ -34,28 +32,11 @@ class ScreeningModuleBoundaryTests(SimpleTestCase):
         self.assertEqual(AIScreenHandler.__module__, 'core.screening.executors.ai_screen_handler')
         self.assertEqual(ExportHandler.__module__, 'core.screening.executors.export_handler')
 
-    def test_bulk_xml_loader_reads_requested_paths_without_directory_scan(self):
-        xml_template = (
-            '<Reference><Title>{title}</Title><Abstract>{abstract}</Abstract>'
-            '<Doi>{doi}</Doi><Url>{url}</Url></Reference>'
-        )
-        with tempfile.TemporaryDirectory() as media_root:
-            data_dir = Path(media_root) / 'projects' / 'project_7' / 'parse_1' / 'split_xmls'
-            data_dir.mkdir(parents=True)
-            alpha_path = data_dir / '00001_alpha.xml'
-            beta_path = data_dir / '00002_beta.xml'
-            alpha_path.write_text(
-                xml_template.format(title='A', abstract='Abstract A', doi='doi-a', url='url-a'),
-                encoding='utf-8',
-            )
-            beta_path.write_text(
-                xml_template.format(title='B', abstract='Abstract B', doi='doi-b', url='url-b'),
-                encoding='utf-8',
-            )
-            with override_settings(MEDIA_ROOT=media_root):
-                result = load_xml_fields_bulk(
-                    [str(alpha_path), str(beta_path)], 7,
-                )
-
-        self.assertEqual(result[str(alpha_path)]['abstract'], 'Abstract A')
-        self.assertEqual(result[str(beta_path)]['doi'], 'doi-b')
+    def test_file_backed_screening_adapters_are_removed(self):
+        repository_root = Path(__file__).resolve().parents[2]
+        for relative_path in (
+            'core/screening/services/input_selector.py',
+            'core/screening/services/result_repository.py',
+        ):
+            with self.subTest(path=relative_path):
+                self.assertFalse((repository_root / relative_path).exists())

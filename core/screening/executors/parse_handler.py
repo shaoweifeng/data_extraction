@@ -3,25 +3,24 @@
 
 负责：
 - 复制上传文件到工作区
-- 调用 screening 领域解析器生成条目
-- 生成单篇 XML 索引文件
-- 保存产物到 DataFile
+- 调用 screening 领域解析器逐条生成标准化记录
+- 批量写入数据库并保存文件级解析诊断
 """
 
 import json
 import shutil
-import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
 from typing import List
 
+from django.core.exceptions import ObjectDoesNotExist
+
 from core.models import DataFile
 from core.executors.registry import register
 from core.executors.step_handler import BaseStepHandler
-from core.executors.base import safe_title
 from core.artifacts.types import ArtifactType
 from core.screening import parsers as _parser
-from core.screening.parsers.diagnostics import build_parse_report
+from core.screening.parsers.diagnostics import ParseReportCollector
 
 
 @register("parse")
@@ -35,41 +34,52 @@ class ParseHandler(BaseStepHandler):
         文献解析流程：
         1. 准备目录结构
         2. 复制上传文件到工作区
-        3. 调用解析脚本
-        4. 生成单篇 XML 索引
-        5. 保存产物到 DataFile
+        3. 逐条解析并批量写入数据库
+        4. 保存解析诊断报告
         """
         self.logger.info("[步骤] 开始文献解析...")
+        batch_id = self._import_batch_id()
+        if batch_id:
+            from core.screening.services.import_service import claim_import_batch
+
+            claim_import_batch(batch_id, self.task_obj.id)
+            self._clear_batch_outputs()
 
         # 1. 准备目录结构
         input_dir = self.workspace / "input"
-        output_dir = self.workspace / "output"
-        split_dir = self.workspace / "split_xmls"
-        for d in [input_dir, output_dir, split_dir]:
+        for d in [input_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
         # 2. 获取输入文件
         input_files = self._get_upload_files()
         if not input_files:
             self.logger.error("[错误] 没有找到输入文件，请先上传文献")
+            self._fail_import_batch()
             return False
 
         total_files = len(input_files)
         self.logger.info(f"[输入] 找到 {total_files} 个待解析文件")
         self.logger.update_progress(0, total_files, "files")
 
+        self._input_source_ids = {
+            data_file.filename: getattr(data_file, 'id', None)
+            for data_file in input_files
+        }
         for i, df in enumerate(input_files, 1):
             dest = input_dir / df.filename
-            shutil.copy(df.file.path, dest)
+            source_path = self._source_path(df)
+            shutil.copy(source_path, dest)
             self.logger.info(f"[复制] {df.filename}")
             self.logger.update_progress(i, total_files, "files")
             if self.check_stop_signal():
+                self._cancel_import_batch()
                 return False
 
         # 3. 调用解析脚本
         self.logger.info("[解析] 调用解析器...")
-        total_entries, merged_xml = self._run_parser(input_dir, output_dir, split_dir)
+        total_entries = self._run_parser(input_dir)
         if total_entries is None:
+            self._fail_import_batch()
             return False
 
         parse_reports = getattr(self, '_parse_reports', [])
@@ -87,14 +97,17 @@ class ParseHandler(BaseStepHandler):
                 f"[质量提示] {parse_summary['missing_abstract_entries']} 条文献缺少摘要"
             )
         split_count = total_entries
-        self.logger.info(f"[拆分] 生成 {split_count} 个单篇XML")
 
         # 5. 保存产物
         self.logger.info("[保存] 保存输出文件到数据库...")
-        self._clear_old_intermediate()
-        saved_count = self._save_outputs(merged_xml, split_dir) if total_entries else 0
-        self._save_parse_reports(input_files, parse_reports)
-        self.logger.info(f"[完成] 已保存 {saved_count} 个文件")
+        try:
+            self._save_parse_reports(input_files, parse_reports)
+        except Exception:
+            if batch_id:
+                self._fail_import_batch()
+                self._clear_batch_outputs(preserve_parse_reports=True)
+            raise
+        self.logger.info("[完成] 标准化文献已写入数据库，解析诊断已保存")
 
         if total_entries == 0:
             failure_message = '未解析到可用文献，请查看解析诊断报告并确认文件格式'
@@ -108,7 +121,26 @@ class ParseHandler(BaseStepHandler):
                 progress_phase='failed',
                 progress_message=failure_message,
             )
+            if batch_id:
+                from core.screening.services.import_service import persist_import_reports
+
+                persist_import_reports(batch_id, parse_reports)
+                self._clear_batch_outputs(preserve_parse_reports=True)
+                self._fail_import_batch()
             return False
+
+        if batch_id:
+            from core.screening.services.import_errors import ScreeningImportError
+            from core.screening.services.import_service import complete_import_batch
+
+            try:
+                complete_import_batch(batch_id, parse_reports)
+            except ScreeningImportError as exc:
+                self.logger.error(f"[导入失败] {exc.message}")
+                self._fail_import_batch()
+                self._clear_batch_outputs(preserve_parse_reports=True)
+                self._update_parse_progress('failed', 100, 100, exc.message)
+                return False
 
         # 6. 写最终统计到 Task.config
         self._update_parse_progress("done", 99, 100,
@@ -120,81 +152,197 @@ class ParseHandler(BaseStepHandler):
 
     def _get_upload_files(self) -> List[DataFile]:
         """获取用户上传的文献文件（input 类别）。"""
+        config = getattr(self, 'config', {}) or {}
+        file_ids = config.get('file_ids') or []
+        batch_id = config.get('import_batch_id')
         if self.stage_obj:
-            return list(DataFile.objects.filter(
+            queryset = DataFile.objects.filter(
                 project=self.project_obj,
                 stage=self.stage_obj,
                 data_category='input',
-            ))
-        return list(DataFile.objects.filter(
-            project=self.project_obj,
-            stage__isnull=True,
-            data_category='input',
-        ))
+            )
+        else:
+            queryset = DataFile.objects.filter(
+                project=self.project_obj,
+                stage__isnull=True,
+                data_category='input',
+            )
+        if file_ids:
+            queryset = queryset.filter(id__in=file_ids)
+        if batch_id:
+            queryset = queryset.filter(reference_import_file__import_batch_id=batch_id)
+        files = list(queryset.order_by('id'))
+        if file_ids and {item.id for item in files} != {int(value) for value in file_ids}:
+            from core.screening.services.import_errors import ScreeningImportError
 
-    def _run_parser(self, input_dir: Path, output_dir: Path, split_dir: Path):
-        """单遍解析并同时生成合并 XML 和单篇 XML。"""
-        merged_xml = output_dir / "references.xml"
+            raise ScreeningImportError(
+                'invalid_import_files', '任务中的文件不存在、已移除或不属于当前项目。',
+                http_status=409,
+            )
+        return files
+
+    @staticmethod
+    def _source_path(data_file: DataFile) -> str:
+        try:
+            private_file = data_file.reference_import_file.raw_file
+            if private_file:
+                return private_file.path
+        except (AttributeError, ObjectDoesNotExist):
+            pass
+        return data_file.file.path
+
+    def _import_batch_id(self):
+        return (getattr(self, 'config', {}) or {}).get('import_batch_id')
+
+    def _fail_import_batch(self):
+        batch_id = self._import_batch_id()
+        if batch_id:
+            from core.screening.services.import_service import fail_import_batch
+
+            fail_import_batch(batch_id)
+
+    def _cancel_import_batch(self):
+        batch_id = self._import_batch_id()
+        if batch_id:
+            from core.screening.services.import_service import cancel_import_batch
+
+            cancel_import_batch(batch_id)
+
+    def _clear_batch_outputs(self, *, preserve_parse_reports=False):
+        batch_id = self._import_batch_id()
+        if batch_id:
+            outputs = DataFile.objects.filter(
+                project=self.project_obj,
+                step=self.step_obj,
+                metadata__import_batch_id=batch_id,
+            ).exclude(data_category='input')
+            if preserve_parse_reports:
+                outputs = outputs.exclude(
+                    metadata__artifact_type=ArtifactType.SCREENING_PARSE_REPORT_JSON,
+                )
+            outputs.delete()
+
+    def _run_parser(self, input_dir: Path):
+        """单遍解析并将标准化记录批量写入数据库。"""
         self._parse_reports = []
+        batch_id = self._import_batch_id()
+        reference_writer = None
+        existing_reference_count = 0
+        if batch_id:
+            from core.screening.services.reference_persistence import ScreeningReferenceBulkWriter
+
+            reference_writer = ScreeningReferenceBulkWriter(
+                batch_id,
+                on_flush=lambda _batch_count, written_count: self._update_parse_progress(
+                    'persisting', 55, 100,
+                    f'[数据库] 已暂存 {written_count} 条标准化文献',
+                ),
+            )
+            existing_reference_count = reference_writer.batch.corpus.active_reference_count
 
         def iter_entries_with_reports():
+            emitted = 0
+            from core.screening.services.import_errors import ScreeningImportError
+            from core.screening.services.import_limits import (
+                ImportLimits,
+                validate_projected_reference_count,
+            )
+
+            limits = ImportLimits.from_settings()
             for file_path in sorted(input_dir.iterdir()):
                 if not file_path.is_file():
                     continue
-                entries = []
+                collector = ParseReportCollector(
+                    str(file_path), max_issues=limits.max_reported_errors,
+                )
                 parser_error = None
                 try:
-                    entries = list(_parser.parse_file(str(file_path)))
+                    for entry in _parser.iter_file(str(file_path)):
+                        try:
+                            _parser.validate_reference_record(entry, limits)
+                        except _parser.ReferenceRecordValidationError as exc:
+                            collector.reject_record(
+                                exc.code,
+                                exc.message,
+                                position=entry.get('source_position'),
+                                identifier=str(
+                                    entry.get('source_identifier')
+                                    or entry.get('record_number')
+                                    or ''
+                                ),
+                                title=str(entry.get('title') or '')[:500],
+                                suggestion='请修正异常字段后重新导出，平台不会静默截断内容。',
+                            )
+                            continue
+
+                        emitted += 1
+                        if (
+                            reference_writer
+                            and emitted % limits.processing_batch_size == 0
+                            and self.check_stop_signal()
+                        ):
+                            self._cancel_import_batch()
+                            raise ScreeningImportError(
+                                'import_cancelled', '文献导入已由用户取消。', http_status=409,
+                            )
+                        projected_total = validate_projected_reference_count(
+                            existing_reference_count, emitted, limits,
+                        )
+                        if (
+                            projected_total >= limits.warning_references
+                            and (
+                                emitted == 1
+                                or projected_total - 1 < limits.warning_references
+                            )
+                        ):
+                            self.logger.warning(
+                                f"[容量提示] 项目文献总数已达到 {projected_total} 篇"
+                            )
+                        collector.observe(entry)
+                        entry['_source_file_id'] = getattr(
+                            self, '_input_source_ids', {},
+                        ).get(file_path.name)
+                        if reference_writer:
+                            reference_writer.add(entry)
+                        yield entry
+                except ScreeningImportError:
+                    self._parse_reports.append(collector.finalize())
+                    raise
                 except Exception as exc:
                     parser_error = exc
                     self.logger.warning(f"[警告] 解析失败 {file_path.name}: {exc}")
-
-                report = build_parse_report(
-                    str(file_path), entries, parser_error=parser_error,
-                )
+                report = collector.finalize(parser_error=parser_error)
                 self._parse_reports.append(report)
-                for entry in entries:
-                    yield entry
 
-        def write_split(entry, position):
-            title = entry.get('title') or f'unknown_{position}'
-            xml_file = split_dir / f"{position:05d}_{safe_title(title, 40)}.xml"
-            root = ET.Element('reference')
-            field_map = [
-                ('title', 'Title'), ('authors', 'Authors'), ('year', 'Year'),
-                ('journal', 'Journal'), ('volume', 'Volume'), ('issue', 'Issue'),
-                ('page', 'Page'), ('date', 'Date'), ('reference_type', 'ReferenceType'),
-                ('pmcid', 'PMCID'), ('address', 'Address'), ('abstract', 'Abstract'),
-                ('doi', 'Doi'), ('url', 'Url'),
-            ]
-            for field_key, xml_tag in field_map:
-                value = entry.get(field_key)
-                if value:
-                    elem = ET.SubElement(root, xml_tag)
-                    elem.text = '; '.join(str(item) for item in value if item) if isinstance(value, list) else str(value)
-            ET.SubElement(root, 'SourceFile').text = str(entry.get('source_file', 'unknown'))
-            ET.SubElement(root, 'SourcePosition').text = str(entry.get('source_position', position))
-            ET.ElementTree(root).write(xml_file, encoding='utf-8', xml_declaration=True)
-            if position % 50 == 0:
-                self._update_parse_progress(
-                    "splitting", 40, 100, f"[2/3] 已解析并生成 {position} 个单篇索引",
-                )
+                if parser_error is not None:
+                    self.logger.warning(
+                        f"[解析诊断] {file_path.name} 已接受 {collector.parsed_entries} 条后终止"
+                    )
 
         try:
-            count = _parser.write_xml_stream(
-                iter_entries_with_reports(),
-                str(merged_xml),
-                on_entry=write_split,
-            )
-            if count == 0:
-                merged_xml.unlink(missing_ok=True)
+            count = 0
+            for count, _entry in enumerate(iter_entries_with_reports(), 1):
+                if count % 100 == 0:
+                    self._update_parse_progress(
+                        "persisting", 40, 100, f"[数据库] 已解析 {count} 条文献",
+                    )
+            if reference_writer:
+                stored_count = reference_writer.finalize()
+                if stored_count != count:
+                    from core.screening.services.import_errors import ScreeningImportError
+
+                    raise ScreeningImportError(
+                        'reference_count_mismatch',
+                        '解析输出数与数据库暂存文献数不一致。',
+                        details={'parsed': count, 'stored': stored_count},
+                    )
         except Exception as e:
             self.logger.error(f"[错误] 解析失败: {str(e)}")
             import traceback
             self.logger.error(traceback.format_exc())
-            return None, None
+            return None
 
-        return count, merged_xml
+        return count
 
     @staticmethod
     def _aggregate_parse_reports(reports):
@@ -223,84 +371,6 @@ class ParseHandler(BaseStepHandler):
         elif 'warning' in statuses:
             summary['status'] = 'warning'
         return summary
-
-    def _clear_old_intermediate(self) -> None:
-        """清除本步骤旧的 intermediate DataFile 记录，避免重复运行时累加。
-        同时清除项目级的人工审阅和 AI 筛选结果（重新上传意味着文献集完全更换）。
-        """
-        old_qs = DataFile.objects.filter(
-            project=self.project_obj,
-            step=self.step_obj,
-            data_category='intermediate',
-        )
-        old_count = old_qs.count()
-        if old_count > 0:
-            old_qs.delete()
-            self.logger.info(f"[清理] 已清除 {old_count} 条旧的 intermediate 记录")
-
-        old_reports = DataFile.objects.filter(
-            project=self.project_obj,
-            step=self.step_obj,
-            data_category='output',
-            metadata__artifact_type=ArtifactType.SCREENING_PARSE_REPORT_JSON,
-        )
-        report_count = old_reports.count()
-        if report_count:
-            old_reports.delete()
-            self.logger.info(f"[清理] 已清除 {report_count} 份旧解析报告")
-
-        # 重新解析意味着文献集完全更换，后续所有流程数据均无效，一并清除
-        from core.models import ManualReview
-        mr_count, _ = ManualReview.objects.filter(project=self.project_obj).delete()
-        if mr_count > 0:
-            self.logger.info(f"[清理] 已清除 {mr_count} 条人工审阅记录")
-
-        # 清除 AI 筛选结果（ai_screen 步骤的 output DataFile）
-        from core.models import StageStep
-        ai_screen_steps = StageStep.objects.filter(
-            stage__project=self.project_obj,
-            step_key='ai_screen',
-        )
-        for step in ai_screen_steps:
-            ai_qs = DataFile.objects.filter(
-                project=self.project_obj,
-                step=step,
-                data_category='output',
-                metadata__artifact_type=ArtifactType.SCREENING_RESULT_JSON,
-            )
-            ai_cnt, _ = ai_qs.delete()
-            if ai_cnt > 0:
-                self.logger.info(f"[清理] 已清除 {ai_cnt} 条 AI 筛选结果")
-
-    def _save_outputs(self, merged_xml: Path, split_dir: Path) -> int:
-        """保存合并 XML 和单篇 XML 到 DataFile，返回保存数量。"""
-        from core.models import Task as _Task
-
-        xml_files = list(split_dir.glob("*.xml"))
-        total = len(xml_files) + (1 if merged_xml.exists() else 0)
-        saved = 0
-        INTERVAL = max(1, len(xml_files) // 20)
-
-        if merged_xml.exists():
-            self.save_output_file(
-                merged_xml, "references.xml", "合并后的文献XML", "intermediate",
-                ArtifactType.SCREENING_PARSED_REFERENCES_XML,
-            )
-            saved += 1
-
-        for j, xml_file in enumerate(xml_files, 1):
-            self.save_output_file(
-                xml_file, xml_file.name, "单篇文献XML", "intermediate",
-                ArtifactType.SCREENING_PARSED_REFERENCE_XML,
-            )
-            saved += 1
-            if j % INTERVAL == 0 or j == len(xml_files):
-                self._update_parse_progress(
-                    "saving",
-                    70 + int(saved / total * 29), 100,
-                    f"[3/3] 保存到数据库 {saved}/{total}",
-                )
-        return saved
 
     def _save_parse_reports(self, input_files: List[DataFile], reports) -> None:
         """Persist compact summaries on inputs and full diagnostics as artifacts."""
@@ -335,7 +405,10 @@ class ParseHandler(BaseStepHandler):
                 '文献解析诊断报告',
                 'output',
                 ArtifactType.SCREENING_PARSE_REPORT_JSON,
-                metadata={'source_file_id': source_file.id if source_file else None},
+                metadata={
+                    'source_file_id': source_file.id if source_file else None,
+                    'import_batch_id': self._import_batch_id(),
+                },
             )
 
     def _update_parse_progress(self, phase: str, current: int, total: int, message: str) -> None:

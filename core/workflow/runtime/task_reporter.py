@@ -184,10 +184,14 @@ class TaskReporter:
 
     def _sync_progress_to_db(self, current: int, total: int):
         try:
-            from django.db import close_old_connections
+            from django.db import close_old_connections, connection
             from core.models import Task
 
-            close_old_connections()
+            # TestCase and some service boundaries intentionally hold an atomic
+            # transaction open. Closing that connection would poison the
+            # surrounding transaction merely because a progress sync ran.
+            if not connection.in_atomic_block:
+                close_old_connections()
             Task.objects.filter(id=self.task_id).update(
                 progress=round(current / total, 4) if total > 0 else 0,
             )
@@ -196,10 +200,11 @@ class TaskReporter:
 
     def _sync_logs_to_db(self):
         try:
-            from django.db import close_old_connections
+            from django.db import close_old_connections, connection
             from core.models import Task
 
-            close_old_connections()
+            if not connection.in_atomic_block:
+                close_old_connections()
             Task.objects.filter(id=self.task_id).update(logs='\n'.join(self.log_buffer))
         except Exception as exc:
             logger.warning(f'同步日志到DB失败: {exc}')

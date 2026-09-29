@@ -17,10 +17,12 @@ describe('operations API', () => {
     await operationsApi.sendHeartbeat({ tab_id: 'tab-1' })
     await operationsApi.fetchOperationsStatus(false)
     await operationsApi.changeSystemState({ mode: 'draining' })
+    await operationsApi.changeAnnouncement({ enabled: true, message: 'notice' })
 
     expect(http.get).toHaveBeenNthCalledWith(1, '/system/status/')
     expect(http.post).toHaveBeenNthCalledWith(1, '/presence/heartbeat/', { tab_id: 'tab-1' })
     expect(http.get).toHaveBeenNthCalledWith(2, '/operations/status/', { params: { inspect_celery: false } })
     expect(http.post).toHaveBeenNthCalledWith(2, '/operations/state/', { mode: 'draining' })
+    expect(http.post).toHaveBeenNthCalledWith(3, '/operations/announcement/', { enabled: true, message: 'notice' })
   })
 })

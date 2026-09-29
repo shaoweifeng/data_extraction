@@ -1,6 +1,7 @@
 """阶段 Pipeline 和模块任务归属测试。"""
 
 from unittest.mock import patch
+from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -40,8 +41,11 @@ class PipelineBoundaryTests(TestCase):
 
 class QualityTaskOwnershipTests(TestCase):
     def test_pdf_metadata_task_is_owned_by_quality_module(self):
-        with patch('core.quality.executors.qa_eval.extract_pdf_meta') as extract:
+        with patch('core.models.QAFulltextAsset.objects.only') as only, patch(
+            'core.quality.services.fulltext.process_fulltext_asset'
+        ) as process:
+            only.return_value.get.return_value = SimpleNamespace(id=7)
             parse_qa_pdf_meta.run(42)
 
-        extract.assert_called_once_with(42)
+        process.assert_called_once_with(7)
         self.assertEqual(parse_qa_pdf_meta.name, 'core.quality.tasks.parse_qa_pdf_meta')

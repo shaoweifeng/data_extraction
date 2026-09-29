@@ -58,6 +58,55 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(get_ai_screen_stats(project))
 
     @action(detail=True, methods=['get'])
+    def ai_screen_inputs(self, request, pk=None):
+        """Return a bounded, database-backed page of references awaiting screening."""
+        from core.screening.models import ScreeningCorpus, ScreeningRun
+        from core.screening.services.screening_run_service import (
+            _current_dedup_run,
+            run_input_references,
+        )
+
+        project = self.get_object()
+        try:
+            limit = min(100, max(1, int(request.query_params.get('limit', 50))))
+            offset = max(0, int(request.query_params.get('offset', 0)))
+        except (TypeError, ValueError):
+            return Response({'error': 'limit 和 offset 必须是整数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        corpus = ScreeningCorpus.objects.filter(project=project).first()
+        if corpus is None or corpus.active_reference_count == 0:
+            return Response({'total': 0, 'results': []})
+
+        dedup_run = _current_dedup_run(corpus)
+        references = run_input_references(corpus, dedup_run)
+        run = ScreeningRun.objects.filter(
+            project=project,
+            corpus_revision=corpus.revision,
+            dedup_run=dedup_run,
+        ).order_by('-created_at').first()
+        if run is not None:
+            pending_ids = run.results.exclude(status='completed').values('reference_id')
+            references = references.filter(id__in=pending_ids)
+
+        total = references.count()
+        page = references.values(
+            'id', 'title', 'publication_year', 'journal', 'doi',
+        )[offset:offset + limit]
+        return Response({
+            'total': total,
+            'results': [
+                {
+                    'reference_id': item['id'],
+                    'title': item['title'] or f"文献 #{item['id']}",
+                    'year': item['publication_year'],
+                    'journal': item['journal'],
+                    'doi': item['doi'],
+                }
+                for item in page
+            ],
+        })
+
+    @action(detail=True, methods=['get'])
     def get_prompt(self, request, pk=None):
         from ..services import get_prompt
 

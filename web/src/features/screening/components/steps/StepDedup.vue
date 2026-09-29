@@ -95,10 +95,10 @@
       <!-- 右：操作按钮 -->
       <div class="dedup-action-btn-wrap">
         <button
-          @click="handleDeduplication"
           :disabled="s.isDeduplicating"
           class="dedup-btn"
           :class="s.dedupCompleted ? 'dedup-btn--redo' : 'dedup-btn--start'"
+          @click="handleDeduplication"
         >
           <i v-if="s.isDeduplicating" class="fas fa-spinner fa-spin"></i>
           <i v-else :class="s.dedupCompleted ? 'fas fa-redo' : 'fas fa-magic'"></i>
@@ -116,7 +116,6 @@
 
     <!-- 去重结果统计 -->
     <div v-if="s.dedupStats" class="dedup-result-section">
-
       <!-- 摘要柱图 -->
       <div class="dedup-bar-summary">
         <div class="dedup-bar-row">
@@ -153,61 +152,111 @@
         重复率 <strong>{{ s.dedupStats.duplicate_rate }}</strong>
       </div>
 
-      <!-- 重复文献详细列表 -->
-      <div v-if="s.dedupStats.duplicate_details?.length > 0" class="mt-4">
+      <!-- 重复文献详细列表：服务端分页，成员按需加载 -->
+      <div v-if="s.dedupStats.duplicate_groups > 0" class="mt-4">
         <div class="dedup-detail-header">
           <span class="font-semibold text-gray-700 text-sm">
             <i class="fas fa-list-ul mr-1.5 text-purple-400"></i>
             重复文献详情（共 {{ s.dedupStats.duplicate_groups || 0 }} 组）
           </span>
           <button
-            @click="s.showDuplicateDetails = !s.showDuplicateDetails"
             class="dedup-detail-toggle"
+            @click="toggleDuplicateDetails"
           >
             <i :class="s.showDuplicateDetails ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
             {{ s.showDuplicateDetails ? '收起' : '展开' }}
           </button>
         </div>
 
-        <div v-show="s.showDuplicateDetails" class="dedup-detail-list">
+        <div v-if="s.showDuplicateDetails" class="dedup-detail-panel">
+          <div v-if="detailLoading" class="dedup-detail-state">
+            <i class="fas fa-spinner fa-spin"></i> 正在加载重复组…
+          </div>
+          <div v-else-if="detailError" class="dedup-detail-state dedup-detail-error">
+            <span>{{ detailError }}</span>
+            <button @click="loadDuplicateGroups(groupPage)">重新加载</button>
+          </div>
+          <div v-else-if="duplicateGroups.length === 0" class="dedup-detail-state">
+            当前页没有重复组
+          </div>
           <div
-            v-for="(dup, idx) in s.dedupStats.duplicate_details"
-            :key="idx"
+            v-for="group in duplicateGroups"
+            v-else
+            :key="group.id"
             class="dedup-detail-item"
           >
-            <div class="dedup-detail-title">{{ idx + 1 }}. {{ dup.title || '(无标题)' }}</div>
+            <button class="dedup-group-head" @click="toggleGroupMembers(group)">
+              <span class="dedup-detail-title">
+                {{ group.sequence }}. {{ group.title || '(无标题)' }}
+              </span>
+              <span class="dedup-group-count">
+                {{ group.member_count }} 条
+                <i :class="group.expanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+              </span>
+            </button>
 
-            <!-- 保留的 -->
-            <div class="dedup-ref kept">
-              <span class="dedup-ref-badge kept-badge">保留</span>
-              <div class="dedup-ref-info">
-                <span class="font-medium text-gray-700">{{ dup.kept.source_file || dup.kept.filename }}</span>
-                <span v-if="dup.kept.source_position" class="text-blue-500 ml-1">#{{ dup.kept.source_position }}</span>
-                <span v-if="dup.kept.year" class="text-gray-400 ml-2">{{ dup.kept.year }}</span>
-                <span v-if="dup.kept.journal" class="text-gray-400 ml-2">· {{ dup.kept.journal }}</span>
-                <a v-if="dup.kept.doi" :href="'https://doi.org/' + dup.kept.doi" target="_blank" class="dedup-doi-link ml-2">
-                  DOI
-                </a>
+            <div v-if="group.expanded" class="dedup-members">
+              <div v-if="group.membersLoading" class="dedup-member-state">
+                <i class="fas fa-spinner fa-spin"></i> 正在加载组内文献…
               </div>
+              <div v-else-if="group.membersError" class="dedup-member-state dedup-detail-error">
+                {{ group.membersError }}
+                <button @click.stop="loadGroupMembers(group, group.memberPage)">重试</button>
+              </div>
+              <template v-else>
+                <div
+                  v-for="member in group.members"
+                  :key="member.id"
+                  class="dedup-ref"
+                >
+                  <span
+                    class="dedup-ref-badge"
+                    :class="member.role === 'kept' ? 'kept-badge' : 'dup-badge'"
+                  >{{ member.role === 'kept' ? '保留' : '重复' }}</span>
+                  <div class="dedup-ref-info">
+                    <span class="font-medium text-gray-700">{{ member.reference.source_file }}</span>
+                    <span class="text-blue-500 ml-1">#{{ member.reference.source_position }}</span>
+                    <span v-if="member.reference.year" class="text-gray-400 ml-2">{{ member.reference.year }}</span>
+                    <span v-if="member.reference.journal" class="text-gray-400 ml-2">· {{ member.reference.journal }}</span>
+                    <a
+                      v-if="member.reference.doi"
+                      :href="'https://doi.org/' + member.reference.doi"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="dedup-doi-link ml-2"
+                    >DOI</a>
+                  </div>
+                </div>
+                <div v-if="group.memberTotalPages > 1" class="dedup-pagination dedup-pagination--members">
+                  <button
+                    :disabled="group.memberPage <= 1"
+                    @click="loadGroupMembers(group, group.memberPage - 1)"
+                  >
+                    上一页
+                  </button>
+                  <span>{{ group.memberPage }} / {{ group.memberTotalPages }}</span>
+                  <button
+                    :disabled="group.memberPage >= group.memberTotalPages"
+                    @click="loadGroupMembers(group, group.memberPage + 1)"
+                  >
+                    下一页
+                  </button>
+                </div>
+              </template>
             </div>
+          </div>
 
-            <!-- 重复的 -->
-            <div
-              v-for="(dup_item, di) in dup.duplicates"
-              :key="di"
-              class="dedup-ref dup"
+          <div v-if="groupTotalPages > 1 && !detailLoading" class="dedup-pagination">
+            <button :disabled="groupPage <= 1" @click="loadDuplicateGroups(groupPage - 1)">
+              <i class="fas fa-chevron-left"></i> 上一页
+            </button>
+            <span>第 {{ groupPage }} / {{ groupTotalPages }} 页</span>
+            <button
+              :disabled="groupPage >= groupTotalPages"
+              @click="loadDuplicateGroups(groupPage + 1)"
             >
-              <span class="dedup-ref-badge dup-badge">重复</span>
-              <div class="dedup-ref-info">
-                <span class="font-medium text-gray-600">{{ dup_item.source_file || dup_item.filename }}</span>
-                <span v-if="dup_item.source_position" class="text-blue-500 ml-1">#{{ dup_item.source_position }}</span>
-                <span v-if="dup_item.year" class="text-gray-400 ml-2">{{ dup_item.year }}</span>
-                <span v-if="dup_item.journal" class="text-gray-400 ml-2">· {{ dup_item.journal }}</span>
-                <a v-if="dup_item.doi" :href="'https://doi.org/' + dup_item.doi" target="_blank" class="dedup-doi-link ml-2">
-                  DOI
-                </a>
-              </div>
-            </div>
+              下一页 <i class="fas fa-chevron-right"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -216,10 +265,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useScreeningStore } from '@/features/screening/store'
 import { useProjectStore } from '@/features/projects/store'
 import { useTaskStore } from '@/features/workflow/store'
+import * as screeningApi from '@/features/screening/api'
 import * as workflowApi from '@/shared/api/workflow'
 import { findLatestDedupTask, getDedupTaskUiState } from '@/features/screening/dedupTaskState'
 
@@ -229,6 +279,14 @@ const taskStore = useTaskStore()
 let dedupPollGeneration = 0
 let dedupPollTimer = null
 let componentActive = true
+let groupRequestController = null
+let groupRequestGeneration = 0
+const memberRequestControllers = new Map()
+const duplicateGroups = ref([])
+const detailLoading = ref(false)
+const detailError = ref('')
+const groupPage = ref(1)
+const groupTotalPages = ref(0)
 
 function isCurrentProject(projectId) {
   return componentActive && Number(project.currentProject?.id) === Number(projectId)
@@ -258,6 +316,7 @@ async function handleDeduplication() {
     return
   }
   s.isDeduplicating = true
+  resetDedupDetails()
   s.dedupProgressCurrent = 0
   s.dedupProgressMsg = '正在启动去重任务...'
   try {
@@ -271,6 +330,109 @@ async function handleDeduplication() {
   } catch (err) {
     alert(`去重启动失败: ${err.response?.data?.error || err.message}`)
     s.isDeduplicating = false
+  }
+}
+
+function resetDedupDetails() {
+  groupRequestGeneration += 1
+  groupRequestController?.abort()
+  groupRequestController = null
+  memberRequestControllers.forEach(controller => controller.abort())
+  memberRequestControllers.clear()
+  duplicateGroups.value = []
+  detailLoading.value = false
+  detailError.value = ''
+  groupPage.value = 1
+  groupTotalPages.value = 0
+  s.showDuplicateDetails = false
+}
+
+async function toggleDuplicateDetails() {
+  s.showDuplicateDetails = !s.showDuplicateDetails
+  if (s.showDuplicateDetails && duplicateGroups.value.length === 0) {
+    await loadDuplicateGroups(1)
+  }
+}
+
+async function loadDuplicateGroups(page = 1) {
+  const projectId = project.currentProject?.id
+  const runId = s.dedupStats?.dedup_run_id
+  if (!projectId || !runId) return
+
+  groupRequestController?.abort()
+  memberRequestControllers.forEach(controller => controller.abort())
+  memberRequestControllers.clear()
+  const controller = new AbortController()
+  groupRequestController = controller
+  const generation = ++groupRequestGeneration
+  detailLoading.value = true
+  detailError.value = ''
+  try {
+    const response = await screeningApi.fetchDedupGroups(
+      projectId,
+      runId,
+      { page, page_size: 20 },
+      { signal: controller.signal },
+    )
+    if (generation !== groupRequestGeneration || !isCurrentProject(projectId)) return
+    duplicateGroups.value = response.data.results.map(group => ({
+      ...group,
+      expanded: false,
+      members: [],
+      membersLoading: false,
+      membersError: '',
+      memberPage: 1,
+      memberTotalPages: 0,
+    }))
+    groupPage.value = response.data.page
+    groupTotalPages.value = response.data.total_pages
+  } catch (error) {
+    if (error.code !== 'ERR_CANCELED' && generation === groupRequestGeneration) {
+      detailError.value = error.response?.data?.detail || '重复组加载失败，请稍后重试'
+    }
+  } finally {
+    if (generation === groupRequestGeneration) detailLoading.value = false
+  }
+}
+
+async function toggleGroupMembers(group) {
+  group.expanded = !group.expanded
+  if (group.expanded && group.members.length === 0) {
+    await loadGroupMembers(group, 1)
+  }
+}
+
+async function loadGroupMembers(group, page = 1) {
+  const projectId = project.currentProject?.id
+  const runId = s.dedupStats?.dedup_run_id
+  if (!projectId || !runId) return
+
+  memberRequestControllers.get(group.id)?.abort()
+  const controller = new AbortController()
+  memberRequestControllers.set(group.id, controller)
+  group.membersLoading = true
+  group.membersError = ''
+  try {
+    const response = await screeningApi.fetchDedupGroupMembers(
+      projectId,
+      runId,
+      group.id,
+      { page, page_size: 50 },
+      { signal: controller.signal },
+    )
+    if (!isCurrentProject(projectId) || memberRequestControllers.get(group.id) !== controller) return
+    group.members = response.data.results
+    group.memberPage = response.data.page
+    group.memberTotalPages = response.data.total_pages
+  } catch (error) {
+    if (error.code !== 'ERR_CANCELED') {
+      group.membersError = error.response?.data?.detail || '组内文献加载失败'
+    }
+  } finally {
+    if (memberRequestControllers.get(group.id) === controller) {
+      group.membersLoading = false
+      memberRequestControllers.delete(group.id)
+    }
   }
 }
 
@@ -340,7 +502,9 @@ function loadDedupStats() {
   if (!screen1Stage) return
   const dedupStep = screen1Stage.steps.find((st) => st.step_key === 'dedup')
   if (!dedupStep) return
+  const previousRunId = s.dedupStats?.dedup_run_id
   s.dedupStats = (dedupStep.metadata?.total_files !== undefined) ? dedupStep.metadata : null
+  if (previousRunId && previousRunId !== s.dedupStats?.dedup_run_id) resetDedupDetails()
   if (dedupStep.status === 'completed') s.dedupCompleted = true
 }
 
@@ -352,6 +516,7 @@ onUnmounted(() => {
   componentActive = false
   dedupPollGeneration += 1
   clearTimeout(dedupPollTimer)
+  resetDedupDetails()
 })
 </script>
 
@@ -528,12 +693,10 @@ onUnmounted(() => {
 }
 .dedup-detail-toggle:hover { background: #f5f3ff; }
 
-.dedup-detail-list {
+.dedup-detail-panel {
   background: #fff;
   border: 1px solid #ede9fe;
   border-radius: 10px;
-  max-height: 24rem;
-  overflow-y: auto;
   padding: 4px 0;
 }
 .dedup-detail-item {
@@ -541,11 +704,53 @@ onUnmounted(() => {
   border-bottom: 1px solid #f8fafc;
 }
 .dedup-detail-item:last-child { border-bottom: none; }
+.dedup-group-head {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
 .dedup-detail-title {
   font-size: .82rem;
   font-weight: 600;
   color: #334155;
-  margin-bottom: 6px;
+}
+.dedup-group-count {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8b5cf6;
+  font-size: .72rem;
+}
+.dedup-members {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #fafafa;
+}
+.dedup-detail-state,
+.dedup-member-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 72px;
+  padding: 12px;
+  color: #64748b;
+  font-size: .78rem;
+}
+.dedup-member-state { min-height: 48px; }
+.dedup-detail-error { color: #b91c1c; }
+.dedup-detail-error button {
+  color: #7c3aed;
+  text-decoration: underline;
 }
 .dedup-ref {
   display: flex;
@@ -575,4 +780,26 @@ onUnmounted(() => {
   text-decoration: none;
 }
 .dedup-doi-link:hover { text-decoration: underline; }
+.dedup-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 14px 8px;
+  color: #64748b;
+  font-size: .75rem;
+}
+.dedup-pagination--members { padding: 8px 0 0; }
+.dedup-pagination button {
+  padding: 4px 10px;
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  background: #fff;
+  color: #7c3aed;
+  cursor: pointer;
+}
+.dedup-pagination button:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
 </style>

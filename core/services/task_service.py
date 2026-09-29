@@ -173,6 +173,11 @@ def stop_task(task: Task, user) -> bool:
 
     if success:
         log_task_stop(task, user)
+        batch_id = (task.config or {}).get('import_batch_id')
+        if batch_id:
+            from core.screening.services.import_service import cancel_import_batch
+
+            cancel_import_batch(batch_id)
 
     return success
 

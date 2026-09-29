@@ -40,7 +40,7 @@ class TaggedTextParserTests(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / f'references{suffix}'
             path.write_bytes(content)
-            return parse_enw(str(path))
+            return list(parse_enw(str(path)))
 
     def test_blank_lines_inside_record_do_not_split_references(self):
         entries = self._parse_bytes(TAGGED_TEXT.encode('utf-8'))
@@ -67,7 +67,7 @@ class TaggedTextParserTests(TestCase):
             output_path = Path(temp_dir) / 'references.xml'
             input_path.write_text(content, encoding='utf-8')
 
-            entries = parse_enw(str(input_path))
+            entries = list(parse_enw(str(input_path)))
             convert_to_xml(entries, str(output_path))
             round_tripped = parse_file(str(output_path))
 
@@ -234,13 +234,13 @@ class InputDeletionStatisticsTests(TestCase):
             'parsed.xml',
             category='intermediate',
             step=self.parse_step,
-            metadata={'artifact_type': ArtifactType.SCREENING_PARSED_REFERENCE_XML},
+            metadata={'artifact_type': 'screening_parsed_reference_xml'},
         )
         self._file(
             'dedup.xml',
             category='intermediate',
             step=self.dedup_step,
-            metadata={'artifact_type': ArtifactType.SCREENING_DEDUP_REFERENCE_XML},
+            metadata={'artifact_type': 'screening_dedup_reference_xml'},
         )
 
         reset_downstream_on_input_delete(removed, self.user)

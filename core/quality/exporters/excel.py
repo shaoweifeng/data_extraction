@@ -7,7 +7,7 @@ import openpyxl
 from openpyxl.styles import PatternFill
 
 from core.models import QAReference
-from core.quality.domain.methods import get_method_config
+from core.quality.services.result_mapping import map_reference_results, quality_result_schema
 
 
 def export_qa_excel(project, quality_method, include_unconfirmed=False):
@@ -73,14 +73,12 @@ def export_qa_excel(project, quality_method, include_unconfirmed=False):
     # ── Sheet 2: 汇总统计 ──────────────────────────────────
     ws2 = wb.create_sheet('汇总统计')
     wb.move_sheet(ws2, offset=-1)
-    method_cfg = get_method_config(quality_method)
+    schema = quality_result_schema(quality_method)
     summary_columns = []
-    for domain in method_cfg['domains']:
-        if domain['has_bias_risk']:
-            summary_columns.append((f"{domain['name']}_偏倚", domain['key'], 'bias_risk_result'))
-    for domain in method_cfg['domains']:
-        if domain['has_applicability']:
-            summary_columns.append((f"{domain['name']}_适用性", domain['key'], 'applicability_result'))
+    for domain in schema['bias_domains']:
+        summary_columns.append((f"{domain['name']}_偏倚", 'bias_risk', domain['key']))
+    for domain in schema['applicability_domains']:
+        summary_columns.append((f"{domain['name']}_适用性", 'applicability', domain['key']))
 
     ws2.append([
         '文献标题', '第一作者', '年份',
@@ -88,11 +86,11 @@ def export_qa_excel(project, quality_method, include_unconfirmed=False):
         '整体审阅状态',
     ])
     for ref in refs:
-        dr_map = {dr.domain: dr for dr in ref.domain_results.all()}
-        summary_values = []
-        for _, domain_key, result_field in summary_columns:
-            domain_result = dr_map.get(domain_key)
-            summary_values.append(getattr(domain_result, result_field, '') if domain_result else '')
+        mapped = map_reference_results(ref, schema)
+        summary_values = [
+            mapped[result_type][domain_key]
+            for _, result_type, domain_key in summary_columns
+        ]
         ws2.append([
             ref.title, ref.first_author, ref.year,
             *summary_values,

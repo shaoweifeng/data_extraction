@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 
 const screeningApi = vi.hoisted(() => ({
-  fetchReviewStats: vi.fn(), fetchReviewList: vi.fn(), updateReviewItem: vi.fn(),
-  appendReviewNote: vi.fn(), fetchReviewNotes: vi.fn(), fetchPrompt: vi.fn(),
-  savePrompt: vi.fn(), resetPrompt: vi.fn(), fetchScreeningStats: vi.fn(), clearAiScreenResults: vi.fn(),
+  fetchReviewStats: vi.fn(), fetchReviewList: vi.fn(), fetchPrompt: vi.fn(),
+  fetchReviewDetail: vi.fn(), updateReviewReference: vi.fn(),
+  appendReviewReferenceNote: vi.fn(), fetchReviewReferenceNotes: vi.fn(),
+  savePrompt: vi.fn(), resetPrompt: vi.fn(), fetchScreeningStats: vi.fn(),
+  fetchScreeningInputs: vi.fn(), clearAiScreenResults: vi.fn(),
 }))
 vi.mock('../api', () => screeningApi)
 vi.mock('@/features/billing/api', () => ({ fetchBalance: vi.fn(), estimateUsage: vi.fn() }))
@@ -16,13 +18,30 @@ import { createReviewController } from './useReviewController'
 import { createAiScreenController } from './useAiScreenController'
 
 describe('screening controllers', () => {
-  it('injects current project and step into review requests', async () => {
+  it('injects current project and step into run-bound review requests', async () => {
     const controller = createReviewController({ projectId: () => 12, stepId: () => 34 })
     await controller.loadItems({ page: 2 })
-    await controller.saveDecision('a/b.xml', 'included')
+    await controller.saveDecision(56, 78, 'included')
     expect(screeningApi.fetchReviewList).toHaveBeenCalledWith({ project: 12, step: 34, page: 2 })
-    expect(screeningApi.updateReviewItem).toHaveBeenCalledWith('a/b.xml', {
+    expect(screeningApi.updateReviewReference).toHaveBeenCalledWith(56, 78, {
       project: 12, step: 34, decision: 'included', reason: '',
+    })
+  })
+
+  it('binds database review requests to a screening run and reference', async () => {
+    const controller = createReviewController({ projectId: () => 12, stepId: () => 34 })
+    await controller.loadDetail(56, 78)
+    await controller.saveDecision(56, 78, 'excluded', 'reason')
+    await controller.appendNote(56, 78, 'note')
+
+    expect(screeningApi.fetchReviewDetail).toHaveBeenCalledWith(
+      56, 78, { project: 12 }, {},
+    )
+    expect(screeningApi.updateReviewReference).toHaveBeenCalledWith(56, 78, {
+      project: 12, step: 34, decision: 'excluded', reason: 'reason',
+    })
+    expect(screeningApi.appendReviewReferenceNote).toHaveBeenCalledWith(56, 78, {
+      project: 12, step: 34, content: 'note',
     })
   })
 

@@ -6,7 +6,7 @@
       </div>
       <div>
         <h3 class="step-title">结果归纳与导出</h3>
-        <p class="step-subtitle">汇总筛选结果，导出 Excel 和 RIS 文件</p>
+        <p class="step-subtitle">汇总筛选结果，导出 Excel、RIS 和 XML 文件</p>
       </div>
     </div>
 
@@ -190,84 +190,39 @@
       <div class="step-list-box" style="padding:14px 16px">
         <p class="text-xs text-gray-400 mb-2">下载历史版本（点击导出后自动更新）</p>
 
-        <!-- 所有文献 Excel -->
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0">所有文献</span>
-          <button
-            @click="downloadFile(s.exportXlsxAllFiles[selectedAllVer])"
-            :disabled="!s.exportXlsxAllFiles || s.exportXlsxAllFiles.length === 0"
-            class="bg-teal-600 hover:bg-teal-700 text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
+        <div
+          v-for="row in exportRows"
+          :key="row.scope"
+          class="export-download-row"
+        >
+          <span class="export-scope-label">{{ row.label }}</span>
+          <select
+            v-model="selectedFormats[row.scope]"
+            class="export-format-select input-base"
+            @change="selectedVersions[row.scope] = 0"
           >
-            <i class="fas fa-file-download mr-1"></i>下载Excel
+            <option v-for="format in row.formats" :key="format" :value="format">
+              {{ formatLabel(format) }}
+            </option>
+          </select>
+          <button
+            @click="downloadFile(currentFile(row.scope))"
+            :disabled="currentFiles(row.scope).length === 0"
+            :class="['export-download-btn', `scope-${row.scope}`]"
+          >
+            <i class="fas fa-file-download"></i>
+            下载{{ formatLabel(selectedFormats[row.scope]) }}
           </button>
           <select
-            v-if="s.exportXlsxAllFiles && s.exportXlsxAllFiles.length > 0"
-            v-model="selectedAllVer"
-            class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base"
+            v-if="currentFiles(row.scope).length"
+            v-model="selectedVersions[row.scope]"
+            class="export-version-select input-base"
           >
-            <option v-for="(f, i) in s.exportXlsxAllFiles" :key="f.id" :value="i">{{ exportFileLabel(f) }}</option>
+            <option v-for="(file, index) in currentFiles(row.scope)" :key="file.id" :value="index">
+              {{ exportFileLabel(file) }}
+            </option>
           </select>
-          <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
-        </div>
-
-        <!-- 纳入文献 Excel -->
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0">纳入文献</span>
-          <button
-            @click="downloadFile(s.exportXlsxIncludedFiles[selectedIncluVer])"
-            :disabled="!s.exportXlsxIncludedFiles || s.exportXlsxIncludedFiles.length === 0"
-            class="bg-green-600 hover:bg-green-700 text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
-          >
-            <i class="fas fa-file-download mr-1"></i>下载Excel
-          </button>
-          <select
-            v-if="s.exportXlsxIncludedFiles && s.exportXlsxIncludedFiles.length > 0"
-            v-model="selectedIncluVer"
-            class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base"
-          >
-            <option v-for="(f, i) in s.exportXlsxIncludedFiles" :key="f.id" :value="i">{{ exportFileLabel(f) }}</option>
-          </select>
-          <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
-        </div>
-
-        <!-- 排除文献 Excel -->
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0">排除文献</span>
-          <button
-            @click="downloadFile(s.exportXlsxExcludedFiles[selectedExcluVer])"
-            :disabled="!s.exportXlsxExcludedFiles || s.exportXlsxExcludedFiles.length === 0"
-            class="bg-red-500 hover:bg-red-600 text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
-          >
-            <i class="fas fa-file-download mr-1"></i>下载Excel
-          </button>
-          <select
-            v-if="s.exportXlsxExcludedFiles && s.exportXlsxExcludedFiles.length > 0"
-            v-model="selectedExcluVer"
-            class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base"
-          >
-            <option v-for="(f, i) in s.exportXlsxExcludedFiles" :key="f.id" :value="i">{{ exportFileLabel(f) }}</option>
-          </select>
-          <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
-        </div>
-
-        <!-- EndNote RIS -->
-        <div class="flex items-center gap-2">
-          <span class="text-xs text-gray-500 w-28 text-right flex-shrink-0">EndNote<br/><span class="text-gray-400">（仅纳入）</span></span>
-          <button
-            @click="downloadFile(s.exportRisFiles[selectedRisVer])"
-            :disabled="!s.exportRisFiles || s.exportRisFiles.length === 0"
-            class="bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg font-medium shadow disabled:bg-gray-300 disabled:cursor-not-allowed transition w-[130px] text-sm flex-shrink-0"
-          >
-            <i class="fas fa-file-download mr-1"></i>下载EndNote
-          </button>
-          <select
-            v-if="s.exportRisFiles && s.exportRisFiles.length > 0"
-            v-model="selectedRisVer"
-            class="border rounded-lg px-2 py-1.5 text-sm bg-white min-w-0 flex-1 input-base"
-          >
-            <option v-for="(f, i) in s.exportRisFiles" :key="f.id" :value="i">{{ exportFileLabel(f) }}</option>
-          </select>
-          <span v-else class="text-xs text-gray-400 flex-1">暂无记录</span>
+          <span v-else class="export-empty">当前格式暂无记录</span>
         </div>
       </div>
     </div>
@@ -291,10 +246,13 @@ const project = useProjectStore()
 const taskStore = useTaskStore()
 const auth = useAuthStore()
 
-const selectedAllVer = ref(0)
-const selectedIncluVer = ref(0)
-const selectedExcluVer = ref(0)
-const selectedRisVer = ref(0)
+const exportRows = [
+  { scope: 'all', label: '所有文献', formats: ['xlsx', 'xml'] },
+  { scope: 'included', label: '纳入文献', formats: ['xlsx', 'ris', 'xml'] },
+  { scope: 'excluded', label: '排除文献', formats: ['xlsx', 'xml'] },
+]
+const selectedFormats = ref({ all: 'xlsx', included: 'xlsx', excluded: 'xlsx' })
+const selectedVersions = ref({ all: 0, included: 0, excluded: 0 })
 let exportAbortController = null
 const activeExportTask = ref(null)
 const allowConflictExport = ref(false)
@@ -348,6 +306,25 @@ function downloadFile(f) {
   downloadUrl(f.file_url || f.file, f.filename)
 }
 
+function formatLabel(format) {
+  return { xlsx: 'Excel', xml: 'XML', ris: 'EndNote RIS' }[format] || format
+}
+
+function currentFiles(scope) {
+  const format = selectedFormats.value[scope]
+  if (format === 'ris') return scope === 'included' ? (s.exportRisFiles || []) : []
+  const names = {
+    all: format === 'xml' ? 'exportXmlAllFiles' : 'exportXlsxAllFiles',
+    included: format === 'xml' ? 'exportXmlIncludedFiles' : 'exportXlsxIncludedFiles',
+    excluded: format === 'xml' ? 'exportXmlExcludedFiles' : 'exportXlsxExcludedFiles',
+  }
+  return s[names[scope]] || []
+}
+
+function currentFile(scope) {
+  return currentFiles(scope)[selectedVersions.value[scope]]
+}
+
 // ── 加载导出文件列表 ──
 async function loadExportFiles() {
   if (!project.currentProject) return
@@ -364,15 +341,16 @@ async function loadExportFiles() {
     s.exportXlsxIncludedFiles = allFiles.filter(f => f.filename?.includes('_included_') && f.filename?.endsWith('.xlsx'))
     s.exportXlsxExcludedFiles = allFiles.filter(f => f.filename?.includes('_excluded_') && f.filename?.endsWith('.xlsx'))
     s.exportRisFiles = allFiles.filter(f => f.filename?.endsWith('.ris'))
+    s.exportXmlFiles = allFiles.filter(f => f.filename?.startsWith('screening_results_') && f.filename?.endsWith('.xml'))
+    s.exportXmlAllFiles = s.exportXmlFiles.filter(f => f.filename?.includes('_all_'))
+    s.exportXmlIncludedFiles = s.exportXmlFiles.filter(f => f.filename?.includes('_included_'))
+    s.exportXmlExcludedFiles = s.exportXmlFiles.filter(f => f.filename?.includes('_excluded_'))
     // 兼容：若无明确分类文件则全部放入 All
     if (s.exportXlsxAllFiles.length === 0 && s.exportXlsxIncludedFiles.length === 0 && s.exportXlsxExcludedFiles.length === 0) {
       s.exportXlsxAllFiles = allFiles.filter(f => f.filename?.endsWith('.xlsx'))
     }
     // 重置选中项
-    selectedAllVer.value = 0
-    selectedIncluVer.value = 0
-    selectedExcluVer.value = 0
-    selectedRisVer.value = 0
+    selectedVersions.value = { all: 0, included: 0, excluded: 0 }
   } catch (e) {
     console.error('[StepExport] loadExportFiles 失败', e)
   }
@@ -488,6 +466,20 @@ onUnmounted(() => exportAbortController?.abort())
 
 .export-progress-box { max-width: 680px; margin: 0 auto; padding: 12px 14px; border: 1px solid #99f6e4; border-radius: 10px; background: #f0fdfa; }
 .export-progress-head, .export-progress-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #0f766e; font-size: .82rem; }
+.export-download-row { display:grid; grid-template-columns:90px 120px 150px minmax(0,1fr); align-items:center; gap:8px; margin-bottom:8px; }
+.export-download-row:last-child { margin-bottom:0; }
+.export-scope-label { color:#475569; font-size:.78rem; font-weight:600; text-align:right; }
+.export-format-select, .export-version-select { min-width:0; padding:6px 9px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; font-size:.78rem; }
+.export-download-btn { height:34px; padding:0 12px; border:0; border-radius:8px; color:#fff; font-size:.78rem; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+.export-download-btn.scope-all { background:#0d9488; }
+.export-download-btn.scope-included { background:#16a34a; }
+.export-download-btn.scope-excluded { background:#ef4444; }
+.export-download-btn:disabled { background:#cbd5e1; cursor:not-allowed; }
+.export-empty { color:#94a3b8; font-size:.75rem; }
+@media (max-width: 760px) {
+  .export-download-row { grid-template-columns:72px 1fr; }
+  .export-version-select, .export-empty { grid-column:2; }
+}
 .export-progress-track { height: 8px; margin: 9px 0 7px; overflow: hidden; border-radius: 999px; background: #ccfbf1; }
 .export-progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0d9488, #14b8a6); transition: width .3s ease; }
 .export-stop-btn { padding: 3px 9px; border: 1px solid #fca5a5; border-radius: 6px; color: #b91c1c; background: #fff; cursor: pointer; white-space: nowrap; }

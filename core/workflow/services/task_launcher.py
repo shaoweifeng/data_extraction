@@ -1,9 +1,11 @@
-"""统一的步骤任务创建边界。"""
+"""统一的步骤任务创建与派发边界。"""
 
 from django.db import transaction
+from django.utils import timezone
 
 from core.models import Project, Task
 from core.workflow.domain.statuses import TaskStatus
+from core.workflow.services.lifecycle import transition_task
 
 
 ACTIVE_EXECUTION_STATUSES = (
@@ -46,3 +48,24 @@ def create_step_task(project_id: int, step_key: str, user_id: int, config: dict,
             created_by_id=user_id,
             config=config,
         )
+
+
+def dispatch_step_task(task: Task, step_key: str | None = None) -> Task:
+    """Dispatch an already committed pending task and persist the broker id."""
+    from core.executors.celery_tasks import execute_async_step
+
+    step_key = step_key or task.task_type
+    try:
+        result = execute_async_step.delay(task.id, step_key, task.project_id)
+    except Exception as exc:
+        transition_task(
+            task,
+            TaskStatus.FAILED,
+            updates={'error_message': f'任务派发失败: {exc}', 'completed_at': timezone.now()},
+            expected_from={TaskStatus.PENDING},
+        )
+        raise
+
+    task.celery_task_id = result.id
+    task.save(update_fields=['celery_task_id', 'updated_at'])
+    return task

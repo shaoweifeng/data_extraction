@@ -83,3 +83,6 @@ web/node_modules/
 # 上面的 /dist/ 只忽略项目根目录的 Python 打包产物，不影响 web/dist
 !web/dist/
 !web/dist/**
+
+# 本地回归样本
+/meta_project/

@@ -113,3 +113,20 @@ class QaExcelExporterTests(TestCase):
 
         self.assertEqual(confirmed_titles, ['Confirmed Study'])
         self.assertEqual(all_titles, ['Confirmed Study', 'Pending Study'])
+
+    def test_missing_domain_result_is_exported_as_pending_not_blank(self):
+        user = User.objects.create_user('qa-missing-domain-user')
+        project = Project.objects.create(name='QA missing domain', owner=user)
+        QAReference.objects.create(
+            project=project,
+            title='Incomplete Study',
+            quality_method='QUADAS2',
+            review_status='confirmed',
+        )
+
+        _, content = export_qa_excel(project, 'QUADAS2')
+        workbook = openpyxl.load_workbook(io.BytesIO(content), read_only=True)
+        row = list(workbook['汇总统计'].iter_rows(values_only=True))[1]
+        workbook.close()
+
+        self.assertTrue(all(value == 'pending' for value in row[3:-1]))

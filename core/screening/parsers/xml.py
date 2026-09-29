@@ -3,7 +3,10 @@
 import os
 import re
 import xml.etree.ElementTree as ET
-from typing import Dict, List
+from typing import Dict, Iterator
+
+
+_MAX_XML_DEPTH = 128
 
 
 def _itext(elem):
@@ -220,28 +223,52 @@ def _normalize_embase_item(item, source_file: str, position: int) -> Dict:
     }
 
 
-def parse_xml(file_path: str) -> List[Dict]:
+def _reject_unsafe_xml(file_path: str) -> None:
+    """Reject DTD/entity declarations without loading the document into memory."""
+    tail = b''
+    with open(file_path, 'rb') as source:
+        while chunk := source.read(64 * 1024):
+            probe = (tail + chunk).lower()
+            if b'<!doctype' in probe or b'<!entity' in probe:
+                raise ValueError('XML 包含禁止的 DTD 或实体声明')
+            tail = probe[-16:]
+
+
+def parse_xml(file_path: str) -> Iterator[Dict]:
     """Parse EndNote, Elsevier/Embase, or internal XML record by record."""
-    parsed_entries = []
+    _reject_unsafe_xml(file_path)
     source_file = os.path.basename(file_path)
     root_tag = None
+    position = 0
+    element_stack = []
 
     for event, elem in ET.iterparse(file_path, events=("start", "end")):
-        if root_tag is None and event == "start":
-            root_tag = _local_name(elem.tag)
-            continue
-        if event != "end":
+        if event == "start":
+            element_stack.append(elem)
+            if len(element_stack) > _MAX_XML_DEPTH:
+                raise ValueError(f'XML 嵌套深度超过 {_MAX_XML_DEPTH} 层上限')
+            if root_tag is None:
+                root_tag = _local_name(elem.tag)
             continue
 
         tag = _local_name(elem.tag)
+        normalized = None
         if root_tag == "xml" and tag == "record":
-            parsed_entries.append(_normalize_endnote_record(elem, source_file, len(parsed_entries) + 1))
-            elem.clear()
+            position += 1
+            normalized = _normalize_endnote_record(elem, source_file, position)
         elif root_tag == "bibdataset" and tag == "item":
-            parsed_entries.append(_normalize_embase_item(elem, source_file, len(parsed_entries) + 1))
-            elem.clear()
+            position += 1
+            normalized = _normalize_embase_item(elem, source_file, position)
         elif root_tag != "xml" and tag == "reference":
-            parsed_entries.append(_normalize_internal_reference(elem, source_file, len(parsed_entries) + 1))
-            elem.clear()
+            position += 1
+            normalized = _normalize_internal_reference(elem, source_file, position)
 
-    return parsed_entries
+        if normalized is not None:
+            normalized['_raw_metadata'] = {
+                'raw_xml': ET.tostring(elem, encoding='unicode'),
+            }
+            if len(element_stack) > 1:
+                element_stack[-2].remove(elem)
+            elem.clear()
+            yield normalized
+        element_stack.pop()

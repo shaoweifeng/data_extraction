@@ -10,21 +10,28 @@ from .api.billing_views import (
 from .screening.api.review_views import (
     review_list,
     review_submit,
-    review_item,
     review_stats,
     review_complete,
-    review_note_append,
-    review_notes_list,
+    review_reference_item,
+    review_reference_notes,
 )
-from .quality.api.reference_views import methods_list, ref_list, ref_import, ref_upload, ref_update, ref_batch_method
+from .screening.api.dedup_views import dedup_group_members, dedup_groups
+from .quality.api.reference_views import (
+    fulltext_download, fulltext_retry, methods_list, ref_list, ref_import, ref_upload, ref_update,
+    ref_batch_method,
+)
 from .quality.api.evaluation_views import eval_start, eval_progress
-from .quality.api.review_views import signal_items_list, signal_item_confirm, signal_batch_confirm, domain_results
+from .quality.api.review_views import (
+    domain_results, project_batch_confirm, signal_batch_confirm,
+    signal_item_confirm, signal_items_list,
+)
 from .quality.api.chart_views import chart_generate, chart_preview, chart_info, chart_settings_get, chart_settings_save
 from .quality.api.export_views import export_excel, export_status
 from .api.schema_views import openapi_schema
 from .operations.api_views import (
-    health_live, health_ready, operations_pause_tasks, operations_resume_tasks,
-    operations_state, operations_status, presence_heartbeat, system_status,
+    health_live, health_ready, operations_announcement, operations_pause_tasks,
+    operations_resume_tasks, operations_state, operations_status, presence_heartbeat,
+    system_status,
 )
 
 # 注册 ViewSets
@@ -36,6 +43,7 @@ router.register(r'files', api.DataFileViewSet, basename='file')
 router.register(r'tasks', api.TaskViewSet, basename='task')
 router.register(r'users', api.UserViewSet, basename='user')
 router.register(r'activity-logs', api.ActivityLogViewSet, basename='activity-log')
+router.register(r'screening-imports', api.ScreeningImportViewSet, basename='screening-import')
 
 urlpatterns = [
     path('health/live/', health_live, name='health_live'),
@@ -44,6 +52,7 @@ urlpatterns = [
     path('presence/heartbeat/', presence_heartbeat, name='presence_heartbeat'),
     path('operations/status/', operations_status, name='operations_status'),
     path('operations/state/', operations_state, name='operations_state'),
+    path('operations/announcement/', operations_announcement, name='operations_announcement'),
     path('operations/tasks/pause/', operations_pause_tasks, name='operations_pause_tasks'),
     path('operations/tasks/resume/', operations_resume_tasks, name='operations_resume_tasks'),
     # 机器可读 API 契约
@@ -66,11 +75,30 @@ urlpatterns = [
     # 人工审阅 API
     path('review/list/',          review_list,    name='review_list'),
     path('review/submit/',        review_submit,  name='review_submit'),
-    path('review/item/<path:source_xml>/', review_item, name='review_item'),
     path('review/stats/',         review_stats,   name='review_stats'),
     path('review/complete/',      review_complete, name='review_complete'),
-    path('review/note/<path:source_xml>/',  review_note_append,  name='review_note_append'),
-    path('review/notes/<path:source_xml>/', review_notes_list,   name='review_notes_list'),
+    path(
+        'review/runs/<int:run_id>/references/<int:reference_id>/',
+        review_reference_item,
+        name='review_reference_item',
+    ),
+    path(
+        'review/runs/<int:run_id>/references/<int:reference_id>/notes/',
+        review_reference_notes,
+        name='review_reference_notes',
+    ),
+
+    # 数据库化去重详情（组与成员均有固定上限的服务端分页）
+    path(
+        'projects/<int:project_id>/dedup-runs/<int:run_id>/groups/',
+        dedup_groups,
+        name='dedup_groups',
+    ),
+    path(
+        'projects/<int:project_id>/dedup-runs/<int:run_id>/groups/<int:group_id>/members/',
+        dedup_group_members,
+        name='dedup_group_members',
+    ),
 
     # RESTful API
     path('', include(router.urls)),
@@ -83,6 +111,8 @@ urlpatterns = [
     path('qa/refs/upload/',                    ref_upload,            name='qa_ref_upload'),
     path('qa/refs/batch-method/',              ref_batch_method,      name='qa_ref_batch_method'),
     path('qa/refs/<int:ref_id>/',              ref_update,            name='qa_ref_update'),
+    path('qa/fulltext-assets/<int:asset_id>/download/', fulltext_download, name='qa_fulltext_download'),
+    path('qa/fulltext-assets/<int:asset_id>/retry/', fulltext_retry, name='qa_fulltext_retry'),
     # AI 评价
     path('qa/eval/start/',                     eval_start,            name='qa_eval_start'),
     path('qa/eval/progress/',                  eval_progress,         name='qa_eval_progress'),
@@ -90,6 +120,7 @@ urlpatterns = [
     path('qa/signal-items/',                   signal_items_list,     name='qa_signal_items_list'),
     path('qa/signal-items/<int:item_id>/confirm/', signal_item_confirm, name='qa_signal_item_confirm'),
     path('qa/signal-items/batch-confirm/',     signal_batch_confirm,  name='qa_signal_batch_confirm'),
+    path('qa/review/batch-confirm/',           project_batch_confirm, name='qa_project_batch_confirm'),
     # 领域结果
     path('qa/domain-results/',                 domain_results,        name='qa_domain_results'),
     # 图表

@@ -9,8 +9,9 @@ from .docx import parse_docx
 from .enw import parse_enw
 from .nbib import parse_nbib
 from .output import convert_to_xml, split_to_single_files, write_xml_stream
-from .registry import parse_file, register_parser, supported_extensions
+from .registry import iter_file, parse_file, register_parser, supported_extensions
 from .ris import parse_ris
+from .validation import ReferenceRecordValidationError, validate_reference_record
 from .xml import parse_xml
 
 
@@ -33,7 +34,7 @@ def iter_directory(dir_path: str):
         if os.path.splitext(filename)[1].lower() not in supported:
             continue
         try:
-            yield from parse_file(file_path)
+            yield from iter_file(file_path)
         except Exception as exc:
             print(f'[警告] 解析失败 {filename}: {exc}')
 
@@ -44,7 +45,8 @@ def parse_directory(dir_path: str) -> List[Dict]:
 
 
 __all__ = [
-    'convert_to_xml', 'iter_directory', 'parse_bib', 'parse_ciw', 'parse_directory', 'parse_docx',
+    'convert_to_xml', 'iter_directory', 'iter_file', 'parse_bib', 'parse_ciw', 'parse_directory', 'parse_docx',
     'parse_enw', 'parse_file', 'parse_nbib', 'parse_ris', 'parse_xml',
-    'register_parser', 'split_to_single_files', 'supported_extensions', 'write_xml_stream',
+    'ReferenceRecordValidationError', 'register_parser', 'split_to_single_files',
+    'supported_extensions', 'validate_reference_record', 'write_xml_stream',
 ]

@@ -14,6 +14,10 @@ export const changeSystemState = payload => (
   http.post('/operations/state/', payload).then(res => res.data)
 )
 
+export const changeAnnouncement = payload => (
+  http.post('/operations/announcement/', payload).then(res => res.data)
+)
+
 export const pauseMaintenanceTasks = () => (
   http.post('/operations/tasks/pause/').then(res => res.data)
 )

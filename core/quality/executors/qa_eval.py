@@ -15,10 +15,10 @@
 
 import json
 import logging
-import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Optional
 
+from django.conf import settings
 from django.utils import timezone
 from core.ai import (
     AIQuotaService,
@@ -36,53 +36,14 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def extract_pdf_meta(ref_id: int):
-    """
-    简单解析 PDF 的元数据（标题、作者、年份、摘要首段）。
-    仅作尽力提取，失败时静默跳过。
-    """
-    from core.models import QAReference
+    """Compatibility wrapper for callers predating the full-text asset service."""
+    from core.models import QAFulltextAsset
+    from core.quality.services.fulltext import process_fulltext_asset
     try:
-        ref = QAReference.objects.select_related('fulltext_file').get(pk=ref_id)
-        if not ref.fulltext_file:
-            return
-        file_path = ref.fulltext_file.file.path
-        if not os.path.exists(file_path):
-            return
-
-        # 优先用 PyMuPDF，可处理 AES 加密 PDF
-        try:
-            import fitz  # PyMuPDF
-            doc = fitz.open(file_path)
-            meta = doc.metadata or {}
-            title = (meta.get('title') or '').strip()
-            author = (meta.get('author') or '').strip()
-            abstract_hint = doc[0].get_text()[:600].strip() if len(doc) > 0 else ''
-            doc.close()
-        except Exception:
-            # 降级到 PyPDF2
-            try:
-                import PyPDF2
-                with open(file_path, 'rb') as f:
-                    reader = PyPDF2.PdfReader(f)
-                    info = reader.metadata or {}
-                    title = info.get('/Title', '').strip()
-                    author = info.get('/Author', '').strip()
-                    abstract_hint = (reader.pages[0].extract_text() or '')[:600].strip() if reader.pages else ''
-            except Exception as e:
-                logger.debug(f'PDF meta parse fallback: {e}')
-                title = author = abstract_hint = ''
-
-        updates = {}
-        if title and not ref.title.endswith('.pdf'):
-            updates['title'] = title
-        if author and not ref.first_author:
-            updates['first_author'] = author.split(';')[0].split(',')[0][:100]
-        if abstract_hint and not ref.abstract:
-            updates['abstract'] = abstract_hint
-        if updates:
-            QAReference.objects.filter(pk=ref_id).update(**updates)
+        asset_id = QAFulltextAsset.objects.only('id').get(qa_reference_id=ref_id).id
+        process_fulltext_asset(asset_id)
     except Exception as e:
-        logger.warning(f'extract_pdf_meta ref_id={ref_id}: {e}')
+        logger.warning('extract_pdf_meta ref_id=%s failed=%s', ref_id, type(e).__name__)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -293,7 +254,7 @@ class QAEvalHandler:
         refs = list(QAReference.objects.filter(
             pk__in=self.ref_ids,
             quality_method__in=AI_SUPPORTED_METHODS,
-        ).select_related('fulltext_file'))
+        ).select_related('fulltext_file', 'fulltext_asset'))
 
         logger.info(f'[QA] 开始评价 project_id={self.project_id}，共 {len(refs)} 篇，模式={self.eval_mode}，模型={self.model_ids}')
 
@@ -536,17 +497,34 @@ class QAEvalHandler:
         - has_fulltext=False: 仅使用摘要
         - content=None:       无内容，需跳过
         """
-        # 优先读取全文 PDF
+        # 新链路优先读取已经校验并提取的私有文本，不在 AI 线程重复解析 PDF。
+        asset = getattr(ref, 'fulltext_asset', None)
+        if asset and asset.status == 'ready' and asset.extraction_status == 'completed':
+            try:
+                asset.extracted_text_file.open('rb')
+                raw = asset.extracted_text_file.read(settings.QA_AI_MAX_CONTENT_CHARS * 4 + 1)
+                text = raw.decode('utf-8', errors='replace')[:settings.QA_AI_MAX_CONTENT_CHARS]
+                if len(text.strip()) > 100:
+                    return text, True
+            except Exception as exc:
+                logger.warning('[QA] 文献 %s 提取文本读取失败: %s', ref.id, type(exc).__name__)
+            finally:
+                try:
+                    asset.extracted_text_file.close()
+                except Exception:
+                    pass
+
+        # 历史 DataFile 兼容：通过 Storage 抽象物化，不直接依赖 file.path。
         if ref.fulltext_file:
             try:
-                file_path = ref.fulltext_file.file.path
-                if os.path.exists(file_path):
+                from core.quality.storage import materialized_storage_path
+
+                with materialized_storage_path(ref.fulltext_file.file, suffix='.pdf') as file_path:
                     text = self._extract_pdf_text(file_path)
-                    if text and len(text.strip()) > 100:
-                        # 截取前 8000 字符（避免超出 context 限制）
-                        return text[:8000], True
-            except Exception as e:
-                logger.warning(f'[QA] 文献 {ref.id} 全文读取失败: {e}')
+                if text and len(text.strip()) > 100:
+                    return text[:settings.QA_AI_MAX_CONTENT_CHARS], True
+            except Exception as exc:
+                logger.warning('[QA] 文献 %s 历史全文读取失败: %s', ref.id, type(exc).__name__)
 
         # 降级：使用摘要
         if ref.abstract and len(ref.abstract.strip()) > 50:
@@ -557,7 +535,7 @@ class QAEvalHandler:
 
     @staticmethod
     def _extract_pdf_text(file_path: str) -> str:
-        """提取 PDF 文本（优先 PyMuPDF，备用 PyPDF2，再备用 pdfminer）。
+        """有页数和字符上限地提取历史 PDF 文本（PyMuPDF，备用 PyPDF2）。
         PyMuPDF 可正确处理 AES 加密 PDF 及复杂字体嵌入，推荐首选。
         """
         # ── 优先：PyMuPDF（fitz）────────────────────────────────────────────
@@ -565,10 +543,15 @@ class QAEvalHandler:
             import fitz  # PyMuPDF
             doc = fitz.open(file_path)
             pages_text = []
-            for page in doc[:20]:  # 最多读前 20 页
+            char_count = 0
+            for page in doc[:settings.QA_PDF_TEXT_MAX_PAGES]:
                 t = page.get_text()
                 if t and t.strip():
-                    pages_text.append(t)
+                    remaining = settings.QA_PDF_TEXT_MAX_CHARS - char_count
+                    pages_text.append(t[:remaining])
+                    char_count += min(len(t), remaining)
+                    if char_count >= settings.QA_PDF_TEXT_MAX_CHARS:
+                        break
             doc.close()
             result = '\n'.join(pages_text)
             if result.strip():
@@ -584,24 +567,20 @@ class QAEvalHandler:
             with open(file_path, 'rb') as f:
                 reader = PyPDF2.PdfReader(f)
                 pages_text = []
-                for page in reader.pages[:20]:
+                char_count = 0
+                for page in reader.pages[:settings.QA_PDF_TEXT_MAX_PAGES]:
                     t = page.extract_text()
                     if t:
-                        pages_text.append(t)
+                        remaining = settings.QA_PDF_TEXT_MAX_CHARS - char_count
+                        pages_text.append(t[:remaining])
+                        char_count += min(len(t), remaining)
+                        if char_count >= settings.QA_PDF_TEXT_MAX_CHARS:
+                            break
                 return '\n'.join(pages_text)
         except ImportError:
             pass
         except Exception as e:
             logger.debug(f'PyPDF2 失败: {e}')
-
-        # ── 最终备用：pdfminer ───────────────────────────────────────────────
-        try:
-            from pdfminer.high_level import extract_text
-            return extract_text(file_path)
-        except ImportError:
-            pass
-        except Exception as e:
-            logger.debug(f'pdfminer 失败: {e}')
 
         return ''
 
@@ -693,7 +672,7 @@ class QAEvalStepHandler(BaseStepHandler):
         refs = list(QAReference.objects.filter(
             pk__in=ref_ids_to_eval,
             quality_method__in=AI_SUPPORTED_METHODS,
-        ).select_related('fulltext_file'))
+        ).select_related('fulltext_file', 'fulltext_asset'))
 
         for ref_index, ref in enumerate(refs):
             if self.executor.check_stop_signal():

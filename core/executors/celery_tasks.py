@@ -30,6 +30,29 @@ from core.workflow.services.lifecycle import InvalidStateTransition, transition_
 logger = logging.getLogger(__name__)
 
 
+def _sync_import_batch_terminal_state(task_obj, *, cancelled=False):
+    batch_id = (task_obj.config or {}).get('import_batch_id') if task_obj else None
+    if not batch_id:
+        return
+    from core.screening.services.import_service import cancel_import_batch, fail_import_batch
+
+    if cancelled:
+        cancel_import_batch(batch_id)
+    else:
+        fail_import_batch(batch_id)
+
+
+def _fail_screening_run_for_task(task_obj):
+    if not task_obj or task_obj.task_type != 'ai_screen':
+        return
+    config = Task.objects.filter(pk=task_obj.pk).values_list('config', flat=True).first() or {}
+    run_id = config.get('screening_run_id')
+    if run_id:
+        from core.screening.services.screening_run_service import fail_screening_run
+
+        fail_screening_run(run_id)
+
+
 @shared_task(bind=True, max_retries=3)
 def execute_async_step(self, task_id: int, step_key: str, project_id: int):
     """
@@ -134,6 +157,7 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
         task_obj = Task.objects.get(id=task_id)
         if task_obj.status in (TaskStatus.STOPPING, TaskStatus.STOPPED):
             executor.finalize(False)
+            _sync_import_batch_terminal_state(task_obj, cancelled=True)
             logger.info(f"[Celery] 任务被用户暂停: task_id={task_id}")
             return False
         raise RuntimeError("任务执行返回失败状态")
@@ -147,6 +171,7 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
         if task_obj and task_obj.status in (TaskStatus.STOPPING, TaskStatus.STOPPED):
             if executor:
                 executor.finalize(False, str(e))
+            _sync_import_batch_terminal_state(task_obj, cancelled=True)
             logger.info(f"[Celery] 任务停止后不再重试: task_id={task_id}")
             return False
 
@@ -175,6 +200,8 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
 
         if executor:
             executor.finalize(False, str(e))
+        _fail_screening_run_for_task(task_obj)
+        _sync_import_batch_terminal_state(task_obj, cancelled=False)
         logger.error(f"[Celery] 任务最终失败: task_id={task_id}, error={str(e)}")
         raise
 
@@ -246,48 +273,33 @@ def cleanup_old_workspaces():
 
     删除超过30天的已完成任务工作区
     """
-    import os
-    import shutil
     from datetime import timedelta
     from pathlib import Path
+    from core.artifacts.services import cleanup_expired_workspaces
 
     logger.info("[Celery] 清理旧工作区...")
 
     workspaces_root = Path(settings.BASE_DIR) / "workspaces"
 
-    if not workspaces_root.exists():
-        return
-
-    cutoff = timezone.now() - timedelta(days=30)
-    cleaned_count = 0
-
-    for project_dir in workspaces_root.iterdir():
-        if not project_dir.is_dir():
-            continue
-
-        for task_dir in project_dir.iterdir():
-            if not task_dir.is_dir():
-                continue
-
-            # 从目录名提取时间戳
-            # 格式: {step}_{timestamp}
-            try:
-                parts = task_dir.name.split('_')
-                if len(parts) >= 2:
-                    timestamp_str = parts[-1]
-                    timestamp = timezone.datetime.strptime(timestamp_str, '%Y%m%d%H%M%S')
-
-                    if timestamp < cutoff:
-                        # 删除目录
-                        shutil.rmtree(task_dir, ignore_errors=True)
-                        cleaned_count += 1
-                        logger.debug(f"[清理] 删除: {task_dir}")
-
-            except (ValueError, IndexError):
-                continue
+    retention_days = max(1, int(settings.TASK_WORKSPACE_RETENTION_DAYS))
+    cutoff = timezone.now() - timedelta(days=retention_days)
+    cleaned_count = cleanup_expired_workspaces(workspaces_root, cutoff.timestamp())
 
     if cleaned_count > 0:
         logger.info(f"[Celery] 清理了 {cleaned_count} 个旧工作区")
+
+
+@shared_task
+def cleanup_abandoned_screening_imports():
+    from core.screening.services.import_service import cleanup_abandoned_import_files
+
+    result = cleanup_abandoned_import_files()
+    if result['purged_files']:
+        logger.info(
+            '[Celery] 清理了 %s 个废弃索引文件（%s bytes）',
+            result['purged_files'], result['purged_bytes'],
+        )
+    return result
 
 
 @shared_task

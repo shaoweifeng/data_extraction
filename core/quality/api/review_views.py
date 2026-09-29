@@ -9,7 +9,8 @@ from core.quality.api.common import (
     _serialize_domain, _serialize_signal, _validated_json,
 )
 from core.quality.api.serializers import (
-    QASignalBatchConfirmInputSerializer, QASignalConfirmInputSerializer,
+    QAProjectBatchConfirmInputSerializer, QASignalBatchConfirmInputSerializer,
+    QASignalConfirmInputSerializer,
 )
 from core.quality.services.domain_results import recalculate_domain_results as _recalc_domain_results
 
@@ -114,6 +115,37 @@ def signal_batch_confirm(request):
         created_by=request.user,
     )
     return _json_ok({'confirmed': confirmed_count})
+
+
+@login_required
+@require_http_methods(['POST'])
+def project_batch_confirm(request):
+    """一次确认项目内所有已有评价结果，自动排除未评价和无信号文献。"""
+    body, error = _validated_json(request, QAProjectBatchConfirmInputSerializer)
+    if error:
+        return error
+    from core.quality.api.common import _get_project
+
+    project = _get_project(request, body['project_id'])
+    if not project:
+        return _json_err('无权访问该项目或项目不存在', 404)
+
+    from core.quality.services.review_service import batch_confirm_project
+
+    result = batch_confirm_project(project, body['confirm_mode'], request.user)
+    from core.models import ActivityLog
+    ActivityLog.objects.create(
+        project=project,
+        operation_type='qa_batch_confirm',
+        operation_detail={
+            'scope': 'project_evaluated_only',
+            'confirm_mode': body['confirm_mode'],
+            'confirmed_references': result['references'],
+            'confirmed_signals': result['signals'],
+        },
+        created_by=request.user,
+    )
+    return _json_ok(result)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

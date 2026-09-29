@@ -14,7 +14,7 @@
     <div class="batch-bar">
       <label class="checkbox-label">
         <input type="checkbox" :checked="allChecked" @change="toggleAll" />
-        <span>全选（{{ checkedIds.length }}/{{ qa.refs.length }}）</span>
+        <span>全选本页（{{ checkedIds.length }}/{{ pageData.results.length }}）</span>
       </label>
       <div v-if="checkedIds.length" class="batch-actions">
         <span class="batch-hint">已选 {{ checkedIds.length }} 篇：</span>
@@ -49,11 +49,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(ref, idx) in filteredRefs" :key="ref.id" :class="{ 'row-checked': checkedIds.includes(ref.id) }">
+          <tr v-for="(ref, idx) in pageData.results" :key="ref.id" :class="{ 'row-checked': checkedIds.includes(ref.id) }">
             <td class="center">
               <input type="checkbox" :checked="checkedIds.includes(ref.id)" @change="toggleCheck(ref.id)" />
             </td>
-            <td class="center text-muted">{{ idx + 1 }}</td>
+            <td class="center text-muted">{{ (pageData.page - 1) * pageData.page_size + idx + 1 }}</td>
             <td>
               <p class="ref-title-text" :title="ref.title">{{ ref.title }}</p>
               <span v-if="ref.first_author" class="ref-meta">{{ ref.first_author }}{{ ref.year ? ` · ${ref.year}` : '' }}</span>
@@ -75,11 +75,18 @@
               </select>
             </td>
           </tr>
-          <tr v-if="!filteredRefs.length">
+          <tr v-if="!pageData.results.length">
             <td colspan="5" class="empty-row">暂无文献</td>
           </tr>
         </tbody>
       </table>
+      <QAPagination
+        :page="pageData.page"
+        :total-pages="pageData.total_pages"
+        :total="pageData.count"
+        :loading="pageLoading"
+        @change="loadPage"
+      />
     </div>
 
     <!-- 方法说明 -->
@@ -98,9 +105,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useQAStore } from '@/features/quality/store'
 import { useProjectStore } from '@/features/projects/store'
+import QAPagination from './QAPagination.vue'
 
 const qa = useQAStore()
 const project = useProjectStore()
@@ -109,23 +117,42 @@ const checkedIds  = ref([])
 const batchMethod = ref('')
 const batchLoading = ref(false)
 const searchText  = ref('')
+const pageLoading = ref(false)
+const pageData = ref({ results: [], count: 0, page: 1, page_size: 30, total_pages: 1, summary: {} })
+let searchTimer = null
 
-const filteredRefs = computed(() => {
-  if (!searchText.value.trim()) return qa.refs
-  const q = searchText.value.toLowerCase()
-  return qa.refs.filter(r => r.title.toLowerCase().includes(q))
-})
+const allChecked = computed(() => (
+  pageData.value.results.length > 0
+  && pageData.value.results.every(item => checkedIds.value.includes(item.id))
+))
 
-const allChecked  = computed(() => checkedIds.value.length === qa.refs.length && qa.refs.length > 0)
-const readyCount  = computed(() => qa.refs.filter(r => r.quality_method).length)
-const noMethodCount = computed(() => qa.refs.filter(r => !r.quality_method).length)
+async function loadPage(page = 1) {
+  if (!project.currentProject) return
+  pageLoading.value = true
+  try {
+    pageData.value = await qa.fetchRefPage(project.currentProject.id, {
+      page,
+      page_size: 30,
+      q: searchText.value.trim(),
+    })
+    checkedIds.value = []
+  } finally {
+    pageLoading.value = false
+  }
+}
 
 onMounted(async () => {
-  await qa.fetchMethods()
+  await Promise.all([qa.fetchMethods(), loadPage(1)])
 })
 
+watch(searchText, () => {
+  window.clearTimeout(searchTimer)
+  searchTimer = window.setTimeout(() => loadPage(1), 300)
+})
+onUnmounted(() => window.clearTimeout(searchTimer))
+
 function toggleAll(e) {
-  checkedIds.value = e.target.checked ? qa.refs.map(r => r.id) : []
+  checkedIds.value = e.target.checked ? pageData.value.results.map(r => r.id) : []
 }
 function toggleCheck(id) {
   const idx = checkedIds.value.indexOf(id)
@@ -134,7 +161,9 @@ function toggleCheck(id) {
 }
 
 async function setRefMethod(ref, method) {
-  await qa.updateRef(ref.id, { quality_method: method })
+  const updated = await qa.updateRef(ref.id, { quality_method: method })
+  const index = pageData.value.results.findIndex(item => item.id === ref.id)
+  if (index !== -1) pageData.value.results[index] = updated
 }
 
 async function doBatchMethod() {
@@ -142,6 +171,9 @@ async function doBatchMethod() {
   batchLoading.value = true
   try {
     await qa.batchSetMethod(checkedIds.value, batchMethod.value)
+    pageData.value.results.forEach((item) => {
+      if (checkedIds.value.includes(item.id)) item.quality_method = batchMethod.value
+    })
     batchMethod.value = ''
     checkedIds.value = []
   } finally {

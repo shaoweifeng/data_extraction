@@ -47,7 +47,11 @@ async function handleNext() {
       const stage = project.stagesData?.find(s => s.stage_key === 'SCREEN_1')
       const reviewStep = stage?.steps?.find(s => s.step_key === 'review')
       if (reviewStep) {
-        await screeningApi.completeReview(project.currentProject?.id, reviewStep.id)
+        await screeningApi.completeReview(
+          project.currentProject?.id,
+          reviewStep.id,
+          screening.reviewRunId,
+        )
         // 刷新 stagesData，让步骤指示器变绿
         await project.fetchStages(project.currentProject?.id)
       }

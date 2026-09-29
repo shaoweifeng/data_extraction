@@ -1,6 +1,9 @@
 import json
+from pathlib import Path
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
+from django.db.models import F, Q
 from rest_framework import serializers as drf_serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -11,6 +14,7 @@ from ..models import ActivityLog, DataFile, ProjectStage, StageStep
 from ..artifacts.types import ArtifactType
 from ..serializers import DataFileSerializer
 from ..services.access_policy import ProjectAccessPolicy
+from core.screening.services.import_validation import FORMAT_BY_EXTENSION
 
 
 class DataFileViewSet(viewsets.ModelViewSet):
@@ -39,24 +43,15 @@ class DataFileViewSet(viewsets.ModelViewSet):
         data_category = qp.get('data_category')
         if data_category:
             qs = qs.filter(data_category=data_category)
-
-        # 排除已被 AI 初筛处理过的源文件（供 AI 初筛"待筛选"列表使用）
-        # 已筛选结果 DataFile 的 metadata.source_xml 记录了源文件名，
-        # 用它反查、排除掉源文件列表中已筛选的条目，使列表随筛选进度动态减少。
-        if qp.get('exclude_screened') in ('1', 'true', 'True') and project_id:
-            ai_step = StageStep.objects.filter(
-                stage__project_id=project_id,
-                stage__stage_key='SCREEN_1',
-                step_key='ai_screen',
-            ).first()
-            if ai_step:
-                screened_sources = (
-                    DataFile.objects.filter(step=ai_step, data_category='output')
-                    .values_list('metadata__source_xml', flat=True)
+        if data_category == 'input':
+            qs = qs.filter(
+                Q(reference_import_file__isnull=True)
+                | Q(reference_import_file__removed_revision__isnull=True)
+                | Q(
+                    reference_import_file__removed_revision__gt=
+                    F('reference_import_file__import_batch__corpus__revision')
                 )
-                screened_sources = [s for s in screened_sources if s]
-                if screened_sources:
-                    qs = qs.exclude(filename__in=screened_sources)
+            )
 
         return qs.select_related('stage', 'step', 'created_by').prefetch_related('versions')
 
@@ -86,12 +81,18 @@ class DataFileViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("缺少权限：file.download")
 
         data_file = self.get_object()
-        if not data_file.file:
+        private_file = None
+        try:
+            private_file = data_file.reference_import_file.raw_file
+        except (AttributeError, ObjectDoesNotExist):
+            pass
+        downloadable = private_file or data_file.file
+        if not downloadable:
             return Response({'error': '文件不存在'}, status=status.HTTP_404_NOT_FOUND)
 
-        data_file.file.open('rb')
+        downloadable.open('rb')
         return FileResponse(
-            data_file.file,
+            downloadable,
             as_attachment=True,
             filename=data_file.filename,
             content_type='application/octet-stream',
@@ -132,6 +133,18 @@ class DataFileViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("缺少权限：file.upload")
 
         uploaded_file = self.request.FILES.get('file')
+        requested_category = serializer.validated_data.get('data_category', 'input')
+        if (
+            requested_category == 'input'
+            and uploaded_file
+            and Path(uploaded_file.name).suffix.lower() in FORMAT_BY_EXTENSION
+        ):
+            raise drf_serializers.ValidationError({
+                'error': {
+                    'code': 'screening_import_endpoint_required',
+                    'message': '文献索引请使用 /api/screening-imports/ 批次上传接口。',
+                }
+            })
         if uploaded_file and not serializer.validated_data.get('filename'):
             serializer.validated_data['filename'] = uploaded_file.name
 
@@ -200,3 +213,19 @@ class DataFileViewSet(viewsets.ModelViewSet):
             created_by=self.request.user,
         )
         instance.delete()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            instance.reference_import_file
+        except (AttributeError, ObjectDoesNotExist):
+            return super().destroy(request, *args, **kwargs)
+
+        from core.screening.services.import_service import remove_source_file
+        from core.screening.services.import_errors import ScreeningImportError
+
+        try:
+            remove_source_file(instance, request.user)
+        except ScreeningImportError as exc:
+            return Response({'error': exc.as_dict()}, status=exc.http_status)
+        return Response(status=status.HTTP_204_NO_CONTENT)

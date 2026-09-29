@@ -16,10 +16,12 @@ describe('quality API', () => {
   it('keeps the established QA route contract', async () => {
     await qualityApi.fetchRefs(42)
     await qualityApi.startEvaluation({ project_id: 42, ref_ids: [7] })
+    await qualityApi.retryFulltext(18)
     await qualityApi.fetchChartSettings(42, 'ROB2')
 
     expect(http.get).toHaveBeenNthCalledWith(1, '/qa/refs/', { params: { project_id: 42 } })
     expect(http.post).toHaveBeenCalledWith('/qa/eval/start/', { project_id: 42, ref_ids: [7] })
+    expect(http.post).toHaveBeenCalledWith('/qa/fulltext-assets/18/retry/')
     expect(http.get).toHaveBeenNthCalledWith(2, '/qa/chart/settings/', {
       params: { project_id: 42, quality_method: 'ROB2' },
     })

@@ -46,6 +46,7 @@ class AIUsageContext:
     project: Any
     task: Any
     model_ids: Iterable[str]
+    idempotency_key: str | None = None
 
 
 class AIUsageSettlementService:
@@ -79,26 +80,40 @@ class AIUsageSettlementService:
                 context.user,
                 credits,
                 task=context.task,
+                idempotency_key=context.idempotency_key,
                 note=f'{context.feature}(免费) · {project_name} · 模型:{model_name}'
                      f'（{stats.get("ref_count", 0)}篇/{total_tokens} tokens，等值{credits} credits）',
             )
         else:
             transaction_record = consume_credits(
-                context.user, credits, task=context.task, note=detail,
+                context.user,
+                credits,
+                task=context.task,
+                note=detail,
+                idempotency_key=context.idempotency_key,
             )
 
-        usage_log = TokenUsageLog.objects.create(
-            task=context.task,
-            project=context.project,
-            user=context.user,
-            model=model_name,
-            prompt_tokens=stats.get('prompt_tokens', 0),
-            completion_tokens=stats.get('completion_tokens', 0),
-            total_tokens=total_tokens,
-            credits_consumed=credits,
-            ref_count=stats.get('ref_count', 0),
-            transaction=transaction_record,
-        )
+        usage_defaults = {
+            'task': context.task,
+            'project': context.project,
+            'user': context.user,
+            'model': model_name,
+            'prompt_tokens': stats.get('prompt_tokens', 0),
+            'completion_tokens': stats.get('completion_tokens', 0),
+            'total_tokens': total_tokens,
+            'credits_consumed': credits,
+            'ref_count': stats.get('ref_count', 0),
+        }
+        if transaction_record is not None:
+            usage_log, _ = TokenUsageLog.objects.update_or_create(
+                transaction=transaction_record,
+                defaults=usage_defaults,
+            )
+        else:
+            usage_log = TokenUsageLog.objects.create(
+                transaction=None,
+                **usage_defaults,
+            )
 
         if context.task:
             result = dict(context.task.result or {})

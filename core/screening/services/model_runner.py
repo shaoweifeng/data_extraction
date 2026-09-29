@@ -32,11 +32,14 @@ class ScreeningModelRunner:
 
             # key: 条目索引 -> [{模型结果}, ...]
             per_entry_model_results: List[List[dict]] = [[] for _ in batch]
+            configured_provider_seen = False
+            provider_errors = []
 
             for model_id in model_ids:
                 if not provider_is_configured(model_id):
                     self.logger.warning(f"[AI] 模型 {model_id} 未配置 API Key，跳过该模型")
                     continue
+                configured_provider_seen = True
 
                 thinking_enabled = self.config.get('enable_thinking') is True
                 provider = get_provider(model_id, thinking_enabled=thinking_enabled)
@@ -50,6 +53,7 @@ class ScreeningModelRunner:
                     screening_results = provider.screen_batch(batch, criteria, prompt_template, concurrency=concurrency)
                 except Exception as e:
                     self.logger.warning(f"[AI] 模型 {model_display} 调用失败: {e}")
+                    provider_errors.append(f'{model_display}: {e}')
                     continue
 
                 for idx, (entry, sr) in enumerate(zip(batch, screening_results)):
@@ -67,14 +71,32 @@ class ScreeningModelRunner:
                     if sr.token_usage:
                         pass  # token_usage 随 result 返回，在 execute() 里汇总
 
-            # 所有模型均无 API Key 时退化为 mock
+            # 生产链路禁止用随机 mock 结果冒充真实筛选；未配置或全部失败均进入重试。
             if all(len(r) == 0 for r in per_entry_model_results):
-                self.logger.warning("[AI] 所有模型均无效，使用 mock")
-                return self._mock_api_call(batch, criteria)
+                message = '; '.join(provider_errors) or (
+                    '所选模型未配置 API Key' if not configured_provider_seen else '模型未返回结果'
+                )
+                return [
+                    {
+                        'reference_id': entry.get('reference_id'),
+                        'decision': 'uncertain',
+                        'consensus': 'pending',
+                        'error': message,
+                    }
+                    for entry in batch
+                ]
 
             # 构建最终返回结果（与旧接口兼容）
             results = []
             for idx, (entry, model_results) in enumerate(zip(batch, per_entry_model_results)):
+                if not model_results:
+                    results.append({
+                        'reference_id': entry.get('reference_id'),
+                        'decision': 'uncertain',
+                        'consensus': 'pending',
+                        'error': '; '.join(provider_errors) or '模型未返回该文献的结果',
+                    })
+                    continue
                 consensus = resolve_consensus(model_results)
                 summary_reason = build_summary_reason(model_results)
 
@@ -118,13 +140,13 @@ class ScreeningModelRunner:
                             break
 
                 results.append({
+                    'reference_id': entry.get('reference_id'),
                     'title':    entry.get('title', ''),
                     'authors':  entry.get('authors', ''),
                     'year':     entry.get('year', ''),
                     'journal':  entry.get('journal', ''),
                     'doi':      entry.get('doi', ''),
                     'url':      entry.get('url', ''),
-                    'source_xml': entry.get('source_xml', ''),
                     # 展示对外的主字段（单模型时直接用主模型结果，多模型时用 consensus）
                     'decision':  consensus,
                     'include_or_not': 'yes' if consensus == 'included' else 'no',
@@ -151,13 +173,13 @@ class ScreeningModelRunner:
             for entry in batch:
                 decision = random.choice(['included', 'excluded'])
                 results.append({
+                    "reference_id": entry.get("reference_id"),
                     "title": entry.get("title", ""),
                     "authors": entry.get("authors", ""),
                     "year": entry.get("year", ""),
                     "journal": entry.get("journal", ""),
                     "doi": entry.get("doi", ""),
                     "url": entry.get("url", ""),
-                    "source_xml": entry.get("source_xml", ""),
                     "decision": decision,
                     "include_or_not": "yes" if decision == "included" else "no",
                     "exclusion_reason": f"根据排除标准: {', '.join(criteria[:2])}..." if decision == "excluded" else "",

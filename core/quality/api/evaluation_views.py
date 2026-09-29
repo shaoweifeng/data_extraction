@@ -4,6 +4,7 @@ import logging
 
 from django.contrib.auth.decorators import login_required
 from django.db import models
+from django.db.models import Count, Q
 from django.views.decorators.http import require_http_methods
 
 from core.models import QAReference, QASignalItem
@@ -87,7 +88,9 @@ def eval_progress(request):
     pending     = refs.filter(ai_eval_status='pending').count()
     running     = refs.filter(ai_eval_status='running').count()
     completed   = refs.filter(ai_eval_status='completed').count()
-    failed      = refs.filter(ai_eval_status__in=['failed', 'skipped_no_fulltext', 'skipped_no_method']).count()
+    failed      = refs.filter(ai_eval_status='failed').count()
+    skipped_no_fulltext = refs.filter(ai_eval_status='skipped_no_fulltext').count()
+    skipped_no_method = refs.filter(ai_eval_status='skipped_no_method').count()
     abstract_only = refs.filter(ai_eval_status='abstract_only').count()
 
     # 双模型信号问题一致性统计
@@ -102,11 +105,28 @@ def eval_progress(request):
         is_confirmed=False,
     ).count()
 
-    # 文献级进度列表
+    # 进度列表只展示正在执行和已经产出结果的文献。纯 pending 文献可能从未
+    # 进入本轮评价，全部返回会把真正的任务状态淹没，也会放大大项目的响应体。
+    visible_refs = (
+        refs.exclude(ai_eval_status='pending')
+        .annotate(
+            divergent_count_value=Count(
+                'signal_items', filter=Q(signal_items__consistency='divergent')
+            )
+        )
+        .order_by(
+            models.Case(
+                models.When(ai_eval_status='running', then=0),
+                models.When(ai_eval_status='failed', then=1),
+                default=2,
+                output_field=models.IntegerField(),
+            ),
+            '-updated_at',
+        )[:200]
+    )
+    visible_total = refs.exclude(ai_eval_status='pending').count()
     ref_list_data = []
-    for ref in refs.select_related('fulltext_file'):
-        # 双模型分歧数
-        div = QASignalItem.objects.filter(qa_ref=ref, consistency='divergent').count() if ref.eval_mode == 'dual' else 0
+    for ref in visible_refs:
         ref_list_data.append({
             'id':             ref.id,
             'title':          ref.title,
@@ -114,7 +134,7 @@ def eval_progress(request):
             'eval_mode':      ref.eval_mode,
             'ai_eval_status': ref.ai_eval_status,
             'review_status':  ref.review_status,
-            'divergent_count': div,
+            'divergent_count': ref.divergent_count_value if ref.eval_mode in ['dual', 'multi'] else 0,
         })
 
     return _json_ok({
@@ -124,10 +144,14 @@ def eval_progress(request):
             'running':      running,
             'completed':    completed + abstract_only,
             'failed':       failed,
+            'skipped_no_fulltext': skipped_no_fulltext,
+            'skipped_no_method': skipped_no_method,
             'abstract_only': abstract_only,
             'divergent_signal_count': divergent_count,
         },
         'refs': ref_list_data,
+        'refs_total': visible_total,
+        'refs_truncated': visible_total > len(ref_list_data),
         'token_stats': _get_qa_token_stats(project, request.user),
     })
 

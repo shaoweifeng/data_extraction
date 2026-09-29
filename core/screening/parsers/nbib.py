@@ -1,10 +1,12 @@
 """PubMed NBIB/Medline reference parser."""
 
 import os
-from typing import Dict, List
+from typing import Dict, Iterator
+
+from .enw import _detect_text_encoding
 
 
-def parse_nbib(file_path: str) -> List[Dict]:
+def parse_nbib(file_path: str) -> Iterator[Dict]:
     """
     解析NBIB/Medline格式文献（PubMed导出）
 
@@ -60,7 +62,7 @@ def parse_nbib(file_path: str) -> List[Dict]:
         else:
             address = None
 
-        return {
+        normalized = {
             'title': get_first(record, ['TI', 'BTI']),
             'authors': authors,
             'journal': get_first(record, ['JT', 'TA']),
@@ -79,11 +81,13 @@ def parse_nbib(file_path: str) -> List[Dict]:
             'source_position': position,
             'source_type': 'NBIB'
         }
+        normalized['_raw_metadata'] = record
+        return normalized
 
-    parsed_entries = []
     current_record = {}
     current_key = None
     current_value = []
+    record_position = 0
 
     def flush_field():
         nonlocal current_key, current_value
@@ -101,17 +105,20 @@ def parse_nbib(file_path: str) -> List[Dict]:
         current_key = None
         current_value = []
 
-    def flush_record():
-        nonlocal current_record
+    def take_record():
+        nonlocal current_record, record_position
         flush_field()
         if not current_record:
-            return
-        parsed_entries.append(normalize(current_record, len(parsed_entries) + 1))
+            return None
+        record_position += 1
+        normalized = normalize(current_record, record_position)
         current_record = {}
+        return normalized
 
     # 单遍逐行解析：不再 readlines()，也不同时保留 lines、records
     # 和 parsed_entries 三份数据。
-    with open(file_path, 'r', encoding='utf-8-sig', errors='strict') as source:
+    encoding = _detect_text_encoding(file_path)
+    with open(file_path, 'r', encoding=encoding, errors='strict') as source:
         for raw_line in source:
             line = raw_line.rstrip('\r\n')
             if not line.strip():
@@ -129,10 +136,12 @@ def parse_nbib(file_path: str) -> List[Dict]:
             value = value.strip()
             flush_field()
             if tag == 'PMID' and current_record:
-                flush_record()
+                record = take_record()
+                if record is not None:
+                    yield record
             current_key = tag
             current_value = [value] if value else []
 
-    flush_record()
-
-    return parsed_entries
+    record = take_record()
+    if record is not None:
+        yield record

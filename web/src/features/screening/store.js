@@ -58,6 +58,7 @@ export const useScreeningStore = defineStore('screening', () => {
   const processedCount = ref(0)
   const screeningProgressValue = ref(0)
   const totalRefs = ref(0)
+  const reviewRunId = ref(null)
 
   // computed：筛选统计（优先使用后端统计值）
   const screeningResults = computed(() => {
@@ -104,6 +105,10 @@ export const useScreeningStore = defineStore('screening', () => {
   const selectedExcelExcludedVersion = ref(0)
   const exportXlsxFiles = ref([])
   const exportRisFiles = ref([])
+  const exportXmlFiles = ref([])
+  const exportXmlAllFiles = ref([])
+  const exportXmlIncludedFiles = ref([])
+  const exportXmlExcludedFiles = ref([])
   const exportXlsxAllFiles = ref([])
   const exportXlsxIncludedFiles = ref([])
   const exportXlsxExcludedFiles = ref([])
@@ -148,6 +153,7 @@ export const useScreeningStore = defineStore('screening', () => {
     processedCount.value = 0
     screeningProgressValue.value = 0
     totalRefs.value = 0
+    reviewRunId.value = null
     enableThinking.value = false
     promptPanelOpen.value = false
     useCustomPrompt.value = false
@@ -163,6 +169,10 @@ export const useScreeningStore = defineStore('screening', () => {
     selectedExcelExcludedVersion.value = 0
     exportXlsxFiles.value = []
     exportRisFiles.value = []
+    exportXmlFiles.value = []
+    exportXmlAllFiles.value = []
+    exportXmlIncludedFiles.value = []
+    exportXmlExcludedFiles.value = []
     exportXlsxAllFiles.value = []
     exportXlsxIncludedFiles.value = []
     exportXlsxExcludedFiles.value = []
@@ -180,13 +190,15 @@ export const useScreeningStore = defineStore('screening', () => {
     screeningTab, pendingFiles, screenedFiles, pendingPage, screenedPage,
     pendingTotal, screenedTotal, PAGE_SIZE, latestTask, latestAiScreenTask, isProcessing,
     aiScreenStats, screeningResults, screeningProgress, aiScreenLogContent, processedCount,
-    screeningProgressValue, totalRefs,
+    screeningProgressValue, totalRefs, reviewRunId,
     aiModelsList, aiModelsLoading, selectedAiModel, selectedAiModels, enableThinking,
     promptPanelOpen, useCustomPrompt, customPromptText, promptSaveStatus, defaultPromptPreview,
     exportFiles, exportStepId, isExporting, exportingType,
     selectedExcelVersion, selectedRisVersion, selectedExcelAllVersion,
     selectedExcelIncludedVersion, selectedExcelExcludedVersion,
-    exportXlsxFiles, exportRisFiles, exportXlsxAllFiles,
+    exportXlsxFiles, exportRisFiles, exportXmlFiles,
+    exportXmlAllFiles, exportXmlIncludedFiles, exportXmlExcludedFiles,
+    exportXlsxAllFiles,
     exportXlsxIncludedFiles, exportXlsxExcludedFiles,
     reset,
   }

@@ -10,4 +10,4 @@ from .file_views import DataFileViewSet
 from .task_views import TaskViewSet
 from .user_views import UserViewSet
 from .activity_log_views import ActivityLogViewSet
-
+from core.screening.api.import_views import ScreeningImportViewSet

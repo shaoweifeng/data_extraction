@@ -2,17 +2,19 @@ import io
 import os
 import uuid
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from PIL import Image
 
 from core.feedback.models import FeedbackAttachment, FeedbackDailyQuota, UserFeedback
+from core.feedback.storage import FeedbackStorage
 from core.models import Project
 from core.operations.services import set_system_state
 
@@ -27,7 +29,34 @@ def image_upload(name='screen.png', image_format='PNG'):
     return SimpleUploadedFile(name, output.getvalue(), content_type=mime)
 
 
-class FeedbackApiTests(TestCase):
+class FeedbackApiTests(TransactionTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._feedback_temp_dir = TemporaryDirectory(prefix='feedback-tests-')
+        cls._feedback_settings = override_settings(
+            FEEDBACK_UPLOAD_ROOT=cls._feedback_temp_dir.name,
+        )
+        cls._feedback_settings.enable()
+        cls._attachment_file_field = FeedbackAttachment._meta.get_field('file')
+        cls._original_attachment_storage = cls._attachment_file_field.storage
+        cls._attachment_file_field.storage = FeedbackStorage()
+        try:
+            super().setUpClass()
+        except Exception:
+            cls._attachment_file_field.storage = cls._original_attachment_storage
+            cls._feedback_settings.disable()
+            cls._feedback_temp_dir.cleanup()
+            raise
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            super().tearDownClass()
+        finally:
+            cls._attachment_file_field.storage = cls._original_attachment_storage
+            cls._feedback_settings.disable()
+            cls._feedback_temp_dir.cleanup()
+
     def setUp(self):
         self.user = User.objects.create_user('feedback-user', password='pw')
         self.other = User.objects.create_user('feedback-other', password='pw')

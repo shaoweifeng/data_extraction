@@ -13,6 +13,7 @@ from .services import (
     pause_long_running_tasks,
     record_presence,
     resume_maintenance_tasks,
+    set_announcement,
     set_system_state,
 )
 
@@ -71,6 +72,27 @@ def operations_state(request):
             request.data.get('mode'),
             message=request.data.get('message', ''),
             scheduled_at=scheduled_at,
+            user=request.user,
+        )
+    except ValueError as exc:
+        return Response({'error': str(exc)}, status=400)
+    return Response(result)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def operations_announcement(request):
+    denied = _require_admin(request)
+    if denied:
+        return denied
+    enabled = request.data.get('enabled')
+    if not isinstance(enabled, bool):
+        return Response({'error': 'enabled 必须是布尔值'}, status=400)
+    try:
+        result = set_announcement(
+            enabled=enabled,
+            message=request.data.get('message', ''),
+            level=request.data.get('level', 'info'),
             user=request.user,
         )
     except ValueError as exc:

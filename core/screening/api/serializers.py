@@ -9,7 +9,7 @@ DECISION_CHOICES = [value for value, _ in ManualReview.DECISION_CHOICES]
 
 
 class ReviewItemInputSerializer(serializers.Serializer):
-    source_xml = serializers.CharField(max_length=500)
+    reference_id = serializers.IntegerField(min_value=1)
     decision = serializers.ChoiceField(choices=DECISION_CHOICES)
     reason = serializers.CharField(required=False, allow_blank=True, default='')
 
@@ -17,6 +17,7 @@ class ReviewItemInputSerializer(serializers.Serializer):
 class ReviewSubmitInputSerializer(serializers.Serializer):
     project = serializers.IntegerField(min_value=1)
     step = serializers.IntegerField(min_value=1)
+    screening_run = serializers.IntegerField(min_value=1)
     reviews = ReviewItemInputSerializer(many=True, allow_empty=False)
 
 
@@ -30,7 +31,10 @@ class ReviewUpdateInputSerializer(serializers.Serializer):
 class ReviewCompleteInputSerializer(serializers.Serializer):
     project = serializers.IntegerField(min_value=1)
     step = serializers.IntegerField(min_value=1)
+    screening_run = serializers.IntegerField(min_value=1)
 
 
-class ReviewNoteInputSerializer(ReviewCompleteInputSerializer):
+class ReviewNoteInputSerializer(serializers.Serializer):
+    project = serializers.IntegerField(min_value=1)
+    step = serializers.IntegerField(min_value=1)
     content = serializers.CharField(max_length=5000, trim_whitespace=True)

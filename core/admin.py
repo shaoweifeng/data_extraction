@@ -4,7 +4,7 @@ from django.contrib import admin
 from .models import (
     UserProfile, Permission, UserPermission, RoleTemplate,
     RoleTemplatePermission, Project, ProjectStage, StageStep,
-    DataFile, DataFileVersion, Task, ManualReview, SystemOperationState
+    DataFile, DataFileVersion, Task, ManualReview, QAFulltextAsset, SystemOperationState
 )
 from .models_billing import CreditAccount, CreditTransaction, TokenUsageLog, RechargeCode
 
@@ -275,7 +275,10 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(SystemOperationState)
 class SystemOperationStateAdmin(admin.ModelAdmin):
-    list_display = ['mode', 'message', 'scheduled_at', 'updated_by', 'updated_at']
+    list_display = [
+        'mode', 'message', 'announcement_enabled', 'announcement_message',
+        'scheduled_at', 'updated_by', 'updated_at',
+    ]
     readonly_fields = ['updated_by', 'updated_at']
 
     def has_add_permission(self, request):
@@ -438,16 +441,19 @@ class RechargeCodeAdmin(admin.ModelAdmin):
 @admin.register(ManualReview)
 class ManualReviewAdmin(admin.ModelAdmin):
     list_display  = [
-        'project', 'source_xml_short', 'ai_decision', 'decision',
+        'project', 'screening_run', 'reference', 'ai_decision', 'decision',
         'is_override', 'reviewer', 'reviewed_at'
     ]
     list_filter   = ['decision', 'ai_decision', 'is_override', 'project']
-    search_fields = ['source_xml', 'reason', 'ai_reason', 'project__name', 'reviewer__username']
-    readonly_fields = ['ai_decision', 'ai_reason', 'is_override', 'reviewed_at', 'created_at']
+    search_fields = ['reference__title', 'reason', 'ai_reason', 'project__name', 'reviewer__username']
+    readonly_fields = [
+        'screening_run', 'ai_decision', 'ai_reason', 'is_override',
+        'reviewed_at', 'created_at',
+    ]
 
     fieldsets = (
         ('文献信息', {
-            'fields': ('project', 'step', 'source_xml'),
+            'fields': ('project', 'step', 'screening_run', 'reference'),
         }),
         ('AI 判断（只读）', {
             'fields': ('ai_decision', 'ai_reason'),
@@ -462,7 +468,26 @@ class ManualReviewAdmin(admin.ModelAdmin):
         }),
     )
 
-    @admin.display(description='XML 文件名')
-    def source_xml_short(self, obj):
-        name = obj.source_xml.split('/')[-1]
-        return name[:60] + '…' if len(name) > 60 else name
+@admin.register(QAFulltextAsset)
+class QAFulltextAssetAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'project', 'qa_reference', 'status', 'scan_status',
+        'extraction_status', 'page_count', 'size_bytes', 'created_at',
+    ]
+    list_filter = ['status', 'scan_status', 'extraction_status', 'created_at']
+    search_fields = ['original_filename', 'sha256', 'qa_reference__title', 'project__name']
+    readonly_fields = [
+        'project', 'qa_reference', 'raw_file', 'extracted_text_file',
+        'original_filename', 'sha256', 'size_bytes', 'mime_type', 'page_count',
+        'scan_status', 'extraction_status', 'extracted_text_sha256',
+        'extracted_text_chars', 'error_code', 'error_message', 'validated_at',
+        'scanned_at', 'extracted_at', 'created_at', 'updated_at',
+    ]
+    raw_id_fields = ['project', 'qa_reference']
+
+    def has_add_permission(self, request):
+        return False
+
+
+# 初筛数据库化模型按领域拆分，Admin 自动发现仍从 core.admin 进入。
+from core.screening import admin as _screening_admin  # noqa: E402,F401

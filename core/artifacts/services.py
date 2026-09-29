@@ -6,20 +6,77 @@
 - 统一产物分类约定（data_category / step_key / metadata.artifact_type）
 - 收拢"删除输入文件时需要联动清理下游"的业务逻辑
 
-注意：
-- Executor 内部的产物写入逻辑（create DataFile）暂不迁移到本层，
-  那部分依赖执行上下文，在批次 C（handler 注册）时一并整理。
-- 本层专注于 ViewSet 层的产物查询与管理。
+执行器生成文件也通过本层持久化，确保分块写入、产物类型与元数据规则一致。
 """
 
+import re
+import shutil
+from pathlib import Path
 from typing import Dict, List
 
+from django.core.files import File
 from django.db.models import Count, Q
 
 from core.models import ActivityLog, DataFile, StageStep
 from core.artifacts.types import ArtifactType
 from core.workflow.domain.statuses import StageStepStatus
 from core.workflow.services.lifecycle import transition_step
+
+
+def persist_generated_artifact(
+    *, project, stage, step, creator, file_path: Path, filename: str,
+    description: str, category: str = 'output', artifact_type: str | None = None,
+    metadata: Dict | None = None,
+) -> DataFile:
+    """Persist a private generated file without loading it wholly into memory."""
+    artifact_metadata = dict(metadata or {})
+    if artifact_type:
+        artifact_metadata['artifact_type'] = artifact_type
+    with Path(file_path).open('rb') as source_file:
+        return DataFile.objects.create(
+            project=project,
+            stage=stage,
+            step=step,
+            filename=filename,
+            file=File(source_file, name=filename),
+            data_category=category,
+            source='tool_generated',
+            description=description,
+            metadata=artifact_metadata,
+            created_by=creator,
+        )
+
+
+def cleanup_expired_workspaces(root: Path, cutoff_timestamp: float) -> int:
+    """Remove expired task workspaces below the configured root only."""
+    root = Path(root).resolve()
+    if root.name != 'workspaces':
+        raise ValueError('工作区清理根目录必须明确指向 workspaces 目录。')
+    if not root.exists():
+        return 0
+    cleaned = 0
+    for project_dir in root.iterdir():
+        if (
+            not project_dir.is_dir()
+            or project_dir.is_symlink()
+            or not re.fullmatch(r'project_\d+', project_dir.name)
+        ):
+            continue
+        for task_dir in project_dir.iterdir():
+            if (
+                not task_dir.is_dir()
+                or task_dir.is_symlink()
+                or not re.search(r'(?:_task_\d+_\d{8}_\d{6}|_\d{14})$', task_dir.name)
+            ):
+                continue
+            try:
+                expired = task_dir.stat().st_mtime < cutoff_timestamp
+            except OSError:
+                continue
+            if expired:
+                shutil.rmtree(task_dir)
+                cleaned += 1
+    return cleaned
 
 
 # ============================================================================
@@ -48,7 +105,7 @@ def get_ai_screen_stats(project) -> Dict:
     metadata = ai_step.metadata or {}
     if (
         ai_step.status == StageStepStatus.COMPLETED
-        and metadata.get('stats_version') == 2
+        and metadata.get('stats_version') in (2, 3)
     ):
         included = int(metadata.get('included_refs', 0))
         excluded = int(metadata.get('excluded_refs', 0))
@@ -66,46 +123,20 @@ def get_ai_screen_stats(project) -> Dict:
             'conflict_count': conflict,
         }
 
-    qs = DataFile.objects.filter(
-        project=project,
-        step=ai_step,
-        data_category='output',
-        metadata__artifact_type=ArtifactType.SCREENING_RESULT_JSON,
-    )
-    # JSONField 没有独立索引。原实现连续 count 四次，会让 MySQL 对同一批
-    # 结果反复扫描。一次条件聚合即可得到互斥分类，并避免 conflict 同时被计入
-    # included/excluded 后造成 pending 统计失真。
-    conflict_filter = (
-        Q(metadata__consensus='conflict')
-        | (Q(metadata__consensus__isnull=True) & Q(metadata__decision='conflict'))
-    )
-    not_conflict = ~conflict_filter
-    counts = qs.aggregate(
-        total=Count('pk'),
-        included=Count(
-            'pk', filter=Q(metadata__decision='included') & not_conflict,
-        ),
-        excluded=Count(
-            'pk', filter=Q(metadata__decision='excluded') & not_conflict,
-        ),
-        conflict=Count('pk', filter=conflict_filter),
-    )
-    total = counts['total']
-    included = counts['included']
-    excluded = counts['excluded']
-    conflict = counts['conflict']
-    pending = total - included - excluded - conflict
+    from core.screening.services.screening_run_service import current_completed_screening_run
 
-    if ai_step.status == StageStepStatus.COMPLETED:
-        cached_metadata = dict(metadata)
-        cached_metadata.update({
-            'stats_version': 2,
-            'included_refs': included,
-            'excluded_refs': excluded,
-            'conflict_refs': conflict,
-            'pending_refs': max(0, pending),
-        })
-        StageStep.objects.filter(pk=ai_step.pk).update(metadata=cached_metadata)
+    run = current_completed_screening_run(project.id)
+    if run is None:
+        return {
+            'included': 0, 'excluded': 0, 'conflict': 0, 'pending_count': 0,
+            'total': 0, 'included_count': 0, 'excluded_count': 0,
+            'conflict_count': 0,
+        }
+    conflict = run.results.filter(consensus='conflict').count()
+    included = run.included_count
+    excluded = run.excluded_count
+    pending = max(0, run.uncertain_count - conflict + run.failed_count)
+    total = run.total_count
 
     return {
         'included':       included,
@@ -134,12 +165,13 @@ def clear_ai_screen_outputs(project, user) -> Dict:
     if not ai_step:
         return {'message': '未找到 ai_screen 步骤，无需清除', 'deleted_count': 0}
 
-    deleted_count, _ = DataFile.objects.filter(
+    from core.screening.models import ScreeningRun
+
+    database_result_count = ScreeningRun.objects.filter(
         project=project,
-        step=ai_step,
-        data_category='output',
-        metadata__artifact_type=ArtifactType.SCREENING_RESULT_JSON,
-    ).delete()
+    ).aggregate(total=Count('results'))['total'] or 0
+    ScreeningRun.objects.filter(project=project).delete()
+    deleted_count = database_result_count
 
     # 删除结果后必须让完成时统计缓存失效，否则新任务真正启动前可能短暂展示旧值。
     metadata = dict(ai_step.metadata or {})

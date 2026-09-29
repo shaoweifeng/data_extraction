@@ -42,6 +42,7 @@
 | GET/POST | `/api/projects/` | 列出可见项目 / 创建归属当前用户的项目 |
 | GET/PATCH/DELETE | `/api/projects/{id}/` | 读写或直接删除可访问项目 |
 | GET | `/api/projects/{id}/stages/` | 项目阶段和步骤 |
+| GET | `/api/projects/{id}/ai_screen_inputs/?limit=&offset=` | 数据库待筛文献分页，返回 `reference_id` 与真实题名 |
 | GET | `/api/stages/`, `/api/steps/`, `/api/tasks/`, `/api/files/` | 仅返回可见项目的下级资源 |
 | POST | `/api/tasks/` | `project`, `task_type`, `config`；项目必须可访问 |
 | POST | `/api/files/` | 文件必须归属可访问项目，`stage/step/project` 关系必须一致 |
@@ -51,21 +52,23 @@
 | 方法 | 路径 | 输入 / 输出要点 |
 |---|---|---|
 | GET | `/api/review/list/?project=&step=&decision=&q=&page=&page_size=` | 分页文献，验证 `step` 属于可访问项目的 `review` 步骤 |
-| POST | `/api/review/submit/` | `project`, `step`, `reviews[]` |
-| PATCH | `/api/review/item/{source_xml}/` | `project`, `step`, `decision`, `reason` |
-| GET | `/api/review/stats/?project=` | 统计；未人工审阅文献默认 AI 判断正确 |
-| POST | `/api/review/complete/` | `project`, `step` |
-| POST/GET | `/api/review/note(s)/{source_xml}/` | 追加 / 读取项目内文献备注 |
+| POST | `/api/review/submit/` | `project`, `step`, `screening_run`, `reviews[].reference_id` |
+| GET/PATCH | `/api/review/runs/{run_id}/references/{reference_id}/` | 按运行与文献读取详情或更新决定 |
+| GET | `/api/review/stats/?project=&run=` | 数据库运行统计；可指定历史运行只读查看 |
+| POST | `/api/review/complete/` | `project`, `step`, `screening_run` |
+| POST/GET | `/api/review/runs/{run_id}/references/{reference_id}/notes/` | 追加 / 读取运行内文献备注 |
 
 ## 6. QA
 
 | 方法 | 路径 | 输入 / 输出要点 |
 |---|---|---|
 | GET | `/api/qa/refs/?project_id=` | 项目 QA 文献列表 |
-| POST | `/api/qa/refs/import/` | `project_id`, `source_stage`；每次导入先清空当前 QA 文献、评价结果、图表及其旧 ref_id 设置 |
-| POST | `/api/qa/refs/upload/` | multipart PDF，单文件不超过 50MB |
+| POST | `/api/qa/refs/import/` | `project_id`, `source_stage`；初筛数据库链路只读取当前文献集匹配的最新已完成运行，返回导入/跳过数量、来源运行和修订；没有匹配运行时返回 409 且保留原 QA 数据 |
+| POST | `/api/qa/refs/upload/` | multipart PDF；默认单次 20 个、单文件 50 MiB、合计 200 MiB，并校验 MIME、PDF 文件头和项目内 SHA-256 去重；创建后先返回待处理状态 |
 | PATCH | `/api/qa/refs/{id}/` | 只允许 schema 中声明的文献字段 |
 | POST | `/api/qa/refs/batch-method/` | `ref_ids[]`, `quality_method`；必须是同一可访问项目 |
+| GET | `/api/qa/fulltext-assets/{id}/download/` | 项目权限校验后的私有 PDF 流，不暴露存储 URL |
+| POST | `/api/qa/fulltext-assets/{id}/retry/` | 重试保留原始 PDF 的暂时性处理失败；被拒绝或已清理的文件不可重试 |
 | POST | `/api/qa/eval/start/` | `project_id`, `ref_ids[]`, `model_ids[]`；验证项目、文献、模型和积分 |
 | GET | `/api/qa/eval/progress/?project_id=` | 项目评价进度 |
 | GET/PATCH/POST | `/api/qa/signal-items/...` | 仅访问可见项目的 QA 文献和信号问题 |

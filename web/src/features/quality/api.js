@@ -1,12 +1,14 @@
 import http from '@/shared/api/http'
 
 export const fetchMethods = () => http.get('/qa/methods/')
-export const fetchRefs = projectId => http.get('/qa/refs/', { params: { project_id: projectId } })
+export const fetchRefs = (projectId, params = {}) =>
+  http.get('/qa/refs/', { params: { project_id: projectId, ...params } })
 export const importFromScreening = (projectId, sourceStage) =>
   http.post('/qa/refs/import/', { project_id: projectId, source_stage: sourceStage })
 export const uploadFulltext = form => http.post('/qa/refs/upload/', form, {
   headers: { 'Content-Type': 'multipart/form-data' },
 })
+export const retryFulltext = assetId => http.post(`/qa/fulltext-assets/${assetId}/retry/`)
 export const updateRef = (refId, payload) => http.patch(`/qa/refs/${refId}/`, payload)
 export const batchSetMethod = (refIds, qualityMethod) =>
   http.post('/qa/refs/batch-method/', { ref_ids: refIds, quality_method: qualityMethod })
@@ -20,6 +22,7 @@ export const fetchDomainResults = qaRefId =>
 export const confirmSignalItem = (itemId, humanJudgment) =>
   http.patch(`/qa/signal-items/${itemId}/confirm/`, { human_judgment: humanJudgment })
 export const batchConfirm = payload => http.post('/qa/signal-items/batch-confirm/', payload)
+export const batchConfirmProject = payload => http.post('/qa/review/batch-confirm/', payload)
 export const previewChart = payload => http.post('/qa/chart/preview/', payload)
 export const generateChart = payload => http.post('/qa/chart/generate/', payload)
 export const fetchChartInfo = (projectId, qualityMethod) =>

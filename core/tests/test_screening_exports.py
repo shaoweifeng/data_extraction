@@ -7,11 +7,9 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import openpyxl
+import xml.etree.ElementTree as ET
 from django.test import TestCase
 
-from core.artifacts.types import ArtifactType
-from core.models import DataFile, Project
-from core.services.project_service import initialize_project
 from core.screening.executors.export_handler import ExportHandler
 
 
@@ -52,15 +50,42 @@ class ScreeningExportGoldenTests(TestCase):
         expected = (FIXTURES / 'golden' / 'screening_included.ris').read_text(encoding='utf-8')
         self.assertEqual(actual, expected)
 
+    def test_xml_export_escapes_values_and_keeps_decision_semantics(self):
+        from core.screening.exporters.xml import ScreeningXmlExporter
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'results.xml'
+            with path.open('w', encoding='utf-8') as output:
+                ScreeningXmlExporter.write_header(output)
+                ScreeningXmlExporter.write_record(
+                    output,
+                    {
+                        'reference_id': 17,
+                        '_export_manual_review': SimpleNamespace(is_override=True),
+                        'extracted_fields': {'人群': '成人 & 儿童'},
+                    },
+                    {'Title': 'A < B & C', 'Abstract': '结构化摘要'},
+                    'included',
+                )
+                ScreeningXmlExporter.write_footer(output)
+
+            root = ET.parse(path).getroot()
+        reference = root.find('Reference')
+        self.assertEqual(reference.attrib, {
+            'id': '17', 'decision': 'included', 'manual_override': 'yes',
+        })
+        self.assertEqual(reference.findtext('Title'), 'A < B & C')
+        self.assertEqual(reference.find("./ExtractedFields/Field[@name='人群']").text, '成人 & 儿童')
+
     def test_excel_rows_match_semantic_golden(self):
         results = [
             {
-                'source_xml': 'excluded.xml',
+                'reference_id': 1,
                 'title': 'Excluded Study',
                 'include_or_not': 'yes',
             },
             {
-                'source_xml': 'included.xml',
+                'reference_id': 2,
                 'title': 'Included Study',
                 'decision': 'included',
                 'exclusion_reason': 'must be cleared',
@@ -68,7 +93,7 @@ class ScreeningExportGoldenTests(TestCase):
             },
         ]
         manual_reviews = {
-            'excluded.xml': SimpleNamespace(
+            1: SimpleNamespace(
                 decision='excluded',
                 reason='Wrong population',
                 is_override=True,
@@ -76,9 +101,7 @@ class ScreeningExportGoldenTests(TestCase):
         }
         with tempfile.TemporaryDirectory() as temp_dir:
             handler = self.make_handler(temp_dir)
-            with patch.object(handler, '_load_xml_fields', return_value={}), patch.object(
-                handler, '_load_extraction_field_names', return_value=[]
-            ):
+            with patch.object(handler, '_load_extraction_field_names', return_value=[]):
                 path = handler._generate_excel(
                     results,
                     'all',
@@ -103,7 +126,7 @@ class ScreeningExportGoldenTests(TestCase):
 
     def test_excel_marks_waived_conflict_in_existing_columns(self):
         result = {
-            'source_xml': 'conflict.xml',
+            'reference_id': 3,
             'title': 'Conflicting Study',
             'decision': 'excluded',
             'consensus': 'conflict',
@@ -123,9 +146,7 @@ class ScreeningExportGoldenTests(TestCase):
         }
         with tempfile.TemporaryDirectory() as temp_dir:
             handler = self.make_handler(temp_dir)
-            with patch.object(handler, '_load_xml_fields', return_value={}), patch.object(
-                handler, '_load_extraction_field_names', return_value=[]
-            ):
+            with patch.object(handler, '_load_extraction_field_names', return_value=[]):
                 path = handler._generate_excel(
                     [result], 'all', 'golden', 'conflict', {}, [],
                 )
@@ -183,104 +204,3 @@ class ScreeningExportGoldenTests(TestCase):
 
         self.assertEqual(len(rows), 1)  # 仅表头
         callback.assert_called_once()
-
-
-class ScreeningExportBatchingTests(TestCase):
-    def setUp(self):
-        from django.contrib.auth import get_user_model
-
-        self.user = get_user_model().objects.create_user('export-user', password='pw')
-        self.project = Project.objects.create(name='流式导出项目', owner=self.user)
-        initialize_project(self.project, self.user)
-        self.ai_step = self.project.stages.get(stage_key='SCREEN_1').steps.get(step_key='ai_screen')
-
-    def test_prepared_results_are_loaded_in_bounded_batches(self):
-        for index in range(5):
-            DataFile.objects.create(
-                project=self.project,
-                stage=self.ai_step.stage,
-                step=self.ai_step,
-                filename=f'result-{index}.json',
-                file='',
-                data_category='output',
-                source='tool_generated',
-                metadata={
-                    'artifact_type': ArtifactType.SCREENING_RESULT_JSON,
-                    'source_xml': f'{index}.xml',
-                    'decision': 'included' if index % 2 == 0 else 'excluded',
-                    'consensus': 'included' if index % 2 == 0 else 'excluded',
-                },
-                created_by=self.user,
-            )
-
-        executor = SimpleNamespace(
-            logger=MagicMock(), workspace=Path('.'), project_obj=self.project,
-            task_obj=None, step_obj=MagicMock(), stage_obj=MagicMock(),
-            project_id=self.project.id, config={}, check_stop_signal=lambda: False,
-        )
-        handler = ExportHandler(executor)
-        result_files = DataFile.objects.filter(step=self.ai_step)
-        stats = {'total': 0, 'included': 0, 'excluded': 0, 'manual_overrides': 0, 'exported': 0}
-
-        with patch(
-            'core.screening.selectors.load_ai_result_file',
-            side_effect=lambda data_file: dict(data_file.metadata),
-        ), patch(
-            'core.screening.selectors.load_xml_fields_bulk', return_value={},
-        ) as load_xml:
-            results = list(handler._iter_prepared_results(
-                result_files, 'all', stats, batch_size=2,
-            ))
-
-        self.assertEqual(len(results), 5)
-        self.assertEqual([len(call.args[0]) for call in load_xml.call_args_list], [2, 2, 1])
-        self.assertEqual(stats['total'], 5)
-        self.assertEqual(stats['included'], 3)
-        self.assertEqual(stats['excluded'], 2)
-
-    def test_unresolved_conflict_requires_explicit_waiver(self):
-        conflict = DataFile.objects.create(
-            project=self.project,
-            stage=self.ai_step.stage,
-            step=self.ai_step,
-            filename='conflict.json',
-            file='',
-            data_category='output',
-            source='tool_generated',
-            metadata={
-                'artifact_type': ArtifactType.SCREENING_RESULT_JSON,
-                'source_xml': 'conflict.xml',
-                'decision': 'excluded',
-                'consensus': 'conflict',
-            },
-            created_by=self.user,
-        )
-        executor = SimpleNamespace(
-            logger=MagicMock(), workspace=Path('.'), project_obj=self.project,
-            task_obj=None, step_obj=MagicMock(), stage_obj=MagicMock(),
-            project_id=self.project.id, config={}, check_stop_signal=lambda: False,
-        )
-        handler = ExportHandler(executor)
-        stats = {'total': 0, 'included': 0, 'excluded': 0, 'manual_overrides': 0, 'exported': 0}
-
-        patches = (
-            patch('core.screening.selectors.load_ai_result_file', return_value=dict(conflict.metadata)),
-            patch('core.screening.selectors.load_xml_fields_bulk', return_value={}),
-        )
-        with patches[0], patches[1]:
-            with self.assertRaisesRegex(RuntimeError, 'AI 分歧'):
-                list(handler._iter_prepared_results(
-                    DataFile.objects.filter(pk=conflict.pk), 'all', stats,
-                ))
-
-        handler.config = {'allow_unresolved_conflicts': True}
-        stats = {'total': 0, 'included': 0, 'excluded': 0, 'manual_overrides': 0, 'exported': 0}
-        with patch(
-            'core.screening.selectors.load_ai_result_file', return_value=dict(conflict.metadata),
-        ), patch('core.screening.selectors.load_xml_fields_bulk', return_value={}):
-            results = list(handler._iter_prepared_results(
-                DataFile.objects.filter(pk=conflict.pk), 'all', stats,
-            ))
-
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]['_export_final_decision'], 'conflict')

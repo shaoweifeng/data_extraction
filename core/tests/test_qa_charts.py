@@ -217,6 +217,24 @@ class QaChartDataGoldenTests(TestCase):
         self.assertEqual((bias_summary['Low'], bias_summary['High']), (1, 0))
         self.assertEqual((applic_summary['Low'], applic_summary['High']), (0, 1))
 
+    def test_pending_and_not_applicable_remain_distinct(self):
+        from core.quality.services.chart_data import build_chart_data
+
+        ref = QAReference.objects.create(
+            project=self.project,
+            title='Explicit states',
+            quality_method='QUADAS2',
+            review_status='confirmed',
+        )
+        self.add_domain(ref, 'patient_selection', 'pending', 'na')
+
+        traffic, proportion, _, _, _ = build_chart_data(self.project, 'QUADAS2')
+
+        self.assertEqual(traffic[0]['bias_risk']['patient_selection'], 'pending')
+        self.assertEqual(traffic[0]['applicability']['patient_selection'], 'na')
+        self.assertEqual(proportion['patient_selection']['counts']['pending'], 1)
+        self.assertEqual(proportion['app_patient_selection']['counts']['na'], 1)
+
     def test_traffic_light_omits_applicability_group_when_method_has_none(self):
         from core.quality.renderers.matplotlib_charts import _draw_traffic_light_matrix
 

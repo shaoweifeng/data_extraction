@@ -3,7 +3,10 @@ import { defineStore } from 'pinia'
 import * as operationsApi from './api'
 
 export const useOperationsStore = defineStore('operations', () => {
-  const system = ref({ mode: 'normal', message: '', scheduled_at: null })
+  const system = ref({
+    mode: 'normal', message: '', scheduled_at: null,
+    announcement_enabled: false, announcement_message: '', announcement_level: 'info',
+  })
   const snapshot = ref(null)
   const loading = ref(false)
   const error = ref('')
@@ -51,8 +54,14 @@ export const useOperationsStore = defineStore('operations', () => {
     return result
   }
 
+  async function changeAnnouncement(payload) {
+    const result = await operationsApi.changeAnnouncement(payload)
+    applySystemState(result)
+    return result
+  }
+
   return {
     system, snapshot, loading, error, isDraining, isMaintenance,
-    applySystemState, refreshSystem, heartbeat, refreshSnapshot, changeState,
+    applySystemState, refreshSystem, heartbeat, refreshSnapshot, changeState, changeAnnouncement,
   }
 })

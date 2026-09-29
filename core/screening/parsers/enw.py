@@ -1,7 +1,7 @@
 """ProCite/EndNote tagged-text parser."""
 
 import os
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, Iterator, List, Optional
 
 
 _PROCITE_TAG_MAP = {
@@ -53,7 +53,7 @@ def _normalize_procite_record(rec: Dict) -> Dict:
         for value in affiliations
         if value and value.strip().rstrip(';').strip()
     )
-    return {
+    normalized = {
         'title': rec.get('%T', '').strip(),
         'authors': authors,
         'journal': rec.get('%J', '').strip(),
@@ -74,18 +74,15 @@ def _normalize_procite_record(rec: Dict) -> Dict:
         'database': rec.get('%W', '').strip(),
         'source_type': 'ENW',
     }
+    normalized['_raw_metadata'] = rec
+    return normalized
 
 
-def _parse_procite_lines(lines: Iterable[str]) -> List[Dict]:
+def _iter_procite_lines(lines: Iterable[str]) -> Iterator[Dict]:
     """逐行解析 ProCite Tagged 记录，不保留原始全文和中间记录列表。"""
     multi_value_tags = {'%A', '%+'}
-    parsed = []
     current: Dict = {}
     last_tag: Optional[str] = None
-
-    def _flush(rec):
-        if rec:
-            parsed.append(_normalize_procite_record(rec))
 
     for raw_line in lines:
         line = raw_line.rstrip('\r\n')
@@ -100,7 +97,7 @@ def _parse_procite_lines(lines: Iterable[str]) -> List[Dict]:
             value = line[3:].strip()
             # %0 是记录类型标签，遇到它意味着新记录开始
             if tag == '%0' and current:
-                _flush(current)
+                yield _normalize_procite_record(current)
                 current = {}
             last_tag = tag
             if tag in multi_value_tags:
@@ -123,8 +120,13 @@ def _parse_procite_lines(lines: Iterable[str]) -> List[Dict]:
                     current[last_tag] = str(current.get(last_tag, '')) + ' ' + line.strip()
 
     # 文件末尾最后一条记录（无空行结尾）
-    _flush(current)
-    return parsed
+    if current:
+        yield _normalize_procite_record(current)
+
+
+def _parse_procite_lines(lines: Iterable[str]) -> List[Dict]:
+    """Compatibility helper for callers that explicitly require a list."""
+    return list(_iter_procite_lines(lines))
 
 
 def _parse_procite_text(text: str) -> List[Dict]:
@@ -153,19 +155,18 @@ def _detect_text_encoding(file_path: str) -> str:
             return 'gb18030'
 
 
-def parse_enw(file_path: str) -> List[Dict]:
+def parse_enw(file_path: str) -> Iterator[Dict]:
     """
     解析 ProCite Tagged 格式（.enw 或 .txt）文件。
     """
     encoding = _detect_text_encoding(file_path)
     try:
         with open(file_path, 'r', encoding=encoding, errors='strict') as source:
-            entries = _parse_procite_lines(source)
+            for i, entry in enumerate(_iter_procite_lines(source), 1):
+                entry['source_file'] = os.path.basename(file_path)
+                entry['source_position'] = i
+                yield entry
     except UnicodeDecodeError as exc:
         raise UnicodeError(
             '无法识别 TXT/ENW 文件编码，请使用 UTF-8、UTF-16 或 GB18030'
         ) from exc
-    for i, e in enumerate(entries, 1):
-        e['source_file'] = os.path.basename(file_path)
-        e['source_position'] = i
-    return entries

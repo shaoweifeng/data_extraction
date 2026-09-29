@@ -61,6 +61,19 @@ class OperationsApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['mode'], 'draining')
 
+    def test_admin_can_publish_announcement_without_changing_runtime_mode(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            '/api/operations/announcement/',
+            {'enabled': True, 'message': '新功能已上线', 'level': 'info'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['mode'], 'normal')
+        self.assertTrue(response.json()['announcement_enabled'])
+        self.assertEqual(response.json()['announcement_message'], '新功能已上线')
+
     def test_draining_blocks_new_work_but_allows_reads(self):
         set_system_state('draining', message='即将维护', user=self.admin)
         self.client.force_login(self.user)

@@ -345,15 +345,20 @@ class DataFileSerializer(serializers.ModelSerializer):
                   'metadata', 'versions_count', 'created_by', 'created_by_username',
                   'created_at', 'updated_at']
         read_only_fields = ['file_size', 'file_type', 'created_at', 'updated_at']
+        extra_kwargs = {'file': {'write_only': True}}
 
     def get_versions_count(self, obj):
         return len(obj.versions.all())
 
     def get_file_url(self, obj):
         if obj.file:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.file.url)
+            from rest_framework.reverse import reverse
+
+            return reverse(
+                'file-download',
+                args=[obj.pk],
+                request=self.context.get('request'),
+            )
         return None
 
 

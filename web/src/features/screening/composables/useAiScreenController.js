@@ -8,13 +8,15 @@ export function createAiScreenController(projectId) {
     savePrompt: payload => screeningApi.savePrompt(projectId(), payload),
     resetPrompt: () => screeningApi.resetPrompt(projectId()),
     loadStats: (targetProjectId = projectId(), config = {}) => screeningApi.fetchScreeningStats(targetProjectId, config),
+    loadInputs: (targetProjectId = projectId(), params = {}, config = {}) => (
+      screeningApi.fetchScreeningInputs(targetProjectId, params, config)
+    ),
     loadReviewPage: (params, targetProjectId = projectId(), config = {}) => (
       screeningApi.fetchReviewList({ project: targetProjectId, ...params }, config)
     ),
     loadBalance: billingApi.fetchBalance,
     estimate: (refCount, modelIds) => billingApi.estimateUsage(refCount, modelIds),
     loadModels: workflowApi.fetchAiModels,
-    loadFiles: workflowApi.fetchFiles,
     loadTask: workflowApi.fetchTask,
     createTask: payload => workflowApi.createTask(payload, { noTimeout: true }),
     stopTask: workflowApi.stopTask,

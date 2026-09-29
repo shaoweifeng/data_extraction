@@ -8,7 +8,10 @@ export function createEvaluationCapability(refs) {
   let evalPoller = null
   const evalCompleted = computed(() => {
     const summary = evalProgress.value?.summary
-    return !!summary && summary.running === 0 && (summary.completed + summary.failed) > 0
+    const processed = (summary?.completed || 0) + (summary?.abstract_only || 0)
+      + (summary?.failed || 0) + (summary?.skipped_no_fulltext || 0)
+      + (summary?.skipped_no_method || 0)
+    return !!summary && summary.running === 0 && processed > 0
   })
 
   async function fetchMethods() {

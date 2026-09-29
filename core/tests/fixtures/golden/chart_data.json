@@ -32,12 +32,12 @@
     }
   ],
   "proportion": {
-    "patient_selection": {"low": 1, "high": 0, "unclear": 0, "pending": 0},
-    "index_test": {"low": 0, "high": 1, "unclear": 0, "pending": 0},
-    "reference_standard": {"low": 0, "high": 0, "unclear": 1, "pending": 0},
-    "flow_timing": {"low": 1, "high": 0, "unclear": 0, "pending": 0},
-    "app_patient_selection": {"low": 1, "high": 0, "unclear": 0, "pending": 0},
-    "app_index_test": {"low": 0, "high": 1, "unclear": 0, "pending": 0},
-    "app_reference_standard": {"low": 0, "high": 0, "unclear": 1, "pending": 0}
+    "patient_selection": {"low": 1, "high": 0, "unclear": 0, "pending": 0, "na": 0},
+    "index_test": {"low": 0, "high": 1, "unclear": 0, "pending": 0, "na": 0},
+    "reference_standard": {"low": 0, "high": 0, "unclear": 1, "pending": 0, "na": 0},
+    "flow_timing": {"low": 1, "high": 0, "unclear": 0, "pending": 0, "na": 0},
+    "app_patient_selection": {"low": 1, "high": 0, "unclear": 0, "pending": 0, "na": 0},
+    "app_index_test": {"low": 0, "high": 1, "unclear": 0, "pending": 0, "na": 0},
+    "app_reference_standard": {"low": 0, "high": 0, "unclear": 1, "pending": 0, "na": 0}
   }
 }

@@ -157,7 +157,13 @@ def check_balance_sufficient(user, required: int) -> bool:
 
 
 @transaction.atomic
-def consume_credits(user, amount: int, task=None, note: str = '') -> Optional['CreditTransaction']:
+def consume_credits(
+    user,
+    amount: int,
+    task=None,
+    note: str = '',
+    idempotency_key: str | None = None,
+) -> Optional['CreditTransaction']:
     """
     按实际 token 用量扣减 credits（原子操作，select_for_update 防并发竞态）。
 
@@ -179,6 +185,19 @@ def consume_credits(user, amount: int, task=None, note: str = '') -> Optional['C
     CreditAccount, CreditTransaction, _ = _get_models()
     account = CreditAccount.objects.select_for_update().get(user=user)
 
+    if idempotency_key:
+        if len(idempotency_key) > 128:
+            raise ValueError('幂等键长度不能超过 128 个字符')
+        existing = CreditTransaction.objects.filter(idempotency_key=idempotency_key).first()
+        if existing:
+            if (
+                existing.account_id != account.id
+                or existing.txn_type != 'consume'
+                or existing.amount != -amount
+            ):
+                raise ValueError('幂等键已被其他额度操作使用')
+            return existing
+
     if account.balance < amount:
         raise ValueError(f"余额不足（需 {amount}，现有 {account.balance} credits）")
 
@@ -194,6 +213,7 @@ def consume_credits(user, amount: int, task=None, note: str = '') -> Optional['C
         balance_after=account.balance,
         task=task,
         note=note or 'AI筛选扣费',
+        idempotency_key=idempotency_key,
     )
     logger.info(f"[billing] consume {user.username} -{amount} credits → 余额 {account.balance}")
     return txn
@@ -234,7 +254,14 @@ def refund_credits(user, amount: int, task=None, note: str = '') -> Optional['Cr
     return txn
 
 
-def log_admin_usage(user, credits_equivalent: int, task=None, note: str = '') -> Optional['CreditTransaction']:
+@transaction.atomic
+def log_admin_usage(
+    user,
+    credits_equivalent: int,
+    task=None,
+    note: str = '',
+    idempotency_key: str | None = None,
+) -> Optional['CreditTransaction']:
     """
     管理员筛选用量审计记录（不扣费，amount=0，仅写流水供统计/审计使用）。
 
@@ -254,6 +281,15 @@ def log_admin_usage(user, credits_equivalent: int, task=None, note: str = '') ->
     CreditAccount, CreditTransaction, _ = _get_models()
     try:
         account = get_or_create_account(user)
+        account = CreditAccount.objects.select_for_update().get(pk=account.pk)
+        if idempotency_key:
+            if len(idempotency_key) > 128:
+                raise ValueError('幂等键长度不能超过 128 个字符')
+            existing = CreditTransaction.objects.filter(idempotency_key=idempotency_key).first()
+            if existing:
+                if existing.account_id != account.id or existing.txn_type != 'admin_usage':
+                    raise ValueError('幂等键已被其他额度操作使用')
+                return existing
         txn = CreditTransaction.objects.create(
             account=account,
             txn_type='admin_usage',
@@ -261,6 +297,7 @@ def log_admin_usage(user, credits_equivalent: int, task=None, note: str = '') ->
             balance_after=account.balance,     # 余额不变
             task=task,
             note=note or f'管理员用量记录（≈{credits_equivalent} credits 等值）',
+            idempotency_key=idempotency_key,
         )
         logger.info(
             f"[billing] admin_usage {user.username} ≈{credits_equivalent} credits"
@@ -268,5 +305,7 @@ def log_admin_usage(user, credits_equivalent: int, task=None, note: str = '') ->
         )
         return txn
     except Exception as e:
+        if idempotency_key:
+            raise
         logger.warning(f"[billing] log_admin_usage 写入失败: {e}")
         return None

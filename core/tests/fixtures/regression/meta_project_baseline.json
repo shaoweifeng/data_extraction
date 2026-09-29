@@ -1,0 +1,581 @@
+{
+  "aggregate": {
+    "duplicate_entries": 933,
+    "duplicate_groups": 814,
+    "kept_entries": 2237,
+    "normalized_title_groups": 2237,
+    "parsed_entries": 3170,
+    "qa_file_count": 38,
+    "screening_file_count": 9,
+    "untitled_entries": 0
+  },
+  "quality_assessment": [
+    {
+      "bytes": 279137,
+      "extension": ".pdf",
+      "filename": "2016  Chen R  脑脊液肝素结合蛋白和降钙素原在细菌性颅内感染诊断中的应用-陈若虹.pdf",
+      "sha256": "3c2e0fd5d8bcdaceb542dfc9b5958d521129ce0f2d25f6282e43cb9d3a420607",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 215358,
+      "extension": ".pdf",
+      "filename": "2017 Lei J   急性化脓性脑膜炎儿童脑脊液肝素结合蛋白水平变化及其与不良预后的关系_雷娟娟.pdf",
+      "sha256": "87f153b7233a6296ae5683e14bfa533077959ebfa6fbf62f13cb89c449ef9ea3",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 831503,
+      "extension": ".pdf",
+      "filename": "2018   Kandil   pubmed  Accuracy of heparin binding protein Source Braz J Microbiol SO 2018 Aug 17.pdf",
+      "sha256": "013fd482d3204d0e73f790edb3ea32263161296ba38d8ec184cf717ff790a5a9",
+      "signature": "255044462d312e37"
+    },
+    {
+      "bytes": 810451,
+      "extension": ".pdf",
+      "filename": "2019 Huang C ,脑脊液肝素结合蛋白检测在小儿化脓性脑膜炎中的应用价值.pdf",
+      "sha256": "83fc127b1e6d0b67f5068faf526ab54cb9fc018ea4e4ecbae53da05b3e0ee6f6",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 902639,
+      "extension": ".pdf",
+      "filename": "2019 Liu M  脑脊液肝素结合蛋白检测在颅内感染性疾病的临床应用.pdf",
+      "sha256": "9e90300337f2d9bbb08d43f9d793498fdeae3dd8261c0f1c38a7ec63fc1229b2",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 522627,
+      "extension": ".pdf",
+      "filename": "2019 Zhang S  Evaluation of heparin-binding protein andor procalcitonin levels in the diagnosis of bacterial intracranial infection using receiver operating characteristic (ROC) curve value.pdf",
+      "sha256": "0c8c3566e3e39c4f22c461fb1ab9893b7d96c65e01e19566ac305e0b24818517",
+      "signature": "255044462d312e34"
+    },
+    {
+      "bytes": 259841,
+      "extension": ".pdf",
+      "filename": "2020  Guan J  脑脊液肝素结合蛋白鉴别细菌性颅内感染的临床价值_管军.pdf",
+      "sha256": "9ad0beaeaf2b1787192af3f971fe4986ee79b7c5a36bfa66242acfef689f27cd",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 2409727,
+      "extension": ".pdf",
+      "filename": "2020  Li W  血清降钙素原和肝素结合蛋白早期辅助诊断儿童细菌性脑膜炎的价值_李文书.pdf",
+      "sha256": "18e8420c7d408db7625b861670ae53186976feb6b3b6293167422f381e1e6bda",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 509550,
+      "extension": ".pdf",
+      "filename": "2020  Li X  HBP联合PCT在中枢神经系统感染患儿的诊断价值_李星.pdf",
+      "sha256": "8ec7a8185f1fd9716223c1d8d0bc97e8de66994b2d1fe1752d6663e28903978e",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 2331253,
+      "extension": ".pdf",
+      "filename": "2021   Zhang T  脑脊液中肝素结合蛋白、总蛋白、降钙素原检测在鉴别细菌性与非细菌性颅内感染疾病中的临床应用_张天照.pdf",
+      "sha256": "90ef2a330b08aa47a7f319e32c10ced19b0a3a900f3397daa86e9cd4f6da4d2b",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1746349,
+      "extension": ".pdf",
+      "filename": "2021  Gui Z 脑脊液肝素结合蛋白在儿童细菌性脑膜炎和病毒性脑膜炎鉴别诊断中的应用价值_桂珍.pdf",
+      "sha256": "97f77214c28ab6c685925f86fd4bd9953534c44d25ca54535b3818de2385b2b6",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1040647,
+      "extension": ".pdf",
+      "filename": "2021  Liu J   肝素结合蛋白在开颅术后早期颅内感染的诊断价值-刘俊.pdf",
+      "sha256": "ca21f8ea421d247a7fdb4d77e898518c94682b60833b515ca2a21832ac9fc63f",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1724398,
+      "extension": ".pdf",
+      "filename": "2021 Bao R  脑脊液HBP、LDH、β2MG水平对化脓性脑膜炎患儿的诊断价值_鲍茹.pdf",
+      "sha256": "f787eef79e412fa171c1f3450e903e68e3775330a25bc081cc4e1d47cc8ff189",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 136346,
+      "extension": ".pdf",
+      "filename": "2021 Chen J  颅脑术后继发颅内感染患者脑脊液HBP、HMGB-1水平变化及意义-陈剑锋.pdf",
+      "sha256": "d06c6410451069daf0c18422ab026d0f13c565418562ee46d6d4911f6acd0e47",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1556400,
+      "extension": ".pdf",
+      "filename": "2021 Han W 肝素结合蛋白、降钙素原和前清蛋白在颅脑肿瘤患者术后颅内感染早期诊断中的意义（知网没有）.pdf",
+      "sha256": "1e96cddd4cdfcb4c8523ff1f1bd45997e2dd4be6305bb0f11a6daeda124eb16c",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1186652,
+      "extension": ".pdf",
+      "filename": "2021 Li X  脑脊液PCT、CD64、HBP联合检测对神经外科术后细菌性脑膜炎的诊断价值_李晓亮.pdf",
+      "sha256": "24de592f687ef2c3e42393d6cd15e12563b65324fb327b485a481a2fa8d8321a",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 464276,
+      "extension": ".pdf",
+      "filename": "2021 Ren D     Diagnostic value of heparin binding prote Source Braz J Med Biol Res 2021 Sep 3 54 11 e11295.PDF",
+      "sha256": "c272c73987b2eb1d47c022f5f01f860851c27d4a760182a5a67cc90b25e3f4db",
+      "signature": "255044462d312e34"
+    },
+    {
+      "bytes": 1126650,
+      "extension": ".pdf",
+      "filename": "2021Liu M  肝素结合蛋白在脑膜炎患者中的表达及其临床意义_刘美玲.pdf",
+      "sha256": "e7ccedfa3c4d05735b97632befdc8a4fa8727782aa23429293bf6af87637b6fb",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1249550,
+      "extension": ".pdf",
+      "filename": "2022   Kong Y  Accuracy of heparin binding protein Source Crit Care SO 2022 Mar 8 26 1 56 (1)  2022.pdf",
+      "sha256": "6e8da7f031d229c64d19c941f83249728c1a2cbe193591a122718cdd2da8f7a2",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 16704,
+      "extension": ".docx",
+      "filename": "2022 El Lehleh   无全文  全绿      参考其他人用过.docx",
+      "sha256": "e81f0260c294653a7a87b0275f10193866caeb551b9e194557e42c7880c5479f",
+      "signature": "504b030414000600"
+    },
+    {
+      "bytes": 520517,
+      "extension": ".pdf",
+      "filename": "2022 Obreja   pubmed  Heparin Binding Protein HBP Neutr Source Antibiotics Basel SO 2022.pdf",
+      "sha256": "b82d43dbe3ed1387a6cddaa1f8852f68f4ac686d5c717d76a7dcdd4e86943835",
+      "signature": "255044462d312e37"
+    },
+    {
+      "bytes": 1407604,
+      "extension": ".pdf",
+      "filename": "2022 Shi S  脑脊液HBP和外周血PCT、hs-CRP在小儿化脓性脑膜炎中的诊断价值_世淑兰.pdf",
+      "sha256": "edbac59b724ee6bc911bafba395f0c8ac8285d2e273c6acb085638c23be8a117",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1240466,
+      "extension": ".pdf",
+      "filename": "2022 Zhang R  老年脑出血开颅术后不同类型病原菌颅内感染对脑脊液NSE、NLRP3、HBP水平的影响-张人菁.pdf",
+      "sha256": "52f15fe20565164fbd74c787ae9222f418f4a17163e103d133979cc4dfc552ad",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 304537,
+      "extension": ".pdf",
+      "filename": "2023  Wang R  脑肿瘤术后颅内感染病原学特点及高危因素分析_王瑞.pdf",
+      "sha256": "a6987817a256c3a094c4612400e22e36ae6ace2e75078d454840f0fdbf33b615",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 704151,
+      "extension": ".pdf",
+      "filename": "2023  Wid´en   Heparin binding protein as a marker Source Clin Neurol Neurosurg SO 2023.pdf",
+      "sha256": "5bb3c87515c2bc4dac8a51c19ce77226ea397933be1d51d26672b8cdb52dc6f7",
+      "signature": "255044462d312e37"
+    },
+    {
+      "bytes": 294940,
+      "extension": ".pdf",
+      "filename": "2023  Yang T  HBP、陷窝蛋白-1及PCT在鉴别诊断脑膜炎患儿疾病类型及预后中的价值_杨韬滔.pdf",
+      "sha256": "d5982c26de77a8e11d2f352a13ea3e2f085d6f58ec0a689791a0f72fe93256d4",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 263578,
+      "extension": ".pdf",
+      "filename": "2023 Lin H   脑脊液中HBP、PCT联合脑脊液常规检测对细菌性脑膜炎的临床价值_林晖.pdf",
+      "sha256": "b46060872fd39d360a862ca884fc7f97cdc6df95cd0abbc31de455ed0f5e739e",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 339742,
+      "extension": ".pdf",
+      "filename": "2023Liu C 脑脊液NSE、HBP、HMGB-1对细菌性脑膜炎的诊断价值及其与病情相关性的探讨_刘成志.pdf",
+      "sha256": "450b7eb9d2e24c9eb65f8546526fb9edb21ead5fd8803f707ee5c7d826ea97b1",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 709505,
+      "extension": ".pdf",
+      "filename": "2024 Guan L  Clinical value of heparin binding pr Source Front Cell Infect Microbiol SO 2024.pdf",
+      "sha256": "707d5ac0ca55bc372c73f80a5122873c42d203aaa27dbdf6701c3da954cab873",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1003349,
+      "extension": ".pdf",
+      "filename": "2024 Li F  脑脊液IGF-1、β_2-MG、HBP与儿童化脓性脑膜炎发生发展的相关性_李凤艳.pdf",
+      "sha256": "65ec18f4800c0b617abf74fbfe9776478d4ac19bb3483794a167f97d31ad9ee2",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 742203,
+      "extension": ".pdf",
+      "filename": "2024 Namiduru   Heparin Binding Protein in Early Dif Source Indian J Clin Biochem SO 2024.pdf",
+      "sha256": "38ed1600556382a6396250d4cfdc95b9740dfc14aa4a21b070c2a2c10b5e6a26",
+      "signature": "255044462d312e34"
+    },
+    {
+      "bytes": 1924656,
+      "extension": ".pdf",
+      "filename": "2024 Ye Y  The diagnostic and prognostic value Source Eur J Med Res SO 2024.pdf",
+      "sha256": "dd1515aad8321be6d80d3bca02e437a1a392dca4afbb2723a53c15cfa61bb789",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1041755,
+      "extension": ".pdf",
+      "filename": "2024 Zhang X   血浆肝素结合蛋白联合脑脊液生化指标检测在颅脑肿瘤患者术后颅内感染早期诊断中的应用-张晓彤.pdf",
+      "sha256": "08f5000a5246e1468318fb1c7c8c2f2fb6867e6442151c1bf68846fd07230056",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 995452,
+      "extension": ".pdf",
+      "filename": "2025  Lin Y  脑脊液中肝素结合蛋白、血管内皮细胞钙黏着蛋白、β2微球蛋白检测在小儿细菌性脑膜炎中的诊断价值_林萌.pdf",
+      "sha256": "723fd8d514f02411f97de5fc58cc4cfdcd3d623a5d5ea54758679cc7465126e0",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 958964,
+      "extension": ".pdf",
+      "filename": "2025  Olie  Heparin Binding Protein in Cerebrosp Source Ann Neurol SO 2025.pdf",
+      "sha256": "71b2e4e794562f0d75ebe848f3f0d24c40475091239e7c824421f150a6ae6ac2",
+      "signature": "255044462d312e37"
+    },
+    {
+      "bytes": 1033721,
+      "extension": ".pdf",
+      "filename": "2025  Wu T   脑脊液神经元特异性烯醇化酶、肝素结合蛋白、高迁移率族蛋白B-1对脑肿瘤手术后细菌性脑膜炎的诊断价值_吴韬.pdf",
+      "sha256": "ce5754c4f643445dc13785d639d1b6f43bb0dce9432d7f602fdfe2376519b841",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 121347,
+      "extension": ".pdf",
+      "filename": "2025 Cao Y  HBP、PCT、MMP-9对脑肿瘤患者术后颅内感染的评估价值_曹勇.pdf",
+      "sha256": "71fbf01ab14b51070959cf9f8a8e9555b44d1e509ddf2ec95eef1f653f86e9e5",
+      "signature": "255044462d312e36"
+    },
+    {
+      "bytes": 1080350,
+      "extension": ".pdf",
+      "filename": "2025 Zhu X    Predictive value of cerebrospinal fl Source Am J Transl Res SO 2025.pdf",
+      "sha256": "40d4bfb8f31f58aa997a3435f35bf6f510eafee63c0718169fd6132af5a2a26a",
+      "signature": "255044462d312e34"
+    }
+  ],
+  "schema_version": 1,
+  "screening": [
+    {
+      "bytes": 196257,
+      "detected_entries": 109,
+      "error_count": 0,
+      "filename": "2026-8-29 27@cqvip.txt",
+      "issue_codes": {},
+      "missing_abstract_entries": 0,
+      "parsed_entries": 109,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 109,
+        "address": 109,
+        "authors": 109,
+        "database": 109,
+        "date": 109,
+        "issue": 109,
+        "journal": 109,
+        "keywords": 109,
+        "reference_type": 109,
+        "source_file": 109,
+        "source_position": 109,
+        "source_type": 109,
+        "title": 109,
+        "url": 69,
+        "volume": 108,
+        "year": 109
+      },
+      "sha256": "259d5ddcd5438517a879458b941460f20d3f33aac24bb64a2c334bd2e9f11b7f",
+      "skipped_entries": 0,
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "bytes": 141470,
+      "detected_entries": 15,
+      "error_count": 0,
+      "filename": "citation-export-2.ris",
+      "issue_codes": {},
+      "missing_abstract_entries": 0,
+      "parsed_entries": 15,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 15,
+        "authors": 15,
+        "doi": 15,
+        "issue": 15,
+        "journal": 15,
+        "reference_type": 15,
+        "source_file": 15,
+        "source_position": 15,
+        "source_type": 15,
+        "title": 15,
+        "url": 15,
+        "year": 15
+      },
+      "sha256": "8e13e6c9121f26d6aca2fa9f09c9767058ff330b1a8bc76f551d53110c8713f0",
+      "skipped_entries": 0,
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "bytes": 138889,
+      "detected_entries": 15,
+      "error_count": 1,
+      "filename": "citation-export.bib",
+      "issue_codes": {
+        "invalid_citation_key": 1
+      },
+      "missing_abstract_entries": 0,
+      "parsed_entries": 14,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 14,
+        "authors": 14,
+        "date": 14,
+        "doi": 14,
+        "issue": 14,
+        "journal": 14,
+        "reference_type": 14,
+        "source_file": 14,
+        "source_identifier": 14,
+        "source_position": 14,
+        "source_type": 14,
+        "title": 14,
+        "url": 14,
+        "year": 14
+      },
+      "sha256": "36aeca084b8bd4b1a58bdbbe6f3c3ec52f072f409f30664f144303939e1b9eae",
+      "skipped_entries": 1,
+      "status": "partial",
+      "warning_count": 0
+    },
+    {
+      "bytes": 1760891,
+      "detected_entries": 264,
+      "error_count": 0,
+      "filename": "pubmed-osimertini-set.nbib",
+      "issue_codes": {
+        "missing_abstract": 1
+      },
+      "missing_abstract_entries": 1,
+      "parsed_entries": 264,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 263,
+        "address": 264,
+        "authors": 264,
+        "date": 264,
+        "doi": 262,
+        "issue": 208,
+        "journal": 264,
+        "page": 255,
+        "pmcid": 120,
+        "reference_type": 264,
+        "source_file": 264,
+        "source_position": 264,
+        "source_type": 264,
+        "title": 264,
+        "url": 264,
+        "volume": 264,
+        "year": 264
+      },
+      "sha256": "ace4bddf374a578bb08081d8e653aa8b1ef12bd502facebb48bdd5bc86d0a28d",
+      "skipped_entries": 0,
+      "status": "warning",
+      "warning_count": 1
+    },
+    {
+      "bytes": 361495,
+      "detected_entries": 25,
+      "error_count": 0,
+      "filename": "records.xml",
+      "issue_codes": {
+        "missing_abstract": 1
+      },
+      "missing_abstract_entries": 1,
+      "parsed_entries": 25,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 24,
+        "address": 25,
+        "authors": 25,
+        "date": 25,
+        "doi": 25,
+        "issue": 17,
+        "journal": 25,
+        "page": 25,
+        "reference_type": 25,
+        "source_file": 25,
+        "source_identifier": 25,
+        "source_position": 25,
+        "source_type": 25,
+        "title": 25,
+        "type": 25,
+        "url": 25,
+        "volume": 25,
+        "year": 25
+      },
+      "sha256": "373086c125d21b6d256b78c89e50ab0a0400d7248145b9f42dafac3336031c7a",
+      "skipped_entries": 0,
+      "status": "warning",
+      "warning_count": 1
+    },
+    {
+      "bytes": 1790292,
+      "detected_entries": 497,
+      "error_count": 0,
+      "filename": "savedrecs-6.ciw",
+      "issue_codes": {},
+      "missing_abstract_entries": 0,
+      "parsed_entries": 497,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 497,
+        "address": 496,
+        "authors": 497,
+        "date": 494,
+        "doi": 474,
+        "issue": 411,
+        "journal": 497,
+        "page": 356,
+        "record_number": 497,
+        "reference_type": 497,
+        "source_file": 497,
+        "source_position": 497,
+        "source_type": 497,
+        "title": 497,
+        "url": 497,
+        "volume": 486,
+        "year": 497
+      },
+      "sha256": "370f82f4133c8dc3c5ebc586c67ae1f213547a552c9814f52ec3b4d225ca572d",
+      "skipped_entries": 0,
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "bytes": 3268,
+      "detected_entries": 1,
+      "error_count": 0,
+      "filename": "sinomed.doc",
+      "issue_codes": {},
+      "missing_abstract_entries": 0,
+      "parsed_entries": 1,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 1,
+        "address": 1,
+        "authors": 1,
+        "date": 1,
+        "issue": 1,
+        "journal": 1,
+        "keywords": 1,
+        "reference_type": 1,
+        "source_file": 1,
+        "source_position": 1,
+        "source_type": 1,
+        "title": 1,
+        "volume": 1,
+        "year": 1
+      },
+      "sha256": "dd56cb8ede06eef7c8db12ee1a37c47b064b518b7b53fbef61e158518cb3d8dc",
+      "skipped_entries": 0,
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "bytes": 788559,
+      "detected_entries": 85,
+      "error_count": 0,
+      "filename": "奥希初筛-swf.xml",
+      "issue_codes": {
+        "missing_abstract": 2
+      },
+      "missing_abstract_entries": 2,
+      "parsed_entries": 85,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 83,
+        "address": 73,
+        "authors": 85,
+        "date": 6,
+        "doi": 78,
+        "issue": 65,
+        "journal": 85,
+        "page": 57,
+        "pmcid": 6,
+        "record_number": 85,
+        "reference_type": 85,
+        "source_file": 85,
+        "source_position": 85,
+        "title": 85,
+        "type": 85,
+        "url": 78,
+        "volume": 85,
+        "year": 85
+      },
+      "sha256": "f74c14d28808c3408e9ccdf8b97e1819c5d96f395626475d5fe1d604db277d69",
+      "skipped_entries": 0,
+      "status": "warning",
+      "warning_count": 2
+    },
+    {
+      "bytes": 14110329,
+      "detected_entries": 2160,
+      "error_count": 0,
+      "filename": "机械通气.xml",
+      "issue_codes": {
+        "missing_abstract": 1
+      },
+      "missing_abstract_entries": 1,
+      "parsed_entries": 2160,
+      "parser_error": "",
+      "populated_fields": {
+        "abstract": 2159,
+        "address": 2119,
+        "authors": 2154,
+        "date": 2051,
+        "doi": 2017,
+        "issue": 1815,
+        "journal": 2160,
+        "page": 1659,
+        "pmcid": 350,
+        "record_number": 2160,
+        "reference_type": 2160,
+        "source_file": 2160,
+        "source_position": 2160,
+        "title": 2160,
+        "type": 2160,
+        "url": 2160,
+        "volume": 2105,
+        "year": 2160
+      },
+      "sha256": "513081b28ce81736a68fc19adc5e578dc7b43c6c674f2490e76f8c386be323be",
+      "skipped_entries": 0,
+      "status": "warning",
+      "warning_count": 1
+    }
+  ]
+}

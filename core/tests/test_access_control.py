@@ -1,11 +1,10 @@
 """项目隔离、管理员可见性与 CSRF 长期回归测试。"""
 
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
-from core.models import ManualReview, Project, QAChart, QAChartSettings, QAReference
+from core.models import Project, QAChart, QAChartSettings, QAReference
 from core.services.access_policy import ProjectAccessPolicy
 from core.services.project_service import initialize_project
 
@@ -76,7 +75,7 @@ class ProjectAccessPolicyTests(AccessFixture):
 
 
 class QaAndCsrfContractTests(AccessFixture):
-    def test_import_clears_all_current_qa_results(self):
+    def test_import_without_current_screening_run_preserves_qa_results(self):
         QAReference.objects.create(project=self.project, title='旧文献')
         QAChart.objects.create(project=self.project, quality_method='QUADAS2')
         QAChartSettings.objects.create(
@@ -85,16 +84,15 @@ class QaAndCsrfContractTests(AccessFixture):
             study_labels={'1': '旧名称'},
         )
         client = self.login(self.owner)
-        with patch('core.quality.services.reference_service.load_ai_results', return_value=[]):
-            response = client.post(
-                '/api/qa/refs/import/',
-                data={'project_id': self.project.id, 'source_stage': 'SCREEN_1'},
-                content_type='application/json',
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(QAReference.objects.filter(project=self.project).exists())
-        self.assertFalse(QAChart.objects.filter(project=self.project).exists())
-        self.assertFalse(QAChartSettings.objects.filter(project=self.project).exists())
+        response = client.post(
+            '/api/qa/refs/import/',
+            data={'project_id': self.project.id, 'source_stage': 'SCREEN_1'},
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertTrue(QAReference.objects.filter(project=self.project).exists())
+        self.assertTrue(QAChart.objects.filter(project=self.project).exists())
+        self.assertTrue(QAChartSettings.objects.filter(project=self.project).exists())
 
     def test_session_write_endpoint_requires_csrf_token(self):
         client = self.login(self.owner, enforce_csrf=True)
@@ -105,20 +103,7 @@ class QaAndCsrfContractTests(AccessFixture):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_unreviewed_items_count_as_ai_correct(self):
-        ManualReview.objects.create(
-            project=self.project,
-            step=self.review_step,
-            source_xml='reviewed.xml',
-            ai_decision='included',
-            decision='included',
-            reviewer=self.owner,
-        )
-        ai_results = [
-            {'source_xml': 'reviewed.xml', 'decision': 'included'},
-            {'source_xml': 'unreviewed.xml', 'decision': 'excluded'},
-        ]
-        with patch('core.screening.api.review_views.load_ai_results', return_value=ai_results):
-            response = self.login(self.owner).get('/api/review/stats/', {'project': self.project.id})
+    def test_review_stats_are_empty_without_database_run(self):
+        response = self.login(self.owner).get('/api/review/stats/', {'project': self.project.id})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['ai_accuracy'], 100.0)
+        self.assertEqual(response.json(), {'total': 0, 'reviewed': 0, 'unreviewed': 0})

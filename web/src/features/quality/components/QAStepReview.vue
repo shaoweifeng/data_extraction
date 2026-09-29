@@ -15,7 +15,7 @@
       <!-- 左侧文献列表 -->
       <div class="ref-panel">
         <div class="ref-panel-header">
-          <span class="ref-count">{{ qa.refs.length }} 篇</span>
+          <span class="ref-count">可审核 {{ pageData.summary.reviewable || 0 }} 篇</span>
           <div class="filter-tabs">
             <button
               v-for="f in refFilters"
@@ -34,12 +34,12 @@
           >
             <i class="fas fa-spinner fa-spin" v-if="batchAllLoading"></i>
             <i class="fas fa-check-double" v-else></i>
-            {{ batchAllLoading ? `处理中 ${batchAllProgress}/${batchAllTotal}…` : '全部一键确认' }}
+            {{ batchAllLoading ? '正在确认已有评价结果…' : `全部一键确认（${pageData.summary.pending_reviewable || 0} 篇）` }}
           </button>
         </div>
         <div class="ref-list">
           <div
-            v-for="ref in filteredRefList"
+            v-for="ref in pageData.results"
             :key="ref.id"
             :class="['ref-item', { active: qa.currentRef?.id === ref.id }, `eval-${ref.ai_eval_status}`]"
             @click="selectRef(ref)"
@@ -50,8 +50,15 @@
               <span :class="['review-dot', reviewDotClass(ref.review_status)]" :title="reviewLabel(ref.review_status)"></span>
             </div>
           </div>
-          <div v-if="!filteredRefList.length" class="ref-list-empty">暂无文献</div>
+          <div v-if="!pageData.results.length" class="ref-list-empty">当前条件下暂无可审核文献</div>
         </div>
+        <QAPagination
+          :page="pageData.page"
+          :total-pages="pageData.total_pages"
+          :total="pageData.count"
+          :loading="pageLoading"
+          @change="loadPage"
+        />
       </div>
 
       <!-- 中间 PDF 预览 -->
@@ -164,6 +171,7 @@ import { useQAStore } from '@/features/quality/store'
 import { useProjectStore } from '@/features/projects/store'
 import QASignalCard from './QASignalCard.vue'
 import QAPdfViewer  from './QAPdfViewer.vue'
+import QAPagination from './QAPagination.vue'
 
 const qa      = useQAStore()
 const project = useProjectStore()
@@ -172,8 +180,11 @@ const refFilter     = ref('all')
 const activeDomain  = ref('all')
 const batchConfirmLoading = ref(false)
 const batchAllLoading  = ref(false)
-const batchAllProgress = ref(0)
-const batchAllTotal    = ref(0)
+const pageLoading = ref(false)
+const pageData = ref({
+  results: [], count: 0, page: 1, page_size: 30, total_pages: 1,
+  summary: { reviewable: 0, confirmed_reviewable: 0, pending_reviewable: 0 },
+})
 
 const refFilters = [
   { key: 'all',       label: '全部' },
@@ -181,17 +192,34 @@ const refFilters = [
   { key: 'confirmed', label: '已完成' },
 ]
 
-// ── 文献列表过滤 ────────────────────────────────────────────────────────────
+// 结果审核只展示已经产生信号问题的文献；未评价文献不属于审核对象。
+const allRefsConfirmed = computed(() => (
+  pageData.value.summary.reviewable > 0
+  && pageData.value.summary.pending_reviewable === 0
+))
 
-const filteredRefList = computed(() => {
-  let list = qa.refs
-  if (refFilter.value === 'pending')   list = list.filter(r => r.review_status !== 'confirmed')
-  if (refFilter.value === 'confirmed') list = list.filter(r => r.review_status === 'confirmed')
-  return list
-})
-
-const confirmedCount   = computed(() => qa.refs.filter(r => r.review_status === 'confirmed').length)
-const allRefsConfirmed = computed(() => qa.refs.length > 0 && qa.refs.every(r => r.review_status === 'confirmed'))
+async function loadPage(page = 1, { selectFirst = true } = {}) {
+  if (!project.currentProject) return
+  pageLoading.value = true
+  try {
+    pageData.value = await qa.fetchRefPage(project.currentProject.id, {
+      page,
+      page_size: 30,
+      view: 'reviewable',
+      review_status: refFilter.value,
+    })
+    if (selectFirst) {
+      if (pageData.value.results.length) await selectRef(pageData.value.results[0])
+      else {
+        qa.currentRef = null
+        qa.signalItems = []
+        qa.domainResults = []
+      }
+    }
+  } finally {
+    pageLoading.value = false
+  }
+}
 
 // ── 领域 & 信号过滤 ──────────────────────────────────────────────────────────
 
@@ -243,6 +271,9 @@ async function doBatchConfirm() {
   batchConfirmLoading.value = true
   try {
     await qa.batchConfirm(qa.currentRef.id, 'adopt_preselected')
+    const index = pageData.value.results.findIndex(item => item.id === qa.currentRef.id)
+    if (index !== -1) pageData.value.results[index] = { ...pageData.value.results[index], review_status: qa.currentRef.review_status }
+    await loadPage(pageData.value.page, { selectFirst: false })
   } catch (e) {
     alert(e?.response?.data?.error || '批量确认失败')
   } finally {
@@ -250,21 +281,17 @@ async function doBatchConfirm() {
   }
 }
 
-// ── 全部文献批量确认（逐篇循环）──────────────────────────────────────────────
+// ── 全部已有评价结果批量确认（单次后端操作）──────────────────────────────────
 
 async function doBatchAllRefs() {
-  const pending = qa.refs.filter(r => r.review_status !== 'confirmed')
-  if (!pending.length) return
-  batchAllLoading.value  = true
-  batchAllProgress.value = 0
-  batchAllTotal.value    = pending.length
+  const pending = pageData.value.summary.pending_reviewable || 0
+  if (!pending) return
+  if (!confirm(`将确认 ${pending} 篇已有 AI 评价结果的文献；未评价文献不会处理。是否继续？`)) return
+  batchAllLoading.value = true
   try {
-    for (const ref of pending) {
-      await qa.batchConfirm(ref.id, 'adopt_preselected')
-      batchAllProgress.value++
-    }
-    // 刷新当前文献的信号问题
-    if (qa.currentRef) await qa.selectRef(qa.currentRef)
+    const result = await qa.batchConfirmProject(project.currentProject.id, 'adopt_preselected')
+    await loadPage(1)
+    alert(`已确认 ${result.references} 篇文献、${result.signals} 条评价项。`)
   } catch (e) {
     alert(e?.response?.data?.error || '批量确认失败')
   } finally {
@@ -297,9 +324,10 @@ function riskClass(r) {
 // ── 初始化 ────────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  if (project.currentProject) await qa.fetchRefs(project.currentProject.id)
-  if (qa.refs.length && !qa.currentRef) await selectRef(qa.refs[0])
+  await loadPage(1)
 })
+
+watch(refFilter, () => loadPage(1))
 </script>
 
 <style scoped>
@@ -337,6 +365,9 @@ onMounted(async () => {
 .dot-partial   { background: #f59e0b; }
 .dot-pending   { background: #e2e8f0; }
 .ref-list-empty { padding: 20px; text-align: center; font-size: 0.78rem; color: #94a3b8; }
+.ref-panel :deep(.qa-pagination) { flex-wrap:wrap; justify-content:center; padding:8px 6px; gap:5px; }
+.ref-panel :deep(.qa-pagination-summary) { width:100%; margin:0; text-align:center; }
+.ref-panel :deep(.qa-pagination input) { width:42px; }
 
 /* 全量批量确认条 */
 .batch-all-bar { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; }

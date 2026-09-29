@@ -13,33 +13,39 @@ from django.db.models import (
     When,
 )
 
-from core.models import ManualReview, StageStep
-from core.screening.selectors import ai_result_files
-
-
-AI_CONFLICT = (
-    Q(metadata__consensus='conflict')
-    | (Q(metadata__consensus__isnull=True) & Q(metadata__decision='conflict'))
+from core.models import ManualReview
+from core.screening.models import ScreeningRun
+from core.screening.services.screening_run_service import (
+    latest_completed_screening_run,
+    screening_run_is_current,
 )
-AI_INCLUDED = Q(metadata__decision='included')
-AI_EXCLUDED = Q(metadata__decision='excluded')
-AI_DECISIVE = Q(metadata__decision__in=('included', 'excluded'))
 
 
-def review_result_queryset(project_id):
-    """Return indexed AI results annotated with the matching human decision."""
-    ai_step = StageStep.objects.filter(
-        stage__project_id=project_id,
-        step_key='ai_screen',
-    ).order_by('-id').first()
-    if not ai_step:
+AI_CONFLICT = Q(consensus='conflict')
+AI_INCLUDED = Q(decision='included')
+AI_EXCLUDED = Q(decision='excluded')
+AI_DECISIVE = Q(decision__in=('included', 'excluded'))
+
+
+def review_result_queryset(project_id, run_id=None):
+    """Return current run results annotated with their human decision."""
+    if run_id is not None:
+        run = ScreeningRun.objects.select_related('corpus', 'dedup_run').filter(
+            pk=run_id,
+            project_id=project_id,
+            status=ScreeningRun.Status.COMPLETED,
+        ).first()
+    else:
+        run = latest_completed_screening_run(project_id)
+    if run is None:
         return None
 
     reviews = ManualReview.objects.filter(
         project_id=project_id,
-        source_xml=OuterRef('metadata__source_xml'),
+        screening_run=run,
+        reference_id=OuterRef('reference_id'),
     )
-    return ai_result_files(project_id, ai_step).annotate(
+    queryset = run.results.select_related('reference').annotate(
         has_human_review=Exists(reviews),
         human_decision=Subquery(reviews.values('decision')[:1]),
         human_is_override=Subquery(
@@ -47,32 +53,42 @@ def review_result_queryset(project_id):
             output_field=BooleanField(),
         ),
         ai_excluded_priority=Case(
-            When(metadata__decision='excluded', then=Value(0)),
+            When(decision='excluded', then=Value(0)),
             default=Value(1),
             output_field=IntegerField(),
         ),
     )
+    queryset._screening_database = True
+    queryset._screening_run = run
+    queryset._screening_is_current = screening_run_is_current(run)
+    return queryset
 
 
 def final_decision_filter(decision):
     """Build the database predicate for one review tab."""
     unreviewed = Q(has_human_review=False)
-
+    conflict = AI_CONFLICT
+    included = AI_INCLUDED
+    excluded = AI_EXCLUDED
+    decisive = AI_DECISIVE
     if decision == 'unreviewed':
         return unreviewed
     if decision == 'included':
-        return Q(human_decision='included') | (unreviewed & AI_INCLUDED & ~AI_CONFLICT)
+        return Q(human_decision='included') | (unreviewed & included & ~conflict)
     if decision == 'excluded':
-        return Q(human_decision='excluded') | (unreviewed & AI_EXCLUDED & ~AI_CONFLICT)
+        return Q(human_decision='excluded') | (unreviewed & excluded & ~conflict)
     if decision == 'conflict':
-        return Q(human_decision='conflict') | (unreviewed & AI_CONFLICT)
+        return Q(human_decision='conflict') | (unreviewed & conflict)
     if decision == 'pending':
-        return Q(human_decision='pending') | (unreviewed & ~AI_DECISIVE & ~AI_CONFLICT)
+        return Q(human_decision='pending') | (unreviewed & ~decisive & ~conflict)
     return Q()
 
 
 def aggregate_review_stats(queryset):
-    """Calculate all review counters in SQL without loading result JSON files."""
+    """Calculate review counters in SQL without loading result payloads."""
+    conflict = AI_CONFLICT
+    included = AI_INCLUDED
+    excluded = AI_EXCLUDED
     unreviewed = Q(has_human_review=False)
     decisive_reviewed = Q(human_decision__in=('included', 'excluded'))
     aggregates = queryset.aggregate(
@@ -82,9 +98,9 @@ def aggregate_review_stats(queryset):
         excluded=Count('pk', filter=Q(human_decision='excluded')),
         pending=Count('pk', filter=Q(human_decision='pending')),
         overridden=Count('pk', filter=Q(human_is_override=True)),
-        ai_included=Count('pk', filter=AI_INCLUDED),
-        ai_excluded=Count('pk', filter=AI_EXCLUDED & ~AI_CONFLICT),
-        ai_conflict=Count('pk', filter=AI_CONFLICT),
+        ai_included=Count('pk', filter=included & ~conflict),
+        ai_excluded=Count('pk', filter=excluded & ~conflict),
+        ai_conflict=Count('pk', filter=conflict),
         tab_included=Count('pk', filter=final_decision_filter('included')),
         tab_excluded=Count('pk', filter=final_decision_filter('excluded')),
         tab_pending=Count('pk', filter=final_decision_filter('pending')),
@@ -98,7 +114,6 @@ def aggregate_review_stats(queryset):
         decisive_reviewed=Count('pk', filter=decisive_reviewed),
         unreviewed=Count('pk', filter=unreviewed),
     )
-
     denominator = aggregates['total'] - aggregates['pending']
     numerator = aggregates['ai_correct_in_reviewed'] + aggregates['unreviewed']
     aggregates['ai_accuracy'] = (

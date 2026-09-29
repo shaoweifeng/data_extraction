@@ -87,6 +87,14 @@ class QASignalBatchConfirmInputSerializer(serializers.Serializer):
         return attrs
 
 
+class QAProjectBatchConfirmInputSerializer(serializers.Serializer):
+    project_id = serializers.IntegerField(min_value=1)
+    confirm_mode = serializers.ChoiceField(
+        choices=['adopt_preselected', 'adopt_ai'],
+        default='adopt_preselected',
+    )
+
+
 class QAChartRequestSerializer(serializers.Serializer):
     project_id = serializers.IntegerField(min_value=1)
     quality_method = serializers.ChoiceField(choices=METHOD_CHOICES, default='QUADAS2')

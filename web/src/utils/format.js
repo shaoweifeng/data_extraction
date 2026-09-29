@@ -117,13 +117,14 @@ export function getShortError(errorMsg) {
  */
 export function exportFileLabel(f) {
   const name = f.filename || ''
-  const m = name.match(/screening_results_(?:all|included|excluded)_(.+?)_(\d{8})_(\d{6})\./)
+  const m = name.match(/screening_results_(all|included|excluded)_(.+?)_(\d{8})_(\d{6})\./)
   if (m) {
-    const model = m[1]
-    const d = m[2]
-    const t = m[3]
+    const scope = { all: '全部', included: '纳入', excluded: '排除' }[m[1]]
+    const model = m[2]
+    const d = m[3]
+    const t = m[4]
     const dateStr = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)} ${t.slice(0, 2)}:${t.slice(2, 4)}`
-    return `${model}  ${dateStr}`
+    return `${scope} · ${model}  ${dateStr}`
   }
   return f.created_at?.slice(0, 16) || name
 }

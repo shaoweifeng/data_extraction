@@ -32,6 +32,11 @@ export const useQAStore = defineStore('qa', () => {
     }
   }
 
+  async function fetchRefPage(projectId, params = {}) {
+    const response = await qualityApi.fetchRefs(projectId, params)
+    return response.data.data
+  }
+
   async function importFromScreening(projectId, sourceStage = 'SCREEN_1') {
     const response = await qualityApi.importFromScreening(projectId, sourceStage)
     return response.data.data
@@ -42,6 +47,11 @@ export const useQAStore = defineStore('qa', () => {
     form.append('project_id', projectId)
     files.forEach(file => form.append('files', file))
     const response = await qualityApi.uploadFulltext(form)
+    return response.data.data
+  }
+
+  async function retryFulltext(assetId) {
+    const response = await qualityApi.retryFulltext(assetId)
     return response.data.data
   }
 
@@ -78,6 +88,6 @@ export const useQAStore = defineStore('qa', () => {
     ...evaluation,
     ...review,
     ...chart,
-    fetchRefs, importFromScreening, uploadFulltext, updateRef, batchSetMethod, reset,
+    fetchRefs, fetchRefPage, importFromScreening, uploadFulltext, retryFulltext, updateRef, batchSetMethod, reset,
   }
 })

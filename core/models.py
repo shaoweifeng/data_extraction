@@ -10,6 +10,9 @@ import shutil
 import uuid
 
 from core.workflow.domain.statuses import ProjectStageStatus, StageStepStatus, TaskStatus
+from core.quality.storage import (
+    qa_extracted_text_upload_path, qa_fulltext_storage, qa_fulltext_upload_path,
+)
 
 
 # ============================================================================
@@ -407,6 +410,14 @@ class SystemOperationState(models.Model):
     mode = models.CharField(max_length=20, choices=MODE_CHOICES, default='normal')
     message = models.CharField(max_length=500, blank=True, default='')
     scheduled_at = models.DateTimeField(null=True, blank=True)
+    announcement_enabled = models.BooleanField(default=False)
+    announcement_message = models.CharField(max_length=500, blank=True, default='')
+    announcement_level = models.CharField(
+        max_length=20,
+        choices=[('info', '通知'), ('success', '成功'), ('warning', '提醒')],
+        default='info',
+    )
+    announcement_updated_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.ForeignKey(
         User, null=True, blank=True, on_delete=models.SET_NULL,
         related_name='system_operation_updates',
@@ -450,6 +461,9 @@ class ActivityLog(models.Model):
         ('model_select', '切换AI模型'),
         ('field_extraction_add', '添加提取字段'),
         ('field_extraction_delete', '删除提取字段'),
+        ('review_decision', '人工审阅决定'),
+        ('review_note', '人工审阅备注'),
+        ('review_complete', '完成人工审阅'),
         # QA 操作日志
         ('qa_import', 'QA导入文献'),
         ('qa_upload_pdf', 'QA上传全文'),
@@ -564,8 +578,8 @@ class ManualReview(models.Model):
     关键设计：
     - ai_decision / ai_reason 冗余存储 AI 原始判断，人工决定单独存 decision 列，两者独立
     - decision 支持三态：included / excluded / pending（待定）
-    - unique_together(project, source_xml) 保证每篇文献只有一条覆写记录（upsert 语义）
-    - 重新 AI 筛选后不清空本表，前端展示时标注"AI已重新筛选"提示
+    - 新链路以 (screening_run, reference) 唯一，确保不同语料版本互相隔离
+    - 重新 AI 筛选后保留历史审阅，新批次不会继承或覆盖旧批次结果
     """
 
     DECISION_CHOICES = [
@@ -590,7 +604,14 @@ class ManualReview(models.Model):
         StageStep, on_delete=models.CASCADE,
         related_name='manual_reviews', verbose_name="所属步骤（review）"
     )
-    source_xml  = models.CharField(max_length=500, verbose_name="对应 XML 文件名")
+    reference = models.ForeignKey(
+        'core.ScreeningReference', null=True, blank=True, on_delete=models.CASCADE,
+        related_name='manual_reviews', verbose_name="对应文献",
+    )
+    screening_run = models.ForeignKey(
+        'core.ScreeningRun', null=True, blank=True, on_delete=models.CASCADE,
+        related_name='manual_reviews', verbose_name="对应 AI 初筛运行",
+    )
 
     # AI 原始判断（冗余，独立列）
     ai_decision = models.CharField(
@@ -648,15 +669,21 @@ class ManualReview(models.Model):
         db_table        = 'plat_manualreview'
         verbose_name    = "人工审阅记录"
         verbose_name_plural = "人工审阅记录"
-        unique_together = ('project', 'source_xml')
         ordering        = ['-reviewed_at']
         indexes         = [
             models.Index(fields=['project', 'decision'],   name='idx_mr_project_decision'),
             models.Index(fields=['project', 'consensus'],  name='idx_mr_project_consensus'),
+            models.Index(fields=['screening_run', 'decision'], name='idx_mr_run_decision'),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['screening_run', 'reference'],
+                name='uniq_mr_run_reference',
+            ),
         ]
 
     def __str__(self):
-        return f"{self.project.name} | {self.source_xml} | {self.get_decision_display()}"
+        return f"{self.project.name} | 文献 {self.reference_id} | {self.get_decision_display()}"
 
 
 # ============================================================================
@@ -713,7 +740,18 @@ class QAReference(models.Model):
     abstract       = models.TextField(blank=True, default='', verbose_name="摘要")
     doi            = models.CharField(max_length=200, blank=True, default='', verbose_name="DOI")
     source_type    = models.CharField(max_length=50, choices=SOURCE_CHOICES, default='fulltext_upload', verbose_name="来源类型")
-    source_ref_id  = models.IntegerField(null=True, blank=True, verbose_name="来源文献ID（初筛/复筛导入时）")
+    # 快照字段继续保留；该外键提供可审计的初筛来源关系。
+    source_reference = models.ForeignKey(
+        'core.ScreeningReference', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='qa_references', verbose_name="来源初筛文献",
+    )
+    source_screening_run = models.ForeignKey(
+        'core.ScreeningRun', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='qa_references', verbose_name="来源 AI 初筛运行",
+    )
+    source_screening_decision = models.CharField(
+        max_length=20, blank=True, default='', verbose_name="导入时最终筛选决定",
+    )
     fulltext_file  = models.ForeignKey(DataFile, null=True, blank=True, on_delete=models.SET_NULL, related_name='qa_references', verbose_name="全文PDF文件")
     fulltext_status= models.CharField(max_length=20, choices=FULLTEXT_STATUS_CHOICES, default='pending', verbose_name="全文状态")
     quality_method = models.CharField(max_length=20, choices=METHOD_CHOICES, blank=True, default='', verbose_name="质量评价方法")
@@ -732,10 +770,90 @@ class QAReference(models.Model):
         indexes = [
             models.Index(fields=['project', 'quality_method'], name='idx_qar_proj_method'),
             models.Index(fields=['project', 'review_status'],  name='idx_qar_proj_review'),
+            models.Index(fields=['source_screening_run', 'source_reference'], name='idx_qar_run_ref'),
         ]
 
     def __str__(self):
         return f"[{self.quality_method}] {self.title[:60]}"
+
+
+class QAFulltextAsset(models.Model):
+    """Private PDF plus its validation, scan and extraction lifecycle."""
+
+    STATUS_CHOICES = [
+        ('pending', '等待处理'),
+        ('validating', '正在校验'),
+        ('scanning', '正在扫描'),
+        ('extracting', '正在提取'),
+        ('ready', '可用'),
+        ('rejected', '已拒绝'),
+        ('failed', '处理失败'),
+    ]
+    SCAN_STATUS_CHOICES = [
+        ('pending', '等待扫描'),
+        ('clean', '安全'),
+        ('not_configured', '未配置扫描器'),
+        ('infected', '发现威胁'),
+        ('failed', '扫描失败'),
+    ]
+    EXTRACTION_STATUS_CHOICES = [
+        ('pending', '等待提取'),
+        ('running', '正在提取'),
+        ('completed', '提取完成'),
+        ('skipped', '无可提取文本'),
+        ('purged', '已按保留策略清理'),
+        ('failed', '提取失败'),
+    ]
+
+    qa_reference = models.OneToOneField(
+        QAReference, on_delete=models.CASCADE, related_name='fulltext_asset',
+        verbose_name='质量评价文献',
+    )
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name='qa_fulltext_assets',
+        verbose_name='所属项目',
+    )
+    raw_file = models.FileField(
+        upload_to=qa_fulltext_upload_path, storage=qa_fulltext_storage,
+        max_length=500, verbose_name='私有 PDF',
+    )
+    extracted_text_file = models.FileField(
+        upload_to=qa_extracted_text_upload_path, storage=qa_fulltext_storage,
+        max_length=500, blank=True, verbose_name='私有提取文本',
+    )
+    original_filename = models.CharField(max_length=255, verbose_name='原始文件名')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
+    sha256 = models.CharField(max_length=64, db_index=True)
+    size_bytes = models.PositiveBigIntegerField(default=0)
+    mime_type = models.CharField(max_length=100, default='application/pdf')
+    page_count = models.PositiveIntegerField(null=True, blank=True)
+    scan_status = models.CharField(max_length=20, choices=SCAN_STATUS_CHOICES, default='pending')
+    extraction_status = models.CharField(
+        max_length=20, choices=EXTRACTION_STATUS_CHOICES, default='pending',
+    )
+    extracted_text_sha256 = models.CharField(max_length=64, blank=True, default='')
+    extracted_text_chars = models.PositiveIntegerField(default=0)
+    error_code = models.CharField(max_length=64, blank=True, default='')
+    error_message = models.CharField(max_length=500, blank=True, default='')
+    validated_at = models.DateTimeField(null=True, blank=True)
+    scanned_at = models.DateTimeField(null=True, blank=True)
+    extracted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'plat_qa_fulltext_asset'
+        verbose_name = '质量评价全文资产'
+        verbose_name_plural = '质量评价全文资产'
+        indexes = [
+            models.Index(fields=['status', 'created_at'], name='idx_qafa_status_created'),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['project', 'sha256'], name='uniq_qafa_project_sha256'),
+        ]
+
+    def __str__(self):
+        return f'{self.qa_reference_id} | {self.original_filename}'
 
 
 class QASignalItem(models.Model):
@@ -868,3 +986,8 @@ class QAChartSettings(models.Model):
 
     def __str__(self):
         return f"{self.project.name} | {self.quality_method}"
+
+
+# core 是一个 Django app；数据库化初筛模型按领域放在 core.screening 中，
+# 在此导入以便 Django 的模型发现与迁移自动检测仍归属 core app。
+from core.screening import models as _screening_models  # noqa: E402,F401

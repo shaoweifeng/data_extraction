@@ -1,27 +1,34 @@
 import * as screeningApi from '../api'
 
 export function createReviewController(context) {
-  const loadStats = () => screeningApi.fetchReviewStats(context.projectId())
+  const loadStats = (runId = null) => screeningApi.fetchReviewStats(context.projectId(), runId)
   const loadItems = (filters = {}) => screeningApi.fetchReviewList({
     project: context.projectId(),
     step: context.stepId(),
     ...filters,
   })
-  const saveDecision = (sourceXml, decision, reason = '') =>
-    screeningApi.updateReviewItem(sourceXml, {
+  const loadDetail = (runId, referenceId, config = {}) =>
+    screeningApi.fetchReviewDetail(runId, referenceId, { project: context.projectId() }, config)
+  const saveDecision = (runId, referenceId, decision, reason = '') => {
+    const payload = {
       project: context.projectId(),
       step: context.stepId(),
       decision,
       reason,
-    })
-  const appendNote = (sourceXml, content) =>
-    screeningApi.appendReviewNote(sourceXml, {
+    }
+    return screeningApi.updateReviewReference(runId, referenceId, payload)
+  }
+  const appendNote = (runId, referenceId, content) => {
+    const payload = {
       project: context.projectId(),
       step: context.stepId(),
       content,
-    })
-  const loadNotes = sourceXml =>
-    screeningApi.fetchReviewNotes(sourceXml, { project: context.projectId() })
+    }
+    return screeningApi.appendReviewReferenceNote(runId, referenceId, payload)
+  }
+  const loadNotes = (runId, referenceId) => screeningApi.fetchReviewReferenceNotes(
+    runId, referenceId, { project: context.projectId() },
+  )
 
-  return { loadStats, loadItems, saveDecision, appendNote, loadNotes }
+  return { loadStats, loadItems, loadDetail, saveDecision, appendNote, loadNotes }
 }

@@ -23,6 +23,37 @@
         </div>
       </section>
 
+      <section class="announcement-card card">
+        <div class="announcement-copy">
+          <div class="announcement-title-row">
+            <h2>工作台通知</h2>
+            <span :class="['announcement-state', { active: operations.system.announcement_enabled }]">
+              {{ operations.system.announcement_enabled ? '展示中' : '未发布' }}
+            </span>
+          </div>
+          <p>仅在用户工作台顶部展示，不进入排空或维护状态，也不会影响任务运行。</p>
+        </div>
+        <div class="announcement-form">
+          <select v-model="announcementLevel" class="input-base announcement-level">
+            <option value="info">普通通知</option>
+            <option value="success">完成通知</option>
+            <option value="warning">重要提醒</option>
+          </select>
+          <input
+            v-model="announcementMessage"
+            maxlength="500"
+            class="input-base"
+            placeholder="例如：新版筛选功能已上线，欢迎体验并提交反馈"
+          />
+          <button class="btn-primary" :disabled="announcementSaving || !announcementMessage.trim()" @click="publishAnnouncement">
+            {{ announcementSaving ? '发布中…' : '发布通知' }}
+          </button>
+          <button class="btn-secondary" :disabled="announcementSaving || !operations.system.announcement_enabled" @click="clearAnnouncement">
+            撤下通知
+          </button>
+        </div>
+      </section>
+
       <section class="metric-grid" v-if="snapshot">
         <div class="metric card"><span>当前在线用户</span><strong>{{ snapshot.presence.online_users }}</strong></div>
         <div class="metric card"><span>活跃标签页</span><strong>{{ snapshot.presence.active_tabs }}</strong></div>
@@ -74,6 +105,9 @@ const operations = useOperationsStore()
 const snapshot = computed(() => operations.snapshot)
 const message = ref('')
 const scheduledAt = ref('')
+const announcementMessage = ref('')
+const announcementLevel = ref('info')
+const announcementSaving = ref(false)
 let timer = null
 const modeLabel = computed(() => ({ normal: '正常运行', draining: '正在排空', maintenance: '维护中' }[operations.system.mode]))
 const safetyClass = computed(() => snapshot.value?.safe_to_stop == null
@@ -97,6 +131,30 @@ async function setMode(mode) {
     scheduled_at: scheduledAt.value ? new Date(scheduledAt.value).toISOString() : null,
   })
 }
+async function publishAnnouncement() {
+  announcementSaving.value = true
+  try {
+    await operations.changeAnnouncement({
+      enabled: true,
+      message: announcementMessage.value,
+      level: announcementLevel.value,
+    })
+  } finally {
+    announcementSaving.value = false
+  }
+}
+async function clearAnnouncement() {
+  announcementSaving.value = true
+  try {
+    await operations.changeAnnouncement({
+      enabled: false,
+      message: announcementMessage.value,
+      level: announcementLevel.value,
+    })
+  } finally {
+    announcementSaving.value = false
+  }
+}
 async function pauseTasks() {
   if (!confirm('将协作式暂停正在运行的 AI 初筛和质量评价任务，是否继续？')) return
   const result = await operationsApi.pauseMaintenanceTasks()
@@ -113,6 +171,8 @@ function formatTime(value) { return value ? new Date(value).toLocaleString('zh-C
 onMounted(async () => {
   await refresh(true)
   message.value = operations.system.message || ''
+  announcementMessage.value = operations.system.announcement_message || ''
+  announcementLevel.value = operations.system.announcement_level || 'info'
   timer = setInterval(() => refresh(false), 15000)
 })
 onBeforeUnmount(() => clearInterval(timer))
@@ -127,6 +187,15 @@ onBeforeUnmount(() => clearInterval(timer))
 .state-pill { border-radius: 999px; padding: 4px 10px; font-size: .75rem; }.state-pill.normal { background:#dcfce7;color:#166534; }
 .state-pill.draining { background:#ffedd5;color:#9a3412; }.state-pill.maintenance { background:#fee2e2;color:#991b1b; }
 .state-form { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }.state-form > input:first-child { flex: 1; min-width: 260px; }
+.announcement-card { padding:18px; margin-bottom:16px; }
+.announcement-title-row { display:flex; align-items:center; gap:10px; }
+.announcement-title-row h2 { margin:0; font-size:1rem; }
+.announcement-copy p { margin:5px 0 14px; color:#64748b; font-size:.8rem; }
+.announcement-state { padding:2px 8px; border-radius:999px; font-size:.7rem; color:#64748b; background:#f1f5f9; }
+.announcement-state.active { color:#166534; background:#dcfce7; }
+.announcement-form { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.announcement-form > input { flex:1; min-width:280px; }
+.announcement-level { width:120px; }
 .date-input { width: 205px; }.metric-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 16px; }
 .metric { padding: 15px; display: flex; flex-direction: column; gap: 6px; }.metric span { color:#64748b;font-size:.75rem; }.metric strong { font-size:1.4rem; }
 .safety { padding: 16px; display:flex;align-items:center;gap:12px;margin-bottom:16px; }.safety.safe { border-color:#86efac;background:#f0fdf4; }

@@ -15,10 +15,7 @@ class ScreeningRisExporter:
 
     def _write_record(self, output, result: Dict, xml: Optional[Dict] = None) -> None:
         """向已打开的 RIS 文件追加一篇文献。"""
-        xml = xml if xml is not None else (
-            self._load_xml_fields(result.get('source_xml', ''))
-            if result.get('source_xml') else {}
-        )
+        xml = xml or {}
 
         def _get(xml_key, json_key, default=''):
             return xml.get(xml_key) or result.get(json_key, '') or default

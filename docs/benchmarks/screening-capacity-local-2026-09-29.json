@@ -1,0 +1,126 @@
+{
+  "batch_size": 1000,
+  "database": {
+    "_scope": "whole_table_after_analyze",
+    "plat_reference_duplicate_group": {
+      "data_bytes": 229376,
+      "index_bytes": 180224
+    },
+    "plat_reference_duplicate_member": {
+      "data_bytes": 245760,
+      "index_bytes": 393216
+    },
+    "plat_screening_reference": {
+      "data_bytes": 42549248,
+      "index_bytes": 34324480
+    },
+    "plat_screening_reference_raw": {
+      "data_bytes": 26804224,
+      "index_bytes": 5275648
+    },
+    "plat_screening_result": {
+      "data_bytes": 15253504,
+      "index_bytes": 13205504
+    }
+  },
+  "duplicate_every": 100,
+  "environment": {
+    "cpu_count": 10,
+    "database_engine": "mysql",
+    "database_version": "8.0.32",
+    "os": "macOS-26.0.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "finished_at": "2026-09-29T08:49:22.916701+00:00",
+  "measurements": {
+    "ai_input_first_page": {
+      "response_bytes": 4772,
+      "seconds": 0.1212,
+      "sql_queries": 10,
+      "status_code": 200
+    },
+    "ai_input_last_page": {
+      "response_bytes": 4930,
+      "seconds": 0.2086,
+      "sql_queries": 9,
+      "status_code": 200
+    },
+    "dedup": {
+      "duplicates": 999,
+      "groups": 999,
+      "kept": 99001,
+      "peak_rss_mib": 150.86,
+      "seconds": 5.312,
+      "total": 100000
+    },
+    "dedup_group_first_page": {
+      "response_bytes": 6411,
+      "seconds": 0.0096,
+      "sql_queries": 9,
+      "status_code": 200
+    },
+    "dedup_group_last_page": {
+      "response_bytes": 6121,
+      "seconds": 0.0077,
+      "sql_queries": 8,
+      "status_code": 200
+    },
+    "reference_seed": {
+      "peak_rss_mib": 134.23,
+      "rows_per_second": 4764.95,
+      "seconds": 20.9866
+    },
+    "review_first_page": {
+      "response_bytes": 12798,
+      "seconds": 0.2033,
+      "sql_queries": 11,
+      "status_code": 200
+    },
+    "review_last_page": {
+      "response_bytes": 409,
+      "seconds": 0.3731,
+      "sql_queries": 10,
+      "status_code": 200
+    },
+    "review_stats": {
+      "response_bytes": 547,
+      "seconds": 0.5287,
+      "sql_queries": 8,
+      "status_code": 200
+    },
+    "ris_parse": {
+      "fixture_write_seconds": 0.0463,
+      "input_bytes": 15066685,
+      "parse_seconds": 0.6418,
+      "process_peak_rss_mib": 80.28,
+      "rows": 100000,
+      "rows_per_second": 155811.78
+    },
+    "screening_result_seed": {
+      "peak_rss_mib": 150.86,
+      "rows": 99001,
+      "seconds": 8.5717
+    },
+    "streaming_export": {
+      "output_bytes": {
+        "ris": 5624224,
+        "xlsx": 7028611,
+        "xml": 21264290
+      },
+      "process_peak_rss_mib": 150.86,
+      "rows": {
+        "all": 99001,
+        "excluded": 50000,
+        "included": 49001
+      },
+      "rows_per_second": 5577.14,
+      "seconds": 17.7512,
+      "sql_queries": 399
+    }
+  },
+  "peak_rss_mib": 150.86,
+  "project_id": null,
+  "requested_references": 100000,
+  "schema_version": 1,
+  "started_at": "2026-09-29T08:48:27.773456+00:00"
+}

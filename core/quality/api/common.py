@@ -2,6 +2,7 @@
 
 import json
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 
 from core.models import QAReference, QASignalItem, QADomainResult
@@ -70,6 +71,16 @@ def _format_validation_errors(errors):
 
 
 def _serialize_ref(ref: QAReference) -> dict:
+    try:
+        asset = ref.fulltext_asset
+    except ObjectDoesNotExist:
+        asset = None
+    if asset:
+        fulltext_url = f'/api/qa/fulltext-assets/{asset.id}/download/'
+    elif ref.fulltext_file_id:
+        fulltext_url = f'/api/files/{ref.fulltext_file_id}/download/'
+    else:
+        fulltext_url = None
     return {
         'id':             ref.id,
         'title':          ref.title,
@@ -79,9 +90,22 @@ def _serialize_ref(ref: QAReference) -> dict:
         'abstract':       ref.abstract,
         'doi':            ref.doi,
         'source_type':    ref.source_type,
+        'source_reference_id': ref.source_reference_id,
+        'source_screening_run_id': ref.source_screening_run_id,
+        'source_screening_decision': ref.source_screening_decision,
         'fulltext_status':ref.fulltext_status,
         'fulltext_file_id': ref.fulltext_file_id,
-        'fulltext_url':   ref.fulltext_file.file.url if ref.fulltext_file else None,
+        'fulltext_url':   fulltext_url,
+        'fulltext_asset': None if not asset else {
+            'id': asset.id,
+            'status': asset.status,
+            'scan_status': asset.scan_status,
+            'extraction_status': asset.extraction_status,
+            'size_bytes': asset.size_bytes,
+            'page_count': asset.page_count,
+            'error_code': asset.error_code,
+            'error_message': asset.error_message,
+        },
         'quality_method': ref.quality_method,
         'eval_mode':      ref.eval_mode,
         'selected_models':ref.selected_models,

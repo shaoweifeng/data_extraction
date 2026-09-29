@@ -67,8 +67,11 @@ def _init_cjk_font():
 
 
 # ── 颜色/符号（直接沿用原脚本）────────────────────────────────────────────────
-_COLORS  = {"High": "#d7191c", "Unclear": "#f1e51d", "Low": "#00b83f"}
-_SYMBOLS = {"High": "×", "Unclear": "?", "Low": "+"}
+_COLORS  = {
+    "High": "#d7191c", "Unclear": "#f1e51d", "Low": "#00b83f",
+    "Pending": "#94a3b8", "NA": "#e5e7eb",
+}
+_SYMBOLS = {"High": "×", "Unclear": "?", "Low": "+", "Pending": "…", "NA": "–"}
 _SYMBOL_FONT_SIZE = 13
 _CIRCLE_MARKER_SIZE = 1350
 # 内部 key → 原脚本 key 的映射
@@ -76,8 +79,8 @@ _JUDGMENT_MAP = {
     "low":     "Low",
     "high":    "High",
     "unclear": "Unclear",
-    "pending": "Unclear",
-    "na":      "Low",
+    "pending": "Pending",
+    "na":      "NA",
 }
 
 # 图例 / 分组标题国际化（lang='zh' 中文，lang='en' 英文）
@@ -88,6 +91,8 @@ _I18N = {
         'high':    '高风险',
         'unclear': '不清楚',
         'low':     '低风险',
+        'pending': '待确认',
+        'na':      '不适用',
     },
     'en': {
         'risk_of_bias':           'Risk of Bias',
@@ -95,6 +100,8 @@ _I18N = {
         'high':    'High',
         'unclear': 'Unclear',
         'low':     'Low',
+        'pending': 'Pending',
+        'na':      'N/A',
     },
 }
 
@@ -114,7 +121,7 @@ def _draw_judgment_marker(ax, x, y, value):
         linewidth=0.8,
         zorder=2,
     )
-    sym_color = "black" if value == "Unclear" else "white"
+    sym_color = "white" if value in {"High", "Low"} else "black"
     ax.text(
         x, y, _SYMBOLS[value],
         ha="center", va="center",
@@ -140,7 +147,7 @@ def _get_study_label(row: dict, study_labels: dict) -> str:
 def _draw_summary_bar(ax, summary_df, title):
     y_positions = np.arange(len(summary_df))
     left = np.zeros(len(summary_df))
-    for status in ["High", "Unclear", "Low"]:
+    for status in ["High", "Unclear", "Low", "Pending", "NA"]:
         values = summary_df[status].values
         ax.barh(y_positions, values, left=left,
                 color=_COLORS[status], edgecolor="black", height=0.65, label=status)
@@ -253,12 +260,16 @@ def _draw_legend(ax, i18n=None):
     ax.axis("off")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    labels = [i18n['high'], i18n['unclear'], i18n['low']]
-    for x, key, label in zip([0.1, 0.42, 0.72], ["High", "Unclear", "Low"], labels):
-        rect = plt.Rectangle((x, 0.25), 0.08, 0.5,
+    labels = [i18n['high'], i18n['unclear'], i18n['low'], i18n['pending'], i18n['na']]
+    for x, key, label in zip(
+        [0.05, 0.25, 0.45, 0.65, 0.83],
+        ["High", "Unclear", "Low", "Pending", "NA"],
+        labels,
+    ):
+        rect = plt.Rectangle((x, 0.25), 0.045, 0.5,
                               facecolor=_COLORS[key], edgecolor="black", linewidth=0.8)
         ax.add_patch(rect)
-        ax.text(x + 0.10, 0.5, label, ha="left", va="center", fontsize=9)
+        ax.text(x + 0.055, 0.5, label, ha="left", va="center", fontsize=8)
     # 外框
     border = plt.Rectangle((0.05, 0.1), 0.9, 0.8,
                             facecolor="none", edgecolor="black", linewidth=1.0)
@@ -353,9 +364,11 @@ def render_proportion(proportion_data, method_name, quality_method='',
                 "High":     item['counts'].get('high', 0)   / total,
                 "Unclear":  item['counts'].get('unclear', 0) / total,
                 "Low":      item['counts'].get('low', 0)    / total,
+                "Pending":  item['counts'].get('pending', 0) / total,
+                "NA":       item['counts'].get('na', 0) / total,
             })
         return pd.DataFrame(records) if records else pd.DataFrame(
-            columns=["domain", "High", "Unclear", "Low"])
+            columns=["domain", "High", "Unclear", "Low", "Pending", "NA"])
 
     rob_summary = _make_summary_df(bias_domains, 'bias_risk')
     app_summary = _make_summary_df(applic_domains, 'applicability')
