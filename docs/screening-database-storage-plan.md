@@ -4,7 +4,7 @@
 >
 > 本次更新已纳入文献解析诊断、Elsevier/Embase XML、索引删除统计同步、质量评价结果维度修复，以及自动去重详情分页需求。
 
-## 当前实施状态（2026-09-29）
+## 当前实施状态（2026-09-30）
 
 本轮已完成阶段 12 本地工程验收；下一步进入阶段 13 目标服务器复验和上线切换：
 
@@ -17,7 +17,7 @@
 - 批次支持取消、失败、重试、派发失败保留原文件和超期失败文件清理；删除已发布来源会创建独立 `remove` 操作并递增文献集修订号，其他来源的文件级统计和解析产物保持不变。前端会展示上传、解析及批次发布状态。
 - 新增索引已不会重新解析旧索引；专项回归覆盖原子上传、越权、并发、限流边界、任务派发失败、取消/重试、清理及连续新增/删除来源，共 10 个场景。
 - **第四步已完成：统一迭代解析器。** NBIB、ENW/TXT、CIW、RIS、BibTeX 和 XML 均改为逐记录产出；XML 同时拒绝 DTD/实体并限制嵌套深度。DOCX 已消除 `lines/full_text/records` 多份副本，上传入口继续限制压缩成员数和解压后总量。
-- 解析 Worker 使用单遍记录流完成统一字段上限校验、诊断汇总及兼容 XML 写出；错误样例受 `SCREENING_IMPORT_MAX_REPORTED_ERRORS` 限制，但总错误/警告计数不截断。乱码不再通过 `errors=ignore` 静默丢弃。
+- 解析 Worker 使用单遍记录流完成统一字段上限校验、诊断汇总和数据库批量写入；错误样例受 `SCREENING_IMPORT_MAX_REPORTED_ERRORS` 限制，但总错误/警告计数不截断。乱码不再通过 `errors=ignore` 静默丢弃。
 - 真实样本回归仍稳定解析 3,170 条，字段覆盖、文件级诊断、814 个重复组和 933 条重复记录均与 `v1.5.0` 基线一致。
 - **第五步已完成：数据库批量导入与原子发布。** 新解析记录按配置批次写入 `ScreeningReference`，保存稳定来源位置、规范化 DOI、题名哈希和记录哈希；写入行在 `target_revision` 发布前对当前文献集不可见。
 - 发布前同时核对文件报告、批次汇总、逐文件数据库行数、当前文献集缓存计数和数据库实际计数；最终短事务只锁定批次/文献集并切换修订号。失败、取消、容量超限和修订冲突均清理未发布文献。
@@ -40,6 +40,7 @@
 - 质量评价图表和 Excel 已复用统一的动态方法 schema 与结果映射；偏倚风险和适用性独立取值，`pending` 与 `na` 分别表达“待确认”和“不适用”，QUADAS-2、NOS 及无适用性领域方法均有专项回归。
 - 执行器生成产物统一通过产物服务分块写入私有存储；工作区过期清理由同一服务处理，保留期使用 `TASK_WORKSPACE_RETENTION_DAYS`（默认 30 天）。文件下载继续经过项目鉴权接口。
 - **阶段 12 本地工程验收已完成。** 已补齐限制边界、恶意输入、真实 RIS 流式解析、10 万篇数据库写入/去重/分页/统计，以及 XLSX、RIS、XML 单遍流式导出的可重复基准。目标服务器并发、故障和备份恢复演练作为阶段 13 的上线门禁保留，不用本地开发机数据替代生产结论。
+- **重构收尾已完成。** 步骤配置不再声明 `split_xmls`、`dedup_xmls` 或单篇结果 JSON；仅供旧测试使用的 XML 合并/拆分模块已经删除，并由模块边界测试防止文件式主数据路径重新进入运行时代码。容量与去重执行器测试使用临时工作区和媒体目录，不再污染真实项目存储。
 
 ## 1. 文档目的
 
@@ -135,11 +136,11 @@
 
 在 100,000 篇规模下，即使 XML 解析本身可以流式进行，单篇 XML 加单篇 JSON 也会产生约 200,000 个业务文件，带来目录遍历、inode、备份、部署同步、查询、清理和并发一致性问题。因此本次改造必须同时处理文献主数据、去重详情和 AI 结果，不能只把 XML 换成数据库后继续保留单篇结果 JSON 或截断的去重报告。
 
-### 3.3 已冻结的旧存储依赖清单
+### 3.3 `v1.5.0` 冻结的旧存储依赖清单（现已清零）
 
-后续阶段迁移消费者时以此清单逐项清零，避免只改主流程而遗漏导出、质量评价或前端：
+以下是改造开始时冻结的历史依赖位置，用于回归审计；当前运行时消费者已经清零：
 
-| 依赖类型 | 当前主要位置 |
+| 依赖类型 | `v1.5.0` 历史位置 |
 | --- | --- |
 | 单篇 XML 生成、复制和读取 | `core/screening/executors/parse_handler.py`、`dedup_handler.py`、`ai_screen_handler.py`、`input_selector.py`、`selectors.py` |
 | 单篇 AI JSON 与 `screening_result_*` | `core/screening/services/result_repository.py`、`review_query.py`、`review_service.py`、`selectors.py` |
@@ -804,7 +805,7 @@ GET /api/projects/{project_id}/dedup-runs/{run_id}/groups/{group_id}/members/?pa
 - `QAReference` 新增 `source_screening_run` 和 `source_screening_decision`；使用新增迁移 `0026_qareference_screening_source`，不修改历史迁移。阶段 11 后质量评价导入只接受当前数据库筛选运行。
 - 当前文献集只有过期筛选运行而没有匹配的已完成运行时，质量评价导入返回明确的 `409 current_screening_run_required`，且事务回滚，不清空既有质量评价数据。
 - 统一质量结果映射包含 `low/high/unclear/pending/na` 五态。比例图分母来自实际映射项；交通灯、比例图和 Excel 不再将 `pending` 映射为“不清楚”或将 `na` 映射为“低风险”。
-- 阶段专项回归覆盖人工覆盖、过期运行拒绝、来源快照、XML 转义、偏倚/适用性隔离、待定/不适用五态、NOS 动态字段、缺失结果按待确认导出和安全工作区清理；全量 Django 309 项、前端 38 项测试及前端生产构建通过。
+- 阶段专项回归覆盖人工覆盖、过期运行拒绝、来源快照、XML 转义、偏倚/适用性隔离、待定/不适用五态、NOS 动态字段、缺失结果按待确认导出和安全工作区清理；测试套件和前端生产构建持续作为验收门禁，不在方案中固化会过时的用例数量。
 
 ### 阶段 10：质量评价 PDF 存储加固
 
@@ -887,7 +888,7 @@ GET /api/projects/{project_id}/dedup-runs/{run_id}/groups/{group_id}/members/?pa
 
 实现与证据：
 
-- 新增 `core/tests/test_screening_capacity_boundaries.py`，固定验证 0、1、999、1,000、25,000、50,000、100,000、100,001 篇，100/101 文件，单文件 50 MiB 与总计 200 MiB 的精确边界，以及标题、摘要、作者上限、XML DTD/实体和 DOCX 路径穿越。
+- 新增 `core/tests/test_screening_capacity_boundaries.py`，固定验证 0、1、999、1,000、25,000、50,000、100,000、100,001 篇，100/101 文件，单文件 50 MiB 与总计 200 MiB 的精确边界，以及标题、摘要、作者上限、XML DTD/实体和 DOCX 路径穿越。去重专项测试同时覆盖 0/1/20/21/100/101 组分页位置、201 成员大组、50/200 分页边界和越界空页。
 - 项目总篇数限制收敛到 `validate_projected_reference_count()`，解析执行器和边界测试使用同一规则，避免入口与 Worker 对 100,000 篇上限理解不同。
 - 新增受 `--execute` 保护的 `benchmark_screening_capacity` 命令。命令创建隔离用户和项目，生成并真实解析 RIS，批量写入文献及原始元数据，执行数据库去重、结果落库、首末页列表、统计，并以生产导出器单遍生成 XLSX、RIS 和 XML；默认无论成功失败都清理测试数据。
 - 本地报告保存在 `docs/benchmarks/screening-capacity-local-2026-09-29.json`。测试环境为 10 核 Apple Silicon、Python 3.12.7、MySQL 8.0.32；该环境信息必须随报告保存，数据不能直接当作服务器 SLA。
@@ -998,8 +999,7 @@ QAReference（数据库业务记录）
 - `core/screening/executors/parse_handler.py`。
 - `core/screening/executors/dedup_handler.py`。
 - `core/screening/executors/ai_screen_handler.py`。
-- `core/screening/services/input_selector.py`。
-- `core/screening/services/result_repository.py`。
+- 数据库文献输入选择、筛选运行和最终决定服务；旧文件输入选择器与结果仓储已经删除。
 - `core/screening/services/review_query.py`、人工审阅 API 和服务。
 - 新增去重运行、重复组和组成员分页 API、Serializer 与权限测试。
 - `core/screening/executors/export_handler.py` 与各导出器。

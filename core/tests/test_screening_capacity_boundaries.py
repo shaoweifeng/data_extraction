@@ -2,13 +2,15 @@
 
 import io
 import json
+import tempfile
 import zipfile
 from dataclasses import replace
+from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from core.screening.parsers.validation import (
     ReferenceRecordValidationError,
@@ -141,15 +143,22 @@ class ScreeningCapacityCommandTests(TestCase):
         from core.models import Project
 
         output = io.StringIO()
-        call_command(
-            'benchmark_screening_capacity',
-            references=25,
-            batch_size=10,
-            duplicate_every=10,
-            skip_dedup=True,
-            execute=True,
-            stdout=output,
-        )
+        with tempfile.TemporaryDirectory(prefix='screening-capacity-test-') as temp_dir:
+            root = Path(temp_dir)
+            with override_settings(
+                BASE_DIR=root,
+                MEDIA_ROOT=root / 'media',
+                SCREENING_IMPORT_UPLOAD_ROOT=root / 'private-imports',
+            ):
+                call_command(
+                    'benchmark_screening_capacity',
+                    references=25,
+                    batch_size=10,
+                    duplicate_every=10,
+                    skip_dedup=True,
+                    execute=True,
+                    stdout=output,
+                )
         report = json.loads(output.getvalue())
         self.assertEqual(report['requested_references'], 25)
         self.assertEqual(report['measurements']['ris_parse']['rows'], 25)

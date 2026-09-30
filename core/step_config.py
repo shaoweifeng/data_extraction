@@ -71,15 +71,15 @@ STEP_CONFIGURATIONS = {
         "name": "导入文献索引",
         "stage_key": "SCREEN_1",
         "execution_mode": "async",
-        "description": "解析RIS/BIB/NBIB/XML格式文献",
+        "description": "解析索引文件并将标准化文献增量写入数据库",
         "timeout": 300,
         "retry_policy": {
             "max_retries": 2,
             "retry_delay": 5,
             "retry_on": ["file_error", "parse_error"]
         },
-        "inputs": ["*.ris", "*.bib", "*.nbib", "*.xml"],
-        "outputs": ["references.xml", "split_xmls/*.xml"],
+        "inputs": ["uploaded_index_files"],
+        "outputs": ["database:screening_references", "parse_report.json"],
         "monitoring": {
             "progress_type": "file_count",
             "progress_unit": "files",
@@ -93,8 +93,8 @@ STEP_CONFIGURATIONS = {
         "metadata_template": {
             "total_files": 0,
             "total_entries": 0,
-            "unique_entries": 0,
-            "split_files": 0
+            "accepted_entries": 0,
+            "rejected_entries": 0
         }
     },
 
@@ -113,8 +113,8 @@ STEP_CONFIGURATIONS = {
             "max_retries": 1,
             "retry_delay": 3
         },
-        "inputs": ["split_xmls/*.xml"],
-        "outputs": ["dedup_xmls/*.xml", "dedup_report.json"],
+        "inputs": ["database:screening_references"],
+        "outputs": ["database:dedup_run", "dedup_report.json"],
         "monitoring": {
             "progress_type": "counter",
             "progress_unit": "refs",
@@ -194,8 +194,8 @@ STEP_CONFIGURATIONS = {
         # concurrency 不在此预置，由 get_user_concurrency(user) 动态计算（普通用户2，管理员16）
         "resume_capability": True,
         "checkpoint_interval": 16,
-        "inputs": ["dedup_xmls/*.xml", "screening_criteria.json"],
-        "outputs": ["results/*/*.json"],
+        "inputs": ["database:dedup_run", "screening_criteria"],
+        "outputs": ["database:screening_run", "database:screening_results"],
         "retry_policy": {
             "max_retries": 3,
             "retry_delay": 10,
@@ -235,7 +235,7 @@ STEP_CONFIGURATIONS = {
         "description": "对 AI 筛选结果进行人工复核，可覆写 AI 判断（纳入/排除/待定）",
         "can_skip": True,             # 可跳过直接进 export
         "timeout": None,
-        "inputs": ["results/*/*.json"],
+        "inputs": ["database:screening_run", "database:screening_results"],
         "outputs": [],                # 无产物文件，结果存 ManualReview 表
         "monitoring": {
             "progress_type": "manual_count",
@@ -258,10 +258,14 @@ STEP_CONFIGURATIONS = {
         "name": "结果归纳",
         "stage_key": "SCREEN_1",
         "execution_mode": "async",
-        "description": "聚合筛选结果生成Excel/RIS",
+        "description": "聚合数据库筛选结果生成 XLSX、RIS 或结构化 XML",
         "timeout": 3600,
-        "inputs": ["results/*/*.json"],
-        "outputs": ["screening_results.xlsx", "screening_results.ris"],
+        "inputs": ["database:screening_run", "database:manual_reviews"],
+        "outputs": [
+            "screening_results.xlsx",
+            "screening_results.ris",
+            "screening_results.xml",
+        ],
         "retry_policy": {
             "max_retries": 1,
             "retry_delay": 5

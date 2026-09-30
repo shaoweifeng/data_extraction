@@ -1,4 +1,4 @@
-"""Long-term contracts for screening module ownership and bulk XML loading."""
+"""Long-term contracts for screening module ownership and storage boundaries."""
 
 from pathlib import Path
 
@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 
 from core.screening.executors.ai_screen_handler import AIScreenHandler
 from core.screening.executors.export_handler import ExportHandler
+from core.step_config import STEP_CONFIGURATIONS
 
 
 class ScreeningModuleBoundaryTests(SimpleTestCase):
@@ -37,6 +38,18 @@ class ScreeningModuleBoundaryTests(SimpleTestCase):
         for relative_path in (
             'core/screening/services/input_selector.py',
             'core/screening/services/result_repository.py',
+            'core/screening/parsers/output.py',
         ):
             with self.subTest(path=relative_path):
                 self.assertFalse((repository_root / relative_path).exists())
+
+    def test_step_configuration_does_not_restore_legacy_screening_files(self):
+        serialized = repr({
+            key: STEP_CONFIGURATIONS[key]
+            for key in ('parse', 'dedup', 'ai_screen', 'review', 'export')
+        })
+        for legacy_path in (
+            'references.xml', 'split_xmls', 'dedup_xmls', 'results/*/*.json',
+        ):
+            with self.subTest(path=legacy_path):
+                self.assertNotIn(legacy_path, serialized)

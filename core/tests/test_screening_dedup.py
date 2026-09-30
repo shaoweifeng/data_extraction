@@ -164,14 +164,24 @@ class ScreeningDedupTestCase(TestCase):
         run = build_dedup_run(create_dedup_run(project=self.project).id)
         run = complete_dedup_run(run.id)
 
-        response = self.client.get(
-            f'/api/projects/{self.project.id}/dedup-runs/{run.id}/groups/',
-            {'page': 6, 'page_size': 20},
-        )
+        groups_url = f'/api/projects/{self.project.id}/dedup-runs/{run.id}/groups/'
+        first_page = self.client.get(groups_url, {'page': 1, 'page_size': 20}).json()
+        fifth_page = self.client.get(groups_url, {'page': 5, 'page_size': 20}).json()
+        response = self.client.get(groups_url, {'page': 6, 'page_size': 20})
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload['count'], 101)
+        self.assertEqual(payload['total_pages'], 6)
+        self.assertEqual(len(first_page['results']), 20)
+        self.assertEqual(first_page['results'][0]['sequence'], 1)
+        self.assertEqual(len(fifth_page['results']), 20)
+        self.assertEqual(fifth_page['results'][-1]['sequence'], 100)
+        self.assertEqual(len(payload['results']), 1)
         self.assertEqual(payload['results'][0]['sequence'], 101)
+        self.assertEqual(
+            self.client.get(groups_url, {'page': 7, 'page_size': 20}).json()['results'],
+            [],
+        )
         group_id = payload['results'][0]['id']
 
         response = self.client.get(
@@ -183,6 +193,42 @@ class ScreeningDedupTestCase(TestCase):
         self.assertEqual(member_payload['page_size'], 200)
         self.assertEqual(member_payload['count'], 2)
         self.assertEqual([row['role'] for row in member_payload['results']], ['kept', 'duplicate'])
+
+    def test_empty_groups_and_large_group_member_page_boundaries(self):
+        self.create_reference(1, 'Unique title')
+        empty_run = complete_dedup_run(
+            build_dedup_run(create_dedup_run(project=self.project).id).id,
+        )
+        empty_url = f'/api/projects/{self.project.id}/dedup-runs/{empty_run.id}/groups/'
+        empty_payload = self.client.get(empty_url).json()
+        self.assertEqual(empty_payload['count'], 0)
+        self.assertEqual(empty_payload['total_pages'], 0)
+        self.assertEqual(empty_payload['results'], [])
+
+        for position in range(2, 203):
+            self.create_reference(position, 'One very large duplicate group')
+        large_run = complete_dedup_run(
+            build_dedup_run(create_dedup_run(project=self.project).id).id,
+        )
+        group = large_run.groups.get()
+        self.assertEqual(group.member_count, 201)
+        members_url = (
+            f'/api/projects/{self.project.id}/dedup-runs/{large_run.id}/groups/'
+            f'{group.id}/members/'
+        )
+        expected_lengths = {1: 50, 4: 50, 5: 1, 6: 0}
+        for page, expected_length in expected_lengths.items():
+            with self.subTest(page=page):
+                payload = self.client.get(
+                    members_url, {'page': page, 'page_size': 50},
+                ).json()
+                self.assertEqual(payload['count'], 201)
+                self.assertEqual(payload['total_pages'], 5)
+                self.assertEqual(len(payload['results']), expected_length)
+
+        capped = self.client.get(members_url, {'page_size': 999}).json()
+        self.assertEqual(capped['page_size'], 200)
+        self.assertEqual(len(capped['results']), 200)
 
     def test_dedup_details_do_not_leak_across_projects(self):
         self.create_reference(1, 'Private')
@@ -196,7 +242,7 @@ class ScreeningDedupTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
-    def test_handler_publishes_compact_metadata_and_database_generated_compatibility_xml(self):
+    def test_handler_publishes_compact_metadata_without_compatibility_xml(self):
         self.create_reference(1, 'Same title')
         self.create_reference(2, 'same title')
         unique = self.create_reference(3, 'Unique title')
@@ -207,11 +253,13 @@ class ScreeningDedupTestCase(TestCase):
             created_by=self.user,
         )
 
-        with tempfile.TemporaryDirectory() as temp_dir, override_settings(BASE_DIR=Path(temp_dir)):
-            executor = StepExecutor(task.id, 'dedup', self.project.id)
-            executor.initialize()
-            success = executor.execute()
-            executor.finalize(success)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            with override_settings(BASE_DIR=root, MEDIA_ROOT=root / 'media'):
+                executor = StepExecutor(task.id, 'dedup', self.project.id)
+                executor.initialize()
+                success = executor.execute()
+                executor.finalize(success)
 
         self.assertTrue(success)
         step = self.project.stages.get(stage_key='SCREEN_1').steps.get(step_key='dedup')

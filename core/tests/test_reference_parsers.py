@@ -10,13 +10,10 @@ from django.test import TestCase
 
 from core.screening.parsers import (
     ReferenceRecordValidationError,
-    convert_to_xml,
-    iter_directory,
     iter_file,
     parse_file,
     supported_extensions,
     validate_reference_record,
-    write_xml_stream,
 )
 from core.screening.parsers.registry import get_parser
 from core.screening.parsers.diagnostics import build_parse_report
@@ -168,7 +165,7 @@ ER  -
             },
         )
 
-    def test_ris_addresses_survive_xml_conversion(self):
+    def test_ris_addresses_are_preserved(self):
         content = """TY  - JOUR
 TI  - RIS address example
 AD  - Department A, University X
@@ -177,15 +174,11 @@ ER  -
 """
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / 'address.ris'
-            output_path = Path(temp_dir) / 'address.xml'
             input_path.write_text(content, encoding='utf-8')
             parsed = parse_file(str(input_path))
-            convert_to_xml(parsed, str(output_path))
-            round_tripped = parse_file(str(output_path))
 
         expected = 'Department A, University X; Department B, Hospital Y'
         self.assertEqual(parsed[0]['address'], expected)
-        self.assertEqual(round_tripped[0]['address'], expected)
 
     def test_internal_xml_fixture_normalizes_core_fields(self):
         result = parse_file(str(FIXTURES / 'references' / 'sample.xml'))
@@ -202,25 +195,6 @@ ER  -
                 'type': 'XML',
             },
         )
-
-    def test_generated_xml_is_single_pass_and_can_be_parsed_again(self):
-        def entries():
-            yield {
-                'title': 'Round trip',
-                'authors': ['Zhang, San', 'Li, Si'],
-                'year': '2025',
-                'doi': '10.1000/round-trip',
-            }
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            output_path = Path(temp_dir) / 'round-trip.xml'
-            convert_to_xml(entries(), str(output_path))
-            parsed = parse_file(str(output_path))
-
-        self.assertEqual(len(parsed), 1)
-        self.assertEqual(parsed[0]['title'], 'Round trip')
-        self.assertEqual(parsed[0]['authors'], ['Zhang, San', 'Li, Si'])
-        self.assertEqual(parsed[0]['doi'], '10.1000/round-trip')
 
     def test_nbib_is_parsed_in_one_pass_without_losing_record_boundaries(self):
         content = """PMID- 1001
@@ -272,7 +246,7 @@ ER
         self.assertEqual(parsed[0]['source_position'], 1)
         self.assertEqual(parsed[1]['url'], 'https://doi.org/10.1000/example')
 
-    def test_ciw_c1_and_rp_addresses_survive_xml_conversion(self):
+    def test_ciw_c1_and_rp_addresses_are_preserved(self):
         content = """PT J
 TI C1 address
 C1 Department A, University X
@@ -286,17 +260,12 @@ ER
 """
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / 'address.ciw'
-            output_path = Path(temp_dir) / 'address.xml'
             input_path.write_text(content, encoding='utf-8')
             parsed = parse_file(str(input_path))
-            convert_to_xml(parsed, str(output_path))
-            round_tripped = parse_file(str(output_path))
 
         expected_c1 = 'Department A, University X; Department B, Hospital Y'
         self.assertEqual(parsed[0]['address'], expected_c1)
-        self.assertEqual(round_tripped[0]['address'], expected_c1)
         self.assertEqual(parsed[1]['address'], 'Corresponding Author, Institute Z')
-        self.assertEqual(round_tripped[1]['address'], 'Corresponding Author, Institute Z')
 
     def test_endnote_xml_stream_parser_preserves_nested_fields(self):
         content = """<?xml version="1.0" encoding="UTF-8"?>
@@ -386,32 +355,6 @@ ER
         self.assertEqual(handler._parse_reports[0]['parsed_entries'], 0)
         self.assertEqual(handler._update_parse_progress.call_args.args[0], 'failed')
         self.assertEqual(handler._write_final_stats.call_args.kwargs['progress_phase'], 'failed')
-
-    def test_directory_and_output_pipeline_visits_each_record_once(self):
-        ris = """TY  - JOUR
-TI  - First
-ER  -
-TY  - JOUR
-TI  - Second
-ER  -
-"""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            input_dir = Path(temp_dir) / 'input'
-            input_dir.mkdir()
-            (input_dir / 'sample.ris').write_text(ris, encoding='utf-8')
-            output_path = Path(temp_dir) / 'merged.xml'
-            visited = []
-
-            count = write_xml_stream(
-                iter_directory(str(input_dir)),
-                str(output_path),
-                on_entry=lambda entry, position: visited.append((position, entry['title'])),
-            )
-            parsed = parse_file(str(output_path))
-
-        self.assertEqual(count, 2)
-        self.assertEqual(visited, [(1, 'First'), (2, 'Second')])
-        self.assertEqual([entry['title'] for entry in parsed], ['First', 'Second'])
 
     def test_parse_handler_does_not_write_merged_or_split_outputs(self):
         ris = """TY  - JOUR
