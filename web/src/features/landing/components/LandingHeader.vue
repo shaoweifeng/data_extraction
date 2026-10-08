@@ -1,10 +1,10 @@
 <template>
   <header class="landing-header">
     <div class="landing-header-inner">
-      <RouterLink class="landing-brand" to="/" aria-label="科研 Meta 平台首页">
+      <RouterLink class="landing-brand" to="/" aria-label="MetaFlow 首页">
         <span class="landing-brand-mark"><i class="fas fa-flask"></i></span>
         <span class="landing-brand-copy">
-          <strong>科研 Meta 平台</strong>
+          <strong>MetaFlow</strong>
           <small>循证研究工作流</small>
         </span>
       </RouterLink>

@@ -1,7 +1,7 @@
 export const SCREENING_STEPS = [
   { id: 1, name: '文献解析', stepKey: 'parse' },
   { id: 2, name: '自动去重', stepKey: 'dedup' },
-  { id: 3, name: '纳排标准', stepKey: 'criteria' },
+  { id: 3, name: '排除标准', stepKey: 'criteria' },
   { id: 4, name: '提取字段', stepKey: 'field_extraction' },
   { id: 5, name: 'AI 初筛', stepKey: 'ai_screen' },
   { id: 6, name: '人工审阅', stepKey: 'review' },

@@ -14,6 +14,7 @@ OpenAI 兼容接口 Provider
 import os
 import json
 import logging
+import re
 import requests
 from typing import List, Dict
 
@@ -69,33 +70,25 @@ class OpenAICompatibleProvider(BaseAIProvider):
         Args:
             entry: 文献信息字典
             criteria: 纳排标准列表（每条一个字符串）
-            prompt_template: prompt 模板，含 {screening_criteria} 占位符
+            prompt_template: prompt 模板，含 {screening_criteria} 和
+                {literature_record} 占位符
 
         Returns:
             ScreeningResult（含 token_usage 字段）
         """
         title = entry.get("title", "Unknown")
 
-        # 构建文献内容（Title + Abstract）
-        # 摘要不截断：让 AI 读完整摘要，避免因截断导致错误排除
-        # （总 prompt 超 100000 字符时会在 _call_api 里整体截断）
-        abstract = entry.get("abstract", "")
-
-        content = f"Title: {title}\n"
-        if abstract:
-            content += f"Abstract: {abstract}\n"
-        if entry.get("journal"):
-            content += f"Journal: {entry['journal']}\n"
-        if entry.get("year"):
-            content += f"Year: {entry['year']}\n"
-
-        # 注入筛选标准到 prompt
+        # 使用标准化 JSON 注入当前单篇文献。只发送白名单字段，避免把来源格式
+        # 或完整原始元数据耦合到 Provider；空字段省略以降低 token 消耗。
+        literature_record = self._literature_record_json(entry)
         criteria_text = "\n".join(
             f"{i+1}. {c}" for i, c in enumerate(criteria)
         )
-        prompt = prompt_template.replace("{screening_criteria}", criteria_text)
-
-        full_prompt = f"{prompt}\n\n[文献内容]\n{content}"
+        full_prompt = self._render_screening_prompt(
+            prompt_template,
+            screening_criteria=criteria_text,
+            literature_record=literature_record,
+        )
 
         # 调用 API，同时获取 token 用量
         raw_response, token_usage = self.generate_text(full_prompt)
@@ -112,6 +105,39 @@ class OpenAICompatibleProvider(BaseAIProvider):
         result = self._parse_response(title, raw_response)
         result.token_usage = token_usage
         return result
+
+    @staticmethod
+    def _render_screening_prompt(
+        template: str,
+        *,
+        screening_criteria: str,
+        literature_record: str,
+    ) -> str:
+        """Expand known placeholders once without reprocessing injected data."""
+        replacements = {
+            "{screening_criteria}": screening_criteria,
+            "{literature_record}": literature_record,
+        }
+        pattern = re.compile(r"\{(?:screening_criteria|literature_record)\}")
+        return pattern.sub(lambda match: replacements[match.group(0)], template)
+
+    @staticmethod
+    def _literature_record_json(entry: Dict) -> str:
+        """Serialize one normalized screening record for the prompt."""
+        field_names = (
+            "reference_id", "title", "abstract", "authors", "journal",
+            "publication_year", "publication_date", "publication_type",
+            "language", "keywords", "volume", "issue", "pages", "doi",
+            "pmid", "pmcid", "isbn", "url", "address", "source_identifier",
+        )
+        record = {
+            field: entry[field]
+            for field in field_names
+            if field in entry and entry[field] not in (None, "", [], {})
+        }
+        if "publication_year" not in record and entry.get("year"):
+            record["publication_year"] = entry["year"]
+        return json.dumps(record, ensure_ascii=False, indent=2, default=str)
 
     def _call_api(self, full_prompt: str):
         """

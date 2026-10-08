@@ -11,6 +11,9 @@ export function createAiScreenController(projectId) {
     loadInputs: (targetProjectId = projectId(), params = {}, config = {}) => (
       screeningApi.fetchScreeningInputs(targetProjectId, params, config)
     ),
+    loadResults: (targetProjectId = projectId(), params = {}, config = {}) => (
+      screeningApi.fetchScreeningResults(targetProjectId, params, config)
+    ),
     loadReviewPage: (params, targetProjectId = projectId(), config = {}) => (
       screeningApi.fetchReviewList({ project: targetProjectId, ...params }, config)
     ),

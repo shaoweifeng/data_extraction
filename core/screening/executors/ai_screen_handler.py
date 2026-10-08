@@ -42,7 +42,7 @@ class AIScreenHandler(BaseStepHandler):
                 f'[数据] 文献集修订 r{run.corpus_revision}，共 {run.total_count} 篇，'
                 f'待处理 {remaining_count} 篇'
             )
-            self.logger.info(f'[标准] 纳排标准: {len(criteria)} 条')
+            self.logger.info(f'[标准] 排除标准: {len(criteria)} 条')
             self._preflight_quota(remaining_count, model_ids)
 
             concurrency = self._concurrency()
@@ -182,7 +182,7 @@ class AIScreenHandler(BaseStepHandler):
             raw = self.stage_obj.metadata.get('screening_criteria', '')
             if raw:
                 return [line.strip() for line in raw.splitlines() if line.strip()]
-        self.logger.warning('[标准] 未找到纳排标准，使用默认值')
+        self.logger.warning('[标准] 未找到排除标准，使用默认值')
         return ['排除非英文文献', '排除综述和Meta分析', '排除动物实验研究', '排除病例报告']
 
     def _process_batch(

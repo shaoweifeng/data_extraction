@@ -1,5 +1,6 @@
 """Shared AI quota, provider and usage-settlement contracts."""
 
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
@@ -15,6 +16,8 @@ from core.ai import (
 from core.executors.ai_providers import OpenAICompatibleProvider
 from core.models import Project, Task
 from core.models_billing import CreditAccount, CreditTransaction, TokenUsageLog
+from core.screening.services.prompt_configuration import save_prompt
+from core.screening.services.prompt_builder import ScreeningPromptBuilder
 
 
 User = get_user_model()
@@ -111,6 +114,113 @@ class SharedAIInfrastructureTests(TestCase):
             result = provider.generate_text('prompt')
         self.assertEqual(result, ('answer', {'total': 3}))
         call.assert_called_once_with('prompt')
+
+    def test_screening_provider_injects_one_structured_literature_record(self):
+        provider = OpenAICompatibleProvider({
+            'api_key': 'test', 'api_url': 'https://example.invalid/v1',
+            'model': 'example', 'timeout': 1,
+        })
+        template = (
+            '<criteria>{screening_criteria}</criteria>\n'
+            '<record>{literature_record}</record>'
+        )
+        entry = {
+            'reference_id': 42,
+            'title': 'Example title',
+            'abstract': 'Example abstract',
+            'authors': ['Alice A', 'Bob B'],
+            'journal': 'Example Journal',
+            'publication_year': '2026',
+            'publication_type': 'Journal Article',
+            'language': 'eng',
+            'keywords': ['screening', 'review'],
+            'doi': '10.1000/example',
+            'pmid': '123456',
+            'url': 'https://example.test/article',
+            'address': '',
+        }
+        response = '[{"exclusion_reason":"","number_exclusion_reason":"","include_or_not":"yes"}]'
+
+        with patch.object(
+            provider, 'generate_text', return_value=(response, {'total': 10}),
+        ) as generate:
+            result = provider.screen_single(entry, ['Exclude reviews'], template)
+
+        rendered = generate.call_args.args[0]
+        self.assertNotIn('{screening_criteria}', rendered)
+        self.assertNotIn('{literature_record}', rendered)
+        self.assertNotIn('[文献内容]', rendered)
+        self.assertIn('1. Exclude reviews', rendered)
+        self.assertIn('"reference_id": 42', rendered)
+        self.assertIn('"authors": [', rendered)
+        self.assertIn('"publication_type": "Journal Article"', rendered)
+        self.assertIn('"language": "eng"', rendered)
+        self.assertNotIn('"address"', rendered)
+        self.assertEqual(result.decision, 'included')
+
+    def test_prompt_render_does_not_expand_placeholders_inside_injected_data(self):
+        rendered = OpenAICompatibleProvider._render_screening_prompt(
+            '{screening_criteria}\n{literature_record}',
+            screening_criteria='1. 标题含有 {literature_record}',
+            literature_record='{"title":"{screening_criteria}"}',
+        )
+
+        self.assertEqual(
+            rendered,
+            '1. 标题含有 {literature_record}\n{"title":"{screening_criteria}"}',
+        )
+
+    def test_custom_screening_prompt_requires_both_placeholders(self):
+        with self.assertRaisesMessage(ValueError, '{literature_record}'):
+            save_prompt(
+                self.project,
+                'Only {screening_criteria}',
+                True,
+                self.user,
+            )
+
+        result = save_prompt(
+            self.project,
+            '{screening_criteria}\n{literature_record}',
+            True,
+            self.user,
+        )
+
+        self.project.refresh_from_db()
+        self.assertTrue(result['use_custom_prompt'])
+        self.assertTrue(self.project.metadata['use_custom_prompt'])
+
+    def test_field_extraction_block_extends_the_base_output_contract(self):
+        executor = Mock()
+        executor.get_previous_step.return_value = SimpleNamespace(metadata={
+            'fields': [
+                {'name': '研究人群', 'definition': '提取研究对象的年龄与疾病'},
+                {'name': '引号"字段', 'definition': '定义中包含"引号"'},
+                {'name': '研究人群', 'definition': '重复字段应忽略'},
+                'invalid-field',
+            ],
+        })
+        handler = SimpleNamespace(executor=executor, logger=Mock())
+        builder = ScreeningPromptBuilder(handler)
+
+        prompt = builder._append_extraction_block('BASE_PROMPT')
+
+        self.assertIn('<field_extraction_task>', prompt)
+        self.assertIn('增加且仅增加一个 extracted_fields 字段', prompt)
+        self.assertIn('文献被排除时，extracted_fields 输出空对象 {}', prompt)
+        self.assertEqual(prompt.count('"name": "研究人群"'), 1)
+        self.assertIn('"name": "引号\\"字段"', prompt)
+        self.assertIn('"研究人群": "提取值或空字符串"', prompt)
+        self.assertNotIn('invalid-field', prompt)
+
+    def test_no_extraction_fields_keeps_base_prompt_unchanged(self):
+        executor = Mock()
+        executor.get_previous_step.return_value = SimpleNamespace(metadata={'fields': []})
+        handler = SimpleNamespace(executor=executor, logger=Mock())
+
+        prompt = ScreeningPromptBuilder(handler)._append_extraction_block('BASE_PROMPT')
+
+        self.assertEqual(prompt, 'BASE_PROMPT')
 
     def test_reasoning_provider_disables_thinking_by_default(self):
         provider = OpenAICompatibleProvider({

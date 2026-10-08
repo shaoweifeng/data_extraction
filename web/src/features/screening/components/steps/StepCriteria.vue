@@ -5,9 +5,9 @@
         <i class="fas fa-list-check"></i>
       </div>
       <div>
-        <h3 class="step-title">设定纳排标准</h3>
+        <h3 class="step-title">设定排除标准</h3>
         <p class="step-subtitle">
-          定义文献应达到的纳入或排除条件
+          定义文献在初筛阶段应被排除的条件
           <button @click="showGuide = true" class="ml-2 text-xs text-indigo-500 hover:text-indigo-700 underline">
             <i class="fas fa-lightbulb mr-0.5"></i>查看撰写指南
           </button>
@@ -205,13 +205,13 @@ async function saveCriteria() {
     const criteria = [...s.criteriaList]
     const metadataResponse = await workflowApi.updateStepMetadata(step.id, { criteria })
     project.replaceStep(metadataResponse.data)
-    // 有纳排标准时，将步骤标记为 completed
+    // 有排除标准时，将步骤标记为 completed
     if (criteria.length > 0 && step.status !== 'completed') {
       const completeResponse = await workflowApi.completeStep(step.id)
       project.replaceStep(completeResponse.data)
     }
   } catch (err) {
-    console.error('保存纳排标准失败', err)
+    console.error('保存排除标准失败', err)
   }
 }
 

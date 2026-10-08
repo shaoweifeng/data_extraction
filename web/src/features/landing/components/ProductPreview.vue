@@ -19,7 +19,7 @@
 
     <div class="preview-workspace">
       <aside class="preview-criteria">
-        <div class="preview-pane-title"><i class="fas fa-list-check"></i> 纳排标准</div>
+        <div class="preview-pane-title"><i class="fas fa-list-check"></i> 排除标准</div>
         <article>
           <span class="criteria-index include">I</span>
           <p><strong>目标人群</strong>符合预设疾病诊断标准</p>
@@ -62,7 +62,7 @@
         <div class="consensus-result">
           <small>交叉验证结论</small>
           <strong>一致纳入</strong>
-          <p>研究人群与研究设计符合当前纳排标准。</p>
+          <p>研究人群与研究设计未触发当前排除标准。</p>
         </div>
         <div class="preview-action"><i class="fas fa-user-check"></i> 进入人工复核</div>
       </aside>

@@ -33,12 +33,24 @@ def reference_entry(reference: ScreeningReference) -> dict:
     return {
         'reference_id': reference.id,
         'title': reference.title,
-        'authors': '; '.join(reference.authors or []),
-        'year': reference.publication_year,
-        'journal': reference.journal,
         'abstract': reference.abstract,
+        'authors': list(reference.authors or []),
+        'journal': reference.journal,
+        'publication_year': reference.publication_year,
+        'publication_date': reference.publication_date,
+        'publication_type': reference.publication_type,
+        'language': reference.language,
+        'keywords': list(reference.keywords or []),
+        'volume': reference.volume,
+        'issue': reference.issue,
+        'pages': reference.pages,
         'doi': reference.doi,
+        'pmid': reference.pmid,
+        'pmcid': reference.pmcid,
+        'isbn': reference.isbn,
         'url': reference.url,
+        'address': reference.address,
+        'source_identifier': reference.source_identifier,
     }
 
 
@@ -388,6 +400,22 @@ def current_completed_screening_run(project_id: int) -> ScreeningRun | None:
             | Q(dedup_run__isnull=True, corpus__last_dedup_run__isnull=True)
         )
         .order_by('-finished_at', '-id')
+        .first()
+    )
+
+
+def current_screening_run(project_id: int) -> ScreeningRun | None:
+    """Return the latest run bound to the project's current corpus revision."""
+    return (
+        ScreeningRun.objects.filter(
+            project_id=project_id,
+            corpus_revision=F('corpus__revision'),
+        )
+        .filter(
+            Q(dedup_run_id=F('corpus__last_dedup_run_id'))
+            | Q(dedup_run__isnull=True, corpus__last_dedup_run__isnull=True)
+        )
+        .order_by('-created_at', '-id')
         .first()
     )
 

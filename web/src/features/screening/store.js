@@ -31,7 +31,7 @@ export const useScreeningStore = defineStore('screening', () => {
   const dedupProgressCurrent = ref(0)   // 0~100 百分比
   const dedupProgressMsg = ref('')
 
-  // 纳排标准（步骤3）
+  // 排除标准（步骤3）
   const newCriteria = ref('')
   const criteriaList = ref([])
   const showCriteriaGuide = ref(false)

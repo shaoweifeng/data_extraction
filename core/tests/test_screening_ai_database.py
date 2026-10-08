@@ -27,6 +27,7 @@ from core.screening.services.screening_run_service import (
     pause_screening_run,
     persist_result_batch,
     prepare_screening_run,
+    reference_entry,
 )
 from core.services.billing_service import grant_credits
 from core.services.project_service import initialize_project
@@ -106,6 +107,35 @@ class ScreeningAIDatabaseTests(TestCase):
             config=self.task.config,
         )[0]
 
+    def test_reference_entry_exposes_normalized_common_fields(self):
+        reference = self.references[0]
+        reference.publication_date = '2026-09-30'
+        reference.publication_type = 'Journal Article'
+        reference.language = 'eng'
+        reference.keywords = ['screening', 'review']
+        reference.volume = '12'
+        reference.issue = '3'
+        reference.pages = '10-20'
+        reference.doi = '10.1000/example'
+        reference.pmid = '123456'
+        reference.pmcid = 'PMC123456'
+        reference.isbn = '9780000000000'
+        reference.url = 'https://example.test/article'
+        reference.address = 'Example University'
+        reference.source_identifier = 'source-1'
+
+        entry = reference_entry(reference)
+
+        self.assertEqual(entry['authors'], ['Author 1'])
+        self.assertEqual(entry['publication_year'], '2026')
+        self.assertEqual(entry['publication_date'], '2026-09-30')
+        self.assertEqual(entry['publication_type'], 'Journal Article')
+        self.assertEqual(entry['language'], 'eng')
+        self.assertEqual(entry['keywords'], ['screening', 'review'])
+        self.assertEqual(entry['pages'], '10-20')
+        self.assertEqual(entry['pmid'], '123456')
+        self.assertEqual(entry['source_identifier'], 'source-1')
+
     def _complete_rows(self, run, *, tokens=1000):
         rows = next_result_batch(run, 10)
         persist_result_batch(rows, [
@@ -162,6 +192,43 @@ class ScreeningAIDatabaseTests(TestCase):
         self.assertEqual(response.json()['total'], 2)
         self.assertEqual(response.json()['results'][0]['title'], 'Reference 1')
         self.assertEqual(response.json()['results'][0]['reference_id'], self.references[0].id)
+
+    def test_ai_screen_stats_report_live_processed_and_remaining_counts(self):
+        run = self._prepare()
+        row = next_result_batch(run, 1)
+        persist_result_batch(row, [{
+            'decision': 'included',
+            'consensus': 'included',
+        }])
+        self.client.force_login(self.user)
+
+        response = self.client.get(f'/api/projects/{self.project.id}/ai_screen_stats/')
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()['total'], 2)
+        self.assertEqual(response.json()['processed_count'], 1)
+        self.assertEqual(response.json()['remaining_count'], 1)
+        self.assertEqual(response.json()['included_count'], 1)
+
+    def test_ai_screen_results_list_processed_references_while_run_is_active(self):
+        run = self._prepare()
+        row = next_result_batch(run, 1)
+        persist_result_batch(row, [{
+            'decision': 'included',
+            'consensus': 'included',
+        }])
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            f'/api/projects/{self.project.id}/ai_screen_results/',
+            {'limit': 50, 'offset': 0},
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()['screening_run_id'], run.id)
+        self.assertEqual(response.json()['total'], 1)
+        self.assertEqual(response.json()['results'][0]['title'], 'Reference 1')
+        self.assertEqual(response.json()['results'][0]['ai_decision'], 'included')
 
     def test_stopped_run_resumes_same_rows_and_resets_processing_claims(self):
         run = self._prepare()

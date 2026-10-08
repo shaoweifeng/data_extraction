@@ -95,8 +95,8 @@ def get_ai_screen_stats(project) -> Dict:
     if not ai_step:
         return {
             'included': 0, 'excluded': 0, 'conflict': 0, 'pending_count': 0,
-            'total': 0, 'included_count': 0, 'excluded_count': 0,
-            'conflict_count': 0,
+            'total': 0, 'processed_count': 0, 'remaining_count': 0,
+            'included_count': 0, 'excluded_count': 0, 'conflict_count': 0,
         }
 
     # 新版 AI 初筛在任务完成时已将互斥统计写入步骤元数据。完成后的页面
@@ -118,25 +118,28 @@ def get_ai_screen_stats(project) -> Dict:
             'conflict': conflict,
             'pending_count': pending,
             'total': total,
+            'processed_count': total,
+            'remaining_count': 0,
             'included_count': included,
             'excluded_count': excluded,
             'conflict_count': conflict,
         }
 
-    from core.screening.services.screening_run_service import current_completed_screening_run
+    from core.screening.services.screening_run_service import current_screening_run
 
-    run = current_completed_screening_run(project.id)
+    run = current_screening_run(project.id)
     if run is None:
         return {
             'included': 0, 'excluded': 0, 'conflict': 0, 'pending_count': 0,
-            'total': 0, 'included_count': 0, 'excluded_count': 0,
-            'conflict_count': 0,
+            'total': 0, 'processed_count': 0, 'remaining_count': 0,
+            'included_count': 0, 'excluded_count': 0, 'conflict_count': 0,
         }
     conflict = run.results.filter(consensus='conflict').count()
     included = run.included_count
     excluded = run.excluded_count
     pending = max(0, run.uncertain_count - conflict + run.failed_count)
     total = run.total_count
+    processed = run.processed_count
 
     return {
         'included':       included,
@@ -144,6 +147,8 @@ def get_ai_screen_stats(project) -> Dict:
         'conflict':       conflict,
         'pending_count':  max(0, pending),
         'total':          total,
+        'processed_count': processed,
+        'remaining_count': max(0, total - processed),
         'included_count': included,
         'excluded_count': excluded,
         'conflict_count': conflict,

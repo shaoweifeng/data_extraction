@@ -68,7 +68,7 @@ class ExportHandler(BaseStepHandler):
 
         # 每批只保留少量结果、人工审阅和 XML 字段，避免 2.5 万篇文献常驻内存。
         criteria_list = self._load_criteria_list()
-        self.logger.info(f"[导出] 纳排标准条数: {len(criteria_list)}")
+        self.logger.info(f"[导出] 排除标准条数: {len(criteria_list)}")
 
         model_suffix = self._get_model_suffix()
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -321,7 +321,7 @@ class ExportHandler(BaseStepHandler):
         return ScreeningRisExporter(self)._generate_ris(results, model_suffix, ts)
 
     def _load_criteria_list(self) -> List[str]:
-        """从 criteria 步骤元数据中加载纳排标准列表（按序），供导出时反查编号。"""
+        """从 criteria 步骤元数据中加载排除标准列表（按序），供导出时反查编号。"""
         try:
             from core.models import StageStep
             criteria_step = StageStep.objects.filter(
@@ -334,7 +334,7 @@ class ExportHandler(BaseStepHandler):
                 if criteria:
                     return [str(c) for c in criteria]
         except Exception as e:
-            logger.warning(f"[导出] 加载纳排标准失败: {e}")
+            logger.warning(f"[导出] 加载排除标准失败: {e}")
         return []
 
     def _load_extraction_field_names(self) -> List[str]:

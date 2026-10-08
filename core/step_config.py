@@ -133,13 +133,13 @@ STEP_CONFIGURATIONS = {
     },
 
     # ------------------------------------------------------------------------
-    # 子步骤: 纳排标准（手动）
+    # 子步骤: 排除标准（手动）
     # ------------------------------------------------------------------------
     "criteria": {
-        "name": "纳排标准",
+        "name": "排除标准",
         "stage_key": "SCREEN_1",
         "execution_mode": "manual",
-        "description": "用户设置初筛纳排标准",
+        "description": "用户设置初筛排除标准",
         "timeout": None,
         "auto_trigger": False,
         "inputs": [],
@@ -499,7 +499,7 @@ STAGE_DEFINITIONS = [
         "steps": [
             {"step_key": "parse", "name": "导入文献索引", "order": 10, "can_skip": False},
             {"step_key": "dedup", "name": "自动去重", "order": 20, "can_skip": True},
-            {"step_key": "criteria", "name": "纳排标准", "order": 30, "can_skip": False},
+            {"step_key": "criteria", "name": "排除标准", "order": 30, "can_skip": False},
             {"step_key": "field_extraction", "name": "提取字段", "order": 35, "can_skip": True},
             {"step_key": "ai_screen", "name": "AI初筛", "order": 40, "can_skip": False},
             {"step_key": "review", "name": "人工审阅", "order": 45, "can_skip": True},

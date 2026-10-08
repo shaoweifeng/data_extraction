@@ -14,7 +14,7 @@
             </div>
             <h1>让文献筛选更快，<br><span>也让每个判断有迹可循</span></h1>
             <p class="hero-lead">
-              从文献导入、去重、纳排标准到 AI 初筛、人工复核与质量评价，
+              从文献导入、去重、排除标准到 AI 初筛、人工复核与质量评价，
               把重复工作交给系统，把最终判断留给研究者。
             </p>
             <div class="hero-actions">
@@ -169,7 +169,7 @@
       <div class="landing-container footer-main">
         <div class="footer-brand">
           <span class="landing-brand-mark"><i class="fas fa-flask"></i></span>
-          <div><strong>科研 Meta 平台</strong><p>系统化文献筛选与质量评价</p></div>
+          <div><strong>MetaFlow</strong><p>系统化文献筛选与质量评价</p></div>
         </div>
         <nav aria-label="页脚导航">
           <a href="#capabilities">核心能力</a>
@@ -181,7 +181,7 @@
         </nav>
       </div>
       <div class="landing-container footer-bottom">
-        <span>© {{ currentYear }} 科研 Meta 平台</span>
+        <span>© {{ currentYear }} MetaFlow</span>
         <span>让研究过程更高效、更清晰、更可复核</span>
       </div>
     </footer>

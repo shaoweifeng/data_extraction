@@ -60,6 +60,10 @@ export const fetchScreeningInputs = (projectId, params = {}, config = {}) => htt
   `/projects/${projectId}/ai_screen_inputs/`,
   { ...config, params },
 )
+export const fetchScreeningResults = (projectId, params = {}, config = {}) => http.get(
+  `/projects/${projectId}/ai_screen_results/`,
+  { ...config, params },
+)
 export const fetchReviewList = (params, config = {}) => http.get('/review/list/', {
   timeout: REVIEW_REQUEST_TIMEOUT,
   ...config,

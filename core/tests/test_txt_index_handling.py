@@ -121,9 +121,10 @@ class OriginalFileDownloadTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_parse_report_endpoint_returns_latest_diagnostics(self):
+    def _create_parse_report(self):
         payload = {
             'filename': self.data_file.filename,
+            'format': 'enw',
             'status': 'warning',
             'detected_entries': 2,
             'parsed_entries': 2,
@@ -145,6 +146,24 @@ class OriginalFileDownloadTests(TestCase):
             },
             created_by=self.user,
         )
+
+    def test_parse_report_endpoint_hides_diagnostics_from_regular_user(self):
+        self._create_parse_report()
+        self.client.force_login(self.user)
+
+        response = self.client.get(f'/api/files/{self.data_file.id}/parse-report/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            'filename': self.data_file.filename,
+            'format': 'enw',
+            'parsed_entries': 2,
+        })
+
+    def test_parse_report_endpoint_returns_full_diagnostics_to_admin(self):
+        self._create_parse_report()
+        self.user.profile.role = 'admin'
+        self.user.profile.save(update_fields=['role'])
         self.client.force_login(self.user)
 
         response = self.client.get(f'/api/files/{self.data_file.id}/parse-report/')
@@ -152,6 +171,53 @@ class OriginalFileDownloadTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['missing_abstract_entries'], 1)
         self.assertEqual(response.json()['issues'][0]['code'], 'missing_abstract')
+
+    def test_file_list_hides_parse_summary_diagnostics_from_regular_user(self):
+        self.data_file.metadata = {
+            'parse_summary': {
+                'status': 'warning',
+                'detected_entries': 2,
+                'parsed_entries': 2,
+                'skipped_entries': 0,
+                'missing_abstract_entries': 1,
+            },
+        }
+        self.data_file.save(update_fields=['metadata'])
+        self.client.force_login(self.user)
+
+        response = self.client.get('/api/files/', {
+            'project': self.project.id,
+            'data_category': 'input',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['results'][0]['metadata']['parse_summary'],
+            {'parsed_entries': 2},
+        )
+
+    def test_file_list_keeps_parse_summary_diagnostics_for_admin(self):
+        self.data_file.metadata = {
+            'parse_summary': {
+                'status': 'warning',
+                'detected_entries': 2,
+                'parsed_entries': 2,
+                'missing_abstract_entries': 1,
+            },
+        }
+        self.data_file.save(update_fields=['metadata'])
+        self.user.profile.role = 'admin'
+        self.user.profile.save(update_fields=['role'])
+        self.client.force_login(self.user)
+
+        response = self.client.get('/api/files/', {
+            'project': self.project.id,
+            'data_category': 'input',
+        })
+
+        summary = response.json()['results'][0]['metadata']['parse_summary']
+        self.assertEqual(summary['status'], 'warning')
+        self.assertEqual(summary['missing_abstract_entries'], 1)
 
 
 class InputDeletionStatisticsTests(TestCase):

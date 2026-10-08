@@ -361,6 +361,24 @@ class DataFileSerializer(serializers.ModelSerializer):
             )
         return None
 
+    def to_representation(self, instance):
+        """Hide parse diagnostics from non-admin accounts without changing writes."""
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        from core.services.access_policy import ProjectAccessPolicy
+
+        if ProjectAccessPolicy.is_platform_admin(user):
+            return representation
+        metadata = dict(representation.get('metadata') or {})
+        summary = metadata.get('parse_summary')
+        if isinstance(summary, dict):
+            metadata['parse_summary'] = {
+                'parsed_entries': int(summary.get('parsed_entries') or 0),
+            }
+            representation['metadata'] = metadata
+        return representation
+
 
 class DataFileBriefSerializer(serializers.ModelSerializer):
     """文件简要信息（用于嵌套显示）"""

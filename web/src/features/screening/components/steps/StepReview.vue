@@ -136,9 +136,9 @@
             <div class="detail-title-row">
               <h3 class="detail-title">{{ selected.title }}</h3>
               <div class="detail-title-actions">
-                <button @click="criteriaPopup = true" class="icon-action-btn" title="查看纳排标准">
+                <button @click="criteriaPopup = true" class="icon-action-btn" title="查看排除标准">
                   <i class="fas fa-clipboard-list"></i>
-                  <span>纳排标准</span>
+                  <span>排除标准</span>
                 </button>
                 <button v-if="extractionFields.length" @click="fieldsPopup = true" class="icon-action-btn" title="查看提取字段">
                   <i class="fas fa-tags"></i>
@@ -294,18 +294,18 @@
       </div>
     </div>
 
-    <!-- ── 纳排标准弹窗 ── -->
+    <!-- ── 排除标准弹窗 ── -->
     <div v-if="criteriaPopup" class="popup-overlay" @click.self="criteriaPopup = false">
       <div class="popup-box">
         <div class="popup-header">
-          <span><i class="fas fa-clipboard-list mr-2 text-indigo-500"></i>纳排标准</span>
+          <span><i class="fas fa-clipboard-list mr-2 text-indigo-500"></i>排除标准</span>
           <button @click="criteriaPopup = false" class="popup-close"><i class="fas fa-times"></i></button>
         </div>
         <div class="popup-body">
           <ol v-if="criteriaList.length" class="criteria-popup-list">
             <li v-for="(c, i) in criteriaList" :key="i">{{ c }}</li>
           </ol>
-          <div v-else class="popup-empty">尚未设置纳排标准</div>
+          <div v-else class="popup-empty">尚未设置排除标准</div>
         </div>
       </div>
     </div>
@@ -432,7 +432,7 @@ const notesLoading    = ref(false)
 const notesList       = ref([])
 const notesPanelReferenceId = ref(null)
 
-// 纳排标准 + 提取字段（从 stagesData 读）
+// 排除标准 + 提取字段（从 stagesData 读）
 const criteriaList = computed(() => {
   const stage = project.stagesData?.find(s => s.stage_key === 'SCREEN_1')
   return stage?.steps?.find(s => s.step_key === 'criteria')?.metadata?.criteria || []

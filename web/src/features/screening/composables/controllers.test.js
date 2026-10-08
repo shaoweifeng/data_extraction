@@ -5,7 +5,7 @@ const screeningApi = vi.hoisted(() => ({
   fetchReviewDetail: vi.fn(), updateReviewReference: vi.fn(),
   appendReviewReferenceNote: vi.fn(), fetchReviewReferenceNotes: vi.fn(),
   savePrompt: vi.fn(), resetPrompt: vi.fn(), fetchScreeningStats: vi.fn(),
-  fetchScreeningInputs: vi.fn(), clearAiScreenResults: vi.fn(),
+  fetchScreeningInputs: vi.fn(), fetchScreeningResults: vi.fn(), clearAiScreenResults: vi.fn(),
 }))
 vi.mock('../api', () => screeningApi)
 vi.mock('@/features/billing/api', () => ({ fetchBalance: vi.fn(), estimateUsage: vi.fn() }))
@@ -60,9 +60,15 @@ describe('screening controllers', () => {
     const signal = new AbortController().signal
 
     await controller.loadStats(12, { signal })
+    await controller.loadResults(12, { limit: 50, offset: 0 }, { signal })
     await controller.loadReviewPage({ page: 3 }, 12, { signal })
 
     expect(screeningApi.fetchScreeningStats).toHaveBeenCalledWith(12, { signal })
+    expect(screeningApi.fetchScreeningResults).toHaveBeenCalledWith(
+      12,
+      { limit: 50, offset: 0 },
+      { signal },
+    )
     expect(screeningApi.fetchReviewList).toHaveBeenCalledWith(
       { project: 12, page: 3 },
       { signal },

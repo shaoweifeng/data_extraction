@@ -93,7 +93,8 @@ class BaseAIProvider(ABC):
         Args:
             entry: 文献信息字典（title, abstract, authors, journal, year, doi 等）
             criteria: 纳排标准列表
-            prompt_template: prompt 模板字符串（含 {screening_criteria} 占位符）
+            prompt_template: prompt 模板字符串（含 {screening_criteria} 和
+                {literature_record} 占位符）
 
         Returns:
             ScreeningResult

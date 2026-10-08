@@ -22,7 +22,7 @@ from core.models import ActivityLog, Project
 _DEFAULT_PROMPT_REL = "core/resources/prompts/prompt1.txt"
 
 # Prompt 必须包含的占位符
-_REQUIRED_PLACEHOLDER = '{screening_criteria}'
+_REQUIRED_PLACEHOLDERS = ('{screening_criteria}', '{literature_record}')
 
 
 # ============================================================================
@@ -70,8 +70,9 @@ def save_prompt(project: Project, custom_prompt: str, use_custom: bool, user) ->
     Raises:
         ValueError: Prompt 校验失败（缺少占位符）
     """
-    if use_custom and _REQUIRED_PLACEHOLDER not in custom_prompt:
-        raise ValueError(f'Prompt 必须包含 {_REQUIRED_PLACEHOLDER} 占位符')
+    missing = [item for item in _REQUIRED_PLACEHOLDERS if item not in custom_prompt]
+    if use_custom and missing:
+        raise ValueError(f'Prompt 必须包含 {"、".join(missing)} 占位符')
 
     project.metadata = project.metadata or {}
     project.metadata['custom_prompt'] = custom_prompt

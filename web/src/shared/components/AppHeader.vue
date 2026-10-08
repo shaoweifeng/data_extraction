@@ -1,12 +1,12 @@
 <template>
   <header class="app-header">
     <!-- 左侧：Logo（点击返回主页） -->
-    <div class="header-brand" @click="goHome" title="返回项目列表">
+    <div class="header-brand" @click="goHome" title="返回首页">
       <div class="header-brand-icon">
         <i class="fas fa-flask"></i>
       </div>
       <div class="header-brand-text">
-        <span class="header-brand-name">科研 Meta 平台</span>
+        <span class="header-brand-name">MetaFlow</span>
         <span class="header-brand-sub">系统化文献筛选与数据提取</span>
       </div>
     </div>
@@ -118,7 +118,7 @@ function goHome() {
   project.currentProject = null
   project.currentStage = 'SCREEN_1'
   window.dispatchEvent(new CustomEvent('app:project-left'))
-  router.push('/projects')
+  router.push('/')
 }
 
 function onUserClick() {

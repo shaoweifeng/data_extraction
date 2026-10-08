@@ -9,7 +9,7 @@
         </div>
         <div>
           <h3 class="step-title" style="font-size:0.92rem;margin:0">AI 智能初筛</h3>
-          <p class="step-subtitle" style="font-size:0.7rem;margin:0">基于纳排标准，大模型自动筛选</p>
+          <p class="step-subtitle" style="font-size:0.7rem;margin:0">基于排除标准，大模型自动筛选</p>
         </div>
       </div>
 
@@ -203,17 +203,23 @@
           <div v-else class="space-y-2">
             <div class="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
               <i class="fas fa-exclamation-triangle mt-0.5 flex-shrink-0"></i>
-              <span>必须包含 <code class="bg-amber-100 px-1 rounded font-mono">{screening_criteria}</code> 占位符，纳排标准将自动注入</span>
+              <span>
+                必须包含
+                <code class="bg-amber-100 px-1 rounded font-mono">{screening_criteria}</code>
+                和
+                <code class="bg-amber-100 px-1 rounded font-mono">{literature_record}</code>
+                占位符，排除标准与单篇文献记录将自动注入
+              </span>
             </div>
             <textarea
               v-model="s.customPromptText"
               rows="9"
-              placeholder="在此输入自定义 Prompt，必须包含 {screening_criteria} 占位符..."
+              placeholder="在此输入自定义 Prompt，必须包含 {screening_criteria} 和 {literature_record} 占位符..."
               class="ai-prompt-textarea"
-              :class="s.customPromptText && !s.customPromptText.includes('{screening_criteria}') ? 'ai-prompt-textarea-error' : ''"
+              :class="s.customPromptText && !hasRequiredPromptPlaceholders ? 'ai-prompt-textarea-error' : ''"
             ></textarea>
-            <div v-if="s.customPromptText && !s.customPromptText.includes('{screening_criteria}')" class="text-xs text-red-500 flex items-center gap-1">
-              <i class="fas fa-times-circle"></i> 缺少 {screening_criteria} 占位符，无法保存
+            <div v-if="s.customPromptText && !hasRequiredPromptPlaceholders" class="text-xs text-red-500 flex items-center gap-1">
+              <i class="fas fa-times-circle"></i> 缺少必要占位符，无法保存
             </div>
           </div>
 
@@ -221,7 +227,7 @@
           <div class="flex gap-2 items-center mt-3">
             <button
               @click="savePrompt"
-              :disabled="s.useCustomPrompt && (!s.customPromptText || !s.customPromptText.includes('{screening_criteria}'))"
+              :disabled="s.useCustomPrompt && (!s.customPromptText || !hasRequiredPromptPlaceholders)"
               class="ai-prompt-save-btn"
             >
               <i class="fas fa-save mr-1"></i>保存
@@ -412,6 +418,10 @@ const queueInfo = ref({ position: 0, queueLength: 0, slotsNeeded: 0, slotsFree: 
 const promptPanelOpen = ref(false)
 const promptSaveStatus = ref('')
 const defaultPromptPreview = ref('（加载中...）')
+const hasRequiredPromptPlaceholders = computed(() => (
+  s.customPromptText.includes('{screening_criteria}')
+  && s.customPromptText.includes('{literature_record}')
+))
 let aiPollGeneration = 0
 let aiPollTimer = null
 let componentActive = true
@@ -439,10 +449,9 @@ const flatModels = computed(() => {
 })
 
 const totalRefCount = computed(() => {
-  const screened = s.aiScreenStats
-    ? (s.aiScreenStats.included_count ?? 0) + (s.aiScreenStats.excluded_count ?? 0) + (s.aiScreenStats.conflict_count ?? 0)
-    : 0
-  return (s.pendingTotal || 0) + screened
+  if (s.totalRefs > 0) return s.totalRefs
+  if (s.aiScreenStats?.total != null) return Number(s.aiScreenStats.total)
+  return (s.pendingTotal || 0) + (s.screenedTotal || 0)
 })
 const LIST_PAGE_SIZE = 50
 
@@ -450,7 +459,11 @@ const LIST_PAGE_SIZE = 50
 const listTab = ref('pending')
 function switchListTab(tab) {
   listTab.value = tab
-  if (tab === 'screened') loadScreenedFiles({ resetPage: false })
+  if (tab === 'screened') {
+    loadScreenedFiles({ resetPage: false })
+  } else {
+    loadPending(Math.max(0, pendingListPage.value - 1))
+  }
 }
 
 // ── 待筛分页（后端分页，每页 50 条）──
@@ -469,10 +482,12 @@ const screenedTotalPages = computed(() => Math.max(1, Math.ceil(screenedCount.va
 const pagedScreenedFiles = computed(() => s.screenedFiles || [])
 
 const screenedCount = computed(() => {
-  if (s.aiScreenStats) {
-    return (s.aiScreenStats.included_count ?? 0) + (s.aiScreenStats.excluded_count ?? 0) + (s.aiScreenStats.conflict_count ?? 0)
-  }
-  return s.screenedTotal || s.screenedFiles?.length || 0
+  return Math.max(
+    Number(s.aiScreenStats?.processed_count || 0),
+    Number(s.processedCount || 0),
+    Number(s.screenedTotal || 0),
+    Number(s.screenedFiles?.length || 0),
+  )
 })
 
 function goScreenedPage(page) {
@@ -608,7 +623,7 @@ async function loadPrompt() {
 
 async function savePrompt() {
   if (!project.currentProject) return
-  if (s.useCustomPrompt && !s.customPromptText.includes('{screening_criteria}')) return
+  if (s.useCustomPrompt && !hasRequiredPromptPlaceholders.value) return
   promptSaveStatus.value = ''
   try {
     await controller.savePrompt({
@@ -722,6 +737,24 @@ async function loadAiScreenStats() {
     const res = await controller.loadStats(projectId, { signal: abortController.signal })
     if (!isCurrentProject(projectId) || requestGeneration !== statsRequestGeneration) return
     s.aiScreenStats = res.data
+    const activeStatus = s.latestAiScreenTask?.status
+    const hasActiveTask = ['running', 'pending', 'stopping', 'queuing'].includes(activeStatus)
+    if (res.data.total != null) {
+      const total = Number(res.data.total)
+      s.totalRefs = hasActiveTask ? Math.max(Number(s.totalRefs || 0), total) : total
+    }
+    if (res.data.processed_count != null) {
+      const processed = Number(res.data.processed_count)
+      const liveProcessed = hasActiveTask
+        ? Math.max(Number(s.processedCount || 0), processed)
+        : processed
+      s.processedCount = liveProcessed
+      s.screenedTotal = liveProcessed
+      if (s.totalRefs > 0) s.pendingTotal = Math.max(0, s.totalRefs - liveProcessed)
+    }
+    if (res.data.remaining_count != null && res.data.processed_count == null) {
+      s.pendingTotal = Number(res.data.remaining_count)
+    }
   } catch {}
 }
 
@@ -733,16 +766,14 @@ async function loadScreenedFiles({ page, resetPage = true } = {}) {
   const abortController = new AbortController()
   screenedAbortController = abortController
   const targetPage = resetPage ? 1 : (page || screenedListPage.value)
-  const stage = project.stagesData.find(st => st.stage_key === 'SCREEN_1')
-  const reviewStepId = stage?.steps?.find(st => st.step_key === 'review')?.id
   try {
-    const response = await controller.loadReviewPage(
-      { step: reviewStepId, decision: '', page: targetPage, page_size: LIST_PAGE_SIZE },
+    const response = await controller.loadResults(
       projectId,
+      { limit: LIST_PAGE_SIZE, offset: (targetPage - 1) * LIST_PAGE_SIZE },
       { signal: abortController.signal },
     )
     if (!isCurrentProject(projectId) || requestGeneration !== screenedRequestGeneration) return
-    s.screenedFiles = (response.data.results || []).filter(item => item.ai_decision)
+    s.screenedFiles = response.data.results || []
     s.screenedTotal = response.data.total || 0
     screenedListPage.value = targetPage
   } catch (e) {
@@ -783,8 +814,12 @@ function syncLatestAiTask() {
   s.screeningProgressValue = aiTask.progress_percentage || 0
   const sp = aiTask.config?.screen_progress
   if (sp) {
-    s.totalRefs = sp.total_refs || s.totalRefs
-    s.processedCount = sp.processed_refs || 0
+    const total = Number(sp.total_refs ?? s.totalRefs ?? 0)
+    const processed = Number(sp.processed_refs ?? 0)
+    s.totalRefs = total
+    s.processedCount = processed
+    s.screenedTotal = processed
+    s.pendingTotal = Math.max(0, total - processed)
   }
   if (['running', 'pending', 'stopping', 'queuing'].includes(aiTask.status)) {
     s.isProcessing = aiTask.status === 'running'
@@ -797,7 +832,7 @@ function syncLatestAiTask() {
 
 // ── 任务操作 ─────────────────────────────────────────────────
 async function startScreening() {
-  if (s.criteriaList.length === 0) { alert('请先设置纳排标准'); return }
+  if (s.criteriaList.length === 0) { alert('请先设置排除标准'); return }
   if (selectedModels.value.length === 0) { alert('请至少选择一个已配置的模型'); return }
   s.isProcessing = true
   // 重置左栏分页状态
@@ -901,8 +936,12 @@ async function pollAiScreening(taskId) {
       s.screeningProgressValue = task.progress_percentage || 0
       const sp = task.config?.screen_progress
       if (sp) {
-        s.totalRefs = sp.total_refs || s.totalRefs
-        s.processedCount = sp.processed_refs || 0
+        const total = Number(sp.total_refs ?? s.totalRefs ?? 0)
+        const processed = Number(sp.processed_refs ?? 0)
+        s.totalRefs = total
+        s.processedCount = processed
+        s.screenedTotal = processed
+        s.pendingTotal = Math.max(0, total - processed)
       }
       if (['running', 'pending', 'stopping', 'queuing'].includes(status)) {
         const interval = status === 'queuing' ? 5000 : 2000
@@ -916,11 +955,14 @@ async function pollAiScreening(taskId) {
             slotsTotal: qi.slots_total || queueInfo.value.slotsTotal,
           }
         }
-        // 避免每个 batch 重新拉取待筛列表和最多 1000 条已筛结果。
+        // 数量变化时刷新轻量统计；仅在用户查看“已筛选”时刷新当前 50 条。
         const currentCount = s.processedCount || 0
         if (status === 'running' && currentCount !== lastStatsCount) {
           lastStatsCount = currentCount
           loadAiScreenStats()
+          if (listTab.value === 'screened') {
+            loadScreenedFiles({ resetPage: false })
+          }
         }
         aiPollTimer = setTimeout(poll, interval)
       } else {

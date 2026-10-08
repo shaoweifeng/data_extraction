@@ -30,7 +30,7 @@ TASK_TYPE_DISPLAY: dict = {
     'ai_screen': 'AI初筛',
     'export': '结果归纳',
     'field_extraction': '提取字段',
-    'criteria': '纳排标准',
+    'criteria': '排除标准',
     # QA 步骤
     'qa_upload': '上传文献',
     'qa_method': '方法选择',

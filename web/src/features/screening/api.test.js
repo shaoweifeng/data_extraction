@@ -30,6 +30,7 @@ describe('screening API', () => {
     const signal = new AbortController().signal
     await screeningApi.fetchScreeningStats(8, { signal })
     await screeningApi.fetchScreeningInputs(8, { limit: 50, offset: 0 }, { signal })
+    await screeningApi.fetchScreeningResults(8, { limit: 50, offset: 0 }, { signal })
     await screeningApi.fetchReviewList({ project: 8, page: 2 }, { signal })
     await workflowApi.fetchFiles({ project: 8, limit: 50 }, { signal })
 
@@ -38,6 +39,10 @@ describe('screening API', () => {
       signal,
     })
     expect(http.get).toHaveBeenCalledWith('/projects/8/ai_screen_inputs/', {
+      signal,
+      params: { limit: 50, offset: 0 },
+    })
+    expect(http.get).toHaveBeenCalledWith('/projects/8/ai_screen_results/', {
       signal,
       params: { limit: 50, offset: 0 },
     })

@@ -17,7 +17,7 @@ export const featureCards = [
     icon: 'fas fa-list-check',
     tone: 'violet',
     eyebrow: '规则',
-    title: '纳排标准结构化管理',
+    title: '排除标准结构化管理',
     description: '集中维护纳入与排除条件，并将标准直接传递给 AI 初筛，减少研究过程中规则漂移。',
   },
   {
@@ -91,4 +91,3 @@ export const trustCards = [
     description: '文件、标准、模型、Prompt 和任务操作形成时间线，便于还原研究过程与定位异常。',
   },
 ]
-

@@ -28,7 +28,7 @@ export function getTaskTypeName(taskType) {
     dedup: '文献去重',
     ai_screen: 'AI初筛',
     export: '结果归纳',
-    criteria: '纳排标准',
+    criteria: '排除标准',
     SCREEN_1: '初筛阶段',
     SEARCH: '文献检索',
     // QA 步骤

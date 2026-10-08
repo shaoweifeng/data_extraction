@@ -100,7 +100,7 @@ class DataFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='parse-report')
     def parse_report(self, request, pk=None):
-        """Return the latest full parse diagnostics for one uploaded index file."""
+        """Return role-appropriate diagnostics for one uploaded index file."""
         source_file = self.get_object()
         report_file = (
             DataFile.objects.filter(
@@ -117,7 +117,17 @@ class DataFileViewSet(viewsets.ModelViewSet):
 
         try:
             report_file.file.open('rb')
-            return Response(json.load(report_file.file))
+            report = json.load(report_file.file)
+            if not ProjectAccessPolicy.is_platform_admin(request.user):
+                report = {
+                    key: report[key]
+                    for key in (
+                        'filename', 'format', 'parsed_entries', 'parsed_at',
+                        'source_file_id',
+                    )
+                    if key in report
+                }
+            return Response(report)
         except (OSError, ValueError, TypeError):
             return Response({'error': '解析报告不可读取'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         finally:

@@ -372,6 +372,8 @@ class ScreeningImportApiTests(TransactionTestCase):
         self.assertGreater(raw.raw_size_bytes, 0)
         self.assertEqual(len(raw.raw_hash), 64)
 
+        self.user.profile.role = 'admin'
+        self.user.profile.save(update_fields=['role'])
         report = self.client.get(f'/api/files/{import_file.source_file_id}/parse-report/')
         self.assertEqual(report.status_code, 200)
         self.assertEqual(report.json()['blocking_error_count'], 0)
@@ -418,6 +420,8 @@ class ScreeningImportApiTests(TransactionTestCase):
         import_file = batch.files.get()
         self.assertEqual(batch.status, ReferenceImportBatch.Status.FAILED)
         self.assertEqual(ScreeningCorpus.objects.get(project=self.project).revision, 0)
+        self.user.profile.role = 'admin'
+        self.user.profile.save(update_fields=['role'])
         report = self.client.get(f'/api/files/{import_file.source_file_id}/parse-report/')
         self.assertEqual(report.status_code, 200)
         self.assertEqual(report.json()['blocking_error_count'], 1)

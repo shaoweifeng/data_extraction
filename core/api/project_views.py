@@ -107,6 +107,55 @@ class ProjectViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=True, methods=['get'])
+    def ai_screen_results(self, request, pk=None):
+        """Return a bounded page of results already processed by the current run."""
+        from django.conf import settings
+        from django.db.models import Q
+
+        from core.screening.models import ScreeningResult
+        from core.screening.services.screening_run_service import current_screening_run
+
+        project = self.get_object()
+        try:
+            limit = min(100, max(1, int(request.query_params.get('limit', 50))))
+            offset = max(0, int(request.query_params.get('offset', 0)))
+        except (TypeError, ValueError):
+            return Response({'error': 'limit 和 offset 必须是整数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        run = current_screening_run(project.id)
+        if run is None:
+            return Response({'total': 0, 'results': [], 'screening_run_id': None})
+
+        max_attempts = max(1, int(getattr(settings, 'SCREENING_AI_MAX_ATTEMPTS', 3)))
+        results = (
+            run.results.select_related('reference')
+            .filter(
+                Q(status=ScreeningResult.Status.COMPLETED)
+                | Q(status=ScreeningResult.Status.FAILED, attempt_count__gte=max_attempts)
+            )
+            .order_by('id')
+        )
+        total = results.count()
+        page = results[offset:offset + limit]
+        return Response({
+            'total': total,
+            'screening_run_id': run.id,
+            'results': [
+                {
+                    'reference_id': row.reference_id,
+                    'title': row.reference.title or f'文献 #{row.reference_id}',
+                    'year': row.reference.publication_year,
+                    'journal': row.reference.journal,
+                    'doi': row.reference.doi,
+                    'ai_decision': row.decision,
+                    'consensus': row.consensus or row.decision,
+                    'status': row.status,
+                }
+                for row in page
+            ],
+        })
+
+    @action(detail=True, methods=['get'])
     def get_prompt(self, request, pk=None):
         from ..services import get_prompt
 
