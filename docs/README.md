@@ -19,6 +19,7 @@
 | [operations.md](./operations.md) | 启停、维护模式、备份和故障恢复 | 部署方式或运维命令变化时 |
 | [account-production-readiness.md](./account-production-readiness.md) | 注册与账户现状、全部外部配置、生产上线验收 | 账户功能、域名、邮件、主体或上线状态变化时 |
 | [commercialization-roadmap.md](./commercialization-roadmap.md) | 收费试点、自助支付和机构化路线 | 商业模式、价格或支付范围确定后 |
+| [personal-plans-and-credit-billing.md](./personal-plans-and-credit-billing.md) | Lite / Plus / Pro 套餐、兑换码与模型加权积分方案 | 套餐、模型费率或积分规则变化时 |
 
 ## 文档维护规则
 
