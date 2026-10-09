@@ -1,3 +1,4 @@
+import json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -5,6 +6,7 @@ from unittest.mock import patch
 import fitz
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import Client, TestCase, override_settings
 
 from core.models import Project, QAFulltextAsset, QAReference
@@ -16,9 +18,9 @@ User = get_user_model()
 
 def make_pdf(*, pages=1, text='A sufficiently long body of research text. ' * 10, encrypted=False):
     document = fitz.open()
-    for _ in range(pages):
+    for index in range(pages):
         page = document.new_page()
-        page.insert_text((72, 72), text)
+        page.insert_text((72, 72), f'PAGE-{index + 1}-MARKER {text}')
     options = {}
     if encrypted:
         options.update(
@@ -40,9 +42,10 @@ class QAFulltextTests(TestCase):
             QA_FULLTEXT_MAX_FILE_BYTES=2 * 1024 * 1024,
             QA_FULLTEXT_MAX_TOTAL_BYTES=3 * 1024 * 1024,
             QA_FULLTEXT_MAX_PAGES=2,
-            QA_PDF_TEXT_MAX_PAGES=2,
             QA_PDF_TEXT_MAX_CHARS=2000,
             QA_AI_MAX_CONTENT_CHARS=1000,
+            QA_CHUNK_TARGET_TOKENS=100,
+            QA_CHUNK_OVERLAP_TOKENS=10,
             QA_FULLTEXT_REQUIRE_CLEAN_SCAN=False,
         )
         self.settings.enable()
@@ -118,6 +121,10 @@ class QAFulltextTests(TestCase):
         self.assertEqual(asset.page_count, 1)
         self.assertEqual(asset.qa_reference.fulltext_status, 'available')
         self.assertTrue(asset.extracted_text_file.name)
+        self.assertTrue(asset.chunk_index_file.name)
+        self.assertEqual(asset.extracted_page_count, 1)
+        self.assertFalse(asset.extraction_truncated)
+        self.assertGreater(asset.chunk_count, 0)
 
         download = self.client.get(f'/api/qa/fulltext-assets/{asset.id}/download/')
         self.assertEqual(download.status_code, 200)
@@ -151,11 +158,154 @@ class QAFulltextTests(TestCase):
         asset = QAFulltextAsset.objects.get(
             pk=response.json()['data']['refs'][0]['fulltext_asset']['id']
         )
+        process_fulltext_asset(asset.id)
+        asset.refresh_from_db()
         storage = asset.raw_file.storage
         name = asset.raw_file.name
+        text_name = asset.extracted_text_file.name
+        chunk_name = asset.chunk_index_file.name
         self.assertTrue(storage.exists(name))
         asset.delete()
         self.assertFalse(storage.exists(name))
+        self.assertFalse(storage.exists(text_name))
+        self.assertFalse(storage.exists(chunk_name))
+
+    @override_settings(QA_FULLTEXT_MAX_PAGES=30, QA_PDF_TEXT_MAX_CHARS=100000)
+    def test_processing_extracts_beyond_twenty_pages_and_chunks_are_stable(self):
+        response, _ = self.upload(make_pdf(pages=25), name='long-study.pdf')
+        asset_id = response.json()['data']['refs'][0]['fulltext_asset']['id']
+        process_fulltext_asset(asset_id)
+
+        asset = QAFulltextAsset.objects.get(pk=asset_id)
+        self.assertEqual(asset.page_count, 25)
+        self.assertEqual(asset.extracted_page_count, 25)
+        self.assertFalse(asset.extraction_truncated)
+        self.assertGreater(asset.chunk_count, 0)
+        asset.extracted_text_file.open('rb')
+        try:
+            extracted = asset.extracted_text_file.read().decode('utf-8')
+        finally:
+            asset.extracted_text_file.close()
+        self.assertIn('<<<QA_PAGE:21>>>', extracted)
+        self.assertIn('PAGE-25-MARKER', extracted)
+
+        first_text_hash = asset.extracted_text_sha256
+        first_chunk_hash = asset.chunk_index_sha256
+        process_fulltext_asset(asset_id, force=True)
+        asset.refresh_from_db()
+        self.assertEqual(asset.extracted_text_sha256, first_text_hash)
+        self.assertEqual(asset.chunk_index_sha256, first_chunk_hash)
+
+    @override_settings(QA_FULLTEXT_MAX_PAGES=10, QA_PDF_TEXT_MAX_CHARS=180)
+    def test_processing_records_character_truncation(self):
+        response, _ = self.upload(make_pdf(pages=3, text='truncation body ' * 40), name='truncated.pdf')
+        asset_id = response.json()['data']['refs'][0]['fulltext_asset']['id']
+        process_fulltext_asset(asset_id)
+
+        asset = QAFulltextAsset.objects.get(pk=asset_id)
+        self.assertTrue(asset.extraction_truncated)
+        self.assertIsNotNone(asset.truncated_at_page)
+        self.assertLessEqual(asset.extracted_text_chars, 180)
+
+    def test_inspection_command_writes_bounded_report(self):
+        response, _ = self.upload(make_pdf(text='inspection-needle research body'))
+        asset_id = response.json()['data']['refs'][0]['fulltext_asset']['id']
+        process_fulltext_asset(asset_id)
+
+        with tempfile.TemporaryDirectory() as output_dir:
+            call_command(
+                'inspect_qa_fulltext',
+                asset_id=asset_id,
+                output=output_dir,
+                find=['inspection-needle'],
+            )
+            markdown = Path(output_dir, f'qa-fulltext-asset-{asset_id}.md').read_text('utf-8')
+            payload = Path(output_dir, f'qa-fulltext-asset-{asset_id}.json').read_text('utf-8')
+        self.assertIn('inspection-needle', markdown)
+        self.assertIn('"chunk_count"', payload)
+
+    def test_evidence_inspection_command_is_read_only_and_bounded(self):
+        response, _ = self.upload(make_pdf(
+            text='Methods Consecutive patients were enrolled using random sampling. ' * 8,
+        ))
+        asset_id = response.json()['data']['refs'][0]['fulltext_asset']['id']
+        asset = QAFulltextAsset.objects.get(pk=asset_id)
+        QAReference.objects.filter(pk=asset.qa_reference_id).update(quality_method='QUADAS2')
+        process_fulltext_asset(asset_id)
+
+        with tempfile.TemporaryDirectory() as output_dir:
+            call_command(
+                'inspect_qa_evidence',
+                reference_id=asset.qa_reference_id,
+                output=output_dir,
+                signal_key=['ps_consecutive'],
+            )
+            markdown = Path(
+                output_dir, f'qa-evidence-reference-{asset.qa_reference_id}.md'
+            ).read_text('utf-8')
+            payload = Path(
+                output_dir, f'qa-evidence-reference-{asset.qa_reference_id}.json'
+            ).read_text('utf-8')
+        self.assertIn('ps_consecutive', markdown)
+        self.assertIn('Consecutive patients', markdown)
+        self.assertNotIn('"text":', payload)
+        self.assertIn('"preview":', payload)
+
+    def test_rebuild_command_supports_dry_run_and_bounded_asset_scope(self):
+        response, _ = self.upload()
+        asset_id = response.json()['data']['refs'][0]['fulltext_asset']['id']
+        call_command('rebuild_qa_fulltext', asset_id=asset_id, limit=1, dry_run=True)
+        asset = QAFulltextAsset.objects.get(pk=asset_id)
+        self.assertEqual(asset.status, 'pending')
+
+        call_command('rebuild_qa_fulltext', asset_id=asset_id, limit=1, dry_run=False)
+        asset.refresh_from_db()
+        self.assertEqual(asset.status, 'ready')
+        self.assertGreater(asset.chunk_count, 0)
+
+        with tempfile.TemporaryDirectory() as output_dir:
+            report = Path(output_dir, 'rebuild.json')
+            call_command(
+                'rebuild_qa_fulltext', asset_id=asset_id, limit=1,
+                resume=True, report=str(report),
+            )
+            self.assertFalse(report.exists())
+
+            retry = Path(output_dir, 'previous.json')
+            retry.write_text(json.dumps({
+                'failed': [{'asset_id': asset_id, 'error': 'previous'}],
+            }), encoding='utf-8')
+            call_command(
+                'rebuild_qa_fulltext', retry_report=str(retry), limit=1,
+                dry_run=True,
+            )
+
+    def test_failed_force_rebuild_preserves_previous_derived_files(self):
+        response, _ = self.upload()
+        asset_id = response.json()['data']['refs'][0]['fulltext_asset']['id']
+        process_fulltext_asset(asset_id)
+        asset = QAFulltextAsset.objects.get(pk=asset_id)
+        text_name = asset.extracted_text_file.name
+        chunk_name = asset.chunk_index_file.name
+        text_hash = asset.extracted_text_sha256
+        chunk_hash = asset.chunk_index_sha256
+
+        with patch(
+            'core.quality.services.fulltext.build_chunks',
+            side_effect=RuntimeError('chunking failed'),
+        ):
+            with self.assertRaises(RuntimeError):
+                process_fulltext_asset(asset_id, force=True)
+
+        asset.refresh_from_db()
+        self.assertEqual(asset.status, 'ready')
+        self.assertEqual(asset.error_code, 'pdf_rebuild_failed')
+        self.assertEqual(asset.extracted_text_file.name, text_name)
+        self.assertEqual(asset.chunk_index_file.name, chunk_name)
+        self.assertEqual(asset.extracted_text_sha256, text_hash)
+        self.assertEqual(asset.chunk_index_sha256, chunk_hash)
+        self.assertTrue(asset.extracted_text_file.storage.exists(text_name))
+        self.assertTrue(asset.chunk_index_file.storage.exists(chunk_name))
 
 
 class QAStorageMaterializationTests(TestCase):

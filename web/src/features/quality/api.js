@@ -10,13 +10,23 @@ export const uploadFulltext = form => http.post('/qa/refs/upload/', form, {
 })
 export const retryFulltext = assetId => http.post(`/qa/fulltext-assets/${assetId}/retry/`)
 export const updateRef = (refId, payload) => http.patch(`/qa/refs/${refId}/`, payload)
-export const batchSetMethod = (refIds, qualityMethod) =>
-  http.post('/qa/refs/batch-method/', { ref_ids: refIds, quality_method: qualityMethod })
+export const batchSetMethod = (refIds, qualityMethod, qualityMethodVariant = '') =>
+  http.post('/qa/refs/batch-method/', {
+    ref_ids: refIds,
+    quality_method: qualityMethod,
+    quality_method_variant: qualityMethodVariant,
+  })
 export const startEvaluation = payload => http.post('/qa/eval/start/', payload)
 export const fetchEvaluationProgress = projectId =>
   http.get('/qa/eval/progress/', { params: { project_id: projectId } })
 export const fetchSignalItems = (qaRefId, filters = {}) =>
   http.get('/qa/signal-items/', { params: { qa_ref_id: qaRefId, ...filters } })
+export const fetchEvidenceContext = (itemId, chunkId, modelId = '') =>
+  http.get(`/qa/signal-items/${itemId}/evidence-context/`, {
+    params: { chunk_id: chunkId, ...(modelId ? { model_id: modelId } : {}) },
+  })
+export const fetchEvaluationAudit = qaRefId =>
+  http.get('/qa/eval/audit/', { params: { qa_ref_id: qaRefId } })
 export const fetchDomainResults = qaRefId =>
   http.get('/qa/domain-results/', { params: { qa_ref_id: qaRefId } })
 export const confirmSignalItem = (itemId, humanJudgment) =>

@@ -92,6 +92,9 @@
               {{ evalStatusLabel(qa.currentRef.ai_eval_status) }}
             </span>
             <span v-if="qa.currentRef.quality_method" class="meta-item method-chip">{{ qa.currentRef.quality_method }}</span>
+            <span v-if="qa.currentRef.fulltext_asset?.extraction_truncated" class="meta-item truncated-chip">
+              全文已截断至第 {{ qa.currentRef.fulltext_asset.truncated_at_page }} 页
+            </span>
           </div>
           <button
             class="btn-batch-confirm"
@@ -102,6 +105,23 @@
             <i class="fas fa-check-double" v-else></i>
             {{ batchConfirmLoading ? '确认中...' : '一键确认' }}
           </button>
+        </div>
+
+        <div v-if="auth.isAdmin && qa.evaluationAudit" class="audit-strip">
+          <div class="audit-title"><i class="fas fa-shield-halved"></i> 评价审计</div>
+          <div v-if="qa.evaluationAudit.asset" class="audit-grid">
+            <span>提取 {{ qa.evaluationAudit.asset.extraction_version || '—' }}</span>
+            <span>分块 {{ qa.evaluationAudit.asset.chunking_version || '—' }}</span>
+            <span>{{ qa.evaluationAudit.asset.chunk_count }} 块</span>
+            <span>{{ qa.evaluationAudit.asset.extracted_text_chars }} 字符</span>
+            <span v-if="qa.evaluationAudit.asset.extraction_truncated" class="audit-warning">
+              已截断至第 {{ qa.evaluationAudit.asset.truncated_at_page }} 页
+            </span>
+          </div>
+          <div v-if="qa.evaluationAudit.latest_project_usage" class="audit-usage">
+            最近任务：{{ qa.evaluationAudit.latest_project_usage.total_tokens.toLocaleString() }} tokens
+            · {{ qa.evaluationAudit.latest_project_usage.credits_consumed }} 积分
+          </div>
         </div>
 
         <!-- 领域过滤 tabs -->
@@ -169,12 +189,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useQAStore } from '@/features/quality/store'
 import { useProjectStore } from '@/features/projects/store'
+import { useAuthStore } from '@/features/account/store'
 import QASignalCard from './QASignalCard.vue'
 import QAPdfViewer  from './QAPdfViewer.vue'
 import QAPagination from './QAPagination.vue'
 
 const qa      = useQAStore()
 const project = useProjectStore()
+const auth    = useAuthStore()
 
 const refFilter     = ref('all')
 const activeDomain  = ref('all')
@@ -258,6 +280,7 @@ async function selectRef(ref) {
   activeDomain.value = 'all'
   try {
     await qa.selectRef(ref)
+    if (auth.isAdmin) await qa.fetchEvaluationAudit(ref.id)
   } catch (e) {
     console.error('[QAStepReview] selectRef failed', e)
     alert(`加载文献「${ref.title?.slice(0, 30)}...」时出错：${e?.response?.data?.error || e?.message || '未知错误'}`)
@@ -290,6 +313,8 @@ async function doBatchAllRefs() {
   batchAllLoading.value = true
   try {
     const result = await qa.batchConfirmProject(project.currentProject.id, 'adopt_preselected')
+    // qaNextDisabled 和步骤高水位读取的是全项目 qa.refs；只刷新分页列表会导致
+    // 后端已确认、当前页已更新，但底部“下一步”仍保持禁用直到整页刷新。
     await loadPage(1)
     alert(`已确认 ${result.references} 篇文献、${result.signals} 条评价项。`)
   } catch (e) {
@@ -462,8 +487,14 @@ watch(refFilter, () => loadPage(1))
 .chip-abstract_only { background: #ffedd5; color: #9a3412; }
 .chip-failed        { background: #fee2e2; color: #991b1b; }
 .chip-skipped_no_fulltext, .chip-skipped_no_method { background: #f1f5f9; color: #64748b; }
+.truncated-chip { background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; }
 .btn-batch-confirm { padding: 6px 12px; background: #6366f1; color: #fff; border: none; border-radius: 7px; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; flex-shrink: 0; white-space: nowrap; }
 .btn-batch-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
+.audit-strip { background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:9px 11px; color:#475569; }
+.audit-title { font-size:.72rem; font-weight:600; color:#334155; margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+.audit-grid { display:flex; flex-wrap:wrap; gap:4px 9px; font-size:.66rem; }
+.audit-usage { margin-top:5px; font-size:.66rem; color:#64748b; }
+.audit-warning { color:#b45309; font-weight:600; }
 
 /* 领域 tabs */
 .domain-tabs-row { display: flex; gap: 4px; flex-wrap: wrap; flex-shrink: 0; }

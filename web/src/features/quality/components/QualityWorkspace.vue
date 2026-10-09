@@ -45,7 +45,8 @@ async function initForProject(projectId) {
   qa.stopPolling()
 
   await qa.fetchRefs(projectId)
-  qa.maxReachedStep = inferQualityMaxStep(qa.refs)
+  const qualityStage = project.stagesData.find(stage => stage.stage_key === 'QUALITY')
+  qa.maxReachedStep = inferQualityMaxStep(qa.refs, qualityStage?.steps || [])
   qa.currentStep    = qa.maxReachedStep
 }
 

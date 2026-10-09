@@ -5,6 +5,7 @@ const api = vi.hoisted(() => ({
   fetchRefs: vi.fn(),
   fetchEvaluationProgress: vi.fn(),
   startEvaluation: vi.fn(),
+  batchConfirmProject: vi.fn(),
 }))
 vi.mock('./api', () => api)
 
@@ -45,5 +46,18 @@ describe('quality store capabilities', () => {
       ref_ids: [7],
       model_ids: ['deepseek-v4-pro'],
     })
+  })
+
+  it('refreshes canonical refs after project-wide review confirmation', async () => {
+    api.batchConfirmProject.mockResolvedValue({ data: { data: { references: 1, signals: 4 } } })
+    api.fetchRefs.mockResolvedValue({
+      data: { data: [{ id: 1, quality_method: 'QUADAS2', review_status: 'confirmed' }] },
+    })
+    const store = useQAStore()
+
+    await store.batchConfirmProject(9)
+
+    expect(store.refs[0].review_status).toBe('confirmed')
+    expect(api.fetchRefs).toHaveBeenCalledWith(9)
   })
 })

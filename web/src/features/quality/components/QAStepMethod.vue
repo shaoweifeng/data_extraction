@@ -20,8 +20,8 @@
         <span class="batch-hint">已选 {{ checkedIds.length }} 篇：</span>
         <select v-model="batchMethod" class="qa-select">
           <option value="">批量设置方法...</option>
-          <option v-for="m in qa.methods" :key="m.key" :value="m.key">
-            {{ m.name }}{{ !m.ai_supported ? ' (AI评价暂不支持)' : '' }}
+          <option v-for="choice in methodChoices" :key="choice.value" :value="choice.value">
+            {{ choice.label }}{{ !choice.ai_supported ? ' (AI评价暂不支持)' : '' }}
           </option>
         </select>
         <button class="btn-sm-primary" @click="doBatchMethod" :disabled="!batchMethod || batchLoading">
@@ -65,13 +65,13 @@
             </td>
             <td>
               <select
-                :value="ref.quality_method"
+                :value="methodSelection(ref)"
                 @change="setRefMethod(ref, $event.target.value)"
                 class="qa-select method-select"
                 :class="{ 'no-method': !ref.quality_method }"
               >
                 <option value="">请选择...</option>
-                <option v-for="m in qa.methods" :key="m.key" :value="m.key">{{ m.name }}</option>
+                <option v-for="choice in methodChoices" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
               </select>
             </td>
           </tr>
@@ -98,6 +98,10 @@
           <span v-else class="tag tag-gray ai-badge">AI 暂不支持</span>
         </div>
         <p class="method-desc">{{ m.description }}</p>
+        <p v-if="!m.ai_supported && m.ai_unavailable_reason" class="method-unavailable">{{ m.ai_unavailable_reason }}</p>
+        <p v-if="m.variants?.length" class="method-variants">
+          研究设计：{{ m.variants.map(item => item.name).join('、') }}
+        </p>
         <p class="method-stat">信号问题：{{ m.signal_count }} 条</p>
       </div>
     </div>
@@ -125,6 +129,28 @@ const allChecked = computed(() => (
   pageData.value.results.length > 0
   && pageData.value.results.every(item => checkedIds.value.includes(item.id))
 ))
+const methodChoices = computed(() => qa.methods.flatMap((method) => {
+  if (!method.variants?.length) {
+    return [{ value: method.key, label: method.name, ai_supported: method.ai_supported }]
+  }
+  return method.variants.map(variant => ({
+    value: `${method.key}::${variant.key}`,
+    label: `${method.name}（${variant.name}）`,
+    ai_supported: method.ai_supported,
+  }))
+}))
+
+function parseMethodSelection(value) {
+  const [quality_method = '', quality_method_variant = ''] = String(value || '').split('::', 2)
+  return { quality_method, quality_method_variant }
+}
+
+function methodSelection(ref) {
+  if (!ref.quality_method) return ''
+  const method = qa.methods.find(item => item.key === ref.quality_method)
+  if (!method?.variants?.length) return ref.quality_method
+  return `${ref.quality_method}::${ref.quality_method_variant || method.default_variant}`
+}
 
 async function loadPage(page = 1) {
   if (!project.currentProject) return
@@ -160,8 +186,9 @@ function toggleCheck(id) {
   else checkedIds.value.splice(idx, 1)
 }
 
-async function setRefMethod(ref, method) {
-  const updated = await qa.updateRef(ref.id, { quality_method: method })
+async function setRefMethod(ref, selection) {
+  const payload = parseMethodSelection(selection)
+  const updated = await qa.updateRef(ref.id, payload)
   const index = pageData.value.results.findIndex(item => item.id === ref.id)
   if (index !== -1) pageData.value.results[index] = updated
 }
@@ -170,9 +197,13 @@ async function doBatchMethod() {
   if (!batchMethod.value || !checkedIds.value.length) return
   batchLoading.value = true
   try {
-    await qa.batchSetMethod(checkedIds.value, batchMethod.value)
+    const payload = parseMethodSelection(batchMethod.value)
+    await qa.batchSetMethod(checkedIds.value, payload.quality_method, payload.quality_method_variant)
     pageData.value.results.forEach((item) => {
-      if (checkedIds.value.includes(item.id)) item.quality_method = batchMethod.value
+      if (checkedIds.value.includes(item.id)) {
+        item.quality_method = payload.quality_method
+        item.quality_method_variant = payload.quality_method_variant
+      }
     })
     batchMethod.value = ''
     checkedIds.value = []
@@ -225,6 +256,8 @@ function fulltextTagClass(s) {
 .method-name { font-size: 0.85rem; font-weight: 600; color: #1e293b; }
 .ai-badge { font-size: 0.68rem; }
 .method-desc { font-size: 0.72rem; color: #64748b; margin: 0 0 4px 0; }
+.method-unavailable { font-size: 0.7rem; color: #b45309; margin: 0 0 4px; }
+.method-variants { font-size: 0.7rem; color: #4f46e5; margin: 0 0 4px; }
 .method-stat { font-size: 0.68rem; color: #94a3b8; margin: 0; }
 .step-footer-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
 .footer-tip { font-size: 0.78rem; color: #94a3b8; }

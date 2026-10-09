@@ -52,11 +52,12 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/features/projects/store'
 import { useTaskStore } from '@/features/workflow/store'
 
 const router = useRouter()
+const route = useRoute()
 const project = useProjectStore()
 const taskStore = useTaskStore()
 
@@ -76,6 +77,11 @@ function getStageStatus(key) {
 function handleStageClick(key) {
   project.currentStage = key
   window.dispatchEvent(new CustomEvent('app:stage-changed', { detail: { stage: key } }))
+  router.replace({
+    name: 'Workspace',
+    params: { projectId: project.currentProject.id },
+    query: { ...route.query, stage: key },
+  })
 }
 
 function handleBackToList() {

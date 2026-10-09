@@ -6,6 +6,7 @@
 from rest_framework import serializers
 
 from core.models import QAReference
+from core.quality.domain.methods import get_method_config
 from core.services.ai_models_config import get_model_config
 
 
@@ -28,6 +29,7 @@ class QARefImportInputSerializer(serializers.Serializer):
 
 class QARefUpdateInputSerializer(serializers.Serializer):
     quality_method = serializers.ChoiceField(choices=METHOD_CHOICES, allow_blank=True, required=False)
+    quality_method_variant = serializers.CharField(max_length=30, allow_blank=True, required=False)
     eval_mode = serializers.ChoiceField(choices=EVAL_MODE_CHOICES, allow_blank=True, required=False)
     selected_models = serializers.ListField(
         child=serializers.CharField(max_length=100), required=False
@@ -42,12 +44,29 @@ class QARefUpdateInputSerializer(serializers.Serializer):
     def validate(self, attrs):
         if not attrs:
             raise serializers.ValidationError('至少需要提供一个可更新字段')
+        method = attrs.get('quality_method')
+        variant = attrs.get('quality_method_variant')
+        if method:
+            try:
+                get_method_config(method, variant or None)
+            except ValueError as exc:
+                raise serializers.ValidationError({'quality_method_variant': str(exc)}) from exc
+        elif method == '' and variant:
+            raise serializers.ValidationError({'quality_method_variant': '未选择评价方法时不能设置研究设计'})
         return attrs
 
 
 class QABatchMethodInputSerializer(serializers.Serializer):
     ref_ids = IdListField(allow_empty=False)
     quality_method = serializers.ChoiceField(choices=METHOD_CHOICES)
+    quality_method_variant = serializers.CharField(max_length=30, allow_blank=True, required=False, default='')
+
+    def validate(self, attrs):
+        try:
+            get_method_config(attrs['quality_method'], attrs['quality_method_variant'] or None)
+        except ValueError as exc:
+            raise serializers.ValidationError({'quality_method_variant': str(exc)}) from exc
+        return attrs
 
 
 class QAEvalStartInputSerializer(serializers.Serializer):

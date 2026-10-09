@@ -11,7 +11,8 @@ import uuid
 
 from core.workflow.domain.statuses import ProjectStageStatus, StageStepStatus, TaskStatus
 from core.quality.storage import (
-    qa_extracted_text_upload_path, qa_fulltext_storage, qa_fulltext_upload_path,
+    qa_chunk_index_upload_path, qa_extracted_text_upload_path, qa_fulltext_storage,
+    qa_fulltext_upload_path,
 )
 
 
@@ -755,6 +756,9 @@ class QAReference(models.Model):
     fulltext_file  = models.ForeignKey(DataFile, null=True, blank=True, on_delete=models.SET_NULL, related_name='qa_references', verbose_name="全文PDF文件")
     fulltext_status= models.CharField(max_length=20, choices=FULLTEXT_STATUS_CHOICES, default='pending', verbose_name="全文状态")
     quality_method = models.CharField(max_length=20, choices=METHOD_CHOICES, blank=True, default='', verbose_name="质量评价方法")
+    quality_method_variant = models.CharField(
+        max_length=30, blank=True, default='', verbose_name='质量评价方法研究设计',
+    )
     eval_mode      = models.CharField(max_length=20, choices=EVAL_MODE_CHOICES, blank=True, default='', verbose_name="评价模式")
     selected_models= models.JSONField(default=list, blank=True, verbose_name="选择的模型ID列表")
     ai_eval_status = models.CharField(max_length=30, choices=AI_STATUS_CHOICES, default='pending', verbose_name="AI评价状态")
@@ -821,6 +825,10 @@ class QAFulltextAsset(models.Model):
         upload_to=qa_extracted_text_upload_path, storage=qa_fulltext_storage,
         max_length=500, blank=True, verbose_name='私有提取文本',
     )
+    chunk_index_file = models.FileField(
+        upload_to=qa_chunk_index_upload_path, storage=qa_fulltext_storage,
+        max_length=500, blank=True, verbose_name='私有全文分块索引',
+    )
     original_filename = models.CharField(max_length=255, verbose_name='原始文件名')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
     sha256 = models.CharField(max_length=64, db_index=True)
@@ -833,6 +841,13 @@ class QAFulltextAsset(models.Model):
     )
     extracted_text_sha256 = models.CharField(max_length=64, blank=True, default='')
     extracted_text_chars = models.PositiveIntegerField(default=0)
+    extraction_version = models.CharField(max_length=32, blank=True, default='')
+    extracted_page_count = models.PositiveIntegerField(default=0)
+    extraction_truncated = models.BooleanField(default=False)
+    truncated_at_page = models.PositiveIntegerField(null=True, blank=True)
+    chunk_index_sha256 = models.CharField(max_length=64, blank=True, default='')
+    chunk_count = models.PositiveIntegerField(default=0)
+    chunking_version = models.CharField(max_length=32, blank=True, default='')
     error_code = models.CharField(max_length=64, blank=True, default='')
     error_message = models.CharField(max_length=500, blank=True, default='')
     validated_at = models.DateTimeField(null=True, blank=True)

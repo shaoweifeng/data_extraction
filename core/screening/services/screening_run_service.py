@@ -257,6 +257,20 @@ def persist_result_batch(rows: list[ScreeningResult], provider_results: list[dic
             key: int(previous_usage.get(key, 0) or 0) + int(current_usage.get(key, 0) or 0)
             for key in ('prompt', 'completion', 'total')
         }
+        merged_model_usage = {}
+        for source in (
+            previous_usage.get('model_usage') or {},
+            current_usage.get('model_usage') or {},
+        ):
+            for model_id, model_stats in source.items():
+                target = merged_model_usage.setdefault(model_id, {
+                    'prompt_tokens': 0, 'completion_tokens': 0,
+                    'total_tokens': 0, 'cached_prompt_tokens': 0, 'calls': 0,
+                })
+                for key in target:
+                    target[key] += int(model_stats.get(key, 0) or 0)
+        if merged_model_usage:
+            row.token_usage['model_usage'] = merged_model_usage
         total_tokens = Decimal(str(row.token_usage.get('total', 0) or 0))
         row.points_consumed = total_tokens / ratio if ratio > 0 else Decimal('0')
         row.finished_at = now

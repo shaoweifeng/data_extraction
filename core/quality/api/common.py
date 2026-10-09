@@ -103,10 +103,14 @@ def _serialize_ref(ref: QAReference) -> dict:
             'extraction_status': asset.extraction_status,
             'size_bytes': asset.size_bytes,
             'page_count': asset.page_count,
+            'extracted_page_count': asset.extracted_page_count,
+            'extraction_truncated': asset.extraction_truncated,
+            'truncated_at_page': asset.truncated_at_page,
             'error_code': asset.error_code,
             'error_message': asset.error_message,
         },
         'quality_method': ref.quality_method,
+        'quality_method_variant': ref.quality_method_variant,
         'eval_mode':      ref.eval_mode,
         'selected_models':ref.selected_models,
         'ai_eval_status': ref.ai_eval_status,
@@ -146,7 +150,21 @@ _DOMAIN_NAME_MAP = {
     'applicability':      '适用性',
 }
 
-def _serialize_signal(item: QASignalItem) -> dict:
+def _public_model_result(result: dict, *, include_audit: bool) -> dict:
+    public_fields = {
+        'model_id', 'model_name', 'judgment', 'reason', 'evidence', 'evidence_page',
+        'evidence_chunk_id', 'evidence_page_start', 'evidence_page_end',
+        'evidence_section', 'validation_status',
+    }
+    audit_fields = {
+        'evidence_sha256', 'prompt_version', 'retrieval_version',
+        'method_config_version', 'evidence_snapshot_sha256', 'validation_errors',
+    }
+    allowed = public_fields | (audit_fields if include_audit else set())
+    return {key: value for key, value in result.items() if key in allowed}
+
+
+def _serialize_signal(item: QASignalItem, *, include_audit=False) -> dict:
     return {
         'id':               item.id,
         'qa_ref_id':        item.qa_ref_id,
@@ -164,7 +182,11 @@ def _serialize_signal(item: QASignalItem) -> dict:
         'ai_evidence':      item.ai_evidence,
         'ai_evidence_page': item.ai_evidence_page,
         # N 模型原始结果列表
-        'model_results':    item.model_results or [],
+        'model_results':    [
+            _public_model_result(result, include_audit=include_audit)
+            for result in (item.model_results or [])
+            if isinstance(result, dict)
+        ],
         # 向后兼容双模型字段
         'model1_id':        item.model1_id,
         'model1_judgment':  item.model1_judgment,

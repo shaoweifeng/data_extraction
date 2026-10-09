@@ -295,3 +295,87 @@ class QaChartDataGoldenTests(TestCase):
                             abs(marker_transform[1, 1]),
                         )
                     plt.close(fig)
+
+    def test_traffic_light_truncates_long_custom_labels_by_display_width(self):
+        import unicodedata
+
+        from core.quality.renderers.matplotlib_charts import (
+            _MAX_STUDY_LABEL_WIDTH,
+            _get_study_label,
+        )
+
+        label = _get_study_label(
+            {'ref_id': 7, 'title': 'Fallback'},
+            {'7': '这是一个特别长的中文文献标题 mixed with a very long English title'},
+        )
+
+        display_width = sum(
+            2 if unicodedata.east_asian_width(char) in {'W', 'F'} else 1
+            for char in label
+        )
+        self.assertLessEqual(display_width, _MAX_STUDY_LABEL_WIDTH)
+        self.assertTrue(label.endswith('…'))
+
+    def test_traffic_light_prefers_title_over_unreliable_author_metadata(self):
+        from core.quality.renderers.matplotlib_charts import _get_study_label
+
+        row = {
+            'ref_id': 7,
+            'title': '正常的文献标题',
+            'first_author': 'CNKI',
+            'year': None,
+        }
+
+        self.assertEqual(
+            _get_study_label(row, {'7': row['title']}),
+            '正常的文献标题',
+        )
+
+    def test_rendered_traffic_light_keeps_marker_rows_apart_with_long_labels(self):
+        import matplotlib.pyplot as plt
+
+        from core.quality.renderers.matplotlib_charts import (
+            _CIRCLE_MARKER_SIZE,
+            render_traffic_light,
+        )
+
+        traffic = [{
+            'ref_id': 1,
+            'title': 'A study title',
+            'bias_risk': {'d1': 'high', 'd2': 'low', 'd3': 'unclear'},
+            'applicability': {},
+        }]
+        domains = [
+            {'key': 'd1', 'name': '领域一'},
+            {'key': 'd2', 'name': '领域二'},
+            {'key': 'd3', 'name': '领域三'},
+        ]
+        captured = {}
+
+        def inspect_figure(fig):
+            fig.canvas.draw()
+            axis = fig.axes[0]
+            first = axis.transData.transform((0, 0))[1]
+            second = axis.transData.transform((0, 1))[1]
+            captured['row_spacing_px'] = abs(second - first)
+            captured['marker_diameter_px'] = (
+                _CIRCLE_MARKER_SIZE ** 0.5 * fig.dpi / 72
+            )
+            plt.close(fig)
+            return 'image'
+
+        with (
+            patch('core.quality.renderers.matplotlib_charts._init_cjk_font'),
+            patch('core.quality.renderers.matplotlib_charts._fig_to_b64', side_effect=inspect_figure),
+        ):
+            result = render_traffic_light(
+                traffic,
+                domains,
+                [],
+                'Method',
+                study_labels={'1': '非常长的文献名称' * 20},
+                orientation='horizontal',
+            )
+
+        self.assertEqual(result, 'image')
+        self.assertGreater(captured['row_spacing_px'], captured['marker_diameter_px'] * 1.15)

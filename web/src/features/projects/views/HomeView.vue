@@ -154,7 +154,7 @@ async function handleSelectProject(p) {
   screening.reset()
   taskStore.reset()
   await project.selectProject(p)
-  router.push(`/workspace/${p.id}`)
+  router.push({ name: 'Workspace', params: { projectId: p.id }, query: { stage: 'SCREEN_1' } })
 }
 
 async function handleDeleteProject(projectId) {
@@ -175,7 +175,7 @@ async function handleCreate() {
     showModal.value = false
     newProject.value = { name: '', description: '' }
     await project.selectProject(created)
-    router.push(`/workspace/${created.id}`)
+    router.push({ name: 'Workspace', params: { projectId: created.id }, query: { stage: 'SCREEN_1' } })
   } catch (e) {
     createError.value = e.response?.data?.error || '创建失败'
   } finally {

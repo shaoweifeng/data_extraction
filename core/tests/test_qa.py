@@ -48,11 +48,11 @@ class TestQualityMethodsConfig(TestCase):
 
     def test_rob2_no_signal_items(self):
         """ROB2 AI 暂不支持，信号问题为空"""
-        from core.quality.domain.methods import get_method_config, AI_SUPPORTED_METHODS
+        from core.quality.domain.methods import get_method_config, ai_supported_method_keys
         cfg = get_method_config('ROB2')
         self.assertFalse(cfg['ai_supported'])
         self.assertEqual(cfg['signal_items'], [])
-        self.assertNotIn('ROB2', AI_SUPPORTED_METHODS)
+        self.assertNotIn('ROB2', ai_supported_method_keys())
 
     def test_invalid_method_raises(self):
         """无效方法键应抛出异常（ValueError 或 KeyError）"""
@@ -223,6 +223,14 @@ class TestQAApiHelpers(TestCase):
         self.assertTrue(data['ok'])
         self.assertIsInstance(data['data'], list)
         self.assertEqual(len(data['data']), 5)
+        nos = next(item for item in data['data'] if item['key'] == 'NOS')
+        self.assertEqual(
+            {variant['key'] for variant in nos['variants']},
+            {'cohort', 'case_control'},
+        )
+        rob2 = next(item for item in data['data'] if item['key'] == 'ROB2')
+        self.assertFalse(rob2['ai_supported'])
+        self.assertTrue(rob2['ai_unavailable_reason'])
 
 
 class TestQAEvaluationStartService(TestCase):
@@ -258,6 +266,48 @@ class TestQAEvaluationStartService(TestCase):
         self.assertEqual(qa_ref.ai_eval_status, 'running')
         self.assertEqual(qa_ref.eval_mode, 'multi')
         self.assertEqual(qa_ref.selected_models, model_ids)
+
+    def test_start_passes_partial_failed_reference_as_domain_resume(self):
+        from core.models import Project, QAReference, QASignalItem
+        from core.quality.services.evaluation_service import start_evaluation
+
+        user = User.objects.create_user('qa-resume-user')
+        project = Project.objects.create(name='QA resume project', owner=user)
+        qa_ref = QAReference.objects.create(
+            project=project,
+            title='Partially evaluated study',
+            quality_method='QUADAS2',
+            ai_eval_status='failed',
+        )
+        QASignalItem.objects.create(
+            qa_ref=qa_ref,
+            quality_method='QUADAS2',
+            domain='patient_selection',
+            result_type='bias_risk',
+            signal_key='ps_consecutive',
+            signal_question='Was a consecutive sample enrolled?',
+            options=['是', '否', '不清楚'],
+        )
+        queued_task = MagicMock(id=92)
+
+        with patch(
+            'core.quality.services.evaluation_service.AIQuotaService.preflight',
+            return_value=10,
+        ), patch(
+            'core.scheduler.TaskScheduler.start_step',
+            return_value=queued_task,
+        ) as start_step, patch(
+            'core.quality.services.evaluation_service.log_task_start',
+        ):
+            start_evaluation(project, user, [qa_ref.id], ['deepseek-v4-pro'])
+
+        start_step.assert_called_once_with(
+            'qa_eval',
+            user.id,
+            ref_ids=[qa_ref.id],
+            model_ids=['deepseek-v4-pro'],
+            resume_ref_ids=[qa_ref.id],
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────

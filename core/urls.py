@@ -22,8 +22,8 @@ from .quality.api.reference_views import (
 )
 from .quality.api.evaluation_views import eval_start, eval_progress
 from .quality.api.review_views import (
-    domain_results, project_batch_confirm, signal_batch_confirm,
-    signal_item_confirm, signal_items_list,
+    domain_results, evaluation_audit, project_batch_confirm, signal_batch_confirm,
+    signal_evidence_context, signal_item_confirm, signal_items_list,
 )
 from .quality.api.chart_views import chart_generate, chart_preview, chart_info, chart_settings_get, chart_settings_save
 from .quality.api.export_views import export_excel, export_status
@@ -119,8 +119,10 @@ urlpatterns = [
     # 信号问题
     path('qa/signal-items/',                   signal_items_list,     name='qa_signal_items_list'),
     path('qa/signal-items/<int:item_id>/confirm/', signal_item_confirm, name='qa_signal_item_confirm'),
+    path('qa/signal-items/<int:item_id>/evidence-context/', signal_evidence_context, name='qa_signal_evidence_context'),
     path('qa/signal-items/batch-confirm/',     signal_batch_confirm,  name='qa_signal_batch_confirm'),
     path('qa/review/batch-confirm/',           project_batch_confirm, name='qa_project_batch_confirm'),
+    path('qa/eval/audit/',                     evaluation_audit,      name='qa_evaluation_audit'),
     # 领域结果
     path('qa/domain-results/',                 domain_results,        name='qa_domain_results'),
     # 图表

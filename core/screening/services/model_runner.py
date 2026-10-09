@@ -105,7 +105,24 @@ class ScreeningModelRunner:
                     'prompt': sum(r['tokens'].get('prompt', 0) for r in model_results),
                     'completion': sum(r['tokens'].get('completion', 0) for r in model_results),
                     'total': sum(r['tokens'].get('total', 0) for r in model_results),
+                    'model_usage': {},
                 }
+                for model_result in model_results:
+                    model_id = model_result.get('model_id')
+                    if not model_id:
+                        continue
+                    tokens = model_result.get('tokens') or {}
+                    target = total_token_usage['model_usage'].setdefault(model_id, {
+                        'prompt_tokens': 0, 'completion_tokens': 0,
+                        'total_tokens': 0, 'cached_prompt_tokens': 0, 'calls': 0,
+                    })
+                    target['prompt_tokens'] += int(tokens.get('prompt', 0) or 0)
+                    target['completion_tokens'] += int(tokens.get('completion', 0) or 0)
+                    target['total_tokens'] += int(tokens.get('total', 0) or 0)
+                    target['cached_prompt_tokens'] += int(
+                        tokens.get('cached_prompt_tokens', 0) or 0
+                    )
+                    target['calls'] += 1
 
                 # 主模型（单模型时第一个就是它；多模型取 consensus 一致的第一个，否则第一个）
                 primary = model_results[0] if model_results else {}

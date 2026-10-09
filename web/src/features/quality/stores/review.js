@@ -13,6 +13,7 @@ export function createReviewCapability(refs) {
   const signalItems = ref([])
   const domainResults = ref([])
   const signalLoading = ref(false)
+  const evaluationAudit = ref(null)
 
   function syncRefStatus(qaRefId) {
     const status = reviewStatus(signalItems.value)
@@ -36,6 +37,17 @@ export function createReviewCapability(refs) {
     const response = await qualityApi.fetchDomainResults(qaRefId)
     domainResults.value = response.data.data || []
     return domainResults.value
+  }
+
+  async function fetchEvidenceContext(itemId, chunkId, modelId = '') {
+    const response = await qualityApi.fetchEvidenceContext(itemId, chunkId, modelId)
+    return response.data.data
+  }
+
+  async function fetchEvaluationAudit(qaRefId) {
+    const response = await qualityApi.fetchEvaluationAudit(qaRefId)
+    evaluationAudit.value = response.data.data
+    return evaluationAudit.value
   }
 
   async function selectRef(refItem) {
@@ -67,6 +79,8 @@ export function createReviewCapability(refs) {
       project_id: projectId,
       confirm_mode: confirmMode,
     })
+    const refsResponse = await qualityApi.fetchRefs(projectId)
+    refs.value = refsResponse.data.data || []
     return response.data.data
   }
 
@@ -75,7 +89,12 @@ export function createReviewCapability(refs) {
     signalItems.value = []
     domainResults.value = []
     signalLoading.value = false
+    evaluationAudit.value = null
   }
 
-  return { currentRef, signalItems, domainResults, signalLoading, selectRef, fetchSignalItems, fetchDomainResults, confirmSignalItem, batchConfirm, batchConfirmProject, resetReview }
+  return {
+    currentRef, signalItems, domainResults, signalLoading, evaluationAudit,
+    selectRef, fetchSignalItems, fetchDomainResults, fetchEvidenceContext,
+    fetchEvaluationAudit, confirmSignalItem, batchConfirm, batchConfirmProject, resetReview,
+  }
 }

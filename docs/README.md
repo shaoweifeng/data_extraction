@@ -11,6 +11,7 @@
 | [openapi.json](./openapi.json) | 机器可读 API 基线 | API 契约变化时 |
 | [frontend-integration-test-plan.md](./frontend-integration-test-plan.md) | 部署后的完整前端验收用例 | 功能模块或主流程变化时 |
 | [performance-todo.md](./performance-todo.md) | 尚未完成的性能改造 | 完成基准测试或性能任务后 |
+| [quality-fulltext-evaluation-plan.md](./quality-fulltext-evaluation-plan.md) | 长全文质量评价、证据检索与方法扩展实施计划 | 质量评价全文链路或方法接入方式变化时 |
 
 ## 部署与商业化
 

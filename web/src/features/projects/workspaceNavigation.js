@@ -17,7 +17,9 @@ export const QUALITY_STEPS = [
   { index: 6, key: 'export', label: '导出报告' },
 ]
 
-export function inferQualityMaxStep(refs = []) {
+export function inferQualityMaxStep(refs = [], stageSteps = []) {
+  const exportStep = stageSteps.find(item => item.step_key === 'qa_export')
+  if (['completed', 'skipped'].includes(exportStep?.status)) return 6
   if (!refs.length) return 1
   let max = 2
   if (refs.some(item => item.quality_method)) max = 3

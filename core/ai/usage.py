@@ -19,8 +19,9 @@ class TokenUsageAccumulator:
         self.completion_tokens = 0
         self.total_tokens = 0
         self.ref_count = 0
+        self.model_usage = {}
 
-    def add(self, usage: Optional[Dict]) -> None:
+    def add(self, usage: Optional[Dict], model_id: str | None = None) -> None:
         if not usage:
             return
         self.prompt_tokens += int(usage.get('prompt', usage.get('prompt_tokens', 0)) or 0)
@@ -30,13 +31,42 @@ class TokenUsageAccumulator:
         self.total_tokens += int(usage.get('total', usage.get('total_tokens', 0)) or 0)
         self.ref_count += 1
 
+        nested_usage = usage.get('model_usage') or {}
+        if model_id:
+            nested_usage = {model_id: usage}
+        for nested_model_id, model_stats in nested_usage.items():
+            if not isinstance(model_stats, dict):
+                continue
+            target = self.model_usage.setdefault(nested_model_id, {
+                'prompt_tokens': 0,
+                'completion_tokens': 0,
+                'total_tokens': 0,
+                'cached_prompt_tokens': 0,
+                'calls': 0,
+            })
+            prompt = int(model_stats.get('prompt_tokens', model_stats.get('prompt', 0)) or 0)
+            completion = int(
+                model_stats.get('completion_tokens', model_stats.get('completion', 0)) or 0
+            )
+            total = int(model_stats.get('total_tokens', model_stats.get('total', 0)) or 0)
+            target['prompt_tokens'] += prompt
+            target['completion_tokens'] += completion
+            target['total_tokens'] += total or prompt + completion
+            target['cached_prompt_tokens'] += int(
+                model_stats.get('cached_prompt_tokens', 0) or 0
+            )
+            target['calls'] += int(model_stats.get('calls', 1) or 1)
+
     def as_dict(self) -> Dict[str, int]:
-        return {
+        result = {
             'prompt_tokens': self.prompt_tokens,
             'completion_tokens': self.completion_tokens,
             'total_tokens': self.total_tokens,
             'ref_count': self.ref_count,
         }
+        if self.model_usage:
+            result['model_usage'] = self.model_usage
+        return result
 
 
 @dataclass(frozen=True)
@@ -66,6 +96,18 @@ class AIUsageSettlementService:
             'credits_actual': credits,
             'credits_estimate': credits,
             'credit_token_ratio': ratio,
+        })
+
+        from core.ai.pricing import calculate_shadow_pricing
+        shadow = calculate_shadow_pricing(stats.get('model_usage'))
+        stats.update({
+            'pricing_version': shadow['pricing_version'],
+            'shadow_credits': shadow['shadow_credits'],
+            'estimated_cost_cny': (
+                str(shadow['estimated_cost_cny'])
+                if shadow['estimated_cost_cny'] is not None else None
+            ),
+            'pricing_unknown_models': shadow['unknown_models'],
         })
 
         model_name = ', '.join(context.model_ids) or 'unknown'
@@ -103,6 +145,10 @@ class AIUsageSettlementService:
             'total_tokens': total_tokens,
             'credits_consumed': credits,
             'ref_count': stats.get('ref_count', 0),
+            'usage_breakdown': stats.get('model_usage', {}),
+            'pricing_version': shadow['pricing_version'],
+            'shadow_credits': shadow['shadow_credits'],
+            'estimated_cost_cny': shadow['estimated_cost_cny'],
         }
         if transaction_record is not None:
             usage_log, _ = TokenUsageLog.objects.update_or_create(

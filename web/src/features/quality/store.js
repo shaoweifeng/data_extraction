@@ -63,11 +63,14 @@ export const useQAStore = defineStore('qa', () => {
     return updated
   }
 
-  async function batchSetMethod(refIds, qualityMethod) {
-    const response = await qualityApi.batchSetMethod(refIds, qualityMethod)
+  async function batchSetMethod(refIds, qualityMethod, qualityMethodVariant = '') {
+    const response = await qualityApi.batchSetMethod(refIds, qualityMethod, qualityMethodVariant)
     for (const id of refIds) {
       const target = refs.value.find(item => item.id === id)
-      if (target) target.quality_method = qualityMethod
+      if (target) {
+        target.quality_method = qualityMethod
+        target.quality_method_variant = qualityMethodVariant
+      }
     }
     return response.data.data
   }

@@ -266,12 +266,24 @@ def ref_update(request, ref_id):
     if error:
         return error
 
-    updatable = ['quality_method', 'eval_mode', 'selected_models', 'fulltext_status', 'title', 'first_author', 'year', 'journal']
+    if 'quality_method_variant' in body and 'quality_method' not in body:
+        from core.quality.domain.methods import get_method_config
+        try:
+            get_method_config(ref.quality_method, body['quality_method_variant'] or None)
+        except ValueError as exc:
+            return _json_err({'quality_method_variant': str(exc)})
+
+    updatable = ['quality_method', 'quality_method_variant', 'eval_mode', 'selected_models', 'fulltext_status', 'title', 'first_author', 'year', 'journal']
     changed = False
     for field in updatable:
         if field in body:
             setattr(ref, field, body[field])
             changed = True
+
+    if 'quality_method' in body and 'quality_method_variant' not in body:
+        method = body['quality_method']
+        ref.quality_method_variant = 'cohort' if method == 'NOS' else ''
+        changed = True
 
     # 绑定全文
     if 'fulltext_file_id' in body:
@@ -299,6 +311,7 @@ def ref_batch_method(request):
 
     ref_ids = list(dict.fromkeys(body['ref_ids']))
     quality_method = body['quality_method']
+    quality_method_variant = body['quality_method_variant'] or ('cohort' if quality_method == 'NOS' else '')
     refs = _visible_qa_refs(request).filter(pk__in=ref_ids)
     if refs.count() != len(ref_ids):
         return _json_err('部分文献不存在或无权访问', 404)
@@ -308,7 +321,7 @@ def ref_batch_method(request):
     first_ref = refs.select_related('project').first()
     from core.quality.services.reference_service import assign_quality_method
 
-    updated = assign_quality_method(refs, quality_method)
+    updated = assign_quality_method(refs, quality_method, quality_method_variant)
 
     # ActivityLog
     from core.models import ActivityLog
@@ -317,7 +330,11 @@ def ref_batch_method(request):
             ActivityLog.objects.create(
                 project=first_ref.project,
                 operation_type='qa_set_method',
-                operation_detail={'method': quality_method, 'count': updated},
+                operation_detail={
+                    'method': quality_method,
+                    'method_variant': quality_method_variant,
+                    'count': updated,
+                },
                 created_by=request.user,
             )
     return _json_ok({'updated': updated})

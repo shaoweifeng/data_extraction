@@ -10,6 +10,7 @@ class CoreConfig(AppConfig):
         import core.models_billing  # noqa: F401
         from core.screening.services.import_limits import validate_import_settings
         from core.quality.services.fulltext import validate_fulltext_settings
+        from core.quality.domain import methods as quality_methods  # noqa: F401
 
         validate_import_settings()
         validate_fulltext_settings()

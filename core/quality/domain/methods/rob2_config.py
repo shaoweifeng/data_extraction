@@ -10,7 +10,11 @@ def get_config() -> dict:
         'key':          'ROB2',
         'name':         'RoB 2',
         'description':  '适用于随机对照试验（RCT）的偏倚风险评价工具（Sterne et al., 2019）',
+        'config_version': '0.1',
         'ai_supported': False,  # 暂不支持AI评价，前端显示提示
+        'ai_unavailable_reason': '尚未配置完整的 RoB 2 信号问题和算法规则',
+        'evaluation_strategy': 'domain_batches',
+        'aggregation_policy': 'quadas2_v1',
         'domains': [
             {'key': 'randomization',   'name': '随机化过程',     'name_en': 'Randomization Process',            'has_bias_risk': True, 'has_applicability': False, 'order': 1},
             {'key': 'deviations',      'name': '偏离预期干预',   'name_en': 'Deviations from Intended Interventions', 'has_bias_risk': True, 'has_applicability': False, 'order': 2},

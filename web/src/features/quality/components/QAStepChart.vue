@@ -138,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useQAStore } from '@/features/quality/store'
 import { useProjectStore } from '@/features/projects/store'
 import QATrafficLight    from './QATrafficLight.vue'
@@ -175,19 +175,6 @@ function _flushSave() {
     { ...studyLabels.value }
   )
 }
-
-// 当 chartData 刷新时，用默认值初始化（不覆盖用户已修改的）
-watch(() => qa.chartData, (d) => {
-  if (!d || !Array.isArray(d.traffic_light)) return
-  const merged = { ...studyLabels.value }
-  d.traffic_light.forEach(row => {
-    const id = String(row.ref_id)
-    if (!(id in merged)) {
-      merged[id] = row.title || `Ref ${row.ref_id}`
-    }
-  })
-  studyLabels.value = merged
-})
 
 // 监听 studyLabels 变化自动触发 debounce 保存
 watch(studyLabels, () => scheduleSaveLabels(), { deep: true })
@@ -318,7 +305,7 @@ onMounted(async () => {
   if (qa.methods.length) {
     chartMethod.value = qa.methods.find(m => m.ai_supported)?.key || 'QUADAS2'
   }
-  // 先拉 DB 里的自定义标签 → 再 preview（watch(chartData) 看到有值就不会覆盖）
+  // 只加载用户实际编辑过的自定义标签；默认标题不写入图表设置。
   if (project.currentProject) {
     const saved = await qa.fetchChartSettings(project.currentProject.id, chartMethod.value)
     studyLabels.value = { ...saved }

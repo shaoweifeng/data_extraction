@@ -322,7 +322,7 @@ const customSelectedIds = ref([])
 
 // 手动选择模式可选文献（AI 可评价文献）
 const customPickerRefs = computed(() =>
-  qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method))
+  qa.refs.filter(r => r.quality_method && aiSupportedMethods.value.has(r.quality_method))
 )
 
 // 切换全选/全不选
@@ -404,15 +404,17 @@ const selectedModelNames = computed(() =>
 
 // ── 统计 ──────────────────────────────────────────────────────────────────────
 
-const AI_SUPPORTED = new Set(['QUADAS2', 'NOS'])
+const aiSupportedMethods = computed(() => new Set(
+  qa.methods.filter(method => method.ai_supported).map(method => method.key)
+))
 
 const totalCount       = computed(() => qa.refs.length)
-const aiSupportedCount = computed(() => qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method)).length)
+const aiSupportedCount = computed(() => qa.refs.filter(r => r.quality_method && aiSupportedMethods.value.has(r.quality_method)).length)
 const noMethodCount    = computed(() => qa.refs.filter(r => !r.quality_method).length)
 const noFultextCount   = computed(() => qa.refs.filter(r => r.fulltext_status !== 'available').length)
 const failedCount      = computed(() => {
   const fs = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
-  return qa.refs.filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && fs.includes(r.ai_eval_status)).length
+  return qa.refs.filter(r => r.quality_method && aiSupportedMethods.value.has(r.quality_method) && fs.includes(r.ai_eval_status)).length
 })
 const estimatedCredits = computed(() => {
   let count
@@ -469,7 +471,7 @@ async function doStartEval() {
     if (reevalScope.value === 'failed') {
       const fs = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
       refIds = qa.refs
-        .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method) && fs.includes(r.ai_eval_status))
+        .filter(r => r.quality_method && aiSupportedMethods.value.has(r.quality_method) && fs.includes(r.ai_eval_status))
         .map(r => r.id)
       if (!refIds.length) { alert('没有需要重评的文献'); return }
     } else if (reevalScope.value === 'custom') {
@@ -477,7 +479,7 @@ async function doStartEval() {
       if (!refIds.length) { alert('请至少选择一篇文献'); return }
     } else {
       refIds = qa.refs
-        .filter(r => r.quality_method && AI_SUPPORTED.has(r.quality_method))
+        .filter(r => r.quality_method && aiSupportedMethods.value.has(r.quality_method))
         .map(r => r.id)
     }
     await qa.startEval(project.currentProject.id, refIds, null, selectedModels.value)
@@ -504,7 +506,7 @@ function handleCancel() {
 // ── 生命周期 ──────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  await loadModels()
+  await Promise.all([loadModels(), qa.fetchMethods()])
   if (project.currentProject) {
     await qa.fetchEvalProgress(project.currentProject.id)
     // fetchEvalProgress 完成后手动同步一次 token_stats（避免 watch immediate 时数据未就绪）

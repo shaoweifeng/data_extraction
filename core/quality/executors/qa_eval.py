@@ -19,6 +19,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Optional
 
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from core.ai import (
     AIQuotaService,
@@ -239,21 +240,33 @@ class QAEvalHandler:
         eval_mode: str,            # 兼容旧参数，实际由 model_ids 长度决定
         model_ids: List[str],      # 选择的模型 ID 列表（1 个=单模型，2+ 个=多模型校验）
         user_id: Optional[int] = None,
+        resume_ref_ids: Optional[List[int]] = None,
+        resume_all_incomplete: bool = False,
+        stop_checker=None,
     ):
         self.project_id = project_id
         self.ref_ids    = ref_ids
         self.model_ids  = model_ids if model_ids else ['deepseek-v4-pro']
         self.user_id    = user_id
+        self.resume_ref_ids = set(resume_ref_ids or [])
+        self.resume_all_incomplete = resume_all_incomplete
+        self.stop_checker = stop_checker
+        self.was_stopped = False
+        self.last_ref_token_stats = None
+        self._rollout_user = None
+        if user_id:
+            from django.contrib.auth import get_user_model
+            self._rollout_user = get_user_model().objects.filter(pk=user_id).first()
         # eval_mode 由模型数量决定，不依赖前端传入
         self.eval_mode  = 'single' if len(self.model_ids) <= 1 else 'multi'
 
     def execute(self):
         from core.models import QAReference
-        from core.quality.domain.methods import get_method_config, AI_SUPPORTED_METHODS
+        from core.quality.domain.methods import ai_supported_method_keys
 
         refs = list(QAReference.objects.filter(
             pk__in=self.ref_ids,
-            quality_method__in=AI_SUPPORTED_METHODS,
+            quality_method__in=ai_supported_method_keys(),
         ).select_related('fulltext_file', 'fulltext_asset'))
 
         logger.info(f'[QA] 开始评价 project_id={self.project_id}，共 {len(refs)} 篇，模式={self.eval_mode}，模型={self.model_ids}')
@@ -284,6 +297,7 @@ class QAEvalHandler:
                 ref_token = self._eval_one_ref(ref)
                 token_stats.add(ref_token)
             except Exception as e:
+                token_stats.add(self.last_ref_token_stats)
                 logger.exception(f'[QA] 文献 {ref.id} 评价失败: {e}')
                 QAReference.objects.filter(pk=ref.id).update(ai_eval_status='failed')
 
@@ -308,6 +322,10 @@ class QAEvalHandler:
                 project=project,
                 task=getattr(self, 'task_obj', None),
                 model_ids=self.model_ids,
+                idempotency_key=(
+                    f'qa-eval-task:{self.task_obj.id}'
+                    if getattr(self, 'task_obj', None) else None
+                ),
             )
             stats = AIUsageSettlementService.settle(context, token_stats)
             if stats.get('total_tokens'):
@@ -323,6 +341,215 @@ class QAEvalHandler:
         return {}
 
     def _eval_one_ref(self, ref) -> Optional[dict]:
+        self.was_stopped = False
+        self.last_ref_token_stats = None
+        asset = getattr(ref, 'fulltext_asset', None)
+        from core.quality.services.evidence_rollout import evidence_retrieval_enabled_for
+        if (
+            evidence_retrieval_enabled_for(self._rollout_user)
+            and asset
+            and asset.status == 'ready'
+            and asset.extraction_status == 'completed'
+        ):
+            return self._eval_one_ref_with_evidence(ref)
+        return self._eval_one_ref_legacy(ref)
+
+    def _eval_one_ref_with_evidence(self, ref) -> Optional[dict]:
+        """Evaluate one reference by domain using verified, shared evidence packages."""
+        from core.models import QADomainResult, QAReference, QASignalItem
+        from core.quality.domain.methods import get_method_config
+        from core.quality.services.evidence_evaluation import (
+            PROMPT_VERSION,
+            build_evidence_prompt,
+            call_model_for_evidence,
+        )
+        from core.quality.services.evidence_retrieval import build_reference_evidence_packages
+        from core.services.ai_models_config import get_model_config
+
+        packages = build_reference_evidence_packages(ref)
+        resume_domains = self.resume_all_incomplete or ref.id in self.resume_ref_ids
+        if not resume_domains:
+            QASignalItem.objects.filter(qa_ref=ref).delete()
+            QADomainResult.objects.filter(qa_ref=ref).delete()
+
+        model_name_map = {}
+        for model_id in self.model_ids:
+            config = get_model_config(model_id)
+            model_name_map[model_id] = config['name'] if config else model_id
+
+        stats = {'prompt': 0, 'completion': 0, 'total': 0}
+        # Keep the live accumulator reachable if persistence fails after a paid API call.
+        self.last_ref_token_stats = stats
+
+        def add_usage(usage, model_id):
+            if not usage:
+                return
+            stats['prompt'] += int(usage.get('prompt', usage.get('prompt_tokens', 0)) or 0)
+            stats['completion'] += int(
+                usage.get('completion', usage.get('completion_tokens', 0)) or 0
+            )
+            stats['total'] += int(usage.get('total', usage.get('total_tokens', 0)) or 0)
+            model_stats = stats.setdefault('model_usage', {}).setdefault(model_id, {
+                'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0,
+                'cached_prompt_tokens': 0, 'calls': 0,
+            })
+            prompt = int(usage.get('prompt', usage.get('prompt_tokens', 0)) or 0)
+            completion = int(usage.get('completion', usage.get('completion_tokens', 0)) or 0)
+            model_stats['prompt_tokens'] += prompt
+            model_stats['completion_tokens'] += completion
+            model_stats['total_tokens'] += int(
+                usage.get('total', usage.get('total_tokens', 0)) or prompt + completion
+            )
+            model_stats['cached_prompt_tokens'] += int(usage.get('cached_prompt_tokens', 0) or 0)
+            model_stats['calls'] += 1
+
+        failed_domains = []
+        completed_domains = []
+        for package in packages:
+            domain = package['domain']
+            expected_keys = {item['signal_key'] for item in package['signal_items']}
+            if resume_domains:
+                existing_rows = list(QASignalItem.objects.filter(
+                    qa_ref=ref,
+                    domain=domain,
+                ).values('signal_key', 'model_results'))
+                completed_keys = {
+                    row['signal_key']
+                    for row in existing_rows
+                    if any(
+                        result.get('prompt_version') == PROMPT_VERSION
+                        and result.get('retrieval_version') == package.get('retrieval_version', '')
+                        and result.get('method_config_version') == package.get('method_config_version', '')
+                        and result.get('evidence_snapshot_sha256') == package.get('snapshot_sha256', '')
+                        for result in (row['model_results'] or [])
+                        if isinstance(result, dict)
+                    )
+                }
+                if expected_keys and expected_keys.issubset(completed_keys):
+                    completed_domains.append(domain)
+                    continue
+
+            if self.stop_checker and self.stop_checker():
+                self.was_stopped = True
+                QAReference.objects.filter(pk=ref.id).update(ai_eval_status='pending')
+                logger.info('[QA] 文献 %s 在领域 %s 前收到停止信号', ref.id, domain)
+                return stats if stats['total'] else None
+
+            prompt = build_evidence_prompt(package, get_method_config(
+                ref.quality_method, ref.quality_method_variant or None,
+            )['name'])
+            all_model_raw = {}
+            all_model_errors = {}
+            if len(self.model_ids) == 1:
+                model_id = self.model_ids[0]
+                results, usage, errors = call_model_for_evidence(model_id, prompt, package)
+                all_model_raw[model_id] = results
+                all_model_errors[model_id] = errors
+                add_usage(usage, model_id)
+            else:
+                max_workers = min(len(self.model_ids), 4)
+                with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                    futures = {
+                        pool.submit(call_model_for_evidence, model_id, prompt, package): model_id
+                        for model_id in self.model_ids
+                    }
+                    for future in as_completed(futures):
+                        model_id = futures[future]
+                        try:
+                            results, usage, errors = future.result()
+                        except Exception as exc:
+                            logger.warning('[QA] 模型 %s 领域 %s 调用异常: %s', model_id, domain, exc)
+                            results, usage, errors = [], None, [type(exc).__name__]
+                        all_model_raw[model_id] = results
+                        all_model_errors[model_id] = errors
+                        add_usage(usage, model_id)
+
+            raw_maps = {
+                model_id: {item['signal_key']: item for item in results}
+                for model_id, results in all_model_raw.items()
+            }
+            domain_complete = all(
+                any(signal_key in raw_maps.get(model_id, {}) for model_id in self.model_ids)
+                for signal_key in expected_keys
+            )
+            if not domain_complete:
+                failed_domains.append(domain)
+                logger.warning('[QA] 文献 %s 领域 %s 返回不完整，保留待重试', ref.id, domain)
+                continue
+
+            rows = []
+            for signal in package['signal_items']:
+                signal_key = signal['signal_key']
+                model_results = []
+                for model_id in self.model_ids:
+                    result = raw_maps.get(model_id, {}).get(signal_key, {})
+                    model_results.append({
+                        'model_id': model_id,
+                        'model_name': model_name_map.get(model_id, model_id),
+                        'judgment': result.get('judgment', ''),
+                        'reason': result.get('reason', ''),
+                        'evidence': result.get('evidence', ''),
+                        'evidence_page': result.get('evidence_page', ''),
+                        'evidence_chunk_id': result.get('evidence_chunk_id', ''),
+                        'evidence_page_start': result.get('evidence_page_start'),
+                        'evidence_page_end': result.get('evidence_page_end'),
+                        'evidence_section': result.get('evidence_section', ''),
+                        'evidence_sha256': result.get('evidence_sha256', ''),
+                        'prompt_version': result.get('prompt_version', ''),
+                        'retrieval_version': package.get('retrieval_version', ''),
+                        'method_config_version': package.get('method_config_version', ''),
+                        'evidence_snapshot_sha256': package.get('snapshot_sha256', ''),
+                        'validation_status': result.get('validation_status', 'failed'),
+                        'validation_errors': all_model_errors.get(model_id, []),
+                    })
+                consistency, recommendation = _determine_consistency(model_results)
+                first_valid = next(
+                    (item for item in model_results if item['judgment'] == recommendation),
+                    next((item for item in model_results if item['judgment']), {}),
+                )
+                model1 = model_results[0] if model_results else {}
+                model2 = model_results[1] if len(model_results) > 1 else {}
+                rows.append(QASignalItem(
+                    qa_ref=ref,
+                    quality_method=ref.quality_method,
+                    domain=signal['domain'],
+                    result_type=signal['result_type'],
+                    signal_key=signal_key,
+                    signal_question=signal['signal_question'],
+                    signal_description=signal['signal_description'],
+                    options=signal['options'],
+                    ai_judgment=recommendation,
+                    ai_reason=first_valid.get('reason', ''),
+                    ai_evidence=first_valid.get('evidence', ''),
+                    ai_evidence_page=first_valid.get('evidence_page', ''),
+                    model_results=model_results,
+                    model1_id=model1.get('model_id', ''),
+                    model1_judgment=model1.get('judgment', ''),
+                    model1_reason=model1.get('reason', ''),
+                    model2_id=model2.get('model_id', ''),
+                    model2_judgment=model2.get('judgment', ''),
+                    model2_reason=model2.get('reason', ''),
+                    consistency=consistency,
+                    system_recommendation=recommendation,
+                    pre_selected=recommendation,
+                ))
+            with transaction.atomic():
+                QASignalItem.objects.filter(qa_ref=ref, domain=domain).delete()
+                QASignalItem.objects.bulk_create(rows)
+            completed_domains.append(domain)
+
+        final_status = 'completed' if len(completed_domains) == len(packages) and not failed_domains else 'failed'
+        QAReference.objects.filter(pk=ref.id).update(ai_eval_status=final_status)
+        from core.quality.services.domain_results import recalculate_domain_results
+        ref.refresh_from_db()
+        recalculate_domain_results(ref)
+        logger.info(
+            '[QA] 文献 %s 证据评价完成 domains=%s failed=%s tokens=%s',
+            ref.id, completed_domains, failed_domains, stats['total'],
+        )
+        return stats if stats['total'] else None
+
+    def _eval_one_ref_legacy(self, ref) -> Optional[dict]:
         """
         评价单篇文献，返回本篇累计的 token_usage dict，或 None（跳过/失败）。
         """
@@ -331,7 +558,7 @@ class QAEvalHandler:
 
         method_key = ref.quality_method
         try:
-            method_cfg = get_method_config(method_key)
+            method_cfg = get_method_config(method_key, ref.quality_method_variant or None)
         except Exception:
             QAReference.objects.filter(pk=ref.id).update(ai_eval_status='skipped_no_method')
             return None
@@ -366,12 +593,24 @@ class QAEvalHandler:
 
         # 本篇 token 累计
         ref_token_stats = {'prompt': 0, 'completion': 0, 'total': 0}
+        self.last_ref_token_stats = ref_token_stats
 
-        def _add_token(usage):
+        def _add_token(usage, model_id):
             if usage:
                 ref_token_stats['prompt']     += usage.get('prompt', 0)
                 ref_token_stats['completion'] += usage.get('completion', 0)
                 ref_token_stats['total']      += usage.get('total', 0)
+                model_stats = ref_token_stats.setdefault('model_usage', {}).setdefault(model_id, {
+                    'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0,
+                    'cached_prompt_tokens': 0, 'calls': 0,
+                })
+                model_stats['prompt_tokens'] += int(usage.get('prompt', 0) or 0)
+                model_stats['completion_tokens'] += int(usage.get('completion', 0) or 0)
+                model_stats['total_tokens'] += int(usage.get('total', 0) or 0)
+                model_stats['cached_prompt_tokens'] += int(
+                    usage.get('cached_prompt_tokens', 0) or 0
+                )
+                model_stats['calls'] += 1
 
         # 并发调用所有模型（最多同时 4 个，避免占用过多连接）
         all_model_raw = {}   # model_id -> List[dict]
@@ -379,7 +618,7 @@ class QAEvalHandler:
             results, usage = _call_model_for_ref(
                 self.model_ids[0], prompt, signal_items_cfg)
             all_model_raw[self.model_ids[0]] = results
-            _add_token(usage)
+            _add_token(usage, self.model_ids[0])
         else:
             max_workers = min(len(self.model_ids), 4)
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
@@ -392,7 +631,7 @@ class QAEvalHandler:
                     try:
                         results, usage = fut.result()
                         all_model_raw[mid] = results
-                        _add_token(usage)
+                        _add_token(usage, mid)
                     except Exception as e:
                         logger.warning(f'[QA] 模型 {mid} 并发调用异常: {e}')
                         all_model_raw[mid] = []
@@ -436,7 +675,10 @@ class QAEvalHandler:
             consistency, recommendation = _determine_consistency(model_results)
 
             # 汇总字段：取推荐值；理由/证据取第一个有效模型的
-            first_valid = next((m for m in model_results if m.get('judgment')), {})
+            first_valid = next(
+                (item for item in model_results if item.get('judgment') == recommendation),
+                next((item for item in model_results if item.get('judgment')), {}),
+            )
             ai_judgment  = recommendation
             ai_reason    = first_valid.get('reason', '')
             ai_evidence  = first_valid.get('evidence', '')
@@ -544,7 +786,7 @@ class QAEvalHandler:
             doc = fitz.open(file_path)
             pages_text = []
             char_count = 0
-            for page in doc[:settings.QA_PDF_TEXT_MAX_PAGES]:
+            for page in doc:
                 t = page.get_text()
                 if t and t.strip():
                     remaining = settings.QA_PDF_TEXT_MAX_CHARS - char_count
@@ -568,7 +810,7 @@ class QAEvalHandler:
                 reader = PyPDF2.PdfReader(f)
                 pages_text = []
                 char_count = 0
-                for page in reader.pages[:settings.QA_PDF_TEXT_MAX_PAGES]:
+                for page in reader.pages:
                     t = page.extract_text()
                     if t:
                         remaining = settings.QA_PDF_TEXT_MAX_CHARS - char_count
@@ -608,7 +850,7 @@ class QAEvalStepHandler(BaseStepHandler):
 
     def execute(self) -> bool:
         from core.models import QAReference
-        from core.quality.domain.methods import AI_SUPPORTED_METHODS
+        from core.quality.domain.methods import ai_supported_method_keys
 
         cfg        = self.executor.config or {}
         ref_ids    = cfg.get('ref_ids', [])
@@ -621,7 +863,7 @@ class QAEvalStepHandler(BaseStepHandler):
         # 确定待评价文献
         qs = QAReference.objects.filter(
             project_id=self.project_id,
-            quality_method__in=AI_SUPPORTED_METHODS,
+            quality_method__in=ai_supported_method_keys(),
         ).exclude(quality_method='')
         if ref_ids:
             qs = qs.filter(pk__in=ref_ids)
@@ -660,6 +902,9 @@ class QAEvalStepHandler(BaseStepHandler):
             eval_mode=eval_mode,
             model_ids=model_ids,
             user_id=user_id,
+            resume_ref_ids=cfg.get('resume_ref_ids', []),
+            resume_all_incomplete=bool(cfg.get('resume_incomplete_only')),
+            stop_checker=self.executor.check_stop_signal,
         )
         # 透传 task_obj，供结算时写入 TokenUsageLog
         engine.task_obj = self.task_obj
@@ -671,7 +916,7 @@ class QAEvalStepHandler(BaseStepHandler):
         completed = 0
         refs = list(QAReference.objects.filter(
             pk__in=ref_ids_to_eval,
-            quality_method__in=AI_SUPPORTED_METHODS,
+            quality_method__in=ai_supported_method_keys(),
         ).select_related('fulltext_file', 'fulltext_asset'))
 
         for ref_index, ref in enumerate(refs):
@@ -686,7 +931,16 @@ class QAEvalStepHandler(BaseStepHandler):
             try:
                 ref_token = engine._eval_one_ref(ref)
                 token_stats.add(ref_token)
+                if engine.was_stopped:
+                    remaining_ids = [item.id for item in refs[ref_index + 1:]]
+                    QAReference.objects.filter(
+                        pk__in=remaining_ids,
+                        ai_eval_status='running',
+                    ).update(ai_eval_status='pending')
+                    self.logger.warning('[QA] 在领域边界收到停止信号，中断评价')
+                    break
             except Exception as e:
+                token_stats.add(engine.last_ref_token_stats)
                 logger.exception(f'[QA] 文献 {ref.id} 评价失败: {e}')
                 QAReference.objects.filter(pk=ref.id).update(ai_eval_status='failed')
             completed += 1

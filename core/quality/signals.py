@@ -8,7 +8,7 @@ from core.models import QAFulltextAsset
 
 @receiver(post_delete, sender=QAFulltextAsset)
 def delete_fulltext_files(sender, instance, **kwargs):
-    for field_name in ('raw_file', 'extracted_text_file'):
+    for field_name in ('raw_file', 'extracted_text_file', 'chunk_index_file'):
         field_file = getattr(instance, field_name, None)
         if field_file and field_file.name:
             field_file.storage.delete(field_file.name)

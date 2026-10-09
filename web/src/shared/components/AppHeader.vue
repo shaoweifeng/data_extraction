@@ -11,13 +11,31 @@
       </div>
     </div>
 
-    <!-- 中间：面包屑（工作区时显示项目名和当前阶段） -->
-    <div class="header-breadcrumb" v-if="project.currentProject">
+    <!-- 中间：面包屑（工作台 → 项目 → 当前阶段） -->
+    <nav v-if="project.currentProject" class="header-breadcrumb" aria-label="当前位置">
+      <button class="bc-link bc-workbench" type="button" @click="goWorkbench">
+        <i class="fas fa-table-columns"></i>
+        <span>工作台</span>
+      </button>
       <span class="bc-sep"><i class="fas fa-chevron-right"></i></span>
-      <span class="bc-item">{{ project.currentProject.name }}</span>
+      <button
+        class="bc-link bc-item"
+        type="button"
+        :title="`返回项目「${project.currentProject.name}」首页`"
+        @click="goProject"
+      >
+        {{ project.currentProject.name }}
+      </button>
       <span class="bc-sep"><i class="fas fa-chevron-right"></i></span>
-      <span class="bc-stage">{{ currentStageName }}</span>
-    </div>
+      <button
+        class="bc-link bc-stage"
+        type="button"
+        :title="`前往${currentStageName}`"
+        @click="goCurrentStage"
+      >
+        {{ currentStageName }}
+      </button>
+    </nav>
 
     <!-- 右侧：余额 + 用户信息 + 退出 -->
     <div class="header-right">
@@ -121,6 +139,32 @@ function goHome() {
   router.push('/')
 }
 
+function goWorkbench() {
+  project.currentProject = null
+  project.currentStage = 'SCREEN_1'
+  window.dispatchEvent(new CustomEvent('app:project-left'))
+  router.push('/projects')
+}
+
+function navigateToStage(stage) {
+  if (!project.currentProject) return
+  project.currentStage = stage
+  window.dispatchEvent(new CustomEvent('app:stage-changed', { detail: { stage } }))
+  router.push({
+    name: 'Workspace',
+    params: { projectId: project.currentProject.id },
+    query: { stage },
+  })
+}
+
+function goProject() {
+  navigateToStage('SCREEN_1')
+}
+
+function goCurrentStage() {
+  navigateToStage(project.currentStage)
+}
+
 function onUserClick() {
   router.push('/profile')
 }
@@ -177,6 +221,17 @@ async function handleLogout() {
   overflow: hidden;
 }
 .bc-sep { color: #d1d5db; font-size: 0.65rem; }
+.bc-link {
+  appearance: none; border: 0; background: transparent; margin: 0;
+  padding: 4px 6px; border-radius: 6px; cursor: pointer;
+  transition: color .15s, background .15s;
+}
+.bc-link:hover, .bc-link:focus-visible { background: #f1f5f9; color: #4f46e5; outline: none; }
+.bc-workbench {
+  display: inline-flex; align-items: center; gap: 5px;
+  color: #64748b; font-size: .8rem; white-space: nowrap;
+}
+.bc-workbench i { color: #94a3b8; font-size: .7rem; }
 .bc-item {
   font-size: 0.8rem; color: #64748b;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;

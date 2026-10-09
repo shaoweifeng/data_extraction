@@ -142,6 +142,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQAStore } from '@/features/quality/store'
 import { useProjectStore } from '@/features/projects/store'
+import * as workflowApi from '@/shared/api/workflow'
 
 const qa      = useQAStore()
 const project = useProjectStore()
@@ -167,6 +168,7 @@ onUnmounted(() => qa.cancelChartGeneration())
 async function doExportImage() {
   if (!project.currentProject) return
   exportingImage.value = true
+  let downloaded = false
   try {
     const refIds = includeUnconfirmed.value
       ? qa.refs.map(r => r.id)
@@ -193,17 +195,22 @@ async function doExportImage() {
     if (qa.chartData?.traffic_light_image) {
       _dl(qa.chartData.traffic_light_image, `qa_traffic_light_${method}.png`)
       addHistory('image', `qa_traffic_light_${method}.png`, null)
+      downloaded = true
     }
     if (qa.chartData?.proportion_image) {
       setTimeout(() => _dl(qa.chartData.proportion_image, `qa_proportion_${method}.png`), 200)
       addHistory('image', `qa_proportion_${method}.png`, null)
+      downloaded = true
     }
-    if (!qa.chartData?.traffic_light_image && !qa.chartData?.proportion_image) {
+    if (!downloaded) {
       alert('图片生成失败，请重试')
+      return
     }
+    await markExportCompleted()
   } catch (e) {
     if (e?.name === 'AbortError') return
-    alert('导出失败：' + (e?.response?.data?.error || e?.message || e))
+    const message = e?.response?.data?.error || e?.message || e
+    alert(downloaded ? `图片已下载，但完成状态保存失败：${message}` : `导出失败：${message}`)
   } finally {
     exportingImage.value = false
   }
@@ -217,16 +224,33 @@ function _dl(dataUrl, filename) {
 }
 
 async function doExportExcel() {
+  if (!project.currentProject) return
   exportingExcel.value = true
+  let downloaded = false
   try {
     await qa.exportExcel(project.currentProject.id, exportMethod.value, includeUnconfirmed.value)
+    downloaded = true
     const name = `qa_export_${exportMethod.value}_${new Date().toISOString().slice(0,10)}.xlsx`
     addHistory('excel', name, null)
+    await markExportCompleted()
   } catch (e) {
-    alert(e?.response?.data?.error || 'Excel 导出失败')
+    const message = e?.response?.data?.error || e?.message || '未知错误'
+    alert(downloaded ? `Excel 已下载，但完成状态保存失败：${message}` : `Excel 导出失败：${message}`)
   } finally {
     exportingExcel.value = false
   }
+}
+
+async function markExportCompleted() {
+  const qualityStage = project.stagesData.find(stage => stage.stage_key === 'QUALITY')
+  const exportStep = qualityStage?.steps?.find(step => step.step_key === 'qa_export')
+  if (!exportStep) throw new Error('未找到导出报告步骤，请刷新页面后重试')
+
+  if (!['completed', 'skipped'].includes(exportStep.status)) {
+    const response = await workflowApi.completeStep(exportStep.id)
+    project.replaceStep(response.data)
+  }
+  qa.maxReachedStep = Math.max(qa.maxReachedStep, 6)
 }
 
 function addHistory(type, name, url) {

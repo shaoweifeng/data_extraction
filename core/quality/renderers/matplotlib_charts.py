@@ -5,6 +5,7 @@
 
 import base64
 import io
+import unicodedata
 
 import matplotlib
 matplotlib.use('Agg')
@@ -74,6 +75,7 @@ _COLORS  = {
 _SYMBOLS = {"High": "×", "Unclear": "?", "Low": "+", "Pending": "…", "NA": "–"}
 _SYMBOL_FONT_SIZE = 13
 _CIRCLE_MARKER_SIZE = 1350
+_MAX_STUDY_LABEL_WIDTH = 36
 # 内部 key → 原脚本 key 的映射
 _JUDGMENT_MAP = {
     "low":     "Low",
@@ -130,16 +132,44 @@ def _draw_judgment_marker(ax, x, y, value):
     )
 
 
+def _truncate_display_width(value, max_width=_MAX_STUDY_LABEL_WIDTH) -> str:
+    """按实际显示宽度截断标签，避免中英文长标题挤压图表主体。"""
+    text = ' '.join(str(value or '').split())
+    width = sum(2 if unicodedata.east_asian_width(char) in {'W', 'F'} else 1 for char in text)
+    if width <= max_width:
+        return text
+
+    result = []
+    used = 0
+    target = max(1, max_width - 1)  # 为省略号预留一个显示单元
+    for char in text:
+        char_width = 2 if unicodedata.east_asian_width(char) in {'W', 'F'} else 1
+        if used + char_width > target:
+            break
+        result.append(char)
+        used += char_width
+    return ''.join(result).rstrip() + '…'
+
+
 def _get_study_label(row: dict, study_labels: dict) -> str:
     ref_id = row['ref_id']
+    original_title = ' '.join(str(row.get('title') or '').split())
     if study_labels and str(ref_id) in study_labels:
-        return study_labels[str(ref_id)][:60]
+        custom_label = ' '.join(str(study_labels[str(ref_id)] or '').split())
+        # 旧版前端曾把未经编辑的完整标题自动保存为“自定义标签”。
+        # 两者完全一致时视为默认值，继续走标题的统一截断逻辑。
+        if custom_label and custom_label != original_title:
+            return _truncate_display_width(custom_label)
+    if original_title:
+        return _truncate_display_width(original_title)
+
+    # 仅在标题确实缺失时才用作者信息兜底；部分来源文件会把
+    # CNKI、Microsoft Administrator 等来源/软件名误放进作者字段。
     author = row.get('first_author') or ''
     year   = row.get('year') or ''
     if author:
-        return f"{author} {year}".strip()
-    title = row.get('title') or f"Ref {ref_id}"
-    return title[:40]
+        return _truncate_display_width(f"{author} {year}".strip())
+    return f"Ref {ref_id}"
 
 
 # ── 以下三个函数原封不动来自 quadas2_matplotlib_tryrun_20260830_025320.py ─────
@@ -316,24 +346,24 @@ def render_traffic_light(traffic_light_data, bias_domains, applic_domains,
     n_rows      = len(rows)
     n_studies   = len(studies)
 
-    # 根据方向计算图幅
+    # 根据方向计算图幅。矩阵每个单元都保留固定的物理尺寸下限，
+    # 标签再长也只能扩展图片边界，不能反过来压缩矩阵造成圆圈重叠。
     if orientation == 'vertical':
         # 纵向：研究=行，领域=列；宽度由领域数决定，高度由研究数决定
-        data_w = n_rows + 1.5      # xlim 范围
-        data_h = n_studies + 1.5   # ylim 范围
         fig_w  = max(7, n_rows * 1.2 + 2)
         fig_h  = max(5, n_studies * 0.85 + 2)
     else:
         # 横向：研究=列，领域=行
-        data_w = n_studies + 4.0
-        data_h = n_rows + 2.1
         fig_w  = max(8, n_studies * 0.85 + 5)
-        fig_h  = fig_w * data_h / data_w
+        fig_h  = max(6, n_rows * 0.85 + 2.5)
 
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
     _draw_traffic_light_matrix(ax, studies, rows, n_bias_rows, orientation=orientation, i18n=i18n)
 
-    plt.tight_layout(pad=0.5)
+    # 不使用 tight_layout：它会为了容纳旋转后的长文献名压缩 axes，
+    # 而 scatter marker 的物理尺寸不变，最终导致相邻行的圆圈重叠。
+    # savefig(bbox_inches='tight') 会在保存时安全扩展标签所在的图片边界。
+    fig.subplots_adjust(left=0.06, right=0.94, bottom=0.08, top=0.94)
     return _fig_to_b64(fig)
 
 

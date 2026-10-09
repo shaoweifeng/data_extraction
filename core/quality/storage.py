@@ -21,6 +21,11 @@ def qa_extracted_text_upload_path(instance, filename):
     return f'project_{instance.qa_reference.project_id}/text/{uuid4().hex}.txt'
 
 
+def qa_chunk_index_upload_path(instance, filename):
+    """Store derived chunk indexes beside private extracted text."""
+    return f'project_{instance.qa_reference.project_id}/chunks/{uuid4().hex}.jsonl'
+
+
 @deconstructible
 class PrivateQAStorage(FileSystemStorage):
     """Private local default that can be replaced by an object-storage backend."""

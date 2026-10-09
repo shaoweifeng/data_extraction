@@ -333,6 +333,24 @@ class CreditTransactionAdmin(admin.ModelAdmin):
     raw_id_fields = ['account', 'task', 'created_by']
 
 
+@admin.register(TokenUsageLog)
+class TokenUsageLogAdmin(admin.ModelAdmin):
+    list_display = [
+        'task', 'project', 'user', 'model', 'total_tokens', 'credits_consumed',
+        'shadow_credits', 'estimated_cost_cny', 'pricing_version', 'created_at',
+    ]
+    list_filter = ['pricing_version', 'created_at']
+    search_fields = ['user__username', 'project__name', 'model']
+    readonly_fields = [field.name for field in TokenUsageLog._meta.fields]
+    raw_id_fields = ['task', 'project', 'user', 'transaction']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(RechargeCode)
 class RechargeCodeAdmin(admin.ModelAdmin):
     list_display  = [
@@ -472,15 +490,20 @@ class ManualReviewAdmin(admin.ModelAdmin):
 class QAFulltextAssetAdmin(admin.ModelAdmin):
     list_display = [
         'id', 'project', 'qa_reference', 'status', 'scan_status',
-        'extraction_status', 'page_count', 'size_bytes', 'created_at',
+        'extraction_status', 'page_count', 'extracted_page_count',
+        'extraction_truncated', 'chunk_count', 'size_bytes', 'created_at',
     ]
-    list_filter = ['status', 'scan_status', 'extraction_status', 'created_at']
+    list_filter = [
+        'status', 'scan_status', 'extraction_status', 'extraction_truncated', 'created_at',
+    ]
     search_fields = ['original_filename', 'sha256', 'qa_reference__title', 'project__name']
     readonly_fields = [
-        'project', 'qa_reference', 'raw_file', 'extracted_text_file',
+        'project', 'qa_reference', 'raw_file', 'extracted_text_file', 'chunk_index_file',
         'original_filename', 'sha256', 'size_bytes', 'mime_type', 'page_count',
         'scan_status', 'extraction_status', 'extracted_text_sha256',
-        'extracted_text_chars', 'error_code', 'error_message', 'validated_at',
+        'extracted_text_chars', 'extraction_version', 'extracted_page_count',
+        'extraction_truncated', 'truncated_at_page', 'chunk_index_sha256',
+        'chunk_count', 'chunking_version', 'error_code', 'error_message', 'validated_at',
         'scanned_at', 'extracted_at', 'created_at', 'updated_at',
     ]
     raw_id_fields = ['project', 'qa_reference']

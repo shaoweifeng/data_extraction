@@ -30,6 +30,7 @@
       <template v-if="!isMultiMode">
         <span class="ai-label">AI 判断</span>
         <span :class="['judgment-chip', judgmentColor(item.ai_judgment)]">{{ item.ai_judgment || '—' }}</span>
+        <span v-if="primaryModelResult?.validation_status === 'no_evidence_unclear'" class="no-evidence-chip">证据不足</span>
         <template v-if="item.ai_evidence">
           <span class="summary-sep">·</span>
           <span class="ev-label">原文依据</span>
@@ -42,6 +43,7 @@
         <span v-for="mr in effectiveModelResults" :key="mr.model_id" class="model-summary-item">
           <span class="model-label-sm">{{ mr.model_name || mr.model_id }}</span>
           <span :class="['judgment-chip', judgmentColor(mr.judgment)]">{{ mr.judgment || '—' }}</span>
+          <span v-if="mr.validation_status === 'no_evidence_unclear'" class="no-evidence-chip">证据不足</span>
         </span>
         <template v-if="item.ai_evidence">
           <span class="summary-sep">·</span>
@@ -58,7 +60,18 @@
         <p class="detail-reason" v-if="item.ai_reason">{{ item.ai_reason }}</p>
         <div v-if="item.ai_evidence" class="detail-evidence">
           <span class="ev-label">原文</span>
-          <span class="ev-text">{{ item.ai_evidence }}</span>
+          <div class="evidence-body">
+            <div class="evidence-meta" v-if="primaryModelResult?.evidence_page">
+              <span>{{ primaryModelResult.evidence_page }}</span>
+              <span v-if="primaryModelResult.evidence_section">{{ sectionLabel(primaryModelResult.evidence_section) }}</span>
+            </div>
+            <span class="ev-text">{{ item.ai_evidence }}</span>
+            <button
+              v-if="primaryModelResult?.evidence_chunk_id"
+              class="btn-context"
+              @click.stop="loadContext(primaryModelResult)"
+            ><i class="fas fa-book-open"></i> 查看相邻上下文</button>
+          </div>
         </div>
       </div>
       <!-- 多模型详情 -->
@@ -68,6 +81,21 @@
             <span class="model-label">{{ mr.model_name || mr.model_id }}</span>
             <span :class="['judgment-chip', judgmentColor(mr.judgment)]">{{ mr.judgment || '—' }}</span>
             <p class="detail-reason" v-if="mr.reason">{{ mr.reason }}</p>
+            <div v-if="mr.evidence" class="model-evidence">
+              <div class="evidence-meta">
+                <span>{{ mr.evidence_page || '位置未知' }}</span>
+                <span v-if="mr.evidence_section">{{ sectionLabel(mr.evidence_section) }}</span>
+              </div>
+              <p>{{ mr.evidence }}</p>
+              <button
+                v-if="mr.evidence_chunk_id"
+                class="btn-context"
+                @click.stop="loadContext(mr)"
+              ><i class="fas fa-book-open"></i> 查看相邻上下文</button>
+              <div v-if="auth.isAdmin" class="model-audit">
+                {{ mr.prompt_version || 'legacy' }} · {{ mr.retrieval_version || '无检索版本' }}
+              </div>
+            </div>
           </div>
         </div>
         <div class="recommend-row" v-if="item.system_recommendation">
@@ -77,6 +105,25 @@
         <div v-if="item.ai_evidence" class="detail-evidence">
           <span class="ev-label">原文</span>
           <span class="ev-text">{{ item.ai_evidence }}</span>
+        </div>
+      </div>
+
+      <div v-if="contextLoading || contextData || contextError" class="context-panel">
+        <div class="context-head">
+          <strong>证据上下文</strong>
+          <button @click.stop="closeContext" aria-label="关闭上下文">×</button>
+        </div>
+        <div v-if="contextLoading" class="context-loading"><i class="fas fa-spinner fa-spin"></i> 加载中…</div>
+        <div v-else-if="contextError" class="context-error">{{ contextError }}</div>
+        <div v-else class="context-chunks">
+          <article v-for="chunk in contextData.chunks" :key="chunk.chunk_id" :class="{ cited: chunk.is_cited }">
+            <header>
+              {{ pageLabel(chunk) }} · {{ sectionLabel(chunk.section) }}
+              <span v-if="chunk.is_cited">当前引用</span>
+            </header>
+            <p>{{ chunk.text }}</p>
+            <small v-if="chunk.text_truncated">片段过长，已限长显示</small>
+          </article>
         </div>
       </div>
     </template>
@@ -114,6 +161,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useQAStore } from '@/features/quality/store'
+import { useAuthStore } from '@/features/account/store'
 
 const props = defineProps({
   item:  { type: Object, required: true },
@@ -121,9 +169,13 @@ const props = defineProps({
 })
 
 const qa = useQAStore()
+const auth = useAuthStore()
 const humanJudgment  = ref(props.item.human_judgment || props.item.pre_selected || '')
 const confirmLoading = ref(false)
 const detailExpanded = ref(false)  // AI 详情默认收起
+const contextLoading = ref(false)
+const contextData = ref(null)
+const contextError = ref('')
 
 const safeOptions = computed(() => {
   const o = props.item.options
@@ -156,6 +208,12 @@ const effectiveModelResults = computed(() => {
     results.push({ model_id: props.item.model2_id || 'Model 2', model_name: props.item.model2_id || 'Model 2', judgment: props.item.model2_judgment, reason: props.item.model2_reason })
   return results
 })
+
+const primaryModelResult = computed(() => (
+  effectiveModelResults.value.find(result => (
+    result.judgment === props.item.ai_judgment && result.evidence_chunk_id
+  )) || effectiveModelResults.value.find(result => result.evidence_chunk_id) || null
+))
 
 const consistencyClass = computed(() => {
   if (props.item.is_confirmed) return 'state-confirmed'
@@ -205,6 +263,42 @@ function judgmentColor(val) {
 }
 
 function selectJudgment(opt) { humanJudgment.value = opt }
+
+function sectionLabel(section) {
+  return {
+    title: '标题', abstract: '摘要', introduction: '引言', methods: '方法',
+    results: '结果', discussion: '讨论', references: '参考文献', unknown: '未识别章节',
+  }[section] || section || '未识别章节'
+}
+
+function pageLabel(chunk) {
+  return chunk.page_start === chunk.page_end
+    ? `第${chunk.page_start}页`
+    : `第${chunk.page_start}-${chunk.page_end}页`
+}
+
+async function loadContext(modelResult) {
+  contextLoading.value = true
+  contextError.value = ''
+  contextData.value = null
+  try {
+    contextData.value = await qa.fetchEvidenceContext(
+      props.item.id,
+      modelResult.evidence_chunk_id,
+      modelResult.model_id,
+    )
+  } catch (error) {
+    contextError.value = error?.response?.data?.error || '证据上下文暂时无法读取'
+  } finally {
+    contextLoading.value = false
+  }
+}
+
+function closeContext() {
+  contextData.value = null
+  contextError.value = ''
+  contextLoading.value = false
+}
 
 async function doConfirm() {
   if (!humanJudgment.value) return
@@ -280,6 +374,7 @@ async function doConfirm() {
 .model-summary-item { display: flex; align-items: center; gap: 4px; }
 .summary-sep { color: #cbd5e1; font-size: 0.7rem; }
 .ev-page-inline { font-size: 0.68rem; color: #64748b; background: #e2e8f0; padding: 1px 5px; border-radius: 3px; }
+.no-evidence-chip { font-size:.62rem; color:#92400e; background:#fef3c7; border-radius:4px; padding:1px 5px; }
 .btn-expand { display: none; } /* 已合并到卡片头部，保留空规则防止引用报错 */
 
 /* 展开后详情区 */
@@ -290,6 +385,11 @@ async function doConfirm() {
 .detail-reason { margin: 0; font-size: 0.72rem; color: #475569; line-height: 1.5; }
 .detail-evidence { display: flex; gap: 6px; align-items: flex-start; }
 .ev-text { font-size: 0.7rem; color: #475569; font-style: italic; line-height: 1.5; flex: 1; }
+.evidence-body { display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+.evidence-meta { display:flex; flex-wrap:wrap; gap:4px; }
+.evidence-meta span { font-size:.62rem; color:#475569; background:#e2e8f0; border-radius:999px; padding:1px 6px; }
+.btn-context { align-self:flex-start; border:1px solid #c7d2fe; background:#eef2ff; color:#4f46e5; border-radius:5px; padding:3px 7px; font-size:.65rem; cursor:pointer; }
+.btn-context:hover { background:#e0e7ff; }
 
 /* 多模型 */
 .multi-models-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -298,7 +398,23 @@ async function doConfirm() {
   display: flex; flex-direction: column; gap: 4px;
   background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px;
 }
+.model-evidence { border-top:1px dashed #e2e8f0; padding-top:5px; display:flex; flex-direction:column; gap:4px; }
+.model-evidence p { margin:0; font-size:.68rem; line-height:1.45; color:#475569; font-style:italic; }
+.model-audit { color:#94a3b8; font-size:.58rem; overflow-wrap:anywhere; }
 .recommend-row { display: flex; align-items: center; gap: 7px; padding-top: 6px; border-top: 1px dashed #e2e8f0; }
+
+.context-panel { background:#fff; border:1px solid #c7d2fe; border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:7px; }
+.context-head { display:flex; justify-content:space-between; align-items:center; font-size:.72rem; color:#3730a3; }
+.context-head button { border:0; background:transparent; color:#94a3b8; font-size:1rem; cursor:pointer; }
+.context-loading, .context-error { font-size:.7rem; color:#64748b; }
+.context-error { color:#b91c1c; }
+.context-chunks { display:flex; flex-direction:column; gap:6px; }
+.context-chunks article { background:#f8fafc; border-left:3px solid #cbd5e1; border-radius:5px; padding:6px 8px; }
+.context-chunks article.cited { background:#eef2ff; border-left-color:#6366f1; }
+.context-chunks header { font-size:.62rem; color:#64748b; display:flex; justify-content:space-between; gap:6px; }
+.context-chunks header span { color:#4f46e5; font-weight:600; }
+.context-chunks p { white-space:pre-wrap; margin:4px 0 0; font-size:.68rem; line-height:1.5; color:#334155; }
+.context-chunks small { color:#b45309; font-size:.6rem; }
 
 /* 判断颜色 */
 .judgment-chip { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }

@@ -102,6 +102,9 @@ def rebuild_from_screening(project, source_stage='SCREEN_1'):
 
 
 @transaction.atomic
-def assign_quality_method(refs, quality_method):
+def assign_quality_method(refs, quality_method, quality_method_variant=''):
     """为同一项目的一组 QA 文献设置评价方法。"""
-    return refs.update(quality_method=quality_method)
+    return refs.update(
+        quality_method=quality_method,
+        quality_method_variant=quality_method_variant,
+    )

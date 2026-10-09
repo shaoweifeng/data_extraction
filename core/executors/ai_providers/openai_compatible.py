@@ -188,10 +188,17 @@ class OpenAICompatibleProvider(BaseAIProvider):
                     content = msg.get("reasoning_content") or ""
                 # 采集 token 用量（OpenAI 兼容接口标准字段）
                 raw_usage = body.get("usage") or {}
+                prompt_details = raw_usage.get("prompt_tokens_details") or {}
                 token_usage = {
                     "prompt":     raw_usage.get("prompt_tokens", 0),
                     "completion": raw_usage.get("completion_tokens", 0),
                     "total":      raw_usage.get("total_tokens", 0),
+                    "cached_prompt_tokens": (
+                        prompt_details.get("cached_tokens")
+                        or raw_usage.get("cache_read_input_tokens")
+                        or raw_usage.get("cached_tokens")
+                        or 0
+                    ),
                 } if raw_usage else None
                 if not content.strip():
                     logger.warning("[DeepSeek] 模型返回内容为空（content 和 reasoning_content 均空）")

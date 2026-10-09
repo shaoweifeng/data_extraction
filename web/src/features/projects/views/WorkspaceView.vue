@@ -64,7 +64,10 @@
                     @click="jumpToQAStep(step.index)"
                   >
                     <span class="step-node-num">
-                      <i v-if="step.index < qa.maxReachedStep && qa.currentStep !== step.index" class="fas fa-check step-check-icon"></i>
+                      <i
+                        v-if="isQAStepCompleted(step) || (step.index < qa.maxReachedStep && qa.currentStep !== step.index)"
+                        class="fas fa-check step-check-icon"
+                      ></i>
                       <span v-else>{{ step.index }}</span>
                     </span>
                     <span class="step-node-label">{{ step.label }}</span>
@@ -152,6 +155,8 @@ const screening = useScreeningStore()
 const taskStore = useTaskStore()
 const qa = useQAStore()
 
+const VALID_STAGES = new Set(['SEARCH', 'SCREEN_1', 'SCREEN_2', 'QUALITY', 'EXTRACT', 'META'])
+
 const loading = ref(true)
 const sidebarCollapsed = ref(false)
 const qaSidebarCollapsed = ref(false)
@@ -161,6 +166,20 @@ const qaNextDisabled = computed(() => isQualityNextDisabled(qa.currentStep, qa.r
 const qaFooterTip = computed(() => qualityFooterTip(qa.currentStep, qa.refs))
 const screen1Steps = SCREENING_STEPS
 const qaSteps = QUALITY_STEPS
+const qaStepKeys = {
+  upload: 'qa_upload',
+  method: 'qa_method',
+  ai_eval: 'qa_eval',
+  review: 'qa_review',
+  chart: 'qa_chart',
+  export: 'qa_export',
+}
+
+function isQAStepCompleted(step) {
+  const qualityStage = project.stagesData.find(stage => stage.stage_key === 'QUALITY')
+  const persistedStep = qualityStage?.steps?.find(item => item.step_key === qaStepKeys[step.key])
+  return ['completed', 'skipped'].includes(persistedStep?.status)
+}
 
 function getQANodeClass(step) {
   if (qa.currentStep === step.index) return 'step-node-active'
@@ -211,6 +230,15 @@ async function initializeWorkspace(projectId) {
 watch(
   () => Number(route.params.projectId),
   projectId => initializeWorkspace(projectId),
+  { immediate: true },
+)
+
+watch(
+  () => route.query.stage,
+  stage => {
+    const normalized = String(stage || 'SCREEN_1').toUpperCase()
+    project.currentStage = VALID_STAGES.has(normalized) ? normalized : 'SCREEN_1'
+  },
   { immediate: true },
 )
 </script>

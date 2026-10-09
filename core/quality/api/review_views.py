@@ -36,7 +36,108 @@ def signal_items_list(request):
     elif request.GET.get('is_confirmed') == 'true':
         qs = qs.filter(is_confirmed=True)
 
-    return _json_ok([_serialize_signal(i) for i in qs])
+    from core.services.access_policy import ProjectAccessPolicy
+
+    include_audit = ProjectAccessPolicy.is_platform_admin(request.user)
+    return _json_ok([_serialize_signal(i, include_audit=include_audit) for i in qs])
+
+
+@login_required
+@require_http_methods(['GET'])
+def signal_evidence_context(request, item_id):
+    """Return only the cited chunk and one bounded neighbor on either side."""
+    item = _get_signal_item(request, item_id)
+    if not item:
+        return _json_err('无权访问该信号问题或信号问题不存在', 404)
+    chunk_id = str(request.GET.get('chunk_id') or '').strip()
+    if not chunk_id:
+        return _json_err('缺少 chunk_id')
+    model_id = str(request.GET.get('model_id') or '').strip()
+    from core.quality.services.evidence_context import get_signal_evidence_context
+    from core.quality.services.evidence_retrieval import EvidenceRetrievalError
+
+    try:
+        payload = get_signal_evidence_context(
+            item,
+            chunk_id=chunk_id,
+            model_id=model_id,
+        )
+    except EvidenceRetrievalError as exc:
+        return _json_err(str(exc), 404)
+    return _json_ok(payload)
+
+
+@login_required
+@require_http_methods(['GET'])
+def evaluation_audit(request):
+    """Admin-only extraction, evidence-version and latest project usage audit."""
+    from core.models_billing import TokenUsageLog
+    from core.services.access_policy import ProjectAccessPolicy
+
+    if not ProjectAccessPolicy.is_platform_admin(request.user):
+        return _json_err('仅管理员可以查看评价审计信息', 403)
+    qa_ref_id = request.GET.get('qa_ref_id')
+    if not qa_ref_id:
+        return _json_err('缺少 qa_ref_id')
+    ref = _get_qa_ref(request, qa_ref_id)
+    if not ref:
+        return _json_err('文献不存在', 404)
+    try:
+        asset = ref.fulltext_asset
+    except Exception:
+        asset = None
+    versions = set()
+    for results in ref.signal_items.values_list('model_results', flat=True):
+        for result in results or []:
+            if isinstance(result, dict):
+                versions.add(tuple(str(result.get(key) or '') for key in (
+                    'prompt_version', 'retrieval_version', 'method_config_version',
+                    'evidence_snapshot_sha256',
+                )))
+    usage = TokenUsageLog.objects.filter(
+        project=ref.project,
+        task__task_type='qa_eval',
+    ).order_by('-created_at').first()
+    return _json_ok({
+        'reference_id': ref.id,
+        'asset': None if not asset else {
+            'id': asset.id,
+            'status': asset.status,
+            'page_count': asset.page_count,
+            'extracted_page_count': asset.extracted_page_count,
+            'extracted_text_chars': asset.extracted_text_chars,
+            'extraction_truncated': asset.extraction_truncated,
+            'truncated_at_page': asset.truncated_at_page,
+            'extraction_version': asset.extraction_version,
+            'chunking_version': asset.chunking_version,
+            'chunk_count': asset.chunk_count,
+        },
+        'evidence_versions': [
+            {
+                'prompt_version': prompt,
+                'retrieval_version': retrieval,
+                'method_config_version': method,
+                'evidence_snapshot_sha256': snapshot,
+            }
+            for prompt, retrieval, method, snapshot in sorted(versions)
+        ],
+        'latest_project_usage': None if not usage else {
+            'task_id': usage.task_id,
+            'model': usage.model,
+            'prompt_tokens': usage.prompt_tokens,
+            'completion_tokens': usage.completion_tokens,
+            'total_tokens': usage.total_tokens,
+            'credits_consumed': usage.credits_consumed,
+            'usage_breakdown': usage.usage_breakdown,
+            'pricing_version': usage.pricing_version,
+            'shadow_credits': usage.shadow_credits,
+            'estimated_cost_cny': (
+                str(usage.estimated_cost_cny) if usage.estimated_cost_cny is not None else None
+            ),
+            'ref_count': usage.ref_count,
+            'recorded_at': usage.created_at.isoformat(),
+        },
+    })
 
 
 @login_required
@@ -72,7 +173,11 @@ def signal_item_confirm(request, item_id):
         },
         created_by=request.user,
     )
-    return _json_ok(_serialize_signal(item))
+    from core.services.access_policy import ProjectAccessPolicy
+    return _json_ok(_serialize_signal(
+        item,
+        include_audit=ProjectAccessPolicy.is_platform_admin(request.user),
+    ))
 
 
 @login_required

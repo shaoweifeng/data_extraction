@@ -129,6 +129,9 @@ const inputRef    = ref(null)
 
 // 外部 studyLabels 变化时同步
 watch(() => props.studyLabels, (val) => {
+  Object.keys(localLabels).forEach(key => {
+    if (!(key in val)) delete localLabels[key]
+  })
   Object.assign(localLabels, val)
 }, { deep: true })
 

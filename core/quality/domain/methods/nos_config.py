@@ -166,19 +166,70 @@ _SIGNAL_ITEMS_CASE_CONTROL = [
     },
 ]
 
+_RETRIEVAL = {
+    'cohort_repr_exposed': (['exposed cohort representative', 'community cohort', '暴露队列', '代表性'], ['participants', 'methods']),
+    'cohort_repr_unexposed': (['non-exposed cohort', 'same community', 'unexposed group', '非暴露队列', '同一社区'], ['participants', 'methods']),
+    'cohort_ascertainment': (['ascertainment of exposure', 'medical record', 'structured interview', '暴露确定', '病历记录'], ['methods', 'participants']),
+    'cohort_outcome_absent': (['outcome absent at start', 'baseline outcome', '研究开始', '结局尚未出现'], ['methods', 'participants']),
+    'cohort_compare': (['adjusted for', 'confounder', 'multivariable', '匹配', '混杂因素'], ['methods', 'results']),
+    'cohort_outcome_assess': (['assessment of outcome', 'blind assessment', 'record linkage', '结局评估', '盲法'], ['methods', 'results']),
+    'cohort_followup_length': (['follow-up duration', 'median follow-up', '随访时间', '随访期'], ['methods', 'results']),
+    'cohort_followup_complete': (['loss to follow-up', 'follow-up rate', 'attrition', '失访', '随访完整'], ['results', 'methods']),
+    'cc_case_def': (['case definition', 'independent validation', '病例定义', '独立验证'], ['participants', 'methods']),
+    'cc_repr': (['consecutive cases', 'representative cases', '连续病例', '病例代表性'], ['participants', 'methods']),
+    'cc_control_selection': (['selection of controls', 'community controls', 'hospital controls', '对照选取', '社区对照'], ['participants', 'methods']),
+    'cc_control_nonexposed': (['definition of controls', 'no history of disease', '对照定义', '无目标疾病'], ['participants', 'methods']),
+    'cc_compare': (['matched for', 'adjusted for', 'confounder', '匹配', '混杂因素'], ['methods', 'results']),
+    'cc_exposure_ascertain': (['ascertainment of exposure', 'blinded interview', 'medical record', '暴露确定', '盲法访谈'], ['methods', 'participants']),
+    'cc_nonresponse': (['non-response rate', 'response rate', 'nonrespondent', '无应答率', '应答率'], ['results', 'methods']),
+}
+
+
+def _with_retrieval(source_items):
+    items = []
+    for source in source_items:
+        item = dict(source)
+        queries, sections = _RETRIEVAL[item['signal_key']]
+        item['retrieval'] = {
+            'queries': list(queries),
+            'preferred_sections': list(sections),
+            'max_chunks': 5,
+        }
+        item['evidence_required'] = True
+        items.append(item)
+    return items
+
 
 def get_config() -> dict:
+    cohort_items = _with_retrieval(_SIGNAL_ITEMS_COHORT)
+    case_control_items = _with_retrieval(_SIGNAL_ITEMS_CASE_CONTROL)
     return {
         'key':          'NOS',
         'name':         'NOS',
         'description':  'Newcastle-Ottawa Scale，适用于队列研究和病例对照研究（Wells et al.）',
+        'config_version': '1.0',
         'ai_supported': True,
+        'evaluation_strategy': 'domain_batches',
+        'aggregation_policy': 'nos_v1',
+        'default_variant': 'cohort',
+        'variants': {
+            'cohort': {
+                'name': '队列研究',
+                'domains': _DOMAINS_COHORT,
+                'signal_items': cohort_items,
+            },
+            'case_control': {
+                'name': '病例对照研究',
+                'domains': _DOMAINS_CASE_CONTROL,
+                'signal_items': case_control_items,
+            },
+        },
         'domains':      _DOMAINS_COHORT,           # 默认使用队列研究领域
         'domains_cohort':       _DOMAINS_COHORT,
         'domains_case_control': _DOMAINS_CASE_CONTROL,
-        'signal_items': _SIGNAL_ITEMS_COHORT,      # 默认队列研究
-        'signal_items_cohort':       _SIGNAL_ITEMS_COHORT,
-        'signal_items_case_control': _SIGNAL_ITEMS_CASE_CONTROL,
+        'signal_items': cohort_items,      # 默认队列研究；兼容历史未记录变体的数据
+        'signal_items_cohort':       cohort_items,
+        'signal_items_case_control': case_control_items,
         'domain_judge_rules': {
             'bias_risk': {
                 'low':     '★ 评分 ≥ 7（满分9星），方法学质量较高',

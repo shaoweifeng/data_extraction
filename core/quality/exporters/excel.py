@@ -99,28 +99,58 @@ def export_qa_excel(project, quality_method, include_unconfirmed=False):
 
     # ── Sheet 3: 证据记录 ──────────────────────────────────
     ws3 = wb.create_sheet('证据记录')
-    ws3.append(['文献标题', '信号问题', 'AI判断', '判断理由', '证据原文', '证据位置', '人工修改前', '人工最终判断', '是否修改'])
+    ws3.append([
+        '文献标题', '信号问题', 'AI判断', '判断理由', '证据原文', '证据位置',
+        '证据块ID', '证据章节', '证据页起', '证据页止', '证据哈希',
+        '检索版本', 'Prompt版本', '方法配置版本', '证据快照哈希',
+        '人工修改前', '人工最终判断', '是否修改',
+    ])
     for ref in refs:
         for item in ref.signal_items.filter(ai_evidence__gt=''):
+            result = next((
+                value for value in (item.model_results or [])
+                if isinstance(value, dict)
+                and value.get('judgment') == item.ai_judgment
+                and value.get('evidence_chunk_id')
+            ), {})
             ws3.append([
                 ref.title, item.signal_question,
                 item.ai_judgment, item.ai_reason,
                 item.ai_evidence, item.ai_evidence_page,
+                result.get('evidence_chunk_id', ''), result.get('evidence_section', ''),
+                result.get('evidence_page_start'), result.get('evidence_page_end'),
+                result.get('evidence_sha256', ''), result.get('retrieval_version', ''),
+                result.get('prompt_version', ''), result.get('method_config_version', ''),
+                result.get('evidence_snapshot_sha256', ''),
                 item.original_ai_judgment, item.human_judgment,
                 '是' if item.is_modified else '否',
             ])
 
     # ── Sheet 4: 多模型校验记录 ────────────────────────────
     ws4 = wb.create_sheet('多模型校验记录')
-    ws4.append(['文献标题', '信号问题', '模型1 ID', '模型1判断', '模型1理由', '模型2 ID', '模型2判断', '模型2理由', '一致性', '系统推荐', '人工最终判断'])
+    ws4.append([
+        '文献标题', '信号问题', '模型ID', '模型名称', '模型判断', '模型理由',
+        '证据原文', '证据位置', '证据块ID', '证据章节', '校验状态',
+        '一致性', '系统推荐', '人工最终判断',
+    ])
     for ref in refs.filter(eval_mode__in=['multi', 'dual']):
         for item in ref.signal_items.exclude(consistency='single'):
-            ws4.append([
-                ref.title, item.signal_question,
-                item.model1_id, item.model1_judgment, item.model1_reason,
-                item.model2_id, item.model2_judgment, item.model2_reason,
-                item.consistency, item.system_recommendation, item.human_judgment,
-            ])
+            results = item.model_results or [
+                {'model_id': item.model1_id, 'judgment': item.model1_judgment, 'reason': item.model1_reason},
+                {'model_id': item.model2_id, 'judgment': item.model2_judgment, 'reason': item.model2_reason},
+            ]
+            for result in results:
+                if not isinstance(result, dict) or not result.get('model_id'):
+                    continue
+                ws4.append([
+                    ref.title, item.signal_question,
+                    result.get('model_id', ''), result.get('model_name', ''),
+                    result.get('judgment', ''), result.get('reason', ''),
+                    result.get('evidence', ''), result.get('evidence_page', ''),
+                    result.get('evidence_chunk_id', ''), result.get('evidence_section', ''),
+                    result.get('validation_status', ''),
+                    item.consistency, item.system_recommendation, item.human_judgment,
+                ])
 
     # 返回文件流
     buf = io.BytesIO()

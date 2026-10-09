@@ -123,6 +123,12 @@ class TokenUsageLog(models.Model):
     # 1 credit = CREDIT_TOKEN_RATIO tokens（settings 里配置，此处冗余存快照）
     credits_consumed = models.IntegerField(default=0, verbose_name="折算 credits")
     ref_count = models.IntegerField(default=1, verbose_name="本次处理文献篇数")
+    usage_breakdown = models.JSONField(default=dict, blank=True, verbose_name="分模型用量")
+    pricing_version = models.CharField(max_length=50, blank=True, default='', verbose_name="影子计费版本")
+    shadow_credits = models.IntegerField(null=True, blank=True, verbose_name="影子积分")
+    estimated_cost_cny = models.DecimalField(
+        max_digits=12, decimal_places=6, null=True, blank=True, verbose_name="估算成本（元）",
+    )
     # 阶段三接入计费后，这里记录对应的 CreditTransaction；阶段二为 null
     transaction = models.ForeignKey(
         CreditTransaction, null=True, blank=True,

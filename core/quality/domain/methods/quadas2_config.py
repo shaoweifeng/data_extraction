@@ -185,14 +185,49 @@ _DOMAIN_JUDGE_RULES = {
     },
 }
 
+_RETRIEVAL = {
+    'ps_consecutive': (['consecutive enrollment', 'random sample', '连续入组', '随机抽样'], ['methods', 'participants']),
+    'ps_avoid_cc': (['case-control design', 'two-gate design', '病例对照设计', '诊断准确性'], ['methods', 'participants']),
+    'ps_avoid_exclusion': (['exclusion criteria', 'excluded patients', '排除标准', '排除患者'], ['methods', 'participants', 'results']),
+    'ps_applicability': (['study population', 'eligibility criteria', 'target population', '研究对象', '纳入标准'], ['participants', 'methods']),
+    'it_blinded': (['index test blinded', 'without knowledge of reference standard', '待评价试验', '盲法'], ['methods']),
+    'it_threshold_preset': (['prespecified threshold', 'cut-off', 'cutoff', '预设阈值', '截断值'], ['methods', 'results']),
+    'it_applicability': (['index test procedure', 'test interpretation', '检测方法', '试验流程'], ['methods']),
+    'rs_classify_correctly': (['reference standard', 'gold standard', 'diagnostic criteria', '参考标准', '诊断标准'], ['methods']),
+    'rs_blinded': (['reference standard blinded', 'without knowledge of index test', '参考标准', '盲法'], ['methods']),
+    'rs_applicability': (['target condition', 'disease definition', '目标疾病', '疾病定义'], ['methods', 'participants']),
+    'ft_interval_appropriate': (['time interval', 'same day', 'within days', '时间间隔'], ['methods', 'results']),
+    'ft_all_received_rs': (['all patients received reference standard', 'verification', '所有患者', '参考标准'], ['methods', 'results']),
+    'ft_same_rs': (['same reference standard', 'differential verification', '相同参考标准', '差异验证'], ['methods', 'results']),
+    'ft_all_analyzed': (['flow diagram', 'excluded from analysis', 'loss to follow-up', '纳入分析', '失访'], ['results', 'methods']),
+}
+
+
+def _signal_items():
+    items = []
+    for source in _SIGNAL_ITEMS:
+        item = dict(source)
+        queries, sections = _RETRIEVAL[item['signal_key']]
+        item['retrieval'] = {
+            'queries': list(queries),
+            'preferred_sections': list(sections),
+            'max_chunks': 5,
+        }
+        item['evidence_required'] = True
+        items.append(item)
+    return items
+
 
 def get_config() -> dict:
     return {
         'key':          'QUADAS2',
         'name':         'QUADAS-2',
         'description':  '适用于诊断准确性研究的质量评价工具（Whiting et al., 2011）',
+        'config_version': '1.0',
         'ai_supported': True,
+        'evaluation_strategy': 'domain_batches',
+        'aggregation_policy': 'quadas2_v1',
         'domains':      _DOMAINS,
-        'signal_items': _SIGNAL_ITEMS,
+        'signal_items': _signal_items(),
         'domain_judge_rules': _DOMAIN_JUDGE_RULES,
     }
