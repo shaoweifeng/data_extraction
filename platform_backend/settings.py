@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'core',
     'core.account.apps.AccountConfig',
     'core.feedback.apps.FeedbackConfig',
+    'core.external_images.apps.ExternalImagesConfig',
 ]
 
 MIDDLEWARE = [
@@ -290,6 +291,24 @@ FEEDBACK_MAX_IMAGE_BYTES = int(os.getenv('FEEDBACK_MAX_IMAGE_BYTES', str(5 * 102
 FEEDBACK_MAX_TOTAL_IMAGE_BYTES = int(os.getenv('FEEDBACK_MAX_TOTAL_IMAGE_BYTES', str(10 * 1024 * 1024)))
 FEEDBACK_MAX_REQUEST_BYTES = int(os.getenv('FEEDBACK_MAX_REQUEST_BYTES', str(12 * 1024 * 1024)))
 FEEDBACK_MAX_IMAGE_PIXELS = int(os.getenv('FEEDBACK_MAX_IMAGE_PIXELS', str(25_000_000)))
+
+# 外部系统图片接收：使用独立 API Key，文件保持私有且不通过 MEDIA_URL 暴露。
+EXTERNAL_IMAGE_UPLOAD_ENABLED = os.getenv(
+    'EXTERNAL_IMAGE_UPLOAD_ENABLED', 'false'
+).lower() == 'true'
+EXTERNAL_IMAGE_UPLOAD_ROOT = os.getenv('EXTERNAL_IMAGE_UPLOAD_ROOT') or os.path.join(
+    BASE_DIR, 'private_media', 'external_images'
+)
+EXTERNAL_IMAGE_UPLOAD_API_KEY = os.getenv('EXTERNAL_IMAGE_UPLOAD_API_KEY', '')
+EXTERNAL_IMAGE_UPLOAD_MAX_IMAGE_BYTES = int(os.getenv(
+    'EXTERNAL_IMAGE_UPLOAD_MAX_IMAGE_BYTES', str(10 * 1024 * 1024)
+))
+EXTERNAL_IMAGE_UPLOAD_MAX_REQUEST_BYTES = int(os.getenv(
+    'EXTERNAL_IMAGE_UPLOAD_MAX_REQUEST_BYTES', str(12 * 1024 * 1024)
+))
+EXTERNAL_IMAGE_UPLOAD_MAX_PIXELS = int(os.getenv(
+    'EXTERNAL_IMAGE_UPLOAD_MAX_PIXELS', str(25_000_000)
+))
 
 # 允许同源 iframe 加载（PDF 在 <iframe> 中预览需要 SAMEORIGIN 而非 DENY）
 X_FRAME_OPTIONS = 'SAMEORIGIN'

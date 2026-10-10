@@ -15,7 +15,8 @@
     {"name": "Quality Assessment"},
     {"name": "Billing"},
     {"name": "Operations"},
-    {"name": "Feedback"}
+    {"name": "Feedback"},
+    {"name": "External Images"}
   ],
   "paths": {
     "/auth/register/": {
@@ -116,6 +117,40 @@
         "tags": ["Feedback"],
         "parameters": [{"name": "attachment_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
         "responses": {"200": {"description": "Private feedback image"}, "404": {"$ref": "#/components/responses/NotFound"}}
+      }
+    },
+    "/external/images/": {
+      "post": {
+        "tags": ["External Images"],
+        "description": "Accept one private JPEG, PNG or WebP image from an external system. The stored object has no public URL.",
+        "security": [{"ExternalImageBearer": []}],
+        "parameters": [
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image"],
+                "properties": {
+                  "image": {"type": "string", "format": "binary"},
+                  "source": {"type": "string", "maxLength": 100}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Image persisted; response includes its absolute private path and storage-relative path"},
+          "200": {"description": "Idempotent retry returned the existing image record and the same path"},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "401": {"description": "Missing or invalid API key"},
+          "413": {"description": "Request body too large"},
+          "422": {"description": "Invalid or unsupported image"},
+          "503": {"description": "External image ingestion is disabled"}
+        }
       }
     },
     "/projects/": {
@@ -240,6 +275,13 @@
     "/billing/transactions/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Transactions"}}}}
   },
   "components": {
+    "securitySchemes": {
+      "ExternalImageBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Value of EXTERNAL_IMAGE_UPLOAD_API_KEY"
+      }
+    },
     "parameters": {
       "Id": {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}
     },

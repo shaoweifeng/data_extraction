@@ -22,3 +22,4 @@ ACCOUNT_RATE_LIMIT_ENABLED = False
 REQUIRE_EMAIL_VERIFICATION = False
 LOGGING = {}
 FEEDBACK_UPLOAD_ROOT = tempfile.mkdtemp(prefix='data-extraction-feedback-tests-')
+EXTERNAL_IMAGE_UPLOAD_ROOT = tempfile.mkdtemp(prefix='data-extraction-external-images-tests-')

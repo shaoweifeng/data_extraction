@@ -509,9 +509,9 @@ python manage.py inspect_qa_evidence \
 - 新增费率版本 `ai-credit-v1`，按模型分别计算输入/输出成本和影子积分；旧公式仍是实际扣费依据，验证期不会改变用户余额；
 - `TokenUsageLog` 新增分模型用量、费率版本、影子积分和估算人民币成本，管理员审计界面同步展示；
 - 新增 `benchmark_qa_evidence`，默认只在本地完成提取、分块、证据检索和提示词估算，显式传入 `--live` 才会向外部模型发送证据并记录真实 Token、错误、积分和成本；
-- 已使用 `meta_project/QA_input` 的 30 篇 PDF 完成本地基准，30/30 成功且无字符截断。页数 P50/P75/P90 为 5/7/9.1，全文字符数为 15,379/21,617/39,009，分块数为 6/7.75/11，单模型全领域提示词估算为 25,852/28,446/35,120 tokens；
-- 可审计明细保存在 `docs/qa-evidence-benchmark-local.json`，报告不包含 PDF 正文；
-- 真实双模型运行尚未执行：该操作会把检索证据发送给 DeepSeek/Qwen 并产生费用，必须在明确授权后运行。因此供应商账单误差、输出 Token、重试率和新版套餐额度仍属于上线门禁，不能用本地估算冒充真实结果。
+- 已使用 `meta_project/QA_input` 的 30 篇 PDF 完成一次真实 DeepSeek + Qwen 双模型基准，30 篇均完成提取且无字符截断，共完成 240 次模型请求，实际总 Token 为 2,196,911；
+- 真实基准只执行了一次，原始明细保存在 `docs/qa-evidence-benchmark-live-2026-10-10.json`，不得对这批 PDF 自动补跑或重复外发；
+- 套餐额度和完整成本计算见 `docs/personal-plans-and-credit-billing.md`。
 
 本地基准命令：
 
@@ -523,17 +523,19 @@ python manage.py benchmark_qa_evidence \
   --output docs/qa-evidence-benchmark-local.json
 ```
 
-获得测试文献外发和费用授权后，真实双模型基准命令为：
+#### 已记录遗留问题：模型引文与证据块匹配失败
 
-```bash
-python manage.py benchmark_qa_evidence \
-  --input-dir meta_project/QA_input \
-  --limit 30 \
-  --method QUADAS2 \
-  --models deepseek-v4-flash qwen3-7-flash \
-  --live \
-  --output docs/qa-evidence-benchmark-live.json
-```
+真实基准虽然完成全部模型请求，但严格证据校验发现 DeepSeek 146 条、Qwen 224 条无效结果，合计至少占理论 840 个模型判断的 44.0%。其中 361 条为引文无法在所选证据块中逐字匹配，9 条为页码范围不一致。30/30 篇均受影响；按文献与信号问题统计，126/420（30.0%）的问题两个模型同时失败，推算至少 78/120（65.0%）的评价领域不完整。
+
+这不代表对应方法学判断必然错误，但表示结果无法由原文审计，当前校验器会丢弃这些返回。正式全量开放和自动重试前需要：
+
+1. 将证据块进一步拆成稳定的短片段 ID；
+2. 模型只返回 `evidence_span_ids`，不再自行复制原文或填写页码；
+3. 服务端根据片段 ID 回填原文、页码、章节和哈希；
+4. 将基准成功口径拆分为“提取成功、模型请求成功、信号问题校验通过、领域完整、文献完整”；
+5. 校验失败不得无限自动重试，平台原因造成的有限重试不能转嫁给用户。
+
+该问题留待后续专项修复；当前真实 Token 和成本数据仍可用于容量测算，但不能把“30/30 提取和调用成功”表述为“30/30 评价结果完整”。
 
 ### 阶段 8：存量重建与灰度上线
 
