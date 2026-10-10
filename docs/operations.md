@@ -34,6 +34,12 @@
 | `FEEDBACK_MAX_IMAGES` | 可选 | 单条反馈图片数上限，默认 3 |
 | `FEEDBACK_MAX_IMAGE_BYTES` | 可选 | 单张反馈图片字节上限，默认 5 MiB |
 | `FEEDBACK_MAX_TOTAL_IMAGE_BYTES` | 可选 | 单条反馈图片总字节上限，默认 10 MiB |
+| `EXTERNAL_IMAGE_UPLOAD_ENABLED` | 可选 | 外部图片接收接口总开关，默认关闭 |
+| `EXTERNAL_IMAGE_UPLOAD_ROOT` | 启用接口时必需 | 私有图片目录；默认 `private_media/external_images`，禁止映射为静态目录 |
+| `EXTERNAL_IMAGE_UPLOAD_API_KEY` | 启用接口时必需 | Bearer API Key，至少 32 个随机字符，禁止提交到 Git |
+| `EXTERNAL_IMAGE_UPLOAD_MAX_IMAGE_BYTES` | 可选 | 单张外部图片上限，默认 10 MiB |
+| `EXTERNAL_IMAGE_UPLOAD_MAX_REQUEST_BYTES` | 可选 | 单次请求体上限，默认 12 MiB |
+| `EXTERNAL_IMAGE_UPLOAD_MAX_PIXELS` | 可选 | 解码后最大像素数，默认 2500 万 |
 
 完整示例见 `.env.example`。
 
@@ -214,11 +220,45 @@ python manage.py migrate
 python manage.py check
 ```
 
-项目文件位于 `media/` 与任务工作目录中，反馈图片位于 `FEEDBACK_UPLOAD_ROOT`。数据库备份必须与这些目录的对应文件快照一起保存。删除项目按产品规则直接清空，不保留应用内回收站；用户反馈不会因关联项目或提交用户删除而自动丢失。
+项目文件位于 `media/` 与任务工作目录中，反馈图片位于 `FEEDBACK_UPLOAD_ROOT`，外部 API 图片位于 `EXTERNAL_IMAGE_UPLOAD_ROOT`。数据库备份必须与这些目录的对应文件快照一起保存。删除项目按产品规则直接清空，不保留应用内回收站；用户反馈不会因关联项目或提交用户删除而自动丢失。
 
 异常退出可能留下未完成数据库提交的孤立反馈图片。命令默认只预览，确认后再执行删除：
 
 ```bash
 python manage.py cleanup_feedback_orphans
 python manage.py cleanup_feedback_orphans --apply --older-than-hours=24
+```
+
+外部图片接口仅接受 `multipart/form-data` 的单个 `image` 字段，支持 JPEG、PNG、WebP；服务端会校验真实格式、像素和大小，移除 EXIF 并重新编码。调用示例：
+
+```bash
+curl -X POST "https://your-domain.example/api/external/images/" \
+  -H "Authorization: Bearer $EXTERNAL_IMAGE_UPLOAD_API_KEY" \
+  -H "Idempotency-Key: 4d65891d-bb89-4e30-a3cd-7e23c6620825" \
+  -F "source=private-tool" \
+  -F "image=@/path/to/image.png"
+```
+
+接口返回图片 ID、服务器绝对路径 `path`、私有存储相对路径 `relative_path`、格式、尺寸、哈希和上传时间，但不提供公开 URL。绝对路径只应提供给受信任的 API 调用方，不应继续暴露给浏览器或第三方用户。孤立文件清理同样默认仅预览：
+
+```json
+{
+  "id": "b6a1e06c-0434-4735-9877-3ba72f5543b6",
+  "path": "/root/data_extraction/private_media/external_images/2026/10/10/b6a1e06c0434473598773ba72f5543b6.png",
+  "relative_path": "2026/10/10/b6a1e06c0434473598773ba72f5543b6.png",
+  "mime_type": "image/png",
+  "file_size": 18342,
+  "width": 1280,
+  "height": 720,
+  "sha256": "...",
+  "source": "private-tool",
+  "created_at": "2026-10-10T14:30:00+08:00"
+}
+```
+
+首次保存返回 HTTP `201`；使用相同 `Idempotency-Key` 重试返回 HTTP `200`，并返回原记录及相同的 `path` 和 `relative_path`。
+
+```bash
+python manage.py cleanup_external_image_orphans
+python manage.py cleanup_external_image_orphans --apply --older-than-hours=24
 ```

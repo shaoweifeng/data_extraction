@@ -72,6 +72,9 @@ urlpatterns = [
     # 用户反馈
     path('feedback/', include('core.feedback.urls')),
 
+    # 外部系统图片接收（独立 Bearer API Key，不使用网页登录会话）
+    path('external/images/', include('core.external_images.urls')),
+
     # 人工审阅 API
     path('review/list/',          review_list,    name='review_list'),
     path('review/submit/',        review_submit,  name='review_submit'),

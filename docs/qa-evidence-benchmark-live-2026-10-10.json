@@ -1,0 +1,1546 @@
+{
+  "schema_version": "qa-evidence-benchmark-v1",
+  "mode": "live",
+  "input_dir": "/Users/gclx/data_extraction/meta_project/QA_input",
+  "method": "QUADAS2",
+  "method_variant": "",
+  "models": [
+    "deepseek-v4-flash",
+    "qwen3-7-flash"
+  ],
+  "settings": {
+    "max_pages": 1000,
+    "max_chars": 200000,
+    "chunk_target_tokens": 2000,
+    "chunk_overlap_tokens": 200,
+    "evidence_chars_per_domain": 24000,
+    "evidence_chunks_per_signal": 5
+  },
+  "summary": {
+    "sample_count": 30,
+    "successful_count": 30,
+    "failed_count": 0,
+    "page_count": {
+      "p50": 5.0,
+      "p75": 7.0,
+      "p90": 9.1,
+      "total": 211.0
+    },
+    "extracted_chars": {
+      "p50": 15379.0,
+      "p75": 21617.0,
+      "p90": 39009.1,
+      "total": 608004.0
+    },
+    "chunk_count": {
+      "p50": 6.0,
+      "p75": 7.75,
+      "p90": 11.0,
+      "total": 222.0
+    },
+    "evidence_chars": {
+      "p50": 51691.0,
+      "p75": 69153.75,
+      "p90": 88458.8,
+      "total": 1722284.0
+    },
+    "estimated_prompt_tokens": {
+      "p50": 25851.5,
+      "p75": 28445.5,
+      "p90": 35120.0,
+      "total": 797171.0
+    },
+    "actual_total_tokens": {
+      "p50": 65429.0,
+      "p75": 88894.75,
+      "p90": 105606.8,
+      "total": 2196911.0
+    },
+    "shadow_credits": {
+      "p50": 39.0,
+      "p75": 50.5,
+      "p90": 62.4,
+      "total": 1302.0
+    },
+    "estimated_cost_cny": {
+      "p50": 0.08,
+      "p75": 0.11,
+      "p90": 0.13,
+      "total": 2.782351
+    }
+  },
+  "aggregate_model_usage": {
+    "deepseek-v4-flash": {
+      "prompt_tokens": 994426,
+      "completion_tokens": 42709,
+      "total_tokens": 1037135,
+      "cached_prompt_tokens": 0,
+      "calls": 120
+    },
+    "qwen3-7-flash": {
+      "prompt_tokens": 1104063,
+      "completion_tokens": 55713,
+      "total_tokens": 1159776,
+      "cached_prompt_tokens": 0,
+      "calls": 120
+    }
+  },
+  "aggregate_pricing": {
+    "pricing_version": "ai-credit-v1",
+    "shadow_credits": 1289,
+    "estimated_cost_cny": "2.782349",
+    "unknown_models": []
+  },
+  "records": [
+    {
+      "file": "2016  Chen R  脑脊液肝素结合蛋白和降钙素原在细菌性颅内感染诊断中的应用-陈若虹.pdf",
+      "error": "",
+      "page_count": 4,
+      "extracted_chars": 12422,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 49422,
+      "estimated_prompt_tokens": 25791,
+      "actual_total_tokens": 65337,
+      "shadow_credits": 39,
+      "estimated_cost_cny": 0.083359,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0004 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0004 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 29194,
+          "completion_tokens": 1426,
+          "total_tokens": 30620,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 32990,
+          "completion_tokens": 1727,
+          "total_tokens": 34717,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2017 Lei J   急性化脓性脑膜炎儿童脑脊液肝素结合蛋白水平变化及其与不良预后的关系_雷娟娟.pdf",
+      "error": "",
+      "page_count": 5,
+      "extracted_chars": 12810,
+      "extraction_truncated": false,
+      "chunk_count": 4,
+      "domain_count": 4,
+      "evidence_chars": 50676,
+      "estimated_prompt_tokens": 27027,
+      "actual_total_tokens": 113570,
+      "shadow_credits": 66,
+      "estimated_cost_cny": 0.142361,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0001 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0003-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 54192,
+          "completion_tokens": 1454,
+          "total_tokens": 55646,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 55992,
+          "completion_tokens": 1932,
+          "total_tokens": 57924,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2018   Kandil   pubmed  Accuracy of heparin binding protein Source Braz J Microbiol SO 2018 Aug 17.pdf",
+      "error": "",
+      "page_count": 7,
+      "extracted_chars": 38323,
+      "extraction_truncated": false,
+      "chunk_count": 26,
+      "domain_count": 4,
+      "evidence_chars": 25086,
+      "estimated_prompt_tokens": 9432,
+      "actual_total_tokens": 30301,
+      "shadow_credits": 21,
+      "estimated_cost_cny": 0.043897,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0009 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0009 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0009 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0001-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0009 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0009 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0009 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0003-c0011 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0007 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 12822,
+          "completion_tokens": 1388,
+          "total_tokens": 14210,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 14440,
+          "completion_tokens": 1651,
+          "total_tokens": 16091,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2019 Huang C ,脑脊液肝素结合蛋白检测在小儿化脓性脑膜炎中的应用价值.pdf",
+      "error": "",
+      "page_count": 7,
+      "extracted_chars": 18792,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 67497,
+      "estimated_prompt_tokens": 35381,
+      "actual_total_tokens": 91099,
+      "shadow_credits": 52,
+      "estimated_cost_cny": 0.110564,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0006-p0006-c0005 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_interval_appropriate 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 40173,
+          "completion_tokens": 1469,
+          "total_tokens": 41642,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 47446,
+          "completion_tokens": 2011,
+          "total_tokens": 49457,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2019 Liu M  脑脊液肝素结合蛋白检测在颅内感染性疾病的临床应用.pdf",
+      "error": "",
+      "page_count": 7,
+      "extracted_chars": 21131,
+      "extraction_truncated": false,
+      "chunk_count": 8,
+      "domain_count": 4,
+      "evidence_chars": 69706,
+      "estimated_prompt_tokens": 36314,
+      "actual_total_tokens": 89587,
+      "shadow_credits": 51,
+      "estimated_cost_cny": 0.109667,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_consecutive 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0004-p0004-c0004 中匹配",
+          "it_applicability 的引文无法在块 p0004-p0004-c0004 中匹配",
+          "rs_applicability 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ft_same_rs 的引文无法在块 p0003-p0003-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_exclusion 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ft_same_rs 的引文无法在块 p0003-p0003-c0003 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 39722,
+          "completion_tokens": 1511,
+          "total_tokens": 41233,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 46452,
+          "completion_tokens": 1902,
+          "total_tokens": 48354,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2019 Zhang S  Evaluation of heparin-binding protein andor procalcitonin levels in the diagnosis of bacterial intracranial infection using receiver operating characteristic (ROC) curve value.pdf",
+      "error": "",
+      "page_count": 5,
+      "extracted_chars": 20517,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 53196,
+      "estimated_prompt_tokens": 16500,
+      "actual_total_tokens": 42506,
+      "shadow_credits": 27,
+      "estimated_cost_cny": 0.056966,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0003 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0001-p0002-c0003 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 18425,
+          "completion_tokens": 1331,
+          "total_tokens": 19756,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 20886,
+          "completion_tokens": 1864,
+          "total_tokens": 22750,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2020  Guan J  脑脊液肝素结合蛋白鉴别细菌性颅内感染的临床价值_管军.pdf",
+      "error": "",
+      "page_count": 4,
+      "extracted_chars": 11555,
+      "extraction_truncated": false,
+      "chunk_count": 4,
+      "domain_count": 4,
+      "evidence_chars": 45640,
+      "estimated_prompt_tokens": 24696,
+      "actual_total_tokens": 104722,
+      "shadow_credits": 62,
+      "estimated_cost_cny": 0.132945,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0004-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_consecutive 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0001-p0002-c0001 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 49272,
+          "completion_tokens": 1693,
+          "total_tokens": 50965,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 51860,
+          "completion_tokens": 1897,
+          "total_tokens": 53757,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2020  Li W  血清降钙素原和肝素结合蛋白早期辅助诊断儿童细菌性脑膜炎的价值_李文书.pdf",
+      "error": "",
+      "page_count": 49,
+      "extracted_chars": 52924,
+      "extraction_truncated": false,
+      "chunk_count": 19,
+      "domain_count": 4,
+      "evidence_chars": 92342,
+      "estimated_prompt_tokens": 48744,
+      "actual_total_tokens": 104385,
+      "shadow_credits": 60,
+      "estimated_cost_cny": 0.128974,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0010-p0012-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0010-p0012-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0010-p0012-c0003 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0023-p0024-c0008 中匹配",
+          "ft_same_rs 的引文无法在块 p0010-p0012-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 引用了与块 p0010-p0012-c0003 不一致的页码",
+          "ps_avoid_exclusion 引用了与块 p0010-p0012-c0003 不一致的页码",
+          "ps_applicability 的引文无法在块 p0001-p0007-c0001 中匹配",
+          "it_threshold_preset 引用了与块 p0010-p0012-c0003 不一致的页码",
+          "it_applicability 引用了与块 p0007-p0009-c0002 不一致的页码",
+          "rs_classify_correctly 引用了与块 p0010-p0012-c0003 不一致的页码",
+          "rs_applicability 引用了与块 p0010-p0012-c0003 不一致的页码",
+          "ft_all_received_rs 引用了与块 p0010-p0012-c0003 不一致的页码",
+          "ft_same_rs 引用了与块 p0010-p0012-c0003 不一致的页码",
+          "ft_all_analyzed 的引文无法在块 p0007-p0009-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 47940,
+          "completion_tokens": 1538,
+          "total_tokens": 49478,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 52984,
+          "completion_tokens": 1923,
+          "total_tokens": 54907,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2020  Li X  HBP联合PCT在中枢神经系统感染患儿的诊断价值_李星.pdf",
+      "error": "",
+      "page_count": 7,
+      "extracted_chars": 17300,
+      "extraction_truncated": false,
+      "chunk_count": 7,
+      "domain_count": 4,
+      "evidence_chars": 62199,
+      "estimated_prompt_tokens": 35091,
+      "actual_total_tokens": 134679,
+      "shadow_credits": 78,
+      "estimated_cost_cny": 0.167349,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_consecutive 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_cc 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0005-c0004 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0005-c0004 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 64682,
+          "completion_tokens": 1480,
+          "total_tokens": 66162,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 66609,
+          "completion_tokens": 1908,
+          "total_tokens": 68517,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021   Zhang T  脑脊液中肝素结合蛋白、总蛋白、降钙素原检测在鉴别细菌性与非细菌性颅内感染疾病中的临床应用_张天照.pdf",
+      "error": "",
+      "page_count": 4,
+      "extracted_chars": 12932,
+      "extraction_truncated": false,
+      "chunk_count": 5,
+      "domain_count": 4,
+      "evidence_chars": 51464,
+      "estimated_prompt_tokens": 27096,
+      "actual_total_tokens": 66539,
+      "shadow_credits": 40,
+      "estimated_cost_cny": 0.084856,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_applicability 引用了与块 p0002-p0002-c0002 不一致的页码",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0001-p0001-c0001 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 29696,
+          "completion_tokens": 1456,
+          "total_tokens": 31152,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 33628,
+          "completion_tokens": 1759,
+          "total_tokens": 35387,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021  Gui Z 脑脊液肝素结合蛋白在儿童细菌性脑膜炎和病毒性脑膜炎鉴别诊断中的应用价值_桂珍.pdf",
+      "error": "",
+      "page_count": 5,
+      "extracted_chars": 11687,
+      "extraction_truncated": false,
+      "chunk_count": 8,
+      "domain_count": 4,
+      "evidence_chars": 37729,
+      "estimated_prompt_tokens": 21223,
+      "actual_total_tokens": 57405,
+      "shadow_credits": 35,
+      "estimated_cost_cny": 0.07379,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0004 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0004 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0004 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0004 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0002-c0005 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0004 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0004 中匹配",
+          "ft_interval_appropriate 的引文无法在块 p0002-p0002-c0005 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0001-p0002-c0004 中匹配",
+          "ft_same_rs 的引文无法在块 p0001-p0002-c0004 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 25135,
+          "completion_tokens": 1415,
+          "total_tokens": 26550,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 29018,
+          "completion_tokens": 1837,
+          "total_tokens": 30855,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021  Liu J   肝素结合蛋白在开颅术后早期颅内感染的诊断价值-刘俊.pdf",
+      "error": "",
+      "page_count": 4,
+      "extracted_chars": 10551,
+      "extraction_truncated": false,
+      "chunk_count": 5,
+      "domain_count": 4,
+      "evidence_chars": 41932,
+      "estimated_prompt_tokens": 23261,
+      "actual_total_tokens": 57821,
+      "shadow_credits": 36,
+      "estimated_cost_cny": 0.076224,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0003-c0004 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ft_interval_appropriate 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0002-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_consecutive 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ft_interval_appropriate 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0003 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 25548,
+          "completion_tokens": 1594,
+          "total_tokens": 27142,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 28792,
+          "completion_tokens": 1887,
+          "total_tokens": 30679,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021 Bao R  脑脊液HBP、LDH、β2MG水平对化脓性脑膜炎患儿的诊断价值_鲍茹.pdf",
+      "error": "",
+      "page_count": 5,
+      "extracted_chars": 13680,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 50443,
+      "estimated_prompt_tokens": 27412,
+      "actual_total_tokens": 68241,
+      "shadow_credits": 40,
+      "estimated_cost_cny": 0.084506,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 30380,
+          "completion_tokens": 1202,
+          "total_tokens": 31582,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 34712,
+          "completion_tokens": 1947,
+          "total_tokens": 36659,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021 Chen J  颅脑术后继发颅内感染患者脑脊液HBP、HMGB-1水平变化及意义-陈剑锋.pdf",
+      "error": "",
+      "page_count": 4,
+      "extracted_chars": 11604,
+      "extraction_truncated": false,
+      "chunk_count": 5,
+      "domain_count": 4,
+      "evidence_chars": 46152,
+      "estimated_prompt_tokens": 27329,
+      "actual_total_tokens": 62137,
+      "shadow_credits": 37,
+      "estimated_cost_cny": 0.079308,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0003-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0003-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0003-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 27880,
+          "completion_tokens": 1317,
+          "total_tokens": 29197,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 31072,
+          "completion_tokens": 1868,
+          "total_tokens": 32940,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021 Han W 肝素结合蛋白、降钙素原和前清蛋白在颅脑肿瘤患者术后颅内感染早期诊断中的意义（知网没有）.pdf",
+      "error": "",
+      "page_count": 6,
+      "extracted_chars": 17944,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 71376,
+      "estimated_prompt_tokens": 33497,
+      "actual_total_tokens": 86818,
+      "shadow_credits": 49,
+      "estimated_cost_cny": 0.104631,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0003-p0003-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ft_same_rs 的引文无法在块 p0003-p0003-c0003 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0003-p0003-c0003 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 38236,
+          "completion_tokens": 1335,
+          "total_tokens": 39571,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 45484,
+          "completion_tokens": 1763,
+          "total_tokens": 47247,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021 Li X  脑脊液PCT、CD64、HBP联合检测对神经外科术后细菌性脑膜炎的诊断价值_李晓亮.pdf",
+      "error": "",
+      "page_count": 3,
+      "extracted_chars": 9097,
+      "extraction_truncated": false,
+      "chunk_count": 4,
+      "domain_count": 4,
+      "evidence_chars": 34548,
+      "estimated_prompt_tokens": 19223,
+      "actual_total_tokens": 47574,
+      "shadow_credits": 30,
+      "estimated_cost_cny": 0.063185,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 21056,
+          "completion_tokens": 1348,
+          "total_tokens": 22404,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 23464,
+          "completion_tokens": 1706,
+          "total_tokens": 25170,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021 Ren D     Diagnostic value of heparin binding prote Source Braz J Med Biol Res 2021 Sep 3 54 11 e11295.PDF",
+      "error": "",
+      "page_count": 6,
+      "extracted_chars": 21779,
+      "extraction_truncated": false,
+      "chunk_count": 7,
+      "domain_count": 4,
+      "evidence_chars": 50600,
+      "estimated_prompt_tokens": 15723,
+      "actual_total_tokens": 40459,
+      "shadow_credits": 25,
+      "estimated_cost_cny": 0.053833,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0004 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0004 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0004 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0004 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0004 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0004 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 17232,
+          "completion_tokens": 1285,
+          "total_tokens": 18517,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 20074,
+          "completion_tokens": 1868,
+          "total_tokens": 21942,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2021Liu M  肝素结合蛋白在脑膜炎患者中的表达及其临床意义_刘美玲.pdf",
+      "error": "",
+      "page_count": 3,
+      "extracted_chars": 8386,
+      "extraction_truncated": false,
+      "chunk_count": 5,
+      "domain_count": 4,
+      "evidence_chars": 33292,
+      "estimated_prompt_tokens": 19940,
+      "actual_total_tokens": 47268,
+      "shadow_credits": 29,
+      "estimated_cost_cny": 0.062211,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_consecutive 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ps_avoid_cc 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 20816,
+          "completion_tokens": 1292,
+          "total_tokens": 22108,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 23404,
+          "completion_tokens": 1756,
+          "total_tokens": 25160,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2022   Kong Y  Accuracy of heparin binding protein Source Crit Care SO 2022 Mar 8 26 1 56 (1)  2022.pdf",
+      "error": "",
+      "page_count": 10,
+      "extracted_chars": 47746,
+      "extraction_truncated": false,
+      "chunk_count": 11,
+      "domain_count": 4,
+      "evidence_chars": 88835,
+      "estimated_prompt_tokens": 25430,
+      "actual_total_tokens": 58622,
+      "shadow_credits": 36,
+      "estimated_cost_cny": 0.076452,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0005-c0005 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0003-c0004 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0003-c0004 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 25712,
+          "completion_tokens": 1567,
+          "total_tokens": 27279,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 29499,
+          "completion_tokens": 1844,
+          "total_tokens": 31343,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2022 Obreja   pubmed  Heparin Binding Protein HBP Neutr Source Antibiotics Basel SO 2022.pdf",
+      "error": "",
+      "page_count": 10,
+      "extracted_chars": 37816,
+      "extraction_truncated": false,
+      "chunk_count": 9,
+      "domain_count": 4,
+      "evidence_chars": 84603,
+      "estimated_prompt_tokens": 24350,
+      "actual_total_tokens": 66706,
+      "shadow_credits": 39,
+      "estimated_cost_cny": 0.082626,
+      "model_errors": {
+        "qwen3-7-flash": [
+          "ps_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0005-c0004 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ],
+        "deepseek-v4-flash": [
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 28758,
+          "completion_tokens": 1399,
+          "total_tokens": 30157,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 34697,
+          "completion_tokens": 1852,
+          "total_tokens": 36549,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2022 Shi S  脑脊液HBP和外周血PCT、hs-CRP在小儿化脓性脑膜炎中的诊断价值_世淑兰.pdf",
+      "error": "",
+      "page_count": 5,
+      "extracted_chars": 14224,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 47512,
+      "estimated_prompt_tokens": 25434,
+      "actual_total_tokens": 64531,
+      "shadow_credits": 38,
+      "estimated_cost_cny": 0.081912,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0004-c0004 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "it_threshold_preset 的引文无法在块 p0003-p0004-c0004 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "ft_interval_appropriate 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 28814,
+          "completion_tokens": 1354,
+          "total_tokens": 30168,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 32526,
+          "completion_tokens": 1837,
+          "total_tokens": 34363,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2022 Zhang R  老年脑出血开颅术后不同类型病原菌颅内感染对脑脊液NSE、NLRP3、HBP水平的影响-张人菁.pdf",
+      "error": "",
+      "page_count": 5,
+      "extracted_chars": 14166,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 51918,
+      "estimated_prompt_tokens": 27475,
+      "actual_total_tokens": 64966,
+      "shadow_credits": 39,
+      "estimated_cost_cny": 0.082307,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0002-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ft_interval_appropriate 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 28973,
+          "completion_tokens": 1358,
+          "total_tokens": 30331,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 32860,
+          "completion_tokens": 1775,
+          "total_tokens": 34635,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2023  Wang R  脑肿瘤术后颅内感染病原学特点及高危因素分析_王瑞.pdf",
+      "error": "",
+      "page_count": 5,
+      "extracted_chars": 16534,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 65456,
+      "estimated_prompt_tokens": 33330,
+      "actual_total_tokens": 147833,
+      "shadow_credits": 84,
+      "estimated_cost_cny": 0.180052,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "it_threshold_preset 的引文无法在块 p0004-p0004-c0005 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0001-c0001 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "it_threshold_preset 的引文无法在块 p0004-p0004-c0005 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0003-c0004 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0004-p0004-c0005 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 70574,
+          "completion_tokens": 1317,
+          "total_tokens": 71891,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 74200,
+          "completion_tokens": 1742,
+          "total_tokens": 75942,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2023  Wid´en   Heparin binding protein as a marker Source Clin Neurol Neurosurg SO 2023.pdf",
+      "error": "",
+      "page_count": 7,
+      "extracted_chars": 39487,
+      "extraction_truncated": false,
+      "chunk_count": 11,
+      "domain_count": 4,
+      "evidence_chars": 88417,
+      "estimated_prompt_tokens": 25420,
+      "actual_total_tokens": 57488,
+      "shadow_credits": 35,
+      "estimated_cost_cny": 0.075225,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0003-p0003-c0004 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 25478,
+          "completion_tokens": 1497,
+          "total_tokens": 26975,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 28586,
+          "completion_tokens": 1927,
+          "total_tokens": 30513,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2023  Yang T  HBP、陷窝蛋白-1及PCT在鉴别诊断脑膜炎患儿疾病类型及预后中的价值_杨韬滔.pdf",
+      "error": "",
+      "page_count": 5,
+      "extracted_chars": 18044,
+      "extraction_truncated": false,
+      "chunk_count": 8,
+      "domain_count": 4,
+      "evidence_chars": 61353,
+      "estimated_prompt_tokens": 32316,
+      "actual_total_tokens": 76075,
+      "shadow_credits": 44,
+      "estimated_cost_cny": 0.094771,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_consecutive 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0001-c0001 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 34155,
+          "completion_tokens": 1359,
+          "total_tokens": 35514,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 38658,
+          "completion_tokens": 1903,
+          "total_tokens": 40561,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2023 Lin H   脑脊液中HBP、PCT联合脑脊液常规检测对细菌性脑膜炎的临床价值_林晖.pdf",
+      "error": "",
+      "page_count": 4,
+      "extracted_chars": 8521,
+      "extraction_truncated": false,
+      "chunk_count": 5,
+      "domain_count": 4,
+      "evidence_chars": 33704,
+      "estimated_prompt_tokens": 25322,
+      "actual_total_tokens": 65521,
+      "shadow_credits": 40,
+      "estimated_cost_cny": 0.084936,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0001-p0002-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 30682,
+          "completion_tokens": 1253,
+          "total_tokens": 31935,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 31720,
+          "completion_tokens": 1866,
+          "total_tokens": 33586,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2023Liu C 脑脊液NSE、HBP、HMGB-1对细菌性脑膜炎的诊断价值及其与病情相关性的探讨_刘成志.pdf",
+      "error": "",
+      "page_count": 6,
+      "extracted_chars": 13853,
+      "extraction_truncated": false,
+      "chunk_count": 4,
+      "domain_count": 4,
+      "evidence_chars": 55012,
+      "estimated_prompt_tokens": 28769,
+      "actual_total_tokens": 74620,
+      "shadow_credits": 45,
+      "estimated_cost_cny": 0.0964,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ps_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0004-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0001 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0004-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "rs_applicability 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ft_same_rs 的引文无法在块 p0001-p0002-c0001 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0001-p0002-c0001 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 33560,
+          "completion_tokens": 1717,
+          "total_tokens": 35277,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 37332,
+          "completion_tokens": 2011,
+          "total_tokens": 39343,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2024 Guan L  Clinical value of heparin binding pr Source Front Cell Infect Microbiol SO 2024.pdf",
+      "error": "",
+      "page_count": 9,
+      "extracted_chars": 38956,
+      "extraction_truncated": false,
+      "chunk_count": 7,
+      "domain_count": 4,
+      "evidence_chars": 78886,
+      "estimated_prompt_tokens": 22760,
+      "actual_total_tokens": 54816,
+      "shadow_credits": 33,
+      "estimated_cost_cny": 0.070461,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 23592,
+          "completion_tokens": 1432,
+          "total_tokens": 25024,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 27840,
+          "completion_tokens": 1952,
+          "total_tokens": 29792,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2024 Li F  脑脊液IGF-1、β_2-MG、HBP与儿童化脓性脑膜炎发生发展的相关性_李凤艳.pdf",
+      "error": "",
+      "page_count": 4,
+      "extracted_chars": 10705,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 42520,
+      "estimated_prompt_tokens": 26973,
+      "actual_total_tokens": 91951,
+      "shadow_credits": 55,
+      "estimated_cost_cny": 0.118697,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_cc 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_interval_appropriate 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_same_rs 的引文无法在块 p0002-p0002-c0002 中匹配",
+          "ft_all_analyzed 的引文无法在块 p0002-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 43992,
+          "completion_tokens": 1533,
+          "total_tokens": 45525,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 44520,
+          "completion_tokens": 1906,
+          "total_tokens": 46426,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    },
+    {
+      "file": "2024 Namiduru   Heparin Binding Protein in Early Dif Source Indian J Clin Biochem SO 2024.pdf",
+      "error": "",
+      "page_count": 6,
+      "extracted_chars": 24518,
+      "extraction_truncated": false,
+      "chunk_count": 6,
+      "domain_count": 4,
+      "evidence_chars": 90768,
+      "estimated_prompt_tokens": 25912,
+      "actual_total_tokens": 63334,
+      "shadow_credits": 37,
+      "estimated_cost_cny": 0.079886,
+      "model_errors": {
+        "deepseek-v4-flash": [
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0003 中匹配"
+        ],
+        "qwen3-7-flash": [
+          "ps_avoid_exclusion 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ps_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "it_threshold_preset 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_classify_correctly 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "rs_applicability 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_interval_appropriate 的引文无法在块 p0002-p0003-c0003 中匹配",
+          "ft_all_received_rs 的引文无法在块 p0001-p0002-c0002 中匹配"
+        ]
+      },
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt_tokens": 27735,
+          "completion_tokens": 1389,
+          "total_tokens": 29124,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        },
+        "qwen3-7-flash": {
+          "prompt_tokens": 32318,
+          "completion_tokens": 1892,
+          "total_tokens": 34210,
+          "cached_prompt_tokens": 0,
+          "calls": 4
+        }
+      }
+    }
+  ]
+}
