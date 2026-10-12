@@ -19,6 +19,9 @@ export const batchSetMethod = (refIds, qualityMethod, qualityMethodVariant = '')
 export const startEvaluation = payload => http.post('/qa/eval/start/', payload)
 export const fetchEvaluationProgress = projectId =>
   http.get('/qa/eval/progress/', { params: { project_id: projectId } })
+export const fetchReviewContexts = projectId =>
+  http.get('/qa/review-context/', { params: { project_id: projectId } })
+export const saveReviewContext = payload => http.put('/qa/review-context/', payload)
 export const fetchSignalItems = (qaRefId, filters = {}) =>
   http.get('/qa/signal-items/', { params: { qa_ref_id: qaRefId, ...filters } })
 export const fetchEvidenceContext = (itemId, chunkId, modelId = '') =>

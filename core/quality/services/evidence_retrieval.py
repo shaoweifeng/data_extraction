@@ -28,6 +28,9 @@ _STOPWORDS = frozenset({
 _REQUIRED_CHUNK_FIELDS = {
     'chunk_id', 'page_start', 'page_end', 'section', 'sha256', 'text',
 }
+_REQUIRED_SPAN_FIELDS = {
+    'span_id', 'page_number', 'section', 'char_count', 'sha256', 'text',
+}
 
 
 class EvidenceRetrievalError(ValueError):
@@ -211,6 +214,7 @@ def _public_candidate(item: dict, signal_key: str) -> dict:
         'sha256': chunk['sha256'],
         'char_count': chunk.get('char_count', len(chunk['text'])),
         'text': chunk['text'],
+        'evidence_spans': deepcopy(chunk.get('evidence_spans', [])),
         'score': item['score'],
         'matched_queries': item['matched_queries'],
         'matched_terms': item['matched_terms'],
@@ -327,6 +331,8 @@ def load_verified_chunks(asset) -> list[dict]:
     if len(chunks) != asset.chunk_count:
         raise EvidenceRetrievalError('全文分块数量不一致，请重新生成分块。')
     chunk_ids = set()
+    verified_spans = {}
+    requires_spans = getattr(asset, 'chunking_version', '') == 'qa-chunks-v2-spans'
     for chunk in chunks:
         if not isinstance(chunk, dict) or not _REQUIRED_CHUNK_FIELDS.issubset(chunk):
             raise EvidenceRetrievalError('全文分块结构无效，请重新生成分块。')
@@ -342,6 +348,30 @@ def load_verified_chunks(asset) -> list[dict]:
         text = chunk['text']
         if not isinstance(text, str) or hashlib.sha256(text.encode('utf-8')).hexdigest() != chunk['sha256']:
             raise EvidenceRetrievalError('全文分块正文校验失败，请重新生成分块。')
+        spans = chunk.get('evidence_spans')
+        if requires_spans and not isinstance(spans, list):
+            raise EvidenceRetrievalError('全文证据片段缺失，请重新生成分块。')
+        for span in spans or []:
+            if not isinstance(span, dict) or not _REQUIRED_SPAN_FIELDS.issubset(span):
+                raise EvidenceRetrievalError('全文证据片段结构无效，请重新生成分块。')
+            span_text = span['text']
+            page_number = span['page_number']
+            if not isinstance(span_text, str) or not span_text:
+                raise EvidenceRetrievalError('全文证据片段正文无效，请重新生成分块。')
+            if hashlib.sha256(span_text.encode('utf-8')).hexdigest() != span['sha256']:
+                raise EvidenceRetrievalError('全文证据片段校验失败，请重新生成分块。')
+            if not isinstance(page_number, int) or not (
+                chunk['page_start'] <= page_number <= chunk['page_end']
+            ):
+                raise EvidenceRetrievalError('全文证据片段页码无效，请重新生成分块。')
+            if span_text not in text:
+                raise EvidenceRetrievalError('全文证据片段无法回溯到分块正文。')
+            fingerprint = (
+                page_number, span['section'], span['sha256'], span_text,
+            )
+            previous = verified_spans.setdefault(span['span_id'], fingerprint)
+            if previous != fingerprint:
+                raise EvidenceRetrievalError('全文证据片段 ID 冲突，请重新生成分块。')
     return chunks
 
 

@@ -5,7 +5,10 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 
 from core.models import QAFulltextAsset
-from core.quality.services.fulltext_chunks import load_chunks
+from core.quality.services.evidence_retrieval import (
+    EvidenceRetrievalError,
+    load_verified_chunks,
+)
 
 
 def _preview(text, *, limit=180):
@@ -40,7 +43,10 @@ class Command(BaseCommand):
 
         output_dir = Path(options['output']).expanduser().resolve()
         output_dir.mkdir(parents=True, exist_ok=True)
-        chunks = load_chunks(asset.chunk_index_file)
+        try:
+            chunks = load_verified_chunks(asset)
+        except EvidenceRetrievalError as exc:
+            raise CommandError(str(exc)) from exc
         chunk_rows = [{
             'chunk_id': chunk.get('chunk_id'),
             'page_start': chunk.get('page_start'),
@@ -49,8 +55,15 @@ class Command(BaseCommand):
             'estimated_tokens': chunk.get('estimated_tokens'),
             'char_count': chunk.get('char_count'),
             'sha256': chunk.get('sha256'),
+            'span_count': len(chunk.get('evidence_spans') or []),
             'preview': _preview(chunk.get('text', '')),
         } for chunk in chunks]
+        unique_spans = {
+            span.get('span_id'): span
+            for chunk in chunks
+            for span in (chunk.get('evidence_spans') or [])
+            if span.get('span_id')
+        }
 
         matches = []
         for phrase in options['find']:
@@ -83,6 +96,7 @@ class Command(BaseCommand):
             'chunk_count': asset.chunk_count,
             'chunking_version': asset.chunking_version,
             'chunk_index_sha256': asset.chunk_index_sha256,
+            'unique_evidence_span_count': len(unique_spans),
             'chunks': chunk_rows,
             'searches': matches,
         }
@@ -104,17 +118,19 @@ class Command(BaseCommand):
             f'- 是否截断 / 截断页：{asset.extraction_truncated} / {asset.truncated_at_page}',
             f'- 提取版本 / SHA256：{asset.extraction_version} / {asset.extracted_text_sha256}',
             f'- 分块数 / 版本 / SHA256：{asset.chunk_count} / {asset.chunking_version} / {asset.chunk_index_sha256}',
+            f'- 唯一证据片段数：{len(unique_spans)}',
             '',
             '## 分块预览',
             '',
-            '| 块 ID | 页码 | 章节 | 估算 Token | 字符数 | 预览 |',
-            '|---|---:|---|---:|---:|---|',
+            '| 块 ID | 页码 | 章节 | 估算 Token | 字符数 | 片段数 | 预览 |',
+            '|---|---:|---|---:|---:|---:|---|',
         ]
         for chunk in chunk_rows:
             preview = (chunk['preview'] or '').replace('|', '\\|')
             lines.append(
                 f"| {chunk['chunk_id']} | {chunk['page_start']}-{chunk['page_end']} | "
-                f"{chunk['section']} | {chunk['estimated_tokens']} | {chunk['char_count']} | {preview} |"
+                f"{chunk['section']} | {chunk['estimated_tokens']} | {chunk['char_count']} | "
+                f"{chunk['span_count']} | {preview} |"
             )
         if matches:
             lines.extend(['', '## 短语检索', ''])

@@ -1,0 +1,113 @@
+{
+  "schema_version": "qa-five-human-reference-v1",
+  "reviewed_at": "2026-10-12",
+  "method": "QUADAS2",
+  "reviewer_note": "由 Codex 阅读五篇 PDF 全文后形成的保守主观参考答案，不是经双人复核的正式方法学金标准。项目未提供综述问题上下文，三项适用性问题统一判为不清楚。",
+  "records": [
+    {
+      "asset_id": 17,
+      "reference_id": 1008,
+      "label": "2016 Chen R",
+      "answers": {
+        "ps_consecutive": {"judgment": "不清楚", "page": "2", "reason": "仅说明2015年3月至8月住院患者，未报告连续入组或随机抽样。"},
+        "ps_avoid_cc": {"judgment": "否", "page": "2", "reason": "按已确诊感染类型分组，并另选非颅内感染对照，属于典型病例与对照比较。"},
+        "ps_avoid_exclusion": {"judgment": "否", "page": "2", "reason": "排除器官功能受损、肿瘤、其他部位感染和免疫异常患者，降低疑似患者代表性。"},
+        "ps_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未提供目标人群与综述问题。"},
+        "it_blinded": {"judgment": "不清楚", "page": "2", "reason": "未报告解释HBP结果时是否不知道参考标准结果。"},
+        "it_threshold_preset": {"judgment": "否", "page": "3", "reason": "根据尤登指数最大值事后确定最佳cut-off。"},
+        "it_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义待评价试验的预期应用方式和阈值。"},
+        "rs_classify_correctly": {"judgment": "不清楚", "page": "2-3", "reason": "没有说明各感染组的完整诊断标准；细菌培养仅少数阳性。"},
+        "rs_blinded": {"judgment": "不清楚", "page": "2", "reason": "未报告参考标准解释是否对HBP结果设盲。"},
+        "rs_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义目标疾病及参考标准。"},
+        "ft_interval_appropriate": {"judgment": "不清楚", "page": "2", "reason": "报告同一脑脊液标本检测，但未清楚交代待评价试验与疾病判定的时间关系。"},
+        "ft_all_received_rs": {"judgment": "不清楚", "page": "2-3", "reason": "未说明全部患者均接受同一套疾病状态验证。"},
+        "ft_same_rs": {"judgment": "不清楚", "page": "2-3", "reason": "各感染组和非感染对照的疾病判定流程未完整描述。"},
+        "ft_all_analyzed": {"judgment": "是", "page": "1-3", "reason": "五组样本量前后一致，表格覆盖全部97例，未见分析阶段额外排除。"}
+      }
+    },
+    {
+      "asset_id": 18,
+      "reference_id": 1009,
+      "label": "2017 Lei J",
+      "answers": {
+        "ps_consecutive": {"judgment": "不清楚", "page": "2", "reason": "描述为选择病例，未报告连续入组或随机抽样。"},
+        "ps_avoid_cc": {"judgment": "否", "page": "1-2", "reason": "预先选择PM、VM及非感染对照三个组，属于病例-对照式构成。"},
+        "ps_avoid_exclusion": {"judgment": "否", "page": "2", "reason": "排除入院前接受抗感染治疗者，可能排除临床常见的部分治疗病例。"},
+        "ps_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未提供目标人群与综述问题。"},
+        "it_blinded": {"judgment": "不清楚", "page": "2", "reason": "未报告HBP检测或解释是否对参考标准设盲。"},
+        "it_threshold_preset": {"judgment": "否", "page": "3", "reason": "按照约登指数最大原则事后确定cut-off。"},
+        "it_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义待评价试验的预期应用方式和阈值。"},
+        "rs_classify_correctly": {"judgment": "是", "page": "2", "reason": "PM和VM依据《诸福棠实用儿科学》第7版标准诊断，定义明确。"},
+        "rs_blinded": {"judgment": "不清楚", "page": "2", "reason": "未报告参考标准解释是否对HBP结果设盲。"},
+        "rs_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义目标疾病及参考标准。"},
+        "ft_interval_appropriate": {"judgment": "是", "page": "2", "reason": "首次发病至脑脊液采集不超过48小时，检测基于同次临床过程。"},
+        "ft_all_received_rs": {"judgment": "不清楚", "page": "2", "reason": "PM/VM有明确诊断标准，但非感染对照是否接受同等验证没有说明。"},
+        "ft_same_rs": {"judgment": "否", "page": "2", "reason": "PM/VM使用儿科学诊断标准，非感染对照依据其他疾病及蛛网膜下腔麻醉入选，验证路径不同。"},
+        "ft_all_analyzed": {"judgment": "是", "page": "1-4", "reason": "33例PM、45例VM和30例对照在结果表中前后一致。"}
+      }
+    },
+    {
+      "asset_id": 19,
+      "reference_id": 1010,
+      "label": "2018 Kandil",
+      "answers": {
+        "ps_consecutive": {"judgment": "不清楚", "page": "2", "reason": "说明纳入医院患者及全部合格患者收集信息，但未明确连续或随机抽样。"},
+        "ps_avoid_cc": {"judgment": "否", "page": "2", "reason": "最终固定为30例细菌性、30例非细菌性和30例正常CSF对照，呈病例-对照式分组。"},
+        "ps_avoid_exclusion": {"judgment": "是", "page": "2", "reason": "研究目标是社区获得性急性脑膜炎，排除结核、慢性、术后脑膜炎及占位等与该目标基本一致。"},
+        "ps_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未提供目标人群与综述问题。"},
+        "it_blinded": {"judgment": "不清楚", "page": "2", "reason": "未报告HBP检测或解释是否对参考诊断设盲。"},
+        "it_threshold_preset": {"judgment": "否", "page": "3-4", "reason": "以当前样本中最高敏感度和特异度选择cut-off。"},
+        "it_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义待评价试验的预期应用方式和阈值。"},
+        "rs_classify_correctly": {"judgment": "不清楚", "page": "1-4", "reason": "仅16.7%细菌组获得培养/染色/抗原确认，其余依靠临床、常规CSF和治疗反应的复合标准，存在误分类可能。"},
+        "rs_blinded": {"judgment": "不清楚", "page": "2", "reason": "未报告参考诊断解释是否对HBP结果设盲。"},
+        "rs_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义目标疾病及参考标准。"},
+        "ft_interval_appropriate": {"judgment": "是", "page": "2", "reason": "CSF和血液同时采集，HBP及参考检查来自同次取样。"},
+        "ft_all_received_rs": {"judgment": "是", "page": "2", "reason": "研究说明全部对象接受临床检查及CSF化学、微生物和细胞学检查。"},
+        "ft_same_rs": {"judgment": "是", "page": "1-2", "reason": "同一复合诊断框架和同类CSF检查用于全部研究对象。"},
+        "ft_all_analyzed": {"judgment": "是", "page": "3-4", "reason": "表1和结果覆盖三组各30例，总计90例。"}
+      }
+    },
+    {
+      "asset_id": 20,
+      "reference_id": 1011,
+      "label": "2019 Huang C",
+      "answers": {
+        "ps_consecutive": {"judgment": "不清楚", "page": "2-3", "reason": "回顾性选取病例，未说明连续纳入或随机抽样。"},
+        "ps_avoid_cc": {"judgment": "否", "page": "1-3", "reason": "按已诊断PM、VE和非感染对照组进行比较。"},
+        "ps_avoid_exclusion": {"judgment": "否", "page": "3", "reason": "排除入院前抗生素治疗超过48小时者，可能造成经治疗病例的选择偏倚。"},
+        "ps_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未提供目标人群与综述问题。"},
+        "it_blinded": {"judgment": "不清楚", "page": "3", "reason": "未报告HBP检测或解释是否对参考诊断设盲。"},
+        "it_threshold_preset": {"judgment": "否", "page": "3-4", "reason": "以约登指数最大时的临界值作为最佳界值。"},
+        "it_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义待评价试验的预期应用方式和阈值。"},
+        "rs_classify_correctly": {"judgment": "是", "page": "3", "reason": "PM和VE依据《诸福棠实用儿科学》第8版诊断标准。"},
+        "rs_blinded": {"judgment": "不清楚", "page": "3", "reason": "未报告参考诊断解释是否对HBP结果设盲。"},
+        "rs_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义目标疾病及参考标准。"},
+        "ft_interval_appropriate": {"judgment": "是", "page": "3", "reason": "入院12小时内、抗生素治疗前采集，并在2小时内完成检测。"},
+        "ft_all_received_rs": {"judgment": "是", "page": "2-3", "reason": "PM、VE和对照均有明确分组依据并进入同一研究流程。"},
+        "ft_same_rs": {"judgment": "否", "page": "3", "reason": "PM/VE依据儿科学诊断标准，对照组以非感染疾病和正常WBC界定，验证路径不同。"},
+        "ft_all_analyzed": {"judgment": "是", "page": "1-5", "reason": "76例PM、55例VE及40例对照均在结果中报告，未见样本量减少。"}
+      }
+    },
+    {
+      "asset_id": 21,
+      "reference_id": 1012,
+      "label": "2019 Liu M",
+      "answers": {
+        "ps_consecutive": {"judgment": "不清楚", "page": "3", "reason": "仅说明选取住院患者，未报告连续入组或随机抽样。"},
+        "ps_avoid_cc": {"judgment": "否", "page": "1-3", "reason": "摘要明确写明病例对照研究。"},
+        "ps_avoid_exclusion": {"judgment": "否", "page": "3", "reason": "排除器官功能受损、肿瘤、血液病、输血和免疫异常患者，限制临床代表性。"},
+        "ps_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未提供目标人群与综述问题。"},
+        "it_blinded": {"judgment": "不清楚", "page": "4", "reason": "未报告HBP检测或解释是否对参考诊断设盲。"},
+        "it_threshold_preset": {"judgment": "否", "page": "4-5", "reason": "方法仅说明ROC分析，cut-off在结果中由本样本给出，没有预设证据。"},
+        "it_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义待评价试验的预期应用方式和阈值。"},
+        "rs_classify_correctly": {"judgment": "是", "page": "3", "reason": "采用卫生部《医院感染诊断标准》，结合临床、影像、实验室及微生物学标准区分疾病状态。"},
+        "rs_blinded": {"judgment": "不清楚", "page": "3-4", "reason": "未报告参考诊断解释是否对HBP结果设盲。"},
+        "rs_applicability": {"judgment": "不清楚", "page": "-", "reason": "项目未定义目标疾病及参考标准。"},
+        "ft_interval_appropriate": {"judgment": "是", "page": "4", "reason": "同次脑脊液分管完成培养和各指标检测，检测及接种均在2小时内。"},
+        "ft_all_received_rs": {"judgment": "是", "page": "3-4", "reason": "全部对象按诊断标准分组并接受相应脑脊液检查。"},
+        "ft_same_rs": {"judgment": "否", "page": "3", "reason": "细菌组可由临床或病原学标准诊断，对照和其他感染组的界定路径不同。"},
+        "ft_all_analyzed": {"judgment": "否", "page": "5", "reason": "结果明确报告多个组存在血清样本缺失，至少部分指标并非全部患者进入分析。"}
+      }
+    }
+  ]
+}

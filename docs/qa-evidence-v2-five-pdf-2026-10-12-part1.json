@@ -1,0 +1,606 @@
+{
+  "run_id": 3,
+  "run_uuid": "78086986-9dbf-4d40-b6f4-d70a444968b4",
+  "asset_ids": [
+    17,
+    18,
+    19
+  ],
+  "models": [
+    "deepseek-v4-flash",
+    "qwen3-7-flash"
+  ],
+  "protocol_version": "qa-evidence-protocol-v2",
+  "prompt_version": "qa-evidence-prompt-v2",
+  "retrieval_version": "qa-evidence-lexical-v1",
+  "chunking_version": "qa-chunks-v2-spans",
+  "records": [
+    {
+      "asset_id": 17,
+      "reference_id": 1008,
+      "title": "2016  Chen R  脑脊液肝素结合蛋白和降钙素原在细菌性颅内感染诊断中的应用-陈若虹",
+      "has_review_context": false,
+      "domains": [
+        {
+          "domain": "patient_selection",
+          "prompt_chars": 15902,
+          "catalog_size": 43,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 1,
+              "errors": [
+                {
+                  "code": "evidence_ref_not_allowed",
+                  "signal_key": "ps_avoid_exclusion",
+                  "returned_refs": [
+                    "E002",
+                    "E003"
+                  ],
+                  "disallowed_refs": [
+                    "E002",
+                    "E003"
+                  ],
+                  "allowed_refs": [
+                    "E005",
+                    "E006",
+                    "E007",
+                    "E008",
+                    "E009",
+                    "E010",
+                    "E011",
+                    "E012",
+                    "E013",
+                    "E014",
+                    "E015",
+                    "E016",
+                    "E017",
+                    "E018",
+                    "E019",
+                    "E020",
+                    "E021",
+                    "E022",
+                    "E023",
+                    "E024",
+                    "E025",
+                    "E026",
+                    "E027",
+                    "E028",
+                    "E029",
+                    "E030",
+                    "E031",
+                    "E032",
+                    "E033",
+                    "E034",
+                    "E035",
+                    "E036",
+                    "E037",
+                    "E038",
+                    "E039",
+                    "E040",
+                    "E041",
+                    "E042",
+                    "E043"
+                  ]
+                }
+              ],
+              "usage": {
+                "prompt": 8327,
+                "completion": 285,
+                "total": 8612,
+                "cached_prompt_tokens": 8192
+              },
+              "response_sha256": "72c59dad7e9cc28954e6b699d5893b2b7b0ba6583f505913c252edeb314f63dc"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 1,
+              "errors": [
+                {
+                  "code": "evidence_ref_not_allowed",
+                  "signal_key": "ps_avoid_exclusion",
+                  "returned_refs": [
+                    "E003"
+                  ],
+                  "disallowed_refs": [
+                    "E003"
+                  ],
+                  "allowed_refs": [
+                    "E005",
+                    "E006",
+                    "E007",
+                    "E008",
+                    "E009",
+                    "E010",
+                    "E011",
+                    "E012",
+                    "E013",
+                    "E014",
+                    "E015",
+                    "E016",
+                    "E017",
+                    "E018",
+                    "E019",
+                    "E020",
+                    "E021",
+                    "E022",
+                    "E023",
+                    "E024",
+                    "E025",
+                    "E026",
+                    "E027",
+                    "E028",
+                    "E029",
+                    "E030",
+                    "E031",
+                    "E032",
+                    "E033",
+                    "E034",
+                    "E035",
+                    "E036",
+                    "E037",
+                    "E038",
+                    "E039",
+                    "E040",
+                    "E041",
+                    "E042",
+                    "E043"
+                  ]
+                }
+              ],
+              "usage": {
+                "prompt": 9462,
+                "completion": 348,
+                "total": 9810,
+                "cached_prompt_tokens": 9216
+              },
+              "response_sha256": "6d3d4923de8a25daf9fa42401e9c5be0547ee49e8b3d04a49f9352033bd7c331"
+            }
+          }
+        },
+        {
+          "domain": "index_test",
+          "prompt_chars": 15706,
+          "catalog_size": 43,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 8234,
+                "completion": 182,
+                "total": 8416,
+                "cached_prompt_tokens": 8064
+              },
+              "response_sha256": "3e140992d2fb8752ccd209e15cd21e88a8f655dcee53941b4581f7cf8e583a4f"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 9324,
+                "completion": 243,
+                "total": 9567,
+                "cached_prompt_tokens": 9216
+              },
+              "response_sha256": "7b11ff096f7904f82f5d9abde13b39e812f8b1b6dc19fcac1f2cca26a9b41155"
+            }
+          }
+        },
+        {
+          "domain": "reference_standard",
+          "prompt_chars": 15690,
+          "catalog_size": 43,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 8216,
+                "completion": 187,
+                "total": 8403,
+                "cached_prompt_tokens": 8064
+              },
+              "response_sha256": "54212c6e4e05c3c50921f9cd8efe8cd7d2f7ddd0e2506df61e1aeb9c9545a4de"
+            },
+            "qwen3-7-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 9303,
+                "completion": 220,
+                "total": 9523,
+                "cached_prompt_tokens": 9216
+              },
+              "response_sha256": "0dd0444352c0f865c8db865e6e1296d06cf495e01f254b28d701b5cb1d466894"
+            }
+          }
+        },
+        {
+          "domain": "flow_timing",
+          "prompt_chars": 16029,
+          "catalog_size": 41,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 4,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 8396,
+                "completion": 260,
+                "total": 8656,
+                "cached_prompt_tokens": 8192
+              },
+              "response_sha256": "4d700ab9eaa3b48741b5bbd69c3468104ed3bf413435ae34e979dfa8734c92c7"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 9586,
+                "completion": 318,
+                "total": 9904,
+                "cached_prompt_tokens": 9216
+              },
+              "response_sha256": "5536efd02b75129670b9465f97169d00a770aa119c5317aecadfba5629d8e666"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": 18,
+      "reference_id": 1009,
+      "title": "2017 Lei J   急性化脓性脑膜炎儿童脑脊液肝素结合蛋白水平变化及其与不良预后的关系 雷娟娟",
+      "has_review_context": false,
+      "domains": [
+        {
+          "domain": "patient_selection",
+          "prompt_chars": 16047,
+          "catalog_size": 40,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 2,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 14705,
+                "completion": 267,
+                "total": 14972,
+                "cached_prompt_tokens": 14464
+              },
+              "response_sha256": "c74d46473677b715de41da1e029191c0952503861aa02b367bd74b20d0be68df"
+            },
+            "qwen3-7-flash": {
+              "validated": 2,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 15315,
+                "completion": 347,
+                "total": 15662,
+                "cached_prompt_tokens": 14976
+              },
+              "response_sha256": "d748754b6154fb0ba94de0d6b97b4b8cb526d8e99ec14107a0edc5cff6ece6c3"
+            }
+          }
+        },
+        {
+          "domain": "index_test",
+          "prompt_chars": 15977,
+          "catalog_size": 40,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 14675,
+                "completion": 203,
+                "total": 14878,
+                "cached_prompt_tokens": 14464
+              },
+              "response_sha256": "47a51d4ed5e6d3e6eea5df3a270d8841a814f1f52bd46d99f2eb0fce7ec79185"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 15282,
+                "completion": 219,
+                "total": 15501,
+                "cached_prompt_tokens": 14976
+              },
+              "response_sha256": "1347f4cfb111ee8e557e76794cca74b844d407644434fff7abf0a79578789c5d"
+            }
+          }
+        },
+        {
+          "domain": "reference_standard",
+          "prompt_chars": 15973,
+          "catalog_size": 40,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 14663,
+                "completion": 171,
+                "total": 14834,
+                "cached_prompt_tokens": 14464
+              },
+              "response_sha256": "780d6d75a8f2f7d2454dad92caaba8cab4492de9225b37435009f26dac2ddfe3"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 15271,
+                "completion": 256,
+                "total": 15527,
+                "cached_prompt_tokens": 14976
+              },
+              "response_sha256": "a944718fc5579c76084f1aa6be0ba58b3fe791393850fb6466b3ac2db1a40ef7"
+            }
+          }
+        },
+        {
+          "domain": "flow_timing",
+          "prompt_chars": 16294,
+          "catalog_size": 40,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 4,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 14837,
+                "completion": 235,
+                "total": 15072,
+                "cached_prompt_tokens": 14592
+              },
+              "response_sha256": "ad61c85ce07dc9e8c7a420dd98a5898f8da0fb88f78c9f06a10a625ff867e7f7"
+            },
+            "qwen3-7-flash": {
+              "validated": 2,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 15524,
+                "completion": 415,
+                "total": 15939,
+                "cached_prompt_tokens": 15360
+              },
+              "response_sha256": "cce2301d26ea5675b07388b380cd3f9e531e365b0b56ddfa2fe185474965b2e5"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": 19,
+      "reference_id": 1010,
+      "title": "Accuracy of heparin binding protein: as a new marker in prediction of acute bacterial meningitis",
+      "has_review_context": false,
+      "domains": [
+        {
+          "domain": "patient_selection",
+          "prompt_chars": 5135,
+          "catalog_size": 25,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 1,
+              "errors": [
+                {
+                  "code": "too_many_evidence_refs",
+                  "signal_key": "ps_avoid_cc",
+                  "returned_refs": [
+                    "E004",
+                    "E006",
+                    "E008",
+                    "E010"
+                  ],
+                  "maximum": 3
+                }
+              ],
+              "usage": {
+                "prompt": 2121,
+                "completion": 300,
+                "total": 2421,
+                "cached_prompt_tokens": 1920
+              },
+              "response_sha256": "67fce0b9d0012282d18c56b6f76db15e4634481753014fe7f228db224a331ade"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 1,
+              "errors": [
+                {
+                  "code": "evidence_ref_not_allowed",
+                  "signal_key": "ps_avoid_cc",
+                  "returned_refs": [
+                    "E002",
+                    "E004",
+                    "E010"
+                  ],
+                  "disallowed_refs": [
+                    "E002",
+                    "E004",
+                    "E010"
+                  ],
+                  "allowed_refs": []
+                }
+              ],
+              "usage": {
+                "prompt": 2377,
+                "completion": 347,
+                "total": 2724,
+                "cached_prompt_tokens": 2176
+              },
+              "response_sha256": "08f480c1e8f7090654921fe009e7e99cd76faa1447fda6c604755f4933f5d473"
+            }
+          }
+        },
+        {
+          "domain": "index_test",
+          "prompt_chars": 18563,
+          "catalog_size": 139,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 8100,
+                "completion": 199,
+                "total": 8299,
+                "cached_prompt_tokens": 7936
+              },
+              "response_sha256": "b0a193e5281ddf1415c82177b337b74c19a459f5f3c1f7f5920d3db13c95ae5e"
+            },
+            "qwen3-7-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 9153,
+                "completion": 232,
+                "total": 9385,
+                "cached_prompt_tokens": 8960
+              },
+              "response_sha256": "2ea53d337c14da3e94a8ada23e2bb6f66afe2fd7443451ca9f67a6782d9f4b54"
+            }
+          }
+        },
+        {
+          "domain": "reference_standard",
+          "prompt_chars": 9821,
+          "catalog_size": 53,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 4026,
+                "completion": 196,
+                "total": 4222,
+                "cached_prompt_tokens": 3840
+              },
+              "response_sha256": "f25c6a4b89b7a42c61c1f56c752280e1ddc78ff44eaba86d38e60fb0e1d74bf7"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 4474,
+                "completion": 255,
+                "total": 4729,
+                "cached_prompt_tokens": 4096
+              },
+              "response_sha256": "20c55afb6ed56c140e7c76edb79ab0eb044ad790a891633fd22acda1299c489f"
+            }
+          }
+        },
+        {
+          "domain": "flow_timing",
+          "prompt_chars": 6577,
+          "catalog_size": 21,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 4,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 2735,
+                "completion": 232,
+                "total": 2967,
+                "cached_prompt_tokens": 2560
+              },
+              "response_sha256": "bb05719c44d1fbc36a2917101b8b557f11d2d57025201d8ec53caad7f5d4fc2a"
+            },
+            "qwen3-7-flash": {
+              "validated": 0,
+              "no_evidence": 4,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 3053,
+                "completion": 279,
+                "total": 3332,
+                "cached_prompt_tokens": 0
+              },
+              "response_sha256": "8ba1965930ce14ca126ac8793637dcddae95035a6d03f2a602c353d062699d3b"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "requested": 84,
+    "validated": 18,
+    "no_evidence": 62,
+    "failed": 4,
+    "invalid_rate": 0.047619047619047616,
+    "error_counts": {
+      "evidence_ref_not_allowed": 3,
+      "too_many_evidence_refs": 1
+    },
+    "token_usage": {
+      "prompt": 227159,
+      "completion": 6196,
+      "total": 233355,
+      "cached_prompt_tokens": 219136,
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt": 109035,
+          "completion": 2717,
+          "total": 111752,
+          "cached_prompt_tokens": 106752,
+          "calls": 12
+        },
+        "qwen3-7-flash": {
+          "prompt": 118124,
+          "completion": 3479,
+          "total": 121603,
+          "cached_prompt_tokens": 112384,
+          "calls": 12
+        }
+      }
+    }
+  }
+}

@@ -86,6 +86,29 @@ class QAEvalStartInputSerializer(serializers.Serializer):
         return list(dict.fromkeys(value))
 
 
+class QAReviewContextInputSerializer(serializers.Serializer):
+    project_id = serializers.IntegerField(min_value=1)
+    quality_method = serializers.ChoiceField(choices=METHOD_CHOICES)
+    method_variant = serializers.CharField(
+        max_length=30, allow_blank=True, required=False, default='',
+    )
+    target_population = serializers.CharField(max_length=4000, allow_blank=True, required=False, default='')
+    index_test = serializers.CharField(max_length=4000, allow_blank=True, required=False, default='')
+    target_condition = serializers.CharField(max_length=4000, allow_blank=True, required=False, default='')
+    reference_standard = serializers.CharField(max_length=4000, allow_blank=True, required=False, default='')
+    intended_use = serializers.CharField(max_length=4000, allow_blank=True, required=False, default='')
+    review_objective = serializers.CharField(max_length=4000, allow_blank=True, required=False, default='')
+
+    def validate(self, attrs):
+        try:
+            get_method_config(
+                attrs['quality_method'], attrs.get('method_variant') or None,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError({'method_variant': str(exc)}) from exc
+        return attrs
+
+
 class QASignalConfirmInputSerializer(serializers.Serializer):
     human_judgment = serializers.CharField(max_length=100, trim_whitespace=True)
 

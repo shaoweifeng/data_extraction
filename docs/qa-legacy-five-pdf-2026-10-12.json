@@ -1,0 +1,1348 @@
+{
+  "schema_version": "qa-legacy-live-v1",
+  "generated_at": "2026-10-12T08:41:54.847615+00:00",
+  "asset_ids": [
+    17,
+    18,
+    19,
+    20,
+    21
+  ],
+  "models": [
+    "deepseek-v4-flash",
+    "qwen3-7-flash"
+  ],
+  "content_limit_chars": 8000,
+  "records": [
+    {
+      "asset_id": 17,
+      "reference_id": 1008,
+      "title": "2016  Chen R  脑脊液肝素结合蛋白和降钙素原在细菌性颅内感染诊断中的应用-陈若虹",
+      "content_chars": 8000,
+      "content_sha256": "344984428120cc38b7285d012885cac6fa7887a8596a3ce4a52736ccf5015141",
+      "prompt_chars": 9829,
+      "models": {
+        "deepseek-v4-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 5268,
+            "completion": 1790,
+            "total": 7058,
+            "cached_prompt_tokens": 5120
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "不清楚",
+              "reason": "文献仅说明收集2015年3月至8月在湘雅二医院住院的颅内感染患者64例，未明确是否为连续入组或随机抽样。",
+              "evidence": "收集2015年3月至8月在湘雅二医院住院的颅内感染患者64例，分为细菌性感染组(23例)、病毒性感染组(16例)、结核性感染组(14例)、隐球菌性感染组(11例)。",
+              "evidence_page": "第1页，摘要/方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究采用病例-对照设计，分别纳入细菌性、病毒性、结核性、隐球菌性颅内感染患者及非颅内感染对照组，属于典型病例与对照比较。",
+              "evidence": "分为细菌性感染组(23例)、病毒性感染组(16例)、结核性感染组(14例)、隐球菌性感染组(11例)，同时选择33例脑脊液白细胞计数(WBC)＜10×10⁶/L的非颅内感染性疾病患者作为对照组。",
+              "evidence_page": "第1页，摘要/方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "是",
+              "reason": "研究明确列出了排除标准，包括其他脏器功能受损、肿瘤、合并其他部位感染及免疫功能异常患者，排除标准合理且明确。",
+              "evidence": "其他脏器功能受损(如慢性肾病、呼吸衰竭、心脏衰竭等)、肿瘤、合并其他部位感染以及免疫功能异常(系统性红斑狼疮、类风湿关节炎等)的患者不纳入本次研究。",
+              "evidence_page": "第2页，研究对象部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "高",
+              "reason": "研究对象为颅内感染患者，包括细菌性、病毒性、结核性和隐球菌性感染，以及非颅内感染对照，与研究问题（脑脊液HBP和PCT诊断细菌性颅内感染）的目标人群匹配。",
+              "evidence": "探讨脑脊液中肝素结合蛋白(HBP)和降钙素原(PCT)在细菌性颅内感染诊断中的应用价值。",
+              "evidence_page": "第1页，摘要部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及待评价试验（HBP和PCT检测）结果解释时是否对参考标准结果设盲。",
+              "evidence": "用cobas E411电化学发光分析仪及配套试剂检测PCT；用ELISA法检测HBP水平。",
+              "evidence_page": "第2页，指标检测部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "否",
+              "reason": "研究采用ROC曲线根据尤登指数最大值原则确定最佳cut-off值，属于根据数据事后选择阈值，而非预先设定。",
+              "evidence": "根据尤登指数为最大值的原则确定4种指标最佳cut-off值，HBP、WBC、TP、PCT分别为24.2 ng/mL、82.0×10⁶/L、788.6 mg/L、0.125 ng/mL。",
+              "evidence_page": "第3页，结果部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "待评价试验为脑脊液HBP和PCT检测，采用ELISA和电化学发光法，与临床实际应用的检测方法一致，研究问题匹配度高。",
+              "evidence": "用cobas E411电化学发光分析仪及配套试剂检测PCT；用ELISA法检测HBP水平。",
+              "evidence_page": "第2页，指标检测部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "不清楚",
+              "reason": "文献未明确说明各感染组的具体诊断标准（如脑脊液培养、病原学检测等），无法判断参考标准是否能正确区分目标疾病状态。",
+              "evidence": "收集2015年3月至8月在湘雅二医院住院的颅内感染患者64例，分为细菌性感染组(23例)、病毒性感染组(16例)、结核性感染组(14例)、隐球菌性感染组(11例)。",
+              "evidence_page": "第2页，研究对象部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及参考标准结果解释时是否对待评价试验结果设盲。",
+              "evidence": "患者脑脊液标本由临床医生采集后及时送检。2 h内完成WBC、TP和Glu检测。将脑脊液离心(200×g，离心5 min)取上清液，于－80 ℃保存，以待检测HBP和PCT。",
+              "evidence_page": "第2页，标本采集与处理部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "不清楚",
+              "reason": "文献未明确描述参考标准的具体定义和诊断标准，无法判断参考标准所定义的目标疾病是否与研究问题完全匹配。",
+              "evidence": "收集2015年3月至8月在湘雅二医院住院的颅内感染患者64例，分为细菌性感染组(23例)、病毒性感染组(16例)、结核性感染组(14例)、隐球菌性感染组(11例)。",
+              "evidence_page": "第2页，研究对象部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "是",
+              "reason": "脑脊液标本采集后2小时内完成WBC、TP和Glu检测，上清液保存用于HBP和PCT检测，待评价试验与参考标准之间的时间间隔合理。",
+              "evidence": "患者脑脊液标本由临床医生采集后及时送检。2 h内完成WBC、TP和Glu检测。将脑脊液离心(200×g，离心5 min)取上清液，于－80 ℃保存，以待检测HBP和PCT。",
+              "evidence_page": "第2页，标本采集与处理部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "不清楚",
+              "reason": "文献未明确说明所有入组患者是否都接受了参考标准（如脑脊液细菌培养等）验证。",
+              "evidence": "收集2015年3月至8月在湘雅二医院住院的颅内感染患者64例，分为细菌性感染组(23例)、病毒性感染组(16例)、结核性感染组(14例)、隐球菌性感染组(11例)。",
+              "evidence_page": "第2页，研究对象部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "不清楚",
+              "reason": "文献未明确说明所有患者是否接受了相同的参考标准。",
+              "evidence": "收集2015年3月至8月在湘雅二医院住院的颅内感染患者64例，分为细菌性感染组(23例)、病毒性感染组(16例)、结核性感染组(14例)、隐球菌性感染组(11例)。",
+              "evidence_page": "第2页，研究对象部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "文献中各组例数明确，所有纳入患者的数据均纳入了统计分析，未见未解释的脱落或排除。",
+              "evidence": "细菌性感染组(23例)、病毒性感染组(16例)、结核性感染组(14例)、隐球菌性感染组(11例)，同时选择33例脑脊液WBC＜10×10⁶/L的非颅内感染性疾病患者作为对照组。",
+              "evidence_page": "第2页，研究对象部分"
+            }
+          ]
+        },
+        "qwen3-7-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 5825,
+            "completion": 1807,
+            "total": 7632,
+            "cached_prompt_tokens": 0
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "不清楚",
+              "reason": "文献仅说明收集了2015年3月至8月住院的患者，未明确说明是否采用连续入组或随机抽样方法，无法排除选择性纳入偏倚。",
+              "evidence": "收集2015年3月至8月在湘雅二医院住院的颅内感染患者64例...同时选择33例脑脊液白细胞计数( WBC) ＜10 × 106 /L 的非颅内感染性疾病患者作为对照组。",
+              "evidence_page": "第1页，摘要及1.1研究对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究采用了病例-对照设计，将确诊的细菌性、病毒性等感染组与WBC<10的非感染对照组进行对比，这种设计容易夸大诊断准确性。",
+              "evidence": "分为细菌性感染组( 23 例)...病毒性感染组( 16 例)...非颅内感染性疾病患者33例...作为对照组。",
+              "evidence_page": "第1页，摘要及1.1研究对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "是",
+              "reason": "研究明确列出了排除标准（如其他脏器功能受损、肿瘤、合并其他部位感染等），这有助于提高样本的同质性和代表性，避免不恰当排除导致的偏倚。",
+              "evidence": "其他脏器功能受损( 如慢性肾病、呼吸衰竭、心脏衰竭等) 、肿瘤、合并其他部位感染以及免疫功能异常...的患者不纳入本次研究。",
+              "evidence_page": "第1页，1.1研究对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "高",
+              "reason": "研究对象为疑似颅内感染的住院患者，涵盖了细菌、病毒、结核、隐球菌等多种病因及非感染对照，符合鉴别诊断细菌性颅内感染的临床场景。",
+              "evidence": "收集2015年3月至8月在湘雅二医院住院的颅内感染患者64例，分为细菌性感染组...病毒性感染组...结核性感染组...隐球菌性感染组...对照组。",
+              "evidence_page": "第1页，1.1研究对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及HBP和PCT的检测人员是否知晓患者的临床诊断结果或参考标准结果，无法判断是否存在测量偏倚。",
+              "evidence": "测定并统计分析患者脑脊液中WBC、总蛋白( TP) 、葡萄糖( Glu) 、HBP 和PCT 水平。",
+              "evidence_page": "第1页，摘要及1.4指标检测"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "否",
+              "reason": "最佳cut-off值是根据尤登指数最大值原则从ROC曲线中事后确定的，而非在研究前预先设定。",
+              "evidence": "根据尤登指数为最大值的原则确定4 种指标最佳cut-off 值...各指标cut-off 值所对应的敏感性、特异性...见表3。",
+              "evidence_page": "第3页，2.3 4 种指标的诊断效能评价结果"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "使用ELISA和电化学发光法检测脑脊液HBP和PCT，这些是临床上可行的检测方法，且针对的是目标疾病状态，符合应用场景。",
+              "evidence": "用cobas E411 电化学发光分析仪及配套试剂检测PCT; 用ELISA 法检测HBP 水平。",
+              "evidence_page": "第1页，1.4指标检测"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "不清楚",
+              "reason": "文献指出细菌培养阳性率低且耗时，但未明确说明“细菌性感染组”的金标准具体是什么（如是否结合临床表现、培养、PCR等综合判定），参考标准的准确性存疑。",
+              "evidence": "诊断细菌性颅内感染的金标准，即脑脊液细菌培养，耗时较长且阳性率不高...本文旨在通过比较...探讨HBP 和PCT 对颅内感染的鉴别诊断价值。",
+              "evidence_page": "第1页，引言及1.1研究对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及参考标准（如最终临床诊断）的解释者是否盲态了解待评价试验（HBP/PCT）的结果。",
+              "evidence": "无相关描述。",
+              "evidence_page": "全文"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准旨在区分细菌性颅内感染与其他类型颅内感染及非感染，与研究问题（诊断细菌性颅内感染）高度匹配。",
+              "evidence": "探讨脑脊液中肝素结合蛋白( HBP) 和降钙素原( PCT) 在细菌性颅内感染诊断中的应用价值。",
+              "evidence_page": "第1页，摘要"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "是",
+              "reason": "标本采集后2小时内完成传统指标检测，离心后保存待测HBP和PCT，时间间隔较短，疾病状态发生变化的可能性小。",
+              "evidence": "患者脑脊液标本由临床医生采集后及时送检。2 h 内完成WBC、TP 和Glu 检测。将脑脊液离心...取上清液，于－80 ℃保存，以待检测HBP 和PCT。",
+              "evidence_page": "第1页，1.3标本采集与处理"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "是",
+              "reason": "所有入组的感染组和非感染组患者均被分类到相应的诊断组别中，意味着所有患者都接受了最终的诊断评估（参考标准）。",
+              "evidence": "收集...颅内感染患者64例，分为...同时选择...非颅内感染性疾病患者33例...作为对照组。",
+              "evidence_page": "第1页，1.1研究对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "是",
+              "reason": "所有患者均依据统一的临床诊断标准被归类为细菌性、病毒性、结核性、隐球菌性或非感染组，使用了相同的参考标准流程。",
+              "evidence": "分为细菌性感染组...病毒性感染组...结核性感染组...隐球菌性感染组...非颅内感染性疾病患者...作为对照组。",
+              "evidence_page": "第1页，1.1研究对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "研究纳入了97例患者（64例感染+33例对照），并在结果部分报告了各组的具体样本量，未见明显未解释的脱落。",
+              "evidence": "细菌感染组( n = 23)...病毒性感染组( n = 16)...结核性感染组( n = 14)...隐球菌性感染组( n = 11)...对照组( n = 33)。",
+              "evidence_page": "第1页，1.1研究对象及表1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "asset_id": 18,
+      "reference_id": 1009,
+      "title": "2017 Lei J   急性化脓性脑膜炎儿童脑脊液肝素结合蛋白水平变化及其与不良预后的关系 雷娟娟",
+      "content_chars": 8000,
+      "content_sha256": "27ab18560c1540cb55fb0f8a2f2641b11151ce82c36bf23efe551be1fc284bd5",
+      "prompt_chars": 9829,
+      "models": {
+        "deepseek-v4-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 8530,
+            "completion": 1607,
+            "total": 10137,
+            "cached_prompt_tokens": 8320
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "不清楚",
+              "reason": "文献仅说明选择2015-01至2016-10我科治疗的急性PM和VM患儿纳入研究，未明确是否为连续入组或随机抽样。",
+              "evidence": "选择２０１５－０１－２０１６－１０我科治疗的急性ＰＭ和ＶＭ患儿纳入研究，其中ＰＭ组３３例……ＶＭ组４５例",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究设置了非感染性疾病对照组（需腰椎穿刺蛛网膜下腔麻醉的患儿），属于病例-对照设计，而非避免病例-对照设计。",
+              "evidence": "另选择本院收治的３０例需腰椎穿刺蛛网膜下腔麻醉的患儿作为对照组",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "是",
+              "reason": "研究明确列出了排除标准（其他类型中枢神经系统感染、合并其他中枢神经系统疾病、入院前抗感染治疗），均为合理的排除标准，未发现不恰当排除。",
+              "evidence": "排除标准：①明确诊断为其他类型中枢神经系统感染性疾病；②合并其他中枢神经系统疾病；③入院前抗感染治疗。",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "高",
+              "reason": "纳入的急性化脓性脑膜炎患儿为首次发病、发病到脑脊液采集≤48h，研究对象与研究问题（脑脊液HBP诊断PM及评估预后）匹配。",
+              "evidence": "ＰＭ或ＶＭ均为首次发病，发病到脑脊液采集≤４８ｈ；ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科学》",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及脑脊液HBP检测时是否对参考标准结果设盲。",
+              "evidence": "采用酶联免疫吸附试验（ＥＬＩＳＡ）法检测脑脊液ＨＢＰ水平……上述检测工作均由我院检验科完成。",
+              "evidence_page": "第2页，资料与方法-观察指标"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "否",
+              "reason": "研究采用ROC曲线按约登指数最大原则确定cut-off值，属于根据数据事后选择最佳阈值，而非预先设定。",
+              "evidence": "按照约登指数最大原则，取４种指标各自ｃｕｔ－ｏｆｆ值分别为２７ｎｇ／ｍｌ、１２０．５ｎｇ／Ｌ、５．５ｍｇ／Ｌ和７０．５×１０６／Ｌ",
+              "evidence_page": "第2页，结果-各指标诊断PM的ROC曲线"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "脑脊液HBP采用ELISA法检测，为临床可及的检测方法，其诊断PM的应用场景与研究问题匹配。",
+              "evidence": "采集患儿脑脊液标本２ｍｌ，采用酶联免疫吸附试验（ＥＬＩＳＡ）法检测脑脊液ＨＢＰ水平",
+              "evidence_page": "第2页，资料与方法-观察指标"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "是",
+              "reason": "PM和VM诊断标准参照第7版《诸福棠实用儿科学》，部分病例有病原学确认，参考标准可正确区分目标疾病状态。",
+              "evidence": "ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科学》……ＰＭ组中有７例确定了病原，包括肺炎球菌３例、流感嗜血杆菌２例……ＶＭ组中有１０例确定了病原",
+              "evidence_page": "第2页，资料与方法-一般资料及结果"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及参考标准（临床诊断）判断时是否对HBP检测结果设盲。",
+              "evidence": "ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科学》",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准为临床诊断标准（第7版《诸福棠实用儿科学》），所定义的急性化脓性脑膜炎与研究问题关注的目标疾病一致。",
+              "evidence": "ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科学》",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "是",
+              "reason": "研究要求发病到脑脊液采集≤48h，待评价试验（脑脊液HBP检测）与参考标准（临床诊断）之间时间间隔合理。",
+              "evidence": "ＰＭ或ＶＭ均为首次发病，发病到脑脊液采集≤４８ｈ",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "是",
+              "reason": "所有入组患儿均依据临床诊断标准确诊为PM或VM，均接受了参考标准验证。",
+              "evidence": "ＰＭ组３３例……ＶＭ组４５例……ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科学》",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "是",
+              "reason": "所有患儿均采用相同的诊断标准（第7版《诸福棠实用儿科学》）作为参考标准。",
+              "evidence": "ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科学》",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "文献报告了PM组33例、VM组45例、对照组30例的完整数据，未提及脱落或排除，所有入组患者均纳入分析。",
+              "evidence": "ＰＭ组３３例，男１４例，女１９例……ＶＭ组４５例……对照组３０例",
+              "evidence_page": "第2页，资料与方法-一般资料"
+            }
+          ]
+        },
+        "qwen3-7-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 8738,
+            "completion": 1745,
+            "total": 10483,
+            "cached_prompt_tokens": 0
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "是",
+              "reason": "研究明确说明选择2015-01至2016-10期间“我科治疗”的患儿纳入，属于连续入组的临床病例系列。",
+              "evidence": "选择２０１５－０１－２０１６－１０我科治疗的急性ＰＭ和ＶＭ患儿纳入研究...另选择本院收治的３０例需腰椎穿刺蛛网膜下腔麻醉的患儿作为对照组",
+              "evidence_page": "第2页，1.1 一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究采用了病例-对照设计，分别选取确诊的PM组、VM组和对照组（非感染性疾病），而非从同一连续队列中筛选所有疑似患者进行诊断测试。",
+              "evidence": "选择...急性ＰＭ和ＶＭ患儿纳入研究...另选择本院收治的３０例需腰椎穿刺蛛网膜下腔麻醉的患儿作为对照组",
+              "evidence_page": "第2页，1.1 一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "是",
+              "reason": "排除标准合理且明确（如其他中枢感染、合并其他疾病、入院前抗感染治疗），旨在保证样本同质性，未见不恰当排除导致代表性严重受损的描述。",
+              "evidence": "排除标准：①明确诊断为其他类型中枢神经系统感染性疾病；②合并其他中枢神经系统疾病；③入院前抗感染治疗。",
+              "evidence_page": "第2页，1.1 一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "低",
+              "reason": "对照组为“需腰椎穿刺蛛网膜下腔麻醉的非感染性疾病患儿”，并非典型的“疑似脑膜炎但非细菌性”的临床鉴别场景（如病毒性脑膜炎虽已纳入，但健康/非感染对照在临床诊断流程中不具可比性），可能高估诊断效能。",
+              "evidence": "另选择本院收治的３０例需腰椎穿刺蛛网膜下腔麻醉的患儿作为对照组，纳入标准：①性别、年龄与ＰＭ组、ＶＭ组匹配；②排除颅内肿瘤、免疫性疾病及感染性疾病。",
+              "evidence_page": "第2页，1.1 一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文中未提及检测HBP等指标的操作人员是否知晓患者的临床分组或预后情况，无法判断是否存在测量偏倚。",
+              "evidence": "上述检测工作均由我院检验科完成。",
+              "evidence_page": "第2页，1.3 观察指标"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "否",
+              "reason": "Cut-off值是通过绘制ROC曲线并依据约登指数最大原则事后计算得出的，而非预先设定的固定阈值。",
+              "evidence": "按照约登指数最大原则，取４种指标各自ｃｕｔ－ｏｆｆ值分别为２７ｎｇ／ｍｌ...",
+              "evidence_page": "第2页，2.4 各指标诊断ＰＭ的ＲＯＣ曲线"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "ELISA法检测脑脊液HBP是成熟的实验室技术，符合临床实际应用场景，方法学描述清晰。",
+              "evidence": "采用酶联免疫吸附试验（ｅｎｚｙｍｅ　ｌｉｎｋｅｄ　ｉｍｍｕｎｏｓｏｒｂｅｎｔ　ａｓｓａｙ，ＥＬＩＳＡ）法检测脑脊液ＨＢＰ水平",
+              "evidence_page": "第2页，1.3 观察指标"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "是",
+              "reason": "参考标准参照第7版《诸福棠实用儿科病学》进行诊断，这是权威的儿科临床指南，能够正确区分目标疾病。",
+              "evidence": "ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科病学》",
+              "evidence_page": "第2页，1.1 一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "参考标准基于临床诊断标准和病原学结果，文中未说明诊断医生是否盲态评估，但通常临床诊断会结合多种信息，盲法实施情况不明。",
+              "evidence": "现阶段，急性ＰＭ仍是儿童神经系统的急危重症之一...目前ＰＭ诊断主要依靠患儿临床症状结合病原学检查",
+              "evidence_page": "第3页，3 讨论"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准定义的急性化脓性脑膜炎（PM）与研究关注的目标疾病完全一致。",
+              "evidence": "目的：探讨急性化脓性脑膜炎（ＰＭ）患儿脑脊液肝素结合蛋白（ＨＢＰ）水平",
+              "evidence_page": "第1页，摘要"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "是",
+              "reason": "纳入标准要求发病到脑脊液采集≤48小时，时间间隔短，能反映急性期状态，避免病情变化导致的偏差。",
+              "evidence": "纳入标准：...②ＰＭ或ＶＭ均为首次发病，发病到脑脊液采集≤４８ｈ",
+              "evidence_page": "第2页，1.1 一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "是",
+              "reason": "所有入组的PM和VM患儿均依据临床标准进行了诊断分类，即都接受了参考标准的验证。",
+              "evidence": "选择...急性ＰＭ和ＶＭ患儿纳入研究...ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科病学》",
+              "evidence_page": "第2页，1.1 一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "是",
+              "reason": "所有患者均使用相同的诊断标准（《诸福棠实用儿科病学》）进行分类。",
+              "evidence": "ＰＭ或ＶＭ诊断标准参照第７版《诸福棠实用儿科病学》",
+              "evidence_page": "第2页，1.1 一般资料"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "文中报告了各组的具体样本量（PM 33, VM 45, Control 30），并在结果部分使用了这些数据进行统计分析，无证据表明存在未解释的脱落。",
+              "evidence": "ＰＭ组３３例...ＶＭ组４５例...对照组３０例",
+              "evidence_page": "第2页，1.1 一般资料"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "asset_id": 19,
+      "reference_id": 1010,
+      "title": "Accuracy of heparin binding protein: as a new marker in prediction of acute bacterial meningitis",
+      "content_chars": 8000,
+      "content_sha256": "5c472ccaea6f92d381cb479d564711f522d074ddf4320b5ec346d829291ff231",
+      "prompt_chars": 9886,
+      "models": {
+        "deepseek-v4-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 3475,
+            "completion": 1426,
+            "total": 4901,
+            "cached_prompt_tokens": 3328
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "不清楚",
+              "reason": "文献仅说明纳入90例临床疑似急性脑膜炎患者，未明确是否连续入组或随机抽样。",
+              "evidence": "the study population encompassed 90 patients who were admitted to the Fever Hospital in Alexandria, Egypt, and were clinically suspected to have acute meningitis",
+              "evidence_page": "第2页，Methods-Study population"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究按诊断将人群分为细菌性脑膜炎、病毒性脑膜炎和正常CSF对照组三组，属于病例-对照设计。",
+              "evidence": "the study population was classified into three groups: Group I included 30 patients diagnosed with acute bacterial meningitis, 30 viral meningitis, and 30 subjects with normal CSF findings",
+              "evidence_page": "第1页，摘要-Patients；第2页，Methods"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "不清楚",
+              "reason": "文献未报告是否有患者被排除或排除标准，无法判断是否存在不恰当排除。",
+              "evidence": "the study population encompassed 90 patients who were admitted to the Fever Hospital in Alexandria, Egypt, and were clinically suspected to have acute meningitis",
+              "evidence_page": "第2页，Methods-Study population"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "低",
+              "reason": "研究纳入的是已确诊分组患者（含正常CSF对照组），而非临床疑似急性脑膜炎的连续就诊人群，与诊断准确性研究的目标人群不完全匹配。",
+              "evidence": "Group I included 30 patients diagnosed with acute bacterial meningitis, 30 viral meningitis, and 30 subjects with normal CSF findings",
+              "evidence_page": "第1页，摘要-Patients"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未描述HBP检测结果解释时是否对参考标准结果设盲。",
+              "evidence": "HBP was measured using enzyme-linked immunosorbent technique in both serum & CSF",
+              "evidence_page": "第1页，摘要-Design/Results"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "不清楚",
+              "reason": "文献报告了CSF和血清的cut-off值（56.7 ng/ml和45.3 ng/ml），但未说明这些阈值是否预先设定还是基于数据事后确定。",
+              "evidence": "Cut-offs of 56.7 ng/ml and 45.3 ng/ml in cerebrospinal fluid & serum showed 100% overall accuracy",
+              "evidence_page": "第1页，摘要-Results"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "HBP采用ELISA方法检测血清和CSF，方法学描述清晰，与临床实际应用场景匹配。",
+              "evidence": "HBP was measured using enzyme-linked immunosorbent technique in both serum & CSF",
+              "evidence_page": "第1页，摘要-Design"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "是",
+              "reason": "参考标准为CSF细菌培养（金标准），结合临床表现、CSF检查、乳胶凝集和培养及治疗反应综合判断，能正确区分目标疾病状态。",
+              "evidence": "Cerebrospinal fluid bacterial culture is the gold-standard for confirmation of acute bacterial meningitis; Diagnosis was based on history, clinical criteria, CSF examination, latex agglutination & culture, and sensitivities and response to therapy",
+              "evidence_page": "第1页，摘要-Background/Design"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未描述参考标准结果解释时是否对待评价试验（HBP）结果设盲。",
+              "evidence": "Diagnosis was based on history, clinical criteria, CSF examination, latex agglutination & culture, and sensitivities and response to therapy",
+              "evidence_page": "第1页，摘要-Design"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准定义的急性细菌性脑膜炎与研究问题中的目标疾病一致，采用CSF培养及综合临床标准。",
+              "evidence": "Cerebrospinal fluid bacterial culture is the gold-standard for confirmation of acute bacterial meningitis",
+              "evidence_page": "第1页，摘要-Background"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "不清楚",
+              "reason": "文献未明确说明HBP检测与参考标准（CSF培养等）之间的具体时间间隔。",
+              "evidence": "HBP was measured using enzyme-linked immunosorbent technique in both serum & CSF",
+              "evidence_page": "第1页，摘要-Design"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "是",
+              "reason": "所有90例患者均接受了CSF检查、培养等参考标准验证，诊断基于这些综合标准进行分组。",
+              "evidence": "Diagnosis was based on history, clinical criteria, CSF examination, latex agglutination & culture, and sensitivities and response to therapy",
+              "evidence_page": "第1页，摘要-Design"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "是",
+              "reason": "所有患者均接受了相同的参考标准组合（临床表现、CSF检查、乳胶凝集、培养及治疗反应）。",
+              "evidence": "Diagnosis was based on history, clinical criteria, CSF examination, latex agglutination & culture, and sensitivities and response to therapy",
+              "evidence_page": "第1页，摘要-Design"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "研究纳入90例患者，分组为30例细菌性脑膜炎、30例病毒性脑膜炎和30例正常对照，所有患者均纳入分析。",
+              "evidence": "30 patients diagnosed with acute bacterial meningitis, 30 viral meningitis, and 30 subjects with normal CSF findings",
+              "evidence_page": "第1页，摘要-Patients"
+            }
+          ]
+        },
+        "qwen3-7-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 3879,
+            "completion": 1577,
+            "total": 5456,
+            "cached_prompt_tokens": 0
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "不清楚",
+              "reason": "文献摘要和正文片段仅说明纳入了90名患者，分为三组，但未明确说明入组方式是连续纳入还是随机抽样，也未提及排除标准的具体细节。",
+              "evidence": "Study population: the study population encompassed 90 patients who were admitted to the Fever Hospital in Alexandria, Egypt, and were clinically suspected to have acute meningitis end of 2016 & early 2017.",
+              "evidence_page": "第2页，Methods部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究设计为横断面研究，但样本选取明显采用了病例-对照模式，分别纳入了确诊的细菌性脑膜炎、病毒性脑膜炎和正常对照组各30例，而非来自同一临床队列的连续样本。",
+              "evidence": "Patients: 30 patients diagnosed with acute bacterial meningitis, 30 viral meningitis, and 30 subjects with normal CSF findings. Design: Diagnosis was based on history, clinical criteria...",
+              "evidence_page": "第1页，Abstract部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "不清楚",
+              "reason": "提供的文本片段中未包含详细的排除标准或筛选流程描述，无法判断是否存在不恰当的排除情况。",
+              "evidence": "NA",
+              "evidence_page": "NA"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "高",
+              "reason": "研究对象为疑似急性细菌性脑膜炎的患者，来源于三级护理中心（Fever Hospital），符合诊断准确性研究的目标人群特征，具有较好的临床适用性。",
+              "evidence": "Study setting: ... tertiary care facility ... serves the population of Alexandria city ... Study design: Cross-sectional study. Study population: ... clinically suspected to have acute meningitis",
+              "evidence_page": "第2页，Methods部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献摘要和现有片段中未提及HBP检测人员是否知晓患者的临床诊断结果或参考标准结果，缺乏关于盲法执行的明确描述。",
+              "evidence": "HBP was measured using enzyme-linked immunosorbent technique in both serum & CSF.",
+              "evidence_page": "第1页，Abstract部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "不清楚",
+              "reason": "文中报告了截断值（Cut-offs）及其准确率，但未说明这些阈值是在研究前预先设定的，还是通过ROC曲线事后确定的。",
+              "evidence": "Cut-offs of 56.7 ng/ml and 45.3 ng/ml in cerebrospinal fluid & serum showed 100% overall accuracy.",
+              "evidence_page": "第1页，Abstract部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "待评价试验为血清和脑脊液HBP检测，旨在预测急性细菌性脑膜炎，这与综述关注的目标疾病和临床应用场景高度匹配。",
+              "evidence": "Objective to evaluate efficacy of Heparin-binding protein in diagnosis of bacterial meningitis. ... Serum Heparin-binding protein serves as a non-invasive potential marker of acute bacterial meningitis",
+              "evidence_page": "第1页，Abstract部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "是",
+              "reason": "参考标准结合了病史、临床标准、CSF检查、乳胶凝集试验、培养及治疗反应，虽然并非单一金标准，但对于区分细菌性和非细菌性脑膜炎是合理且充分的复合标准。",
+              "evidence": "Diagnosis was based on history, clinical criteria, CSF examination, latex agglutination & culture, and sensitivities and response to therapy.",
+              "evidence_page": "第1页，Abstract部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及确定最终诊断（参考标准）的临床医生或实验室人员是否知晓HBP检测结果，存在潜在的性能偏倚风险。",
+              "evidence": "NA",
+              "evidence_page": "NA"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准定义的疾病状态为“急性细菌性脑膜炎”，与本研究旨在评估的诊断目标完全一致。",
+              "evidence": "Accuracy of heparin binding protein: as a new marker in prediction of acute bacterial meningitis",
+              "evidence_page": "第1页，标题"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "不清楚",
+              "reason": "文献未提供HBP检测与参考标准诊断之间的具体时间间隔信息，无法判断是否存在因时间延迟导致的疾病状态改变。",
+              "evidence": "NA",
+              "evidence_page": "NA"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "是",
+              "reason": "所有入组的90名患者均接受了基于临床、实验室和培养的综合诊断评估，即都接受了参考标准的验证。",
+              "evidence": "the study population was classified into three groups... Diagnosis was based on history, clinical criteria, CSF examination, latex agglutination & culture...",
+              "evidence_page": "第1页，Abstract部分；第2页，Methods部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "是",
+              "reason": "所有患者均依据相同的诊断标准组合（病史、临床、CSF、培养等）进行分类，没有证据显示不同组别使用了不同的参考标准。",
+              "evidence": "Diagnosis was based on history, clinical criteria, CSF examination, latex agglutination & culture, and sensitivities and response to therapy.",
+              "evidence_page": "第1页，Abstract部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "研究纳入了90名患者并报告了三组的数据，未发现明显的脱落或未解释的排除导致分析不完整的情况。",
+              "evidence": "Patients: 30 patients diagnosed with acute bacterial meningitis, 30 viral meningitis, and 30 subjects with normal CSF findings.",
+              "evidence_page": "第1页，Abstract部分"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "asset_id": 20,
+      "reference_id": 1011,
+      "title": "JY11A01程歆琦",
+      "content_chars": 8000,
+      "content_sha256": "0c2491a974a1a75b27d1649e42d6bdf6c1a6e0f58db6adcc1e22568b13c38e63",
+      "prompt_chars": 9812,
+      "models": {
+        "deepseek-v4-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 4758,
+            "completion": 1541,
+            "total": 6299,
+            "cached_prompt_tokens": 4608
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "不清楚",
+              "reason": "文献仅说明选取2018年8月至2019年1月收治的中枢神经系统感染患儿131例，未明确是否为连续入组或随机抽样。",
+              "evidence": "选取2018年8月至2019年1月湖南省儿童医院收治的中枢神经系统感染患儿131例，其中化脓性脑膜炎（PM组）76例……病毒性脑炎患儿（VE组）55例。",
+              "evidence_page": "第2页，对象与方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究设置了非感染性疾病患儿作为对照组，属于病例-对照设计，而非避免病例-对照设计。",
+              "evidence": "另选择40例脑脊液白细胞计数正常的非感染性疾病（癫痫、自身免疫性脑炎等）患儿作为对照组。",
+              "evidence_page": "第3页，对象与方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "是",
+              "reason": "研究明确列出了排除标准，包括颅脑外伤、中枢神经系统肿瘤、非细菌或病毒病原体感染以及入院前抗生素治疗时间>48 h，排除标准合理。",
+              "evidence": "排除颅脑外伤、中枢神经系统肿瘤、非细菌或病毒病原体感染以及入院前抗生素治疗时间>48 h的患儿。",
+              "evidence_page": "第3页，对象与方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "高",
+              "reason": "研究对象为小儿化脓性脑膜炎患儿，研究目的是评估脑脊液HBP在其诊断和预后中的价值，纳入人群与研究问题匹配。",
+              "evidence": "探讨脑脊液肝素结合蛋白（HBP）检测在小儿化脓性脑膜炎（PM）诊断和预后预测中的价值。",
+              "evidence_page": "第1页，摘要部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及待评价试验（HBP检测）结果解释时是否对参考标准结果设盲。",
+              "evidence": "HBP检测采用免疫荧光干式定量法，仪器和试剂为中翰盛泰生物技术股份有限公司生产的Jet-iStar3000免疫分析仪及配套试剂。",
+              "evidence_page": "第3页，方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "否",
+              "reason": "研究采用ROC曲线约登指数最大时的临界值作为最佳界值，属于根据数据事后确定阈值，而非预先设定。",
+              "evidence": "以约登指数最大时的临界值作为最佳界值。",
+              "evidence_page": "第3页，统计学分析部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "待评价试验为脑脊液HBP检测，采用免疫荧光干式定量法，方法学描述清晰，与研究问题匹配。",
+              "evidence": "HBP检测采用免疫荧光干式定量法，仪器和试剂为中翰盛泰生物技术股份有限公司生产的Jet-iStar3000免疫分析仪及配套试剂，检测下限为5.9 ng/mL。",
+              "evidence_page": "第3页，方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "是",
+              "reason": "参考标准为《诸福棠实用儿科学》第8版化脓性脑膜炎与病毒性脑炎的诊断标准，为公认的临床诊断标准，能正确区分目标疾病状态。",
+              "evidence": "PM与VE患儿均符合《诸福棠实用儿科学》第8版化脓性脑膜炎与病毒性脑炎的诊断标准。",
+              "evidence_page": "第3页，对象与方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及参考标准结果解释时是否对待评价试验（HBP）结果设盲。",
+              "evidence": "PM与VE患儿均符合《诸福棠实用儿科学》第8版化脓性脑膜炎与病毒性脑炎的诊断标准。",
+              "evidence_page": "第3页，对象与方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准定义的化脓性脑膜炎和病毒性脑炎与研究问题中的目标疾病一致。",
+              "evidence": "PM与VE患儿均符合《诸福棠实用儿科学》第8版化脓性脑膜炎与病毒性脑炎的诊断标准。",
+              "evidence_page": "第3页，对象与方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "是",
+              "reason": "所有患儿于入院后12小时内、抗生素治疗之前采集标本进行待评价试验和参考标准评估，时间间隔合适。",
+              "evidence": "所有患儿于入院后12小时内、抗生素治疗之前（第1天）采集脑脊液检测HBP、WBC、N%、Glu、TP、LDH，同时抽取静脉血分离血清用于PCT检测。",
+              "evidence_page": "第3页，方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "是",
+              "reason": "所有纳入的PM组、VE组和对照组患儿均按照诊断标准进行了参考标准验证。",
+              "evidence": "PM与VE患儿均符合《诸福棠实用儿科学》第8版化脓性脑膜炎与病毒性脑炎的诊断标准……另选择40例脑脊液白细胞计数正常的非感染性疾病患儿作为对照组。",
+              "evidence_page": "第3页，对象与方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "是",
+              "reason": "所有患儿均采用相同的参考标准（《诸福棠实用儿科学》第8版诊断标准）进行诊断。",
+              "evidence": "PM与VE患儿均符合《诸福棠实用儿科学》第8版化脓性脑膜炎与病毒性脑炎的诊断标准。",
+              "evidence_page": "第3页，对象与方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "文献报告了PM组76例、VE组55例和对照组40例的全部数据，未提及脱落或排除，所有患者均纳入分析。",
+              "evidence": "选取2018年8月至2019年1月湖南省儿童医院收治的中枢神经系统感染患儿131例，其中化脓性脑膜炎（PM组）76例……病毒性脑炎患儿（VE组）55例……另选择40例……作为对照组。",
+              "evidence_page": "第2-3页，对象与方法部分"
+            }
+          ]
+        },
+        "qwen3-7-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 5411,
+            "completion": 1787,
+            "total": 7198,
+            "cached_prompt_tokens": 0
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "是",
+              "reason": "研究选取了2018年8月至2019年1月期间收治的连续病例，未提及非连续或随机抽样导致的偏倚。",
+              "evidence": "选取2018 年8 月至2019 年1 月湖南省儿童医院收治的中枢神经系统感染患儿131例...另选择40例脑脊液白细胞计数正常的非感染性疾病患儿作为对照组",
+              "evidence_page": "第2页，对象与方法-一、对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究采用了回顾性设计，将确诊的化脓性脑膜炎（PM）和病毒性脑炎（VE）患儿与对照组进行比较，属于典型的病例对照设计，存在选择性纳入典型病例的风险。",
+              "evidence": "采取回顾性研究方法，选取2018年8月至2019年1月湖南省儿童医院收治的化脓性脑膜炎患儿（PM组）76例，病毒性脑炎患儿（VE组）55例，另选择同期40例...作为对照组。",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "是",
+              "reason": "研究明确列出了排除标准（如颅脑外伤、肿瘤、入院前抗生素治疗>48h等），这些排除标准对于确保诊断准确性是合理的，未见不恰当排除。",
+              "evidence": "排除颅脑外伤、中枢神经系统肿瘤、非细菌或病毒病原体感染以及入院前抗生素治疗时间>48 h 的患儿。",
+              "evidence_page": "第2页，对象与方法-一、对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "高",
+              "reason": "研究对象为疑似中枢神经系统感染的儿童，符合临床实际应用场景，且疾病阶段（入院时）与研究问题（早期诊断）匹配。",
+              "evidence": "选取2018 年8 月至2019 年1 月湖南省儿童医院收治的中枢神经系统感染患儿...所有患儿于入院后12 小时内、抗生素治疗之前（第1 天）采集脑脊液检测",
+              "evidence_page": "第2页，对象与方法-一、对象及二、方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献中未明确说明HBP检测结果的解释者是否知晓参考标准（临床诊断）的结果，也未说明是否采用盲法评估。",
+              "evidence": "文献仅描述了检测方法（免疫荧光干式定量法等）和统计学分析，未提及结果判读时的盲法措施。",
+              "evidence_page": "第2页，对象与方法-二、方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "否",
+              "reason": "最佳诊断界值是通过ROC曲线约登指数最大时确定的，属于事后根据数据计算得出，而非预先设定的固定阈值。",
+              "evidence": "以受试者工作特征曲线（ROC）评价...以约登指数最大时的临界值作为最佳界值。HBP最佳诊断界值（11.84 ng/mL）...",
+              "evidence_page": "第2页，对象与方法-三、统计学分析及第1页，结果"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "待评价试验（HBP检测）在入院早期进行，使用常规临床仪器，符合小儿化脓性脑膜炎早期诊断的实际应用需求。",
+              "evidence": "HBP 检测采用免疫荧光干式定量法...所有指标均在标本采集后 2 小时内完成检测。",
+              "evidence_page": "第2页，对象与方法-二、方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "是",
+              "reason": "参考标准为《诸福棠实用儿科学》第8版诊断标准，并结合脑脊液细菌培养阳性作为部分确诊依据，能够正确区分目标疾病。",
+              "evidence": "PM与VE患儿均符合《诸福棠实用儿科学》第8 版化脓性脑膜炎与病毒性脑炎的诊断标准...PM 患儿入院后脑脊液细菌培养阳性21 例",
+              "evidence_page": "第2页，对象与方法-一、对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未说明临床医生在做出最终诊断（参考标准）时，是否不知道HBP或其他实验室指标的结果。",
+              "evidence": "文献未提及诊断过程中是否对实验室检查结果设盲。",
+              "evidence_page": "全文缺失相关信息"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准定义的疾病状态（化脓性脑膜炎）与本综述关注的目标疾病完全一致。",
+              "evidence": "探讨脑脊液肝素结合蛋白（HBP）检测在小儿化脓性脑膜炎（PM）诊断...中的价值。",
+              "evidence_page": "第1页，摘要-目的"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "是",
+              "reason": "待评价试验（HBP）与参考标准（临床诊断/培养）均在入院早期（第1天）进行，时间间隔短，疾病状态稳定。",
+              "evidence": "所有患儿于入院后12 小时内、抗生素治疗之前（第1 天）采集脑脊液检测HBP...同时抽取静脉血分离血清用于PCT检测",
+              "evidence_page": "第2页，对象与方法-二、方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "是",
+              "reason": "所有入组的PM、VE及对照组患儿均接受了基于临床标准和/或细菌培养的参考标准判定。",
+              "evidence": "PM与VE患儿均符合《诸福棠实用儿科学》第8 版...诊断标准...另选择40例...作为对照组。",
+              "evidence_page": "第2页，对象与方法-一、对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "是",
+              "reason": "所有患者均依据相同的诊断标准（《诸福棠实用儿科学》第8版）进行分类，参考标准一致。",
+              "evidence": "PM与VE患儿均符合《诸福棠实用儿科学》第8 版化脓性脑膜炎与病毒性脑炎的诊断标准",
+              "evidence_page": "第2页，对象与方法-一、对象"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "研究纳入了全部131例患儿及40例对照组，并在结果中报告了各组的具体样本量，无未解释的脱落。",
+              "evidence": "选取...患儿131例...另选择40例...作为对照组。结果部分详细列出了各组的样本量（n=76, n=55, n=40）。",
+              "evidence_page": "第2页，对象与方法-一、对象及第1页，结果"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "asset_id": 21,
+      "reference_id": 1012,
+      "title": "JY7A01李伟述评",
+      "content_chars": 8000,
+      "content_sha256": "45805dcc13780ef4b68c224c01a87fbbaedc391877833e85c27f765f58b26ec1",
+      "prompt_chars": 9812,
+      "models": {
+        "deepseek-v4-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 4114,
+            "completion": 1501,
+            "total": 5615,
+            "cached_prompt_tokens": 3968
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "不清楚",
+              "reason": "文献仅说明收集了2016年12月至2018年5月住院患者，未明确是否连续入组或随机抽样。",
+              "evidence": "收集2016年12月至2018年5月在辽宁省人民医院神经科住院的开颅术后患者150例",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究明确为病例对照研究设计，分别纳入细菌性颅内感染、非细菌性颅内感染和对照组，属于病例-对照设计。",
+              "evidence": "方法 病例对照研究。收集……术后细菌性颅内感染组73例，术后未感染组77例……非细菌性颅内感染组14例……对照组32例",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "不清楚",
+              "reason": "文献未报告是否有患者被排除，也未说明排除标准和排除人数。",
+              "evidence": "收集2016年12月至2018年5月在辽宁省人民医院神经科住院的开颅术后患者150例……并收集同时期未手术患者46例",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "高",
+              "reason": "研究对象为颅内感染疑似患者，包括术后细菌性颅内感染、非细菌性颅内感染及对照，疾病阶段和就诊场景与脑脊液HBP诊断颅内感染的研究问题匹配。",
+              "evidence": "探讨脑脊液（CSF）中肝素结合蛋白（HBP）水平在颅内感染性疾病中的临床应用价值",
+              "evidence_page": "第1页，摘要目的部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未描述待评价试验（脑脊液HBP检测）结果解释时是否对参考标准结果设盲。",
+              "evidence": "采用胶乳免疫比浊法测定脑脊液中HBP浓度",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "不清楚",
+              "reason": "文献报告了ROC曲线下面积，但未说明诊断阈值是否预先设定，可能存在根据数据选择最佳阈值的情况。",
+              "evidence": "脑脊液中HBP、WBC、中性粒细胞、TP、PCT和血清PCT诊断细菌性颅内感染的ROC曲线下面积分别为0.986、0.987、0.945、0.945、0.770和0.914",
+              "evidence_page": "第1页，摘要结果部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "脑脊液HBP采用胶乳免疫比浊法测定，为临床实验室常规可及方法，试验执行与颅内感染诊断的实际应用场景匹配。",
+              "evidence": "采用胶乳免疫比浊法测定脑脊液中HBP浓度，采用电化学发光法测定脑脊液以及血清降钙素原（PCT）浓度",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "不清楚",
+              "reason": "文献未明确描述细菌性颅内感染的具体参考标准（如脑脊液培养、病原学证据等），无法判断参考标准能否正确区分目标疾病状态。",
+              "evidence": "根据重症颅内感染诊断标准将细菌性颅内感染患者分为轻症颅内感染组26例、重症颅内感染组47例",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未描述参考标准结果解释时是否对待评价试验（HBP）结果设盲。",
+              "evidence": "根据患者出院时格拉斯哥预后量表评分（GOS），分为预后良好组……预后不良组",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准定义的细菌性颅内感染、非细菌性颅内感染及未感染状态与本综述关注的颅内感染性疾病目标疾病一致。",
+              "evidence": "术后细菌性颅内感染组73例，术后未感染组77例……非细菌性颅内感染组14例，选择脑脊液WBC<10×10⁶/L的非颅内感染性疾病患者32例作为对照组",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "不清楚",
+              "reason": "文献未报告待评价试验（脑脊液HBP检测）与参考标准判定之间的具体时间间隔。",
+              "evidence": "采用胶乳免疫比浊法测定脑脊液中HBP浓度，采用电化学发光法测定脑脊液以及血清降钙素原（PCT）浓度",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "不清楚",
+              "reason": "文献未明确说明所有入组患者是否均接受了参考标准验证。",
+              "evidence": "收集2016年12月至2018年5月在辽宁省人民医院神经科住院的开颅术后患者150例……并收集同时期未手术患者46例",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "不清楚",
+              "reason": "文献未明确说明不同组别患者是否接受了相同的参考标准。",
+              "evidence": "根据重症颅内感染诊断标准将细菌性颅内感染患者分为轻症颅内感染组26例、重症颅内感染组47例",
+              "evidence_page": "第1页，摘要方法部分"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "不清楚",
+              "reason": "文献未报告是否有患者脱落或被排除分析，无法判断是否所有入组患者均纳入最终分析。",
+              "evidence": "收集2016年12月至2018年5月在辽宁省人民医院神经科住院的开颅术后患者150例（术后细菌性颅内感染组73例，术后未感染组77例），并收集同时期未手术患者46例",
+              "evidence_page": "第1页，摘要方法部分"
+            }
+          ]
+        },
+        "qwen3-7-flash": {
+          "valid": 14,
+          "missing": 0,
+          "invalid_judgment": 0,
+          "usage": {
+            "prompt": 4862,
+            "completion": 1717,
+            "total": 6579,
+            "cached_prompt_tokens": 0
+          },
+          "results": [
+            {
+              "status": "valid",
+              "signal_key": "ps_consecutive",
+              "judgment": "不清楚",
+              "reason": "文献仅说明收集了特定时间段内的住院患者，未明确说明是否采用连续入组或随机抽样方式，存在选择性纳入的可能性。",
+              "evidence": "收集2016年12月至2018年5月在辽宁省人民医院神经科住院的开颅术后患者150例...并收集同时期未手术患者46例",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_cc",
+              "judgment": "否",
+              "reason": "研究设计为病例对照研究，且对照组包括“未感染组”和“非颅内感染性疾病患者”，这种设计容易夸大诊断准确性，属于典型的病例-对照偏倚风险。",
+              "evidence": "病例对照研究。收集...开颅术后患者150例（术后细菌性颅内感染组73例，术后未感染组77例），并收集同时期未手术患者46例（非细菌性颅内感染组14 例，选择脑脊液WBC<10×106/L 的非颅内感染性疾病患者32 例作为对照组）。",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_avoid_exclusion",
+              "judgment": "是",
+              "reason": "文中未提及对符合条件的患者进行不恰当的排除，所有收集的患者均纳入了后续分析，样本完整性较好。",
+              "evidence": "收集2016年12月至2018年5月...患者150例...并收集同时期未手术患者46例...统计分析各组检测指标的差异",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ps_applicability",
+              "judgment": "低",
+              "reason": "研究对象主要为“开颅术后患者”，这属于特定的亚群，而非所有疑似颅内感染的普通人群，因此对于一般性颅内感染诊断问题的适用性较低。",
+              "evidence": "收集2016年12月至2018年5月在辽宁省人民医院神经科住院的开颅术后患者150例",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未明确说明HBP检测结果的解释者是否知晓参考标准（临床诊断）的结果，盲法执行情况描述缺失。",
+              "evidence": "采用胶乳免疫比浊法测定脑脊液中HBP浓度...统计分析各组检测指标的差异",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_threshold_preset",
+              "judgment": "不适用",
+              "reason": "该研究主要报告ROC曲线下面积及中位数/四分位数间距，未明确报告预先设定的单一诊断切点值用于分类，而是通过ROC分析评估性能，故视为不适用或需结合具体阈值定义判断，此处因无明确预设阈值描述，倾向于不适用或不清楚，但鉴于通常诊断试验需阈值，若无则无法判断是否预设，选不适用更稳妥指代其未提供单一阈值判定逻辑。",
+              "evidence": "脑脊液中HBP、WBC...诊断细菌性颅内感染的ROC 曲线下面积分别为0.986...",
+              "evidence_page": "第1页，摘要-结果"
+            },
+            {
+              "status": "valid",
+              "signal_key": "it_applicability",
+              "judgment": "高",
+              "reason": "待评价试验（HBP检测）的方法（胶乳免疫比浊法）在临床实验室中是可实现的，符合实际应用场景。",
+              "evidence": "采用胶乳免疫比浊法测定脑脊液中HBP浓度",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_classify_correctly",
+              "judgment": "不清楚",
+              "reason": "参考标准似乎基于临床诊断标准（如重症颅内感染诊断标准、GOS评分等），但未详细说明具体的金标准定义（如脑脊液培养阳性率等），难以确切判断其区分疾病状态的能力。",
+              "evidence": "根据重症颅内感染诊断标准将细菌性颅内感染患者分为轻症...根据患者出院时格拉斯哥预后量表评分（GOS）",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_blinded",
+              "judgment": "不清楚",
+              "reason": "文献未提及参考标准（临床诊断）的制定过程是否对HBP等生物标志物结果设盲。",
+              "evidence": "根据重症颅内感染诊断标准将细菌性颅内感染患者分为...",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "rs_applicability",
+              "judgment": "高",
+              "reason": "参考标准旨在识别“细菌性颅内感染”，这与综述关注的目标疾病一致。",
+              "evidence": "探讨脑脊液（CSF）中肝素结合蛋白（HBP）水平在颅内感染性疾病中的临床应用价值...诊断细菌性颅内感染",
+              "evidence_page": "第1页，摘要-目的/结论"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_interval_appropriate",
+              "judgment": "不清楚",
+              "reason": "文献未明确说明HBP检测与临床诊断/参考标准确定之间的时间间隔，无法判断是否存在疾病状态改变的风险。",
+              "evidence": "收集...患者...采用胶乳免疫比浊法测定...统计分析",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_received_rs",
+              "judgment": "是",
+              "reason": "研究对所有入组的196例患者（150+46）均进行了各项指标检测和分组比较，暗示所有患者都接受了相应的评估以确立分组。",
+              "evidence": "收集...患者150例...并收集同时期未手术患者46例...统计分析各组检测指标的差异",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_same_rs",
+              "judgment": "是",
+              "reason": "所有患者似乎都依据相同的临床诊断标准和预后评分系统进行分组，使用了统一的参考标准框架。",
+              "evidence": "根据重症颅内感染诊断标准...根据患者出院时格拉斯哥预后量表评分（GOS）",
+              "evidence_page": "第1页，摘要-方法"
+            },
+            {
+              "status": "valid",
+              "signal_key": "ft_all_analyzed",
+              "judgment": "是",
+              "reason": "文中列出了各组的样本量（73, 77, 14, 32等），总和为196，与收集总数一致，且进行了完整的统计比较，未见明显排除未解释的情况。",
+              "evidence": "术后细菌性颅内感染组73例，术后未感染组77例...非细菌性颅内感染组14 例...对照组32 例",
+              "evidence_page": "第1页，摘要-方法"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "expected": 140,
+    "returned": 140,
+    "valid": 140,
+    "missing": 0,
+    "invalid_judgment": 0,
+    "valid_rate": 1.0,
+    "token_usage": {
+      "prompt": 54860,
+      "completion": 16498,
+      "total": 71358,
+      "cached_prompt_tokens": 25344,
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt": 26145,
+          "completion": 7865,
+          "total": 34010,
+          "cached_prompt_tokens": 25344,
+          "calls": 5
+        },
+        "qwen3-7-flash": {
+          "prompt": 28715,
+          "completion": 8633,
+          "total": 37348,
+          "cached_prompt_tokens": 0,
+          "calls": 5
+        }
+      }
+    }
+  }
+}

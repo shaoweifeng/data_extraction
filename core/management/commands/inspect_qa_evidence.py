@@ -60,9 +60,14 @@ class Command(BaseCommand):
                 selected_for = sorted(signal_keys.intersection(chunk['selected_for']))
                 if not selected_for:
                     continue
-                chunks.append({
+                sanitized = {
                     key: value for key, value in chunk.items() if key != 'text'
-                } | {
+                }
+                sanitized['evidence_spans'] = [
+                    {key: value for key, value in span.items() if key != 'text'}
+                    for span in chunk.get('evidence_spans', [])
+                ]
+                chunks.append(sanitized | {
                     'selected_for': selected_for,
                     'preview': _preview(chunk['text']),
                 })

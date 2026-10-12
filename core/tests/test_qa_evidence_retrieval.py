@@ -158,6 +158,57 @@ class QAQAEvidenceRetrievalTests(SimpleTestCase):
         with self.assertRaisesRegex(EvidenceRetrievalError, '校验失败'):
             _load_verified_chunks(asset)
 
+    def test_v2_span_hash_page_and_source_text_are_verified(self):
+        chunk = make_chunk(1, 'Methods\n\nConsecutive participants were enrolled.', page=3)
+        span_text = 'Consecutive participants were enrolled.'
+        chunk['evidence_spans'] = [{
+            'span_id': 'p0003-s0001-12345678',
+            'page_number': 3,
+            'section': 'methods',
+            'char_count': len(span_text),
+            'sha256': hashlib.sha256(span_text.encode('utf-8')).hexdigest(),
+            'text': span_text,
+        }]
+
+        class MemoryField:
+            name = 'chunks.jsonl'
+
+            def __init__(self, value):
+                self.payload = value
+
+            def open(self, mode):
+                pass
+
+            def read(self, size=-1):
+                return self.payload if size < 0 else self.payload[:size]
+
+            def close(self):
+                pass
+
+        def asset_for(value):
+            payload = (json.dumps(value, ensure_ascii=False) + '\n').encode()
+            return SimpleNamespace(
+                chunk_index_file=MemoryField(payload),
+                chunk_index_sha256=hashlib.sha256(payload).hexdigest(),
+                chunk_count=1,
+                chunking_version='qa-chunks-v2-spans',
+            )
+
+        self.assertEqual(_load_verified_chunks(asset_for(chunk)), [chunk])
+
+        missing = json.loads(json.dumps(chunk))
+        missing.pop('evidence_spans')
+        with self.assertRaisesRegex(EvidenceRetrievalError, '片段缺失'):
+            _load_verified_chunks(asset_for(missing))
+
+        invalid = json.loads(json.dumps(chunk))
+        invalid['evidence_spans'][0]['text'] = 'Fabricated evidence.'
+        invalid['evidence_spans'][0]['sha256'] = hashlib.sha256(
+            b'Fabricated evidence.'
+        ).hexdigest()
+        with self.assertRaisesRegex(EvidenceRetrievalError, '无法回溯'):
+            _load_verified_chunks(asset_for(invalid))
+
     def test_no_evidence_remains_empty_instead_of_becoming_negative_evidence(self):
         signal = self.signal_map['it_threshold_preset']
         selected = retrieve_for_signal(

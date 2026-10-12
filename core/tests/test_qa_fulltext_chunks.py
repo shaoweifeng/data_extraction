@@ -4,6 +4,8 @@ import json
 from django.test import SimpleTestCase
 
 from core.quality.services.fulltext_chunks import (
+    CHUNKING_VERSION,
+    EVIDENCE_SPAN_MAX_CHARS,
     PageText,
     build_chunks,
     serialize_chunks,
@@ -46,3 +48,37 @@ class QAFulltextChunkTests(SimpleTestCase):
     def test_invalid_overlap_is_rejected(self):
         with self.assertRaises(ValueError):
             build_chunks([PageText(1, 'text')], target_tokens=10, overlap_tokens=10)
+
+    def test_v2_spans_are_deterministic_page_bound_and_exact(self):
+        pages = [
+            PageText(3, 'Methods\n\n' + ('连续纳入符合标准的患者，并记录检测结果。' * 35)),
+            PageText(4, 'Results\n\n' + ('All participants received the reference standard. ' * 20)),
+        ]
+        first = build_chunks(pages, target_tokens=120, overlap_tokens=20)
+        second = build_chunks(pages, target_tokens=120, overlap_tokens=20)
+
+        self.assertEqual(CHUNKING_VERSION, 'qa-chunks-v2-spans')
+        self.assertEqual(first, second)
+        span_fingerprints = {}
+        for chunk in first:
+            self.assertIn('evidence_spans', chunk)
+            for span in chunk['evidence_spans']:
+                self.assertGreater(len(span['text']), 0)
+                self.assertLessEqual(len(span['text']), EVIDENCE_SPAN_MAX_CHARS)
+                self.assertGreaterEqual(span['page_number'], chunk['page_start'])
+                self.assertLessEqual(span['page_number'], chunk['page_end'])
+                self.assertIn(span['text'], chunk['text'])
+                self.assertEqual(
+                    hashlib.sha256(span['text'].encode('utf-8')).hexdigest(),
+                    span['sha256'],
+                )
+                fingerprint = (
+                    span['page_number'], span['section'], span['sha256'], span['text'],
+                )
+                self.assertIn(fingerprint, {span_fingerprints.setdefault(span['span_id'], fingerprint)})
+
+        self.assertTrue(span_fingerprints)
+        self.assertTrue(all(
+            span_id.startswith(f'p{fingerprint[0]:04d}-s')
+            for span_id, fingerprint in span_fingerprints.items()
+        ))

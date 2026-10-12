@@ -98,6 +98,17 @@ def evaluation_audit(request):
         project=ref.project,
         task__task_type='qa_eval',
     ).order_by('-created_at').first()
+    latest_v2_run = ref.project.qa_evaluation_runs.filter(
+        signal_results__qa_reference=ref,
+    ).distinct().order_by('-created_at').first()
+    v2_status_counts = {}
+    if latest_v2_run:
+        from django.db.models import Count
+        v2_status_counts = {
+            row['status']: row['count']
+            for row in latest_v2_run.signal_results.filter(qa_reference=ref)
+            .values('status').annotate(count=Count('id'))
+        }
     return _json_ok({
         'reference_id': ref.id,
         'asset': None if not asset else {
@@ -121,6 +132,18 @@ def evaluation_audit(request):
             }
             for prompt, retrieval, method, snapshot in sorted(versions)
         ],
+        'latest_v2_run': None if not latest_v2_run else {
+            'id': latest_v2_run.id,
+            'run_uuid': str(latest_v2_run.run_uuid),
+            'status': latest_v2_run.status,
+            'protocol_version': latest_v2_run.protocol_version,
+            'retrieval_version': latest_v2_run.retrieval_version,
+            'chunking_version': latest_v2_run.chunking_version,
+            'status_counts': v2_status_counts,
+            'error_summary': latest_v2_run.error_summary,
+            'token_usage': latest_v2_run.token_usage,
+            'created_at': latest_v2_run.created_at.isoformat(),
+        },
         'latest_project_usage': None if not usage else {
             'task_id': usage.task_id,
             'model': usage.model,

@@ -9,7 +9,9 @@ from dataclasses import dataclass
 from typing import Iterable, Sequence
 
 
-CHUNKING_VERSION = 'qa-chunks-v1'
+CHUNKING_VERSION = 'qa-chunks-v2-spans'
+EVIDENCE_SPAN_MAX_CHARS = 400
+EVIDENCE_SPAN_MIN_BOUNDARY_CHARS = 80
 
 
 @dataclass(frozen=True)
@@ -24,6 +26,7 @@ class _TextUnit:
     section: str
     text: str
     estimated_tokens: int
+    evidence_spans: tuple[dict, ...]
 
 
 _SECTION_PATTERNS = (
@@ -96,10 +99,73 @@ def _cut_to_token_budget(text: str, budget: int) -> tuple[str, str]:
     return text[:cut].strip(), text[cut:].strip()
 
 
+def _split_evidence_text(
+    text: str,
+    *,
+    max_chars: int = EVIDENCE_SPAN_MAX_CHARS,
+    min_boundary_chars: int = EVIDENCE_SPAN_MIN_BOUNDARY_CHARS,
+) -> list[str]:
+    """Split exact normalized text into short, deterministic citation spans."""
+    if max_chars <= 0:
+        raise ValueError('max_chars must be positive')
+    if min_boundary_chars < 0 or min_boundary_chars >= max_chars:
+        raise ValueError('min_boundary_chars must be non-negative and below max_chars')
+
+    remaining = (text or '').strip()
+    spans = []
+    while remaining:
+        if len(remaining) <= max_chars:
+            spans.append(remaining)
+            break
+
+        window = remaining[:max_chars]
+        boundary = -1
+        for marker in ('\n', '。', '！', '？', '.', '!', '?', '；', ';'):
+            position = window.rfind(marker, min_boundary_chars)
+            if position >= 0:
+                boundary = max(boundary, position + 1)
+        if boundary < min_boundary_chars:
+            whitespace = window.rfind(' ', min_boundary_chars)
+            if whitespace >= min_boundary_chars:
+                boundary = whitespace
+        if boundary < min_boundary_chars:
+            boundary = max_chars
+
+        piece = remaining[:boundary].strip()
+        if piece:
+            spans.append(piece)
+        remaining = remaining[boundary:].strip()
+    return spans
+
+
+def _make_evidence_spans(
+    *,
+    page_number: int,
+    section: str,
+    text: str,
+    first_ordinal: int,
+) -> tuple[tuple[dict, ...], int]:
+    spans = []
+    ordinal = first_ordinal
+    for piece in _split_evidence_text(text):
+        digest = hashlib.sha256(piece.encode('utf-8')).hexdigest()
+        spans.append({
+            'span_id': f'p{page_number:04d}-s{ordinal:04d}-{digest[:8]}',
+            'page_number': page_number,
+            'section': section,
+            'char_count': len(piece),
+            'sha256': digest,
+            'text': piece,
+        })
+        ordinal += 1
+    return tuple(spans), ordinal
+
+
 def _page_units(pages: Sequence[PageText], target_tokens: int) -> list[_TextUnit]:
     units: list[_TextUnit] = []
     current_section = 'unknown'
     for page in pages:
+        span_ordinal = 1
         normalized = _normalize_text(page.text)
         if not normalized:
             continue
@@ -128,11 +194,18 @@ def _page_units(pages: Sequence[PageText], target_tokens: int) -> list[_TextUnit
                 piece, remaining = _cut_to_token_budget(remaining, target_tokens)
                 if not piece:
                     break
+                evidence_spans, span_ordinal = _make_evidence_spans(
+                    page_number=page.page_number,
+                    section=current_section,
+                    text=piece,
+                    first_ordinal=span_ordinal,
+                )
                 units.append(_TextUnit(
                     page_number=page.page_number,
                     section=current_section,
                     text=piece,
                     estimated_tokens=estimate_tokens(piece),
+                    evidence_spans=evidence_spans,
                 ))
     return units
 
@@ -164,6 +237,14 @@ def build_chunks(
         section = current[0].section if all(
             unit.section == current[0].section for unit in current
         ) else 'mixed'
+        evidence_spans = []
+        seen_span_ids = set()
+        for unit in current:
+            for span in unit.evidence_spans:
+                if span['span_id'] in seen_span_ids:
+                    continue
+                seen_span_ids.add(span['span_id'])
+                evidence_spans.append(span)
         chunks.append({
             'chunk_id': f'p{page_start:04d}-p{page_end:04d}-c{index:04d}',
             'page_start': page_start,
@@ -173,6 +254,7 @@ def build_chunks(
             'char_count': len(text),
             'sha256': hashlib.sha256(text.encode('utf-8')).hexdigest(),
             'text': text,
+            'evidence_spans': evidence_spans,
         })
 
     for unit in units:

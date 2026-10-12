@@ -4,7 +4,8 @@ from django.contrib import admin
 from .models import (
     UserProfile, Permission, UserPermission, RoleTemplate,
     RoleTemplatePermission, Project, ProjectStage, StageStep,
-    DataFile, DataFileVersion, Task, ManualReview, QAFulltextAsset, SystemOperationState
+    DataFile, DataFileVersion, Task, ManualReview, QAEvaluationRun,
+    QAFulltextAsset, QAModelSignalResult, QAReviewContext, SystemOperationState
 )
 from .models_billing import CreditAccount, CreditTransaction, TokenUsageLog, RechargeCode
 
@@ -509,6 +510,58 @@ class QAFulltextAssetAdmin(admin.ModelAdmin):
     raw_id_fields = ['project', 'qa_reference']
 
     def has_add_permission(self, request):
+        return False
+
+
+@admin.register(QAReviewContext)
+class QAReviewContextAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'project', 'quality_method', 'method_variant', 'updated_by', 'updated_at',
+    ]
+    list_filter = ['quality_method', 'method_variant', 'updated_at']
+    search_fields = [
+        'project__name', 'target_population', 'index_test', 'target_condition',
+        'reference_standard', 'review_objective',
+    ]
+    raw_id_fields = ['project', 'created_by', 'updated_by']
+    readonly_fields = ['context_version', 'created_at', 'updated_at']
+
+
+@admin.register(QAEvaluationRun)
+class QAEvaluationRunAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'run_uuid', 'project', 'status', 'requested_count', 'validated_count',
+        'failed_count', 'created_by', 'created_at',
+    ]
+    list_filter = ['status', 'protocol_version', 'retrieval_version', 'created_at']
+    search_fields = ['run_uuid', 'idempotency_key', 'project__name']
+    raw_id_fields = ['project', 'task', 'created_by']
+    readonly_fields = [field.name for field in QAEvaluationRun._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(QAModelSignalResult)
+class QAModelSignalResultAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'evaluation_run', 'qa_reference', 'signal_key', 'model_id', 'status',
+        'attempt_count', 'updated_at',
+    ]
+    list_filter = ['status', 'model_id', 'prompt_version', 'created_at']
+    search_fields = [
+        'qa_reference__title', 'signal_key', 'model_id', 'error_code', 'error_message',
+    ]
+    raw_id_fields = ['evaluation_run', 'qa_reference']
+    readonly_fields = [field.name for field in QAModelSignalResult._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
 

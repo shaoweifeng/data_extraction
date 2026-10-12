@@ -871,6 +871,196 @@ class QAFulltextAsset(models.Model):
         return f'{self.qa_reference_id} | {self.original_filename}'
 
 
+class QAReviewContext(models.Model):
+    """Project-level review question used by applicability assessments."""
+
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name='qa_review_contexts',
+        verbose_name='所属项目',
+    )
+    quality_method = models.CharField(
+        max_length=20, choices=QAReference.METHOD_CHOICES, verbose_name='评价方法',
+    )
+    method_variant = models.CharField(
+        max_length=30, blank=True, default='', verbose_name='研究设计变体',
+    )
+    target_population = models.TextField(blank=True, default='', verbose_name='目标人群')
+    index_test = models.TextField(blank=True, default='', verbose_name='待评价试验或干预')
+    target_condition = models.TextField(blank=True, default='', verbose_name='目标疾病或目标状态')
+    reference_standard = models.TextField(blank=True, default='', verbose_name='参考标准')
+    intended_use = models.TextField(blank=True, default='', verbose_name='预期使用场景')
+    review_objective = models.TextField(blank=True, default='', verbose_name='系统评价研究目的')
+    context_version = models.CharField(
+        max_length=32, default='qa-review-context-v1', verbose_name='上下文版本',
+    )
+    created_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='created_qa_review_contexts', verbose_name='创建人',
+    )
+    updated_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='updated_qa_review_contexts', verbose_name='最后修改人',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'plat_qa_review_context'
+        verbose_name = '质量评价研究问题'
+        verbose_name_plural = '质量评价研究问题'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['project', 'quality_method', 'method_variant'],
+                name='uniq_qa_review_context',
+            ),
+        ]
+
+    def __str__(self):
+        variant = f'/{self.method_variant}' if self.method_variant else ''
+        return f'{self.project_id} | {self.quality_method}{variant}'
+
+
+class QAEvaluationRun(models.Model):
+    """Auditable execution envelope for a V2 quality-evaluation request."""
+
+    STATUS_CHOICES = [
+        ('pending', '等待执行'),
+        ('running', '执行中'),
+        ('partial', '部分完成'),
+        ('completed', '已完成'),
+        ('failed', '失败'),
+        ('stopped', '已停止'),
+    ]
+
+    run_uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name='qa_evaluation_runs',
+        verbose_name='所属项目',
+    )
+    task = models.ForeignKey(
+        Task, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='qa_evaluation_runs', verbose_name='后台任务',
+    )
+    created_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='qa_evaluation_runs', verbose_name='执行用户',
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True,
+        verbose_name='运行状态',
+    )
+    model_ids = models.JSONField(default=list, blank=True, verbose_name='模型ID列表')
+    protocol_version = models.CharField(max_length=32, verbose_name='证据协议版本')
+    retrieval_version = models.CharField(max_length=32, verbose_name='检索版本')
+    chunking_version = models.CharField(max_length=32, verbose_name='分块版本')
+    method_config_version = models.CharField(
+        max_length=32, blank=True, default='', verbose_name='方法配置版本',
+    )
+    idempotency_key = models.CharField(
+        max_length=160, null=True, blank=True, unique=True, verbose_name='幂等键',
+    )
+    requested_count = models.PositiveIntegerField(default=0, verbose_name='请求结果数')
+    validated_count = models.PositiveIntegerField(default=0, verbose_name='有效结果数')
+    failed_count = models.PositiveIntegerField(default=0, verbose_name='失败结果数')
+    skipped_count = models.PositiveIntegerField(default=0, verbose_name='跳过结果数')
+    token_usage = models.JSONField(default=dict, blank=True, verbose_name='Token用量')
+    error_summary = models.JSONField(default=dict, blank=True, verbose_name='错误汇总')
+    started_at = models.DateTimeField(null=True, blank=True, verbose_name='开始时间')
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name='完成时间')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'plat_qa_evaluation_run'
+        verbose_name = '质量评价执行批次'
+        verbose_name_plural = '质量评价执行批次'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['project', 'status'], name='idx_qaer_project_status'),
+            models.Index(fields=['task', 'created_at'], name='idx_qaer_task_created'),
+        ]
+
+    def __str__(self):
+        return f'{self.project_id} | {self.run_uuid} | {self.status}'
+
+
+class QAModelSignalResult(models.Model):
+    """One independently persisted model result for one reference signal."""
+
+    STATUS_CHOICES = [
+        ('pending', '等待执行'),
+        ('running', '执行中'),
+        ('validated', '校验通过'),
+        ('no_evidence', '无可用证据'),
+        ('invalid_response', '响应无效'),
+        ('provider_failed', '模型调用失败'),
+        ('needs_review', '需要人工处理'),
+        ('stopped', '已停止'),
+    ]
+
+    evaluation_run = models.ForeignKey(
+        QAEvaluationRun, on_delete=models.CASCADE, related_name='signal_results',
+        verbose_name='评价批次',
+    )
+    qa_reference = models.ForeignKey(
+        QAReference, on_delete=models.CASCADE, related_name='model_signal_results',
+        verbose_name='质量评价文献',
+    )
+    signal_key = models.CharField(max_length=100, verbose_name='信号问题标识符')
+    model_id = models.CharField(max_length=100, verbose_name='模型ID')
+    status = models.CharField(
+        max_length=24, choices=STATUS_CHOICES, default='pending', db_index=True,
+        verbose_name='结果状态',
+    )
+    judgment = models.CharField(max_length=50, blank=True, default='', verbose_name='模型判断')
+    reason = models.TextField(blank=True, default='', verbose_name='判断理由')
+    evidence_refs = models.JSONField(default=list, blank=True, verbose_name='模型引用编号')
+    resolved_evidence = models.JSONField(default=list, blank=True, verbose_name='服务端核验证据')
+    evidence_snapshot_sha256 = models.CharField(
+        max_length=64, blank=True, default='', verbose_name='证据快照SHA256',
+    )
+    prompt_version = models.CharField(max_length=32, blank=True, default='', verbose_name='提示词版本')
+    retrieval_version = models.CharField(max_length=32, blank=True, default='', verbose_name='检索版本')
+    chunking_version = models.CharField(max_length=32, blank=True, default='', verbose_name='分块版本')
+    method_config_version = models.CharField(
+        max_length=32, blank=True, default='', verbose_name='方法配置版本',
+    )
+    response_sha256 = models.CharField(
+        max_length=64, blank=True, default='', verbose_name='模型响应SHA256',
+    )
+    error_code = models.CharField(max_length=64, blank=True, default='', verbose_name='错误码')
+    error_message = models.CharField(max_length=500, blank=True, default='', verbose_name='错误摘要')
+    token_usage = models.JSONField(default=dict, blank=True, verbose_name='Token用量')
+    attempt_count = models.PositiveSmallIntegerField(default=0, verbose_name='调用次数')
+    started_at = models.DateTimeField(null=True, blank=True, verbose_name='开始时间')
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name='完成时间')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'plat_qa_model_signal_result'
+        verbose_name = '质量评价模型信号结果'
+        verbose_name_plural = '质量评价模型信号结果'
+        ordering = ['evaluation_run', 'qa_reference', 'signal_key', 'model_id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['evaluation_run', 'qa_reference', 'signal_key', 'model_id'],
+                name='uniq_qa_run_ref_signal_model',
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=['qa_reference', 'status'], name='idx_qamsr_ref_status',
+            ),
+            models.Index(
+                fields=['evaluation_run', 'status'], name='idx_qamsr_run_status',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.qa_reference_id} | {self.signal_key} | {self.model_id}'
+
+
 class QASignalItem(models.Model):
     """信号问题评价结果（每篇文献×每条信号问题一行）"""
     RESULT_TYPE_CHOICES = [
@@ -926,6 +1116,11 @@ class QASignalItem(models.Model):
         verbose_name        = "信号问题评价结果"
         verbose_name_plural = "信号问题评价结果"
         ordering            = ['qa_ref', 'domain', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['qa_ref', 'signal_key'], name='uniq_qasi_ref_signal',
+            ),
+        ]
         indexes = [
             models.Index(fields=['qa_ref', 'domain'],       name='idx_qasi_ref_domain'),
             models.Index(fields=['qa_ref', 'is_confirmed'], name='idx_qasi_ref_confirmed'),

@@ -88,3 +88,6 @@ web/node_modules/
 
 # 本地回归样本
 /meta_project/
+
+# 本地临时分析与渲染产物
+/tmp/

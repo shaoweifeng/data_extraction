@@ -11,6 +11,12 @@
       </div>
     </div>
 
+
+    <div class="ai-reference-notice" role="note">
+      <i class="fas fa-circle-info"></i>
+      <span>AI 评价用于辅助研判，不代替专业人工审核；请在「结果审核」中对照原文确认。</span>
+    </div>
+
     <!-- 主体：左右分栏 -->
     <div class="aiev-body">
 
@@ -39,6 +45,11 @@
             <span class="ov-label">无全文</span>
           </div>
         </div>
+
+        <QAReviewContextEditor
+          :project-id="project.currentProject?.id"
+          :references="qa.refs"
+        />
 
         <!-- 模型选择 -->
         <div class="config-card">
@@ -307,6 +318,7 @@ import { useQAStore } from '@/features/quality/store'
 import { useProjectStore } from '@/features/projects/store'
 import { useTaskStore } from '@/features/workflow/store'
 import * as workflowApi from '@/shared/api/workflow'
+import QAReviewContextEditor from './QAReviewContextEditor.vue'
 
 const qa      = useQAStore()
 const project = useProjectStore()
@@ -558,6 +570,12 @@ function statusDotClass(s) {
 .step-icon-wrap { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; background: linear-gradient(135deg,#f59e0b,#f97316); }
 .step-title { font-size: 1rem; font-weight: 600; color: #1e293b; margin: 0; }
 .step-subtitle { font-size: 0.75rem; color: #64748b; margin: 0; }
+.ai-reference-notice {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 12px; border: 1px solid #fde68a; border-radius: 9px;
+  background: #fffbeb; color: #92400e; font-size: 0.75rem; line-height: 1.45;
+}
+.ai-reference-notice i { color: #d97706; }
 
 /* ── 主体左右分栏 ── */
 .aiev-body {

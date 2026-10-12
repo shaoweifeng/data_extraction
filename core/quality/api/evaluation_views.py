@@ -3,16 +3,93 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Count, Q
 from django.views.decorators.http import require_http_methods
 
-from core.models import QAReference, QASignalItem
+from core.models import ActivityLog, QAReference, QAReviewContext, QASignalItem
 from core.quality.api.common import _get_project, _json_err, _json_ok, _validated_json
-from core.quality.api.serializers import QAEvalStartInputSerializer
+from core.quality.api.serializers import QAEvalStartInputSerializer, QAReviewContextInputSerializer
 
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_review_context(row):
+    return {
+        'id': row.id,
+        'project_id': row.project_id,
+        'quality_method': row.quality_method,
+        'method_variant': row.method_variant,
+        'target_population': row.target_population,
+        'index_test': row.index_test,
+        'target_condition': row.target_condition,
+        'reference_standard': row.reference_standard,
+        'intended_use': row.intended_use,
+        'review_objective': row.review_objective,
+        'context_version': row.context_version,
+        'updated_at': row.updated_at.isoformat(),
+    }
+
+
+@login_required
+@require_http_methods(['GET', 'PUT'])
+def review_context(request):
+    """Read or upsert project/method-level context used by applicability questions."""
+    if request.method == 'GET':
+        project_id = request.GET.get('project_id')
+        if not project_id:
+            return _json_err('缺少 project_id')
+        project = _get_project(request, project_id)
+        if not project:
+            return _json_err('无权访问该项目或项目不存在', 404)
+        rows = QAReviewContext.objects.filter(project=project).order_by(
+            'quality_method', 'method_variant',
+        )
+        return _json_ok([_serialize_review_context(row) for row in rows])
+
+    body, error = _validated_json(request, QAReviewContextInputSerializer)
+    if error:
+        return error
+    project = _get_project(request, body['project_id'])
+    if not project:
+        return _json_err('无权访问该项目或项目不存在', 404)
+    lookup = {
+        'project': project,
+        'quality_method': body['quality_method'],
+        'method_variant': body.get('method_variant') or '',
+    }
+    defaults = {
+        key: body.get(key, '') for key in (
+            'target_population', 'index_test', 'target_condition',
+            'reference_standard', 'intended_use', 'review_objective',
+        )
+    }
+    with transaction.atomic():
+        row, created = QAReviewContext.objects.get_or_create(
+            **lookup,
+            defaults={
+                **defaults,
+                'created_by': request.user,
+                'updated_by': request.user,
+            },
+        )
+        if not created:
+            for key, value in defaults.items():
+                setattr(row, key, value)
+            row.updated_by = request.user
+            row.save(update_fields=[*defaults.keys(), 'updated_by', 'updated_at'])
+    ActivityLog.objects.create(
+        project=project,
+        operation_type='qa_review_context_update',
+        operation_detail={
+            'quality_method': row.quality_method,
+            'method_variant': row.method_variant,
+            'created': created,
+        },
+        created_by=request.user,
+    )
+    return _json_ok(_serialize_review_context(row))
 
 
 @login_required

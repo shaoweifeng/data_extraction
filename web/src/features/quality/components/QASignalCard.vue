@@ -30,7 +30,8 @@
       <template v-if="!isMultiMode">
         <span class="ai-label">AI 判断</span>
         <span :class="['judgment-chip', judgmentColor(item.ai_judgment)]">{{ item.ai_judgment || '—' }}</span>
-        <span v-if="primaryModelResult?.validation_status === 'no_evidence_unclear'" class="no-evidence-chip">证据不足</span>
+        <span v-if="isNoEvidence(primaryModelResult)" class="no-evidence-chip">证据不足</span>
+        <span v-if="needsManualReview(primaryModelResult)" class="needs-review-chip">需人工判断</span>
         <template v-if="item.ai_evidence">
           <span class="summary-sep">·</span>
           <span class="ev-label">原文依据</span>
@@ -43,7 +44,8 @@
         <span v-for="mr in effectiveModelResults" :key="mr.model_id" class="model-summary-item">
           <span class="model-label-sm">{{ mr.model_name || mr.model_id }}</span>
           <span :class="['judgment-chip', judgmentColor(mr.judgment)]">{{ mr.judgment || '—' }}</span>
-          <span v-if="mr.validation_status === 'no_evidence_unclear'" class="no-evidence-chip">证据不足</span>
+          <span v-if="isNoEvidence(mr)" class="no-evidence-chip">证据不足</span>
+          <span v-if="needsManualReview(mr)" class="needs-review-chip">需人工判断</span>
         </span>
         <template v-if="item.ai_evidence">
           <span class="summary-sep">·</span>
@@ -80,6 +82,10 @@
           <div v-for="mr in effectiveModelResults" :key="mr.model_id" class="multi-model-col">
             <span class="model-label">{{ mr.model_name || mr.model_id }}</span>
             <span :class="['judgment-chip', judgmentColor(mr.judgment)]">{{ mr.judgment || '—' }}</span>
+            <div v-if="needsManualReview(mr)" class="needs-review-message">
+              <i class="fas fa-triangle-exclamation"></i>
+              该模型结果未通过证据协议校验，请对照原文人工选择。
+            </div>
             <p class="detail-reason" v-if="mr.reason">{{ mr.reason }}</p>
             <div v-if="mr.evidence" class="model-evidence">
               <div class="evidence-meta">
@@ -212,8 +218,17 @@ const effectiveModelResults = computed(() => {
 const primaryModelResult = computed(() => (
   effectiveModelResults.value.find(result => (
     result.judgment === props.item.ai_judgment && result.evidence_chunk_id
-  )) || effectiveModelResults.value.find(result => result.evidence_chunk_id) || null
+  )) || effectiveModelResults.value.find(result => result.evidence_chunk_id)
+    || effectiveModelResults.value[0] || null
 ))
+
+function isNoEvidence(result) {
+  return ['no_evidence', 'no_evidence_unclear'].includes(result?.validation_status)
+}
+
+function needsManualReview(result) {
+  return ['needs_review', 'invalid_response', 'provider_failed'].includes(result?.validation_status)
+}
 
 const consistencyClass = computed(() => {
   if (props.item.is_confirmed) return 'state-confirmed'
@@ -227,6 +242,9 @@ const consistencyClass = computed(() => {
 
 const consistencyLabel = computed(() => {
   if (props.item.is_confirmed) return '已确认'
+  if (effectiveModelResults.value.some(needsManualReview) && !props.item.ai_judgment) {
+    return '需人工判断'
+  }
   const c = props.item.consistency
   const n = effectiveModelResults.value.length
   return {
@@ -375,6 +393,7 @@ async function doConfirm() {
 .summary-sep { color: #cbd5e1; font-size: 0.7rem; }
 .ev-page-inline { font-size: 0.68rem; color: #64748b; background: #e2e8f0; padding: 1px 5px; border-radius: 3px; }
 .no-evidence-chip { font-size:.62rem; color:#92400e; background:#fef3c7; border-radius:4px; padding:1px 5px; }
+.needs-review-chip { font-size:.62rem; color:#991b1b; background:#fee2e2; border-radius:4px; padding:1px 5px; }
 .btn-expand { display: none; } /* 已合并到卡片头部，保留空规则防止引用报错 */
 
 /* 展开后详情区 */
@@ -383,6 +402,7 @@ async function doConfirm() {
   display: flex; flex-direction: column; gap: 6px;
 }
 .detail-reason { margin: 0; font-size: 0.72rem; color: #475569; line-height: 1.5; }
+.needs-review-message { padding:5px 7px; border-radius:5px; background:#fff1f2; color:#9f1239; font-size:.65rem; line-height:1.4; }
 .detail-evidence { display: flex; gap: 6px; align-items: flex-start; }
 .ev-text { font-size: 0.7rem; color: #475569; font-style: italic; line-height: 1.5; flex: 1; }
 .evidence-body { display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }

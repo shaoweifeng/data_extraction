@@ -20,7 +20,7 @@ from .quality.api.reference_views import (
     fulltext_download, fulltext_retry, methods_list, ref_list, ref_import, ref_upload, ref_update,
     ref_batch_method,
 )
-from .quality.api.evaluation_views import eval_start, eval_progress
+from .quality.api.evaluation_views import eval_start, eval_progress, review_context
 from .quality.api.review_views import (
     domain_results, evaluation_audit, project_batch_confirm, signal_batch_confirm,
     signal_evidence_context, signal_item_confirm, signal_items_list,
@@ -119,6 +119,7 @@ urlpatterns = [
     # AI 评价
     path('qa/eval/start/',                     eval_start,            name='qa_eval_start'),
     path('qa/eval/progress/',                  eval_progress,         name='qa_eval_progress'),
+    path('qa/review-context/',                  review_context,        name='qa_review_context'),
     # 信号问题
     path('qa/signal-items/',                   signal_items_list,     name='qa_signal_items_list'),
     path('qa/signal-items/<int:item_id>/confirm/', signal_item_confirm, name='qa_signal_item_confirm'),

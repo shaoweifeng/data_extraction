@@ -1,0 +1,391 @@
+{
+  "run_id": 4,
+  "run_uuid": "ca273954-89fd-4cb2-9e06-d2e7555ace08",
+  "asset_ids": [
+    20,
+    21
+  ],
+  "models": [
+    "deepseek-v4-flash",
+    "qwen3-7-flash"
+  ],
+  "protocol_version": "qa-evidence-protocol-v2",
+  "prompt_version": "qa-evidence-prompt-v2",
+  "retrieval_version": "qa-evidence-lexical-v1",
+  "chunking_version": "qa-chunks-v2-spans",
+  "records": [
+    {
+      "asset_id": 20,
+      "reference_id": 1011,
+      "title": "JY11A01程歆琦",
+      "has_review_context": false,
+      "domains": [
+        {
+          "domain": "patient_selection",
+          "prompt_chars": 22552,
+          "catalog_size": 53,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 1,
+              "errors": [
+                {
+                  "code": "evidence_ref_not_allowed",
+                  "signal_key": "ps_avoid_cc",
+                  "returned_refs": [
+                    "E009",
+                    "E010",
+                    "E047"
+                  ],
+                  "disallowed_refs": [
+                    "E047"
+                  ],
+                  "allowed_refs": [
+                    "E001",
+                    "E002",
+                    "E003",
+                    "E004",
+                    "E005",
+                    "E006",
+                    "E007",
+                    "E008",
+                    "E009",
+                    "E010",
+                    "E011",
+                    "E012",
+                    "E013",
+                    "E014",
+                    "E015",
+                    "E016",
+                    "E017",
+                    "E018",
+                    "E019",
+                    "E020",
+                    "E021",
+                    "E022",
+                    "E023",
+                    "E024",
+                    "E025",
+                    "E026",
+                    "E027",
+                    "E028",
+                    "E029",
+                    "E030",
+                    "E031",
+                    "E032",
+                    "E033",
+                    "E034",
+                    "E035",
+                    "E036",
+                    "E037",
+                    "E038",
+                    "E039",
+                    "E040",
+                    "E041",
+                    "E042",
+                    "E043",
+                    "E044",
+                    "E045",
+                    "E046"
+                  ]
+                }
+              ],
+              "usage": {
+                "prompt": 12255,
+                "completion": 277,
+                "total": 12532,
+                "cached_prompt_tokens": 12032
+              },
+              "response_sha256": "a325ee257bad5687e9fb39b99403ca99ad65d39208d54aec3c85e1597bf64ce2"
+            },
+            "qwen3-7-flash": {
+              "validated": 2,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 14524,
+                "completion": 349,
+                "total": 14873,
+                "cached_prompt_tokens": 14336
+              },
+              "response_sha256": "585fef818017b6dbc67fb5d990d090ac9a4a7e7330e365f7c275f4e87bcbd4cb"
+            }
+          }
+        },
+        {
+          "domain": "index_test",
+          "prompt_chars": 19773,
+          "catalog_size": 46,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 10714,
+                "completion": 205,
+                "total": 10919,
+                "cached_prompt_tokens": 10496
+              },
+              "response_sha256": "d264959ad189fcc1cb551bc0905147979e32e3833874de4a8bf98e4b8a253e56"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 12680,
+                "completion": 219,
+                "total": 12899,
+                "cached_prompt_tokens": 0
+              },
+              "response_sha256": "61bf8b7c9c098e5bf771bb898a1378d074253e990b4be57e4fe46bf6d1bad9c3"
+            }
+          }
+        },
+        {
+          "domain": "reference_standard",
+          "prompt_chars": 19685,
+          "catalog_size": 46,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 10660,
+                "completion": 179,
+                "total": 10839,
+                "cached_prompt_tokens": 10496
+              },
+              "response_sha256": "9fced14a271a78ea8eb22c7431bbbb8459226fddaed88550e32d9275e6f1f870"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 12599,
+                "completion": 238,
+                "total": 12837,
+                "cached_prompt_tokens": 0
+              },
+              "response_sha256": "74acc14610d4c1fcb11e2cae589a5ea8f471de869783cc0b6565e94abc817387"
+            }
+          }
+        },
+        {
+          "domain": "flow_timing",
+          "prompt_chars": 20126,
+          "catalog_size": 46,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 4,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 10894,
+                "completion": 240,
+                "total": 11134,
+                "cached_prompt_tokens": 10752
+              },
+              "response_sha256": "f6ded2d4720035c51ab08f840b18903fe0681f1b499828f87bcfe5c38644b5eb"
+            },
+            "qwen3-7-flash": {
+              "validated": 2,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 12952,
+                "completion": 437,
+                "total": 13389,
+                "cached_prompt_tokens": 0
+              },
+              "response_sha256": "7e1182c9bd7e602aa70546ccb53e0b149b38dfa42e2edb16649256c809b86664"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": 21,
+      "reference_id": 1012,
+      "title": "JY7A01李伟述评",
+      "has_review_context": false,
+      "domains": [
+        {
+          "domain": "patient_selection",
+          "prompt_chars": 24857,
+          "catalog_size": 58,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 2,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 12837,
+                "completion": 285,
+                "total": 13122,
+                "cached_prompt_tokens": 12672
+              },
+              "response_sha256": "9304523c922a669b4271bbed2a48004dfc2657228491d1a363ef4fb80b50390f"
+            },
+            "qwen3-7-flash": {
+              "validated": 2,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 15181,
+                "completion": 336,
+                "total": 15517,
+                "cached_prompt_tokens": 0
+              },
+              "response_sha256": "b886d6a08e41db5106ca77ba85212f226a8b4b6e832d96cae318ab08cdf4a957"
+            }
+          }
+        },
+        {
+          "domain": "index_test",
+          "prompt_chars": 20465,
+          "catalog_size": 47,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 10847,
+                "completion": 188,
+                "total": 11035,
+                "cached_prompt_tokens": 10624
+              },
+              "response_sha256": "9bbfcb73c089b8249c5bc43741c3dc8a7c52a7960e8641597fcda2ac7a033b37"
+            },
+            "qwen3-7-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 12629,
+                "completion": 223,
+                "total": 12852,
+                "cached_prompt_tokens": 12416
+              },
+              "response_sha256": "24021a35367aa95272c2bc355dcdf14e348968666899dfb28d9c9cb2cc929a3b"
+            }
+          }
+        },
+        {
+          "domain": "reference_standard",
+          "prompt_chars": 18019,
+          "catalog_size": 41,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 0,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 9284,
+                "completion": 169,
+                "total": 9453,
+                "cached_prompt_tokens": 9088
+              },
+              "response_sha256": "c560f34a63a61e37bca45ca92814f661875b85e28d60aa0478c37a25a9be3cb3"
+            },
+            "qwen3-7-flash": {
+              "validated": 1,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 10967,
+                "completion": 239,
+                "total": 11206,
+                "cached_prompt_tokens": 0
+              },
+              "response_sha256": "fa76be433140fe247e7b60feeda6af22e5e24311b6e6362c695a9beee5cb1b56"
+            }
+          }
+        },
+        {
+          "domain": "flow_timing",
+          "prompt_chars": 20710,
+          "catalog_size": 47,
+          "models": {
+            "deepseek-v4-flash": {
+              "validated": 1,
+              "no_evidence": 3,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 10973,
+                "completion": 291,
+                "total": 11264,
+                "cached_prompt_tokens": 10752
+              },
+              "response_sha256": "a1c78954cd156e94e6c803fb19874f3fab5c551792d16bd946553e055d33c6e2"
+            },
+            "qwen3-7-flash": {
+              "validated": 2,
+              "no_evidence": 2,
+              "failed": 0,
+              "errors": [],
+              "usage": {
+                "prompt": 12811,
+                "completion": 431,
+                "total": 13242,
+                "cached_prompt_tokens": 0
+              },
+              "response_sha256": "6dd33e1bc75897d5a99954d2d3edb157e094ce3a9987e4d6b6af65b71ed81e92"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "requested": 56,
+    "validated": 16,
+    "no_evidence": 39,
+    "failed": 1,
+    "invalid_rate": 0.017857142857142856,
+    "error_counts": {
+      "evidence_ref_not_allowed": 1
+    },
+    "token_usage": {
+      "prompt": 192807,
+      "completion": 4306,
+      "total": 197113,
+      "cached_prompt_tokens": 113664,
+      "model_usage": {
+        "deepseek-v4-flash": {
+          "prompt": 88464,
+          "completion": 1834,
+          "total": 90298,
+          "cached_prompt_tokens": 86912,
+          "calls": 8
+        },
+        "qwen3-7-flash": {
+          "prompt": 104343,
+          "completion": 2472,
+          "total": 106815,
+          "cached_prompt_tokens": 26752,
+          "calls": 8
+        }
+      }
+    }
+  }
+}

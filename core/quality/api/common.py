@@ -154,11 +154,12 @@ def _public_model_result(result: dict, *, include_audit: bool) -> dict:
     public_fields = {
         'model_id', 'model_name', 'judgment', 'reason', 'evidence', 'evidence_page',
         'evidence_chunk_id', 'evidence_page_start', 'evidence_page_end',
-        'evidence_section', 'validation_status',
+        'evidence_section', 'evidence_span_ids', 'validation_status',
     }
     audit_fields = {
         'evidence_sha256', 'prompt_version', 'retrieval_version',
         'method_config_version', 'evidence_snapshot_sha256', 'validation_errors',
+        'evidence_refs', 'error_code',
     }
     allowed = public_fields | (audit_fields if include_audit else set())
     return {key: value for key, value in result.items() if key in allowed}

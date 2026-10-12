@@ -253,6 +253,7 @@ class QAEvalHandler:
         self.stop_checker = stop_checker
         self.was_stopped = False
         self.last_ref_token_stats = None
+        self._v2_orchestrator = None
         self._rollout_user = None
         if user_id:
             from django.contrib.auth import get_user_model
@@ -304,6 +305,8 @@ class QAEvalHandler:
         logger.info(f'[QA] 评价完成 project_id={self.project_id}')
 
         # ── 结算：按实际 token 扣费 ───────────────────────────────────────────
+        if self._v2_orchestrator:
+            self._v2_orchestrator.finalize(stopped=self.was_stopped)
         self._settle_credits(token_stats)
 
     def _settle_credits(self, token_stats):
@@ -345,14 +348,36 @@ class QAEvalHandler:
         self.last_ref_token_stats = None
         asset = getattr(ref, 'fulltext_asset', None)
         from core.quality.services.evidence_rollout import evidence_retrieval_enabled_for
+        from core.quality.services.fulltext_chunks import CHUNKING_VERSION
         if (
             evidence_retrieval_enabled_for(self._rollout_user)
             and asset
             and asset.status == 'ready'
             and asset.extraction_status == 'completed'
         ):
+            if asset.chunking_version == CHUNKING_VERSION:
+                return self._eval_one_ref_with_evidence_v2(ref)
             return self._eval_one_ref_with_evidence(ref)
         return self._eval_one_ref_legacy(ref)
+
+    def _eval_one_ref_with_evidence_v2(self, ref) -> Optional[dict]:
+        """Evaluate a span-indexed reference through the auditable V2 protocol."""
+        from core.quality.services.evidence_orchestrator_v2 import EvidenceV2Orchestrator
+
+        if self._v2_orchestrator is None:
+            self._v2_orchestrator = EvidenceV2Orchestrator(
+                project_id=self.project_id,
+                model_ids=self.model_ids,
+                user_id=self.user_id,
+                task=getattr(self, 'task_obj', None),
+                resume_ref_ids=self.resume_ref_ids,
+                resume_all_incomplete=self.resume_all_incomplete,
+                stop_checker=self.stop_checker,
+            )
+        stats = self._v2_orchestrator.evaluate_reference(ref)
+        self.was_stopped = self._v2_orchestrator.was_stopped
+        self.last_ref_token_stats = stats
+        return stats
 
     def _eval_one_ref_with_evidence(self, ref) -> Optional[dict]:
         """Evaluate one reference by domain using verified, shared evidence packages."""
@@ -952,5 +977,7 @@ class QAEvalStepHandler(BaseStepHandler):
         )
 
         # 按实际 token 结算
+        if engine._v2_orchestrator:
+            engine._v2_orchestrator.finalize(stopped=engine.was_stopped)
         engine._settle_credits(token_stats)
         return True
