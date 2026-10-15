@@ -14,6 +14,7 @@ from core.quality.storage import (
     qa_chunk_index_upload_path, qa_extracted_text_upload_path, qa_fulltext_storage,
     qa_fulltext_upload_path,
 )
+from core.service_contact.storage import service_contact_storage
 
 
 # ============================================================================
@@ -38,6 +39,14 @@ class UserProfile(models.Model):
     is_approved = models.BooleanField(default=True, verbose_name="是否已审核")
     is_banned = models.BooleanField(default=False, verbose_name="是否被封禁")
     concurrency_limit = models.IntegerField(default=2, verbose_name="AI筛选并发档位")
+    # 新套餐权益的显式管理员覆盖。null 表示按当前套餐或免费默认值解析；
+    # 旧字段继续保留，阶段 6 切换统一权益服务前不改变现有行为。
+    quota_projects_override = models.IntegerField(
+        null=True, blank=True, verbose_name="项目配额覆盖",
+    )
+    ai_call_slots_override = models.IntegerField(
+        null=True, blank=True, verbose_name="AI调用槽位覆盖",
+    )
     approved_at = models.DateTimeField(null=True, blank=True, verbose_name="审核时间")
     approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='approved_users', verbose_name="审核人")
@@ -302,7 +311,11 @@ class DataFile(models.Model):
                               related_name='files', verbose_name="所属步骤")
 
     filename = models.CharField(max_length=255, verbose_name="文件名")
-    file = models.FileField(upload_to=data_file_upload_path, verbose_name="文件")
+    file = models.FileField(
+        upload_to=data_file_upload_path,
+        max_length=500,
+        verbose_name="文件",
+    )
     file_size = models.BigIntegerField(default=0, verbose_name="文件大小(字节)")
     file_type = models.CharField(max_length=50, blank=True, verbose_name="文件类型")
     data_category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='input', verbose_name="数据类别")
@@ -436,6 +449,73 @@ class SystemOperationState(models.Model):
 
     def __str__(self):
         return self.get_mode_display()
+
+
+def service_contact_qr_upload_path(instance, filename):
+    """Use an opaque name so uploaded QR filenames never become public identifiers."""
+    extension = os.path.splitext(filename or '')[1].lower()
+    extension = extension if extension in {'.png', '.jpg', '.jpeg'} else '.png'
+    return f'qr/{uuid.uuid4().hex}{extension}'
+
+
+class ServiceContactSetting(models.Model):
+    """Singleton contact details shown by the internal-test consultation entry."""
+
+    singleton_id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    enabled = models.BooleanField(default=False, verbose_name='启用咨询入口')
+    display_name = models.CharField(
+        max_length=100, default='MetaFlow 服务助手', verbose_name='联系人名称',
+    )
+    wechat_id = models.CharField(max_length=100, blank=True, default='', verbose_name='微信号')
+    wechat_qr = models.ImageField(
+        upload_to=service_contact_qr_upload_path,
+        storage=service_contact_storage,
+        blank=True,
+        verbose_name='微信二维码',
+    )
+    contact_email = models.EmailField(blank=True, default='', verbose_name='联系邮箱')
+    service_hours = models.CharField(
+        max_length=200, blank=True, default='', verbose_name='服务时间',
+    )
+    description = models.CharField(
+        max_length=500,
+        blank=True,
+        default='当前处于内测阶段，暂不公开售卖。',
+        verbose_name='页面说明',
+    )
+    security_notice = models.CharField(
+        max_length=500,
+        blank=True,
+        default='请勿向任何人提供密码、邮箱验证码或其他账户安全信息。',
+        verbose_name='安全提示',
+    )
+    updated_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='service_contact_updates',
+        verbose_name='最后更新人',
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='最后更新时间')
+
+    class Meta:
+        db_table = 'plat_service_contact_setting'
+        verbose_name = '服务联系方式'
+        verbose_name_plural = '服务联系方式'
+
+    def clean(self):
+        super().clean()
+        if self.enabled and not (self.wechat_id or self.wechat_qr or self.contact_email):
+            from django.core.exceptions import ValidationError
+            raise ValidationError('启用咨询入口前，至少配置微信号、微信二维码或联系邮箱之一。')
+
+    def save(self, *args, **kwargs):
+        self.singleton_id = 1
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.display_name
 
 
 # ============================================================================

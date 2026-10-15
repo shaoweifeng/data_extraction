@@ -16,9 +16,9 @@ import json
 import logging
 import re
 import requests
-from typing import List, Dict
-
 from typing import List, Dict, Optional
+
+from core.ai.usage_schema import normalize_provider_usage
 from .base import BaseAIProvider, ScreeningResult
 
 logger = logging.getLogger(__name__)
@@ -45,6 +45,9 @@ class OpenAICompatibleProvider(BaseAIProvider):
             or os.environ.get("AI_MODEL", "deepseek-chat")
         )
         self.provider_id = self.config.get("provider", "")
+        self.platform_model_id = self.config.get("id") or self.model
+        self.region = self.config.get("region", "")
+        self.service_tier = self.config.get("service_tier", "standard")
         self.timeout = int(
             self.config.get("timeout")
             or os.environ.get("AI_TIMEOUT", "120")
@@ -186,20 +189,24 @@ class OpenAICompatibleProvider(BaseAIProvider):
                 # 真正的回答在 reasoning_content 里
                 if not content.strip():
                     content = msg.get("reasoning_content") or ""
-                # 采集 token 用量（OpenAI 兼容接口标准字段）
+                # 采集并规范化用量。保留 prompt/completion/total 旧字段，
+                # 同时提供逐调用 v2 明细供影子计费和后续账单复算。
                 raw_usage = body.get("usage") or {}
-                prompt_details = raw_usage.get("prompt_tokens_details") or {}
-                token_usage = {
-                    "prompt":     raw_usage.get("prompt_tokens", 0),
-                    "completion": raw_usage.get("completion_tokens", 0),
-                    "total":      raw_usage.get("total_tokens", 0),
-                    "cached_prompt_tokens": (
-                        prompt_details.get("cached_tokens")
-                        or raw_usage.get("cache_read_input_tokens")
-                        or raw_usage.get("cached_tokens")
-                        or 0
-                    ),
-                } if raw_usage else None
+                request_id = (
+                    body.get("id")
+                    or response.headers.get("x-request-id")
+                    or response.headers.get("x-dashscope-request-id")
+                    or ""
+                )
+                token_usage = normalize_provider_usage(
+                    raw_usage,
+                    provider=self.provider_id,
+                    model_id=self.platform_model_id,
+                    provider_model=body.get("model") or self.model,
+                    region=self.region,
+                    service_tier=body.get("service_tier") or self.service_tier,
+                    provider_request_id=request_id,
+                )
                 if not content.strip():
                     logger.warning("[DeepSeek] 模型返回内容为空（content 和 reasoning_content 均空）")
                     return None, token_usage

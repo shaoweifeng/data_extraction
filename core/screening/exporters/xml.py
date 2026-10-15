@@ -15,10 +15,19 @@ class ScreeningXmlExporter:
         ('Page', 'Page'),
         ('Date', 'Date'),
         ('Doi', 'Doi'),
+        ('PMID', 'PMID'),
         ('PMCID', 'PMCID'),
+        ('ISBN', 'ISBN'),
+        ('ISSN', 'ISSN'),
         ('Abstract', 'Abstract'),
         ('URL', 'URL'),
         ('Address', 'Address'),
+        ('Keywords', 'Keywords'),
+        ('Language', 'Language'),
+        ('Publisher', 'Publisher'),
+        ('Database', 'Database'),
+        ('Organization', 'Organization'),
+        ('SourceIdentifier', 'SourceIdentifier'),
     )
 
     @classmethod

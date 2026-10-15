@@ -51,6 +51,7 @@ def _normalize_endnote_record(rec, source_file: str, position: int) -> Dict:
         date = f"{date} {year}"
 
     authors = [text for author in rec.findall("./contributors/authors/author") if (text := _itext(author))]
+    keywords = [text for node in rec.findall("./keywords/keyword") if (text := _itext(node))]
     doi_raw = _first_text(rec, ["./doi", "./electronic-resource-num"])
     doi_raw = doi_raw.replace("doi:", "").replace("DOI:", "").strip()
     doi = (doi_raw.split()[0] if doi_raw else "").strip().rstrip(".").rstrip(";").strip()
@@ -78,8 +79,15 @@ def _normalize_endnote_record(rec, source_file: str, position: int) -> Dict:
         "page": _first_text(rec, ["./pages"]),
         "date": date,
         "pmcid": _first_text(rec, ["./custom2"]),
+        "isbn": _first_text(rec, ["./isbn"]),
+        "issn": _first_text(rec, ["./issn"]),
         "address": _first_text(rec, ["./auth-address"]),
         "abstract": _first_text(rec, ["./abstract"]),
+        "keywords": keywords,
+        "language": _first_text(rec, ["./language"]),
+        "publisher": _first_text(rec, ["./publisher"]),
+        "database": _first_text(rec, ["./database", "./source-app"]),
+        "organization": _first_text(rec, ["./institution", "./organization"]),
         "doi": doi,
         "url": url,
         "source_file": source_file,
@@ -101,8 +109,23 @@ def _normalize_internal_reference(ref, source_file: str, position: int) -> Dict:
         "year": _first_text(ref, ["Year"]),
         "abstract": _first_text(ref, ["Abstract"]),
         "doi": _first_text(ref, ["DOI", "Doi", "doi"]),
+        "pmid": _first_text(ref, ["PMID", "Pmid", "pmid"]),
+        "pmcid": _first_text(ref, ["PMCID", "Pmcid", "pmcid"]),
+        "isbn": _first_text(ref, ["ISBN", "Isbn", "isbn"]),
+        "issn": _first_text(ref, ["ISSN", "Issn", "issn"]),
         "url": _first_text(ref, ["URL", "Url", "url"]),
         "address": _first_text(ref, ["Address"]),
+        "reference_type": _first_text(ref, ["ReferenceType"]),
+        "volume": _first_text(ref, ["Volume"]),
+        "issue": _first_text(ref, ["Issue"]),
+        "page": _first_text(ref, ["Page"]),
+        "date": _first_text(ref, ["Date"]),
+        "keywords": _first_text(ref, ["Keywords"]),
+        "language": _first_text(ref, ["Language"]),
+        "publisher": _first_text(ref, ["Publisher"]),
+        "database": _first_text(ref, ["Database"]),
+        "organization": _first_text(ref, ["Organization"]),
+        "source_identifier": _first_text(ref, ["SourceIdentifier"]),
         "source_file": source_file,
         "source_position": position,
         "type": "XML",
@@ -201,6 +224,12 @@ def _normalize_embase_item(item, source_file: str, position: int) -> Dict:
             seen_organizations.add(organization.casefold())
 
     fulltext_url = (item.get("fulltexturl") or "").strip()
+    keywords = []
+    for elem in item.iter():
+        if _local_name(elem.tag) in {"controlledterm", "keyword"}:
+            value = _itext(elem)
+            if value and value not in keywords:
+                keywords.append(value)
     return {
         "title": _first_descendant_text(item, ["titletext"]),
         "authors": authors,
@@ -214,7 +243,16 @@ def _normalize_embase_item(item, source_file: str, position: int) -> Dict:
         "address": "; ".join(organizations),
         "abstract": "\n".join(abstract_parts),
         "doi": doi,
+        "pmid": _first_descendant_text(item, ["pmid"]),
+        "pmcid": _first_descendant_text(item, ["pmcid"]),
+        "isbn": _first_descendant_text(item, ["isbn"]),
+        "issn": _first_descendant_text(item, ["issn"]),
         "url": fulltext_url or (f"https://doi.org/{doi}" if doi else ""),
+        "keywords": keywords,
+        "language": _first_descendant_text(item, ["language"]),
+        "publisher": _first_descendant_text(item, ["publishername", "publisher"]),
+        "database": "Embase",
+        "organization": "; ".join(organizations),
         "source_file": source_file,
         "source_position": position,
         "source_identifier": source_identifier or doi,

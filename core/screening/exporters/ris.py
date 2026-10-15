@@ -47,6 +47,10 @@ class ScreeningRisExporter:
             ('DO', 'Doi', 'doi'),
             ('AB', 'Abstract', 'abstract'),
             ('AD', 'Address', 'address'),
+            ('DA', 'Date', 'date'),
+            ('LA', 'Language', 'language'),
+            ('PB', 'Publisher', 'publisher'),
+            ('DB', 'Database', 'database'),
         ]:
             value = _get(xml_key, json_key)
             if value:
@@ -61,9 +65,30 @@ class ScreeningRisExporter:
         elif page:
             output.write(f"SP  - {page}\n")
 
+        keywords = _get('Keywords', 'keywords')
+        if isinstance(keywords, (list, tuple, set)):
+            keyword_values = keywords
+        else:
+            keyword_values = str(keywords).split(';')
+        for keyword in keyword_values:
+            normalized_keyword = str(keyword).strip()
+            if normalized_keyword:
+                output.write(f"KW  - {normalized_keyword}\n")
+        for serial_number in (_get('ISSN', 'issn'), _get('ISBN', 'isbn')):
+            if serial_number:
+                output.write(f"SN  - {serial_number}\n")
+        pmid = _get('PMID', 'pmid')
+        if pmid:
+            output.write(f"AN  - {pmid}\n")
         pmcid = _get('PMCID', 'pmcid')
         if pmcid:
-            output.write(f"AN  - {pmcid}\n")
+            output.write(f"C2  - {pmcid}\n")
+        organization = _get('Organization', 'organization')
+        if organization:
+            output.write(f"C1  - {organization}\n")
+        source_identifier = _get('SourceIdentifier', 'source_identifier')
+        if source_identifier:
+            output.write(f"ID  - {source_identifier}\n")
         url = _get('URL', 'url')
         if url:
             output.write(f"UR  - {url}\n")

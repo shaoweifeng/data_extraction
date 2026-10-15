@@ -103,7 +103,7 @@
     </div>
 
     <!-- 导出按钮区域 -->
-    <div class="space-y-3">
+    <div class="export-actions-stack">
 
       <!-- 待定文献始终阻止导出 -->
       <div v-if="hasPending" class="export-block-tip">
@@ -464,7 +464,13 @@ onUnmounted(() => exportAbortController?.abort())
 /* 统计区域 */
 .stat-section { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: .9rem; }
 
-.export-progress-box { max-width: 680px; margin: 0 auto; padding: 12px 14px; border: 1px solid #99f6e4; border-radius: 10px; background: #f0fdfa; }
+.export-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.export-progress-box { width: 100%; max-width: 680px; margin: 0 auto; padding: 12px 14px; border: 1px solid #99f6e4; border-radius: 10px; background: #f0fdfa; }
 .export-progress-head, .export-progress-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #0f766e; font-size: .82rem; }
 .export-download-row { display:grid; grid-template-columns:90px 120px 150px minmax(0,1fr); align-items:center; gap:8px; margin-bottom:8px; }
 .export-download-row:last-child { margin-bottom:0; }

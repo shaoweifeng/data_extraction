@@ -84,12 +84,13 @@ def check_create_permission(user) -> None:
     if not _check_permission(user, 'project.create'):
         raise PermissionError("缺少权限：project.create")
 
-    if not user.is_superuser and hasattr(user, 'profile'):
-        quota = user.profile.quota_projects
-        if quota >= 0:
-            current_count = Project.objects.filter(owner=user).count()
-            if current_count >= quota:
-                raise PermissionError(f"已达项目配额上限({quota}个)")
+    from core.services.entitlement_service import resolve_user_entitlements
+
+    quota = resolve_user_entitlements(user).project_limit
+    if quota >= 0:
+        current_count = Project.objects.filter(owner=user).count()
+        if current_count >= quota:
+            raise PermissionError(f"已达当前套餐项目上限({quota}个)")
 
 
 # ============================================================================

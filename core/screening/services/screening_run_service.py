@@ -48,8 +48,12 @@ def reference_entry(reference: ScreeningReference) -> dict:
         'pmid': reference.pmid,
         'pmcid': reference.pmcid,
         'isbn': reference.isbn,
+        'issn': reference.issn,
         'url': reference.url,
         'address': reference.address,
+        'publisher': reference.publisher,
+        'database': reference.database,
+        'organization': reference.organization,
         'source_identifier': reference.source_identifier,
     }
 
@@ -265,10 +269,16 @@ def persist_result_batch(rows: list[ScreeningResult], provider_results: list[dic
             for model_id, model_stats in source.items():
                 target = merged_model_usage.setdefault(model_id, {
                     'prompt_tokens': 0, 'completion_tokens': 0,
-                    'total_tokens': 0, 'cached_prompt_tokens': 0, 'calls': 0,
+                    'total_tokens': 0, 'cached_prompt_tokens': 0,
+                    'cache_write_prompt_tokens': 0, 'calls': 0,
+                    'call_details': [],
                 })
-                for key in target:
+                for key in (
+                    'prompt_tokens', 'completion_tokens', 'total_tokens',
+                    'cached_prompt_tokens', 'cache_write_prompt_tokens', 'calls',
+                ):
                     target[key] += int(model_stats.get(key, 0) or 0)
+                target['call_details'].extend(model_stats.get('call_details') or [])
         if merged_model_usage:
             row.token_usage['model_usage'] = merged_model_usage
         total_tokens = Decimal(str(row.token_usage.get('total', 0) or 0))

@@ -48,6 +48,8 @@ class OpenApiContractTests(TestCase):
         '/qa/chart/generate/',
         '/qa/export/excel/',
         '/billing/balance/',
+        '/billing/plans/',
+        '/billing/batches/',
         '/health/live/',
         '/health/ready/',
         '/system/status/',

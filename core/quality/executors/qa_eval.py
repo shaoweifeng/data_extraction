@@ -279,7 +279,13 @@ class QAEvalHandler:
                 User = get_user_model()
                 user = User.objects.filter(pk=self.user_id).first()
                 if user:
-                    estimated = AIQuotaService.preflight(user, len(refs), self.model_ids)
+                    estimated = AIQuotaService.preflight(
+                        user,
+                        len(refs),
+                        self.model_ids,
+                        feature='qa_eval',
+                        task=getattr(self, 'task_obj', None),
+                    )
                     if is_unlimited_ai_user(user):
                         logger.info('[QA][计费] 管理员账户，跳过余额预检')
                     else:
@@ -319,6 +325,16 @@ class QAEvalHandler:
 
             user = get_user_model().objects.filter(pk=self.user_id).first()
             project = Project.objects.filter(pk=self.project_id).first()
+            # V2 persists every completed provider call into the evaluation run.
+            # Settle the cumulative persisted usage so a Celery retry cannot lose
+            # calls completed before the worker interruption.
+            settlement_usage = token_stats
+            if self._v2_orchestrator and self._v2_orchestrator.run:
+                self._v2_orchestrator.run.refresh_from_db(fields=['token_usage'])
+                persisted_usage = dict(self._v2_orchestrator.run.token_usage or {})
+                if persisted_usage:
+                    persisted_usage.setdefault('ref_count', len(self.ref_ids))
+                    settlement_usage = persisted_usage
             context = AIUsageContext(
                 feature='AI质量评价',
                 user=user,
@@ -330,7 +346,7 @@ class QAEvalHandler:
                     if getattr(self, 'task_obj', None) else None
                 ),
             )
-            stats = AIUsageSettlementService.settle(context, token_stats)
+            stats = AIUsageSettlementService.settle(context, settlement_usage)
             if stats.get('total_tokens'):
                 logger.info(
                     f"[QA][计费] 已统一结算 {stats['total_tokens']} tokens，"
@@ -407,26 +423,8 @@ class QAEvalHandler:
         self.last_ref_token_stats = stats
 
         def add_usage(usage, model_id):
-            if not usage:
-                return
-            stats['prompt'] += int(usage.get('prompt', usage.get('prompt_tokens', 0)) or 0)
-            stats['completion'] += int(
-                usage.get('completion', usage.get('completion_tokens', 0)) or 0
-            )
-            stats['total'] += int(usage.get('total', usage.get('total_tokens', 0)) or 0)
-            model_stats = stats.setdefault('model_usage', {}).setdefault(model_id, {
-                'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0,
-                'cached_prompt_tokens': 0, 'calls': 0,
-            })
-            prompt = int(usage.get('prompt', usage.get('prompt_tokens', 0)) or 0)
-            completion = int(usage.get('completion', usage.get('completion_tokens', 0)) or 0)
-            model_stats['prompt_tokens'] += prompt
-            model_stats['completion_tokens'] += completion
-            model_stats['total_tokens'] += int(
-                usage.get('total', usage.get('total_tokens', 0)) or prompt + completion
-            )
-            model_stats['cached_prompt_tokens'] += int(usage.get('cached_prompt_tokens', 0) or 0)
-            model_stats['calls'] += 1
+            from core.ai.usage_schema import merge_call_usage
+            merge_call_usage(stats, usage, model_id)
 
         failed_domains = []
         completed_domains = []
@@ -621,21 +619,8 @@ class QAEvalHandler:
         self.last_ref_token_stats = ref_token_stats
 
         def _add_token(usage, model_id):
-            if usage:
-                ref_token_stats['prompt']     += usage.get('prompt', 0)
-                ref_token_stats['completion'] += usage.get('completion', 0)
-                ref_token_stats['total']      += usage.get('total', 0)
-                model_stats = ref_token_stats.setdefault('model_usage', {}).setdefault(model_id, {
-                    'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0,
-                    'cached_prompt_tokens': 0, 'calls': 0,
-                })
-                model_stats['prompt_tokens'] += int(usage.get('prompt', 0) or 0)
-                model_stats['completion_tokens'] += int(usage.get('completion', 0) or 0)
-                model_stats['total_tokens'] += int(usage.get('total', 0) or 0)
-                model_stats['cached_prompt_tokens'] += int(
-                    usage.get('cached_prompt_tokens', 0) or 0
-                )
-                model_stats['calls'] += 1
+            from core.ai.usage_schema import merge_call_usage
+            merge_call_usage(ref_token_stats, usage, model_id)
 
         # 并发调用所有模型（最多同时 4 个，避免占用过多连接）
         all_model_raw = {}   # model_id -> List[dict]
@@ -904,7 +889,13 @@ class QAEvalStepHandler(BaseStepHandler):
 
         user = self.task_obj.created_by if self.task_obj else None
         if user:
-            estimated = AIQuotaService.preflight(user, total, model_ids)
+            estimated = AIQuotaService.preflight(
+                user,
+                total,
+                model_ids,
+                feature='qa_eval',
+                task=self.task_obj,
+            )
             if is_unlimited_ai_user(user):
                 self.logger.info('[QA][计费] 管理员账户，跳过余额预检')
             else:

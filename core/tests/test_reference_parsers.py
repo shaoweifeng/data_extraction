@@ -112,6 +112,37 @@ abstract = {Present},
         self.assertEqual(issue['line'], 5)
         self.assertEqual(issue['identifier'], 'Invalid Key')
 
+    def test_bibtex_extended_bibliography_fields_are_normalized(self):
+        content = """@article{CompleteKey,
+title = {Complete title},
+author = {Zhang, San and Li, Si},
+keywords = {diagnosis, evidence; review},
+language = {English},
+publisher = {Example Publisher},
+organization = {Example Organization},
+database = {Example Database},
+issn = {1234-5678},
+isbn = {978-1},
+pmid = {12345678},
+pmcid = {PMC123456},
+abstract = {Present}
+}
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'complete.bib'
+            path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(path))[0]
+
+        self.assertEqual(parsed['keywords'], ['diagnosis', 'evidence', 'review'])
+        self.assertEqual(parsed['language'], 'English')
+        self.assertEqual(parsed['publisher'], 'Example Publisher')
+        self.assertEqual(parsed['organization'], 'Example Organization')
+        self.assertEqual(parsed['database'], 'Example Database')
+        self.assertEqual(parsed['issn'], '1234-5678')
+        self.assertEqual(parsed['isbn'], '978-1')
+        self.assertEqual(parsed['pmid'], '12345678')
+        self.assertEqual(parsed['pmcid'], 'PMC123456')
+
     def test_diagnostics_count_missing_abstract_without_marking_record_skipped(self):
         content = """TY  - JOUR
 TI  - Has abstract
@@ -180,6 +211,36 @@ ER  -
         expected = 'Department A, University X; Department B, Hospital Y'
         self.assertEqual(parsed[0]['address'], expected)
 
+    def test_ris_extended_bibliography_fields_are_preserved(self):
+        content = """TY  - JOUR
+TI  - Extended RIS example
+KW  - diagnosis
+KW  - evidence
+LA  - English
+PB  - Example Publisher
+SN  - 1234-5678
+AN  - 12345678
+C2  - PMC123456
+C1  - Example Organization
+DB  - PubMed
+DA  - 2026/10/14
+ER  -
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / 'extended.ris'
+            input_path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(input_path))[0]
+
+        self.assertEqual(parsed['keywords'], 'diagnosis; evidence')
+        self.assertEqual(parsed['language'], 'English')
+        self.assertEqual(parsed['publisher'], 'Example Publisher')
+        self.assertEqual(parsed['issn'], '1234-5678')
+        self.assertEqual(parsed['pmid'], '12345678')
+        self.assertEqual(parsed['pmcid'], 'PMC123456')
+        self.assertEqual(parsed['organization'], 'Example Organization')
+        self.assertEqual(parsed['database'], 'PubMed')
+        self.assertEqual(parsed['date'], '2026/10/14')
+
     def test_internal_xml_fixture_normalizes_core_fields(self):
         result = parse_file(str(FIXTURES / 'references' / 'sample.xml'))
         self.assertEqual(len(result), 1)
@@ -195,6 +256,67 @@ ER  -
                 'type': 'XML',
             },
         )
+
+    def test_internal_xml_round_trip_fields_are_all_read(self):
+        content = """<?xml version="1.0" encoding="UTF-8"?>
+<References><Reference id="1" decision="included" manual_override="no">
+<ReferenceType>Journal Article</ReferenceType><Title>Complete XML</Title>
+<Authors>Zhang, San; Li, Si</Authors><Year>2026</Year><Journal>Journal</Journal>
+<Volume>12</Volume><Issue>3</Issue><Page>101-109</Page><Date>2026-10-14</Date>
+<Doi>10.1000/complete</Doi><PMID>123</PMID><PMCID>PMC123</PMCID>
+<ISBN>978-1</ISBN><ISSN>1234-5678</ISSN><Abstract>Abstract</Abstract>
+<URL>https://example.test</URL><Address>Address</Address><Keywords>A; B</Keywords>
+<Language>English</Language><Publisher>Publisher</Publisher><Database>Database</Database>
+<Organization>Organization</Organization><SourceIdentifier>SRC-123</SourceIdentifier>
+</Reference></References>"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'complete.xml'
+            path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(path))[0]
+
+        self.assertEqual(parsed['reference_type'], 'Journal Article')
+        self.assertEqual(parsed['volume'], '12')
+        self.assertEqual(parsed['issue'], '3')
+        self.assertEqual(parsed['page'], '101-109')
+        self.assertEqual(parsed['date'], '2026-10-14')
+        self.assertEqual(parsed['pmid'], '123')
+        self.assertEqual(parsed['pmcid'], 'PMC123')
+        self.assertEqual(parsed['isbn'], '978-1')
+        self.assertEqual(parsed['issn'], '1234-5678')
+        self.assertEqual(parsed['keywords'], 'A; B')
+        self.assertEqual(parsed['publisher'], 'Publisher')
+        self.assertEqual(parsed['database'], 'Database')
+        self.assertEqual(parsed['organization'], 'Organization')
+        self.assertEqual(parsed['source_identifier'], 'SRC-123')
+
+    def test_endnote_accession_number_is_not_assumed_to_be_pmid(self):
+        content = """%0 Journal Article
+%T Accession example
+%M WOS:000123456
+%@ 1234-5678
+%W Web of Science
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'accession.enw'
+            path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(path))[0]
+
+        self.assertEqual(parsed['source_identifier'], 'WOS:000123456')
+        self.assertEqual(parsed['pmid'], '')
+        self.assertEqual(parsed['issn'], '1234-5678')
+
+    def test_endnote_book_serial_number_is_normalized_as_isbn(self):
+        content = """%0 Book
+%T Book example
+%@ 978-1-2345-6789-0
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'book.enw'
+            path.write_text(content, encoding='utf-8')
+            parsed = parse_file(str(path))[0]
+
+        self.assertEqual(parsed['isbn'], '978-1-2345-6789-0')
+        self.assertEqual(parsed['issn'], '')
 
     def test_nbib_is_parsed_in_one_pass_without_losing_record_boundaries(self):
         content = """PMID- 1001

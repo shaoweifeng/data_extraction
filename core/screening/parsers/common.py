@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List, TypedDict
 # 但不应在没有同步更新契约和回归基线的情况下返回新的顶层字段。
 REFERENCE_RECORD_FIELDS = frozenset({
     'title', 'authors', 'journal', 'year', 'volume', 'issue', 'page', 'date',
-    'doi', 'pmcid', 'abstract', 'url', 'address', 'keywords', 'database',
+    'doi', 'pmid', 'pmcid', 'isbn', 'issn', 'abstract', 'url', 'address', 'keywords', 'language', 'database',
     'publisher', 'organization', 'reference_type', 'type', 'record_number',
     'source_file', 'source_position', 'source_identifier', 'source_type',
     '_raw_metadata',
@@ -26,13 +26,17 @@ class ReferenceRecord(TypedDict, total=False):
     page: str
     date: str
     doi: str
+    pmid: str
     pmcid: str
+    isbn: str
+    issn: str
     abstract: str
     url: str
     address: str
     keywords: str
     database: str
     publisher: str
+    language: str
     organization: str
     reference_type: str
     type: str

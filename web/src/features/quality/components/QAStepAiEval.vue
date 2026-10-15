@@ -93,6 +93,9 @@
                 >
                   <span class="ai-submodel-name">{{ sm.name }}</span>
                   <span class="ai-submodel-desc">{{ sm.description }}</span>
+                  <span v-if="modelMultiplier(sm.id)" class="model-multiplier">
+                    {{ modelMultiplier(sm.id) }}×
+                  </span>
                   <i v-if="isModelSelected(sm.id)" class="fas fa-check ai-submodel-check"></i>
                 </button>
               </div>
@@ -107,7 +110,12 @@
               <i class="fas fa-info-circle"></i> 仅重评 {{ failedCount }} 篇失败/跳过
             </div>
             <div class="credit-hint" v-if="estimatedCredits > 0">
-              <i class="fas fa-coins"></i> 预计 {{ estimatedCredits }} 积分
+              <i class="fas fa-coins"></i> 预计 {{ estimatedCreditsLabel }} 积分
+              <RouterLink
+                v-if="billingEstimate.sufficient === false"
+                to="/billing"
+                class="credit-insufficient"
+              >余额不足，去兑换</RouterLink>
             </div>
           </div>
           <div class="start-btns">
@@ -291,7 +299,7 @@
             </ul>
             <p class="confirm-credit" v-if="estimatedCredits > 0">
               <i class="fas fa-coins" style="color:#f59e0b"></i>
-              预计消耗 <strong>{{ estimatedCredits }}</strong> 积分
+              预计消耗 <strong>{{ estimatedCreditsLabel }}</strong> 积分
             </p>
           </div>
           <div class="modal-footer">
@@ -318,6 +326,7 @@ import { useQAStore } from '@/features/quality/store'
 import { useProjectStore } from '@/features/projects/store'
 import { useTaskStore } from '@/features/workflow/store'
 import * as workflowApi from '@/shared/api/workflow'
+import * as billingApi from '@/features/billing/api'
 import QAReviewContextEditor from './QAReviewContextEditor.vue'
 
 const qa      = useQAStore()
@@ -328,6 +337,9 @@ const selectedModels   = ref([])
 const showConfirmModal = ref(false)
 const startLoading     = ref(false)
 const reevalScope      = ref('all')
+const modelEstimateMap = ref({})
+const billingEstimate  = ref({ base: null, reserve: null, sufficient: true })
+let estimateRequestSequence = 0
 
 // 手动选择模式的勾选状态
 const customSelectedIds = ref([])
@@ -397,11 +409,29 @@ async function loadModels() {
         if (def) { selectedModels.value = [def.id]; break }
       }
     }
+    await loadModelMultipliers()
   } catch (e) {
     console.error('加载模型列表失败', e)
   } finally {
     modelsLoading.value = false
   }
+}
+
+async function loadModelMultipliers() {
+  const ids = allSubModels.value.filter(model => model.configured).map(model => model.id)
+  if (!ids.length) return
+  try {
+    const response = await billingApi.estimateUsage(1, ids.join(','), 'qa_eval')
+    modelEstimateMap.value = Object.fromEntries(
+      (response.data.estimate_detail?.models || []).map(item => [item.model_id, item]),
+    )
+  } catch (error) {
+    console.error('加载质量评价模型积分倍率失败', error)
+  }
+}
+
+function modelMultiplier(modelId) {
+  return modelEstimateMap.value[modelId]?.multiplier || ''
 }
 
 const allSubModels = computed(() => {
@@ -428,13 +458,49 @@ const failedCount      = computed(() => {
   const fs = ['failed', 'skipped_no_fulltext', 'skipped_no_method']
   return qa.refs.filter(r => r.quality_method && aiSupportedMethods.value.has(r.quality_method) && fs.includes(r.ai_eval_status)).length
 })
-const estimatedCredits = computed(() => {
+const estimatedReferenceCount = computed(() => {
   let count
   if (reevalScope.value === 'failed') count = failedCount.value
   else if (reevalScope.value === 'custom') count = customSelectedIds.value.length
   else count = aiSupportedCount.value
-  return count * selectedModels.value.length * 10
+  return count
 })
+const estimatedCredits = computed(() => billingEstimate.value.reserve || 0)
+const estimatedCreditsLabel = computed(() => {
+  const base = billingEstimate.value.base
+  const reserve = billingEstimate.value.reserve
+  if (!reserve) return '计算中…'
+  return base && base !== reserve ? `${base}～${reserve}` : String(reserve)
+})
+
+async function refreshBillingEstimate() {
+  const count = estimatedReferenceCount.value
+  const modelIds = selectedModels.value.slice()
+  const sequence = ++estimateRequestSequence
+  if (!count || !modelIds.length) {
+    billingEstimate.value = { base: null, reserve: null, sufficient: true }
+    return
+  }
+  try {
+    const response = await billingApi.estimateUsage(count, modelIds.join(','), 'qa_eval')
+    if (sequence !== estimateRequestSequence) return
+    billingEstimate.value = {
+      base: response.data.estimate_detail?.base_credits ?? response.data.estimated_credits,
+      reserve: response.data.estimated_credits,
+      sufficient: response.data.sufficient,
+    }
+  } catch (error) {
+    if (sequence !== estimateRequestSequence) return
+    billingEstimate.value = { base: null, reserve: null, sufficient: true }
+    console.error('加载质量评价积分预估失败', error)
+  }
+}
+
+watch(
+  [() => selectedModels.value.slice(), estimatedReferenceCount],
+  refreshBillingEstimate,
+  { immediate: true },
+)
 
 // ── 进度 ──────────────────────────────────────────────────────────────────────
 
@@ -472,7 +538,11 @@ function toggleModel(id) {
   }
 }
 
-const canStart = computed(() => aiSupportedCount.value > 0 && selectedModels.value.length > 0)
+const canStart = computed(() => (
+  aiSupportedCount.value > 0
+  && selectedModels.value.length > 0
+  && billingEstimate.value.sufficient !== false
+))
 
 // ── 启动评价 ──────────────────────────────────────────────────────────────────
 
@@ -608,6 +678,11 @@ function statusDotClass(s) {
 .ai-provider-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .ai-provider-logo { font-size: 0.95rem; line-height: 1; }
 .ai-provider-name { font-size: 0.78rem; font-weight: 600; color: #334155; }
+.model-multiplier {
+  flex-shrink: 0; margin-left: auto; padding: 1px 6px; border-radius: 999px;
+  background: #eef2ff; color: #4f46e5; font-size: 0.66rem; font-weight: 700;
+}
+.credit-insufficient { margin-left: 4px; color: #dc2626; font-weight: 600; text-decoration: underline; }
 .ai-provider-unconfigured { font-size: 0.65rem; color: #94a3b8; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; margin-left: 2px; }
 .ai-submodel-list { display: flex; flex-wrap: wrap; gap: 5px; padding-left: 18px; }
 .ai-submodel-btn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 7px; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; transition: all 0.14s; font-size: 0.75rem; }

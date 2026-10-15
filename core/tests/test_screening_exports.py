@@ -10,6 +10,7 @@ import openpyxl
 import xml.etree.ElementTree as ET
 from django.test import TestCase
 
+from core.models import DataFile
 from core.screening.executors.export_handler import ExportHandler
 
 
@@ -29,6 +30,41 @@ class ScreeningExportGoldenTests(TestCase):
             config={},
         )
         return ExportHandler(executor)
+
+    def test_generated_artifact_path_allows_long_project_paths(self):
+        self.assertEqual(DataFile._meta.get_field('file').max_length, 500)
+
+    def test_two_or_three_models_use_short_readable_tags(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            handler = self.make_handler(temp_dir)
+            handler.config.update({
+                'ai_models': [
+                    'qwen3-7-plus',
+                    'doubao-seed-2-1-turbo',
+                    'deepseek-v4-pro',
+                ],
+            })
+
+            first = handler._get_model_suffix()
+            second = handler._get_model_suffix()
+
+        self.assertEqual(first, second)
+        self.assertEqual(first, 'qw-plus+db-turbo+ds-pro')
+        self.assertRegex(first, r'^[A-Za-z0-9._+-]+$')
+
+    def test_more_than_three_models_use_count_and_stable_hash(self):
+        model_ids = [
+            'deepseek-v4-flash', 'deepseek-v4-pro',
+            'doubao-seed-2-1-turbo', 'qwen3-7-flash',
+            'qwen3-7-plus', 'qwen3-7-max',
+        ]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            handler = self.make_handler(temp_dir)
+            first = handler._get_model_suffix(model_ids)
+            second = handler._get_model_suffix(model_ids)
+
+        self.assertEqual(first, second)
+        self.assertRegex(first, r'^6models-[a-f0-9]{8}$')
 
     def test_ris_output_matches_golden_file(self):
         result = {
@@ -64,7 +100,14 @@ class ScreeningExportGoldenTests(TestCase):
                         '_export_manual_review': SimpleNamespace(is_override=True),
                         'extracted_fields': {'人群': '成人 & 儿童'},
                     },
-                    {'Title': 'A < B & C', 'Abstract': '结构化摘要'},
+                    {
+                        'Title': 'A < B & C', 'Abstract': '结构化摘要',
+                        'PMID': '123', 'PMCID': 'PMC123', 'ISBN': '978-1',
+                        'ISSN': '1234-5678', 'Keywords': 'A; B',
+                        'Language': 'English', 'Publisher': 'Publisher',
+                        'Database': 'Database', 'Organization': 'Organization',
+                        'SourceIdentifier': 'SRC-17',
+                    },
                     'included',
                 )
                 ScreeningXmlExporter.write_footer(output)
@@ -75,6 +118,15 @@ class ScreeningExportGoldenTests(TestCase):
             'id': '17', 'decision': 'included', 'manual_override': 'yes',
         })
         self.assertEqual(reference.findtext('Title'), 'A < B & C')
+        self.assertEqual(reference.findtext('PMID'), '123')
+        self.assertEqual(reference.findtext('PMCID'), 'PMC123')
+        self.assertEqual(reference.findtext('ISBN'), '978-1')
+        self.assertEqual(reference.findtext('ISSN'), '1234-5678')
+        self.assertEqual(reference.findtext('Keywords'), 'A; B')
+        self.assertEqual(reference.findtext('Publisher'), 'Publisher')
+        self.assertEqual(reference.findtext('Database'), 'Database')
+        self.assertEqual(reference.findtext('Organization'), 'Organization')
+        self.assertEqual(reference.findtext('SourceIdentifier'), 'SRC-17')
         self.assertEqual(reference.find("./ExtractedFields/Field[@name='人群']").text, '成人 & 儿童')
 
     def test_excel_rows_match_semantic_golden(self):
@@ -181,6 +233,32 @@ class ScreeningExportGoldenTests(TestCase):
         self.assertIn('N1  - AI模型存在分歧', content)
         self.assertIn('Model A：纳入；理由：符合标准', content)
         self.assertIn('Model B：排除；理由：人群不符', content)
+
+    def test_ris_exports_extended_bibliography_fields(self):
+        result = {'title': 'Extended RIS', '_export_final_decision': 'included'}
+        fields = {
+            'Title': 'Extended RIS', 'Date': '2026/10/14',
+            'PMID': '123', 'PMCID': 'PMC123', 'ISBN': '978-1',
+            'ISSN': '1234-5678', 'Keywords': 'diagnosis; evidence',
+            'Language': 'English', 'Publisher': 'Publisher',
+            'Database': 'Database', 'Organization': 'Organization',
+            'SourceIdentifier': 'SRC-123',
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            handler = self.make_handler(temp_dir)
+            path = handler._generate_ris(
+                [{**result, '_export_xml_fields': fields}], 'extended', 'fixed',
+            )
+            content = path.read_text(encoding='utf-8')
+
+        for line in (
+            'DA  - 2026/10/14', 'AN  - 123', 'C2  - PMC123',
+            'SN  - 978-1', 'SN  - 1234-5678', 'KW  - diagnosis',
+            'KW  - evidence', 'LA  - English', 'PB  - Publisher',
+            'DB  - Database', 'C1  - Organization',
+            'ID  - SRC-123',
+        ):
+            self.assertIn(line, content)
 
     def test_ris_only_conflict_is_not_written_to_included_excel(self):
         result = {

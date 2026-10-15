@@ -23,12 +23,14 @@ AI_PROVIDERS = [
         "description": "深度求索 · 均衡性价比",
         "api_url": os.environ.get("DEEPSEEK_API_URL", "https://api.deepseek.com/v1"),
         "api_key": os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("AI_API_KEY", ""),
+        "region": os.environ.get("DEEPSEEK_REGION", "global"),
+        "service_tier": os.environ.get("DEEPSEEK_SERVICE_TIER", "standard"),
         "timeout": int(os.environ.get("AI_TIMEOUT", "120")),
         "sub_models": [
             {
                 "id": "deepseek-v4-flash",
-                "name": "DeepSeek V4 Flash",
-                "model": "deepseek-v4-flash",
+                "name": "DeepSeek V4.1 Flash",
+                "model": "deepseek-flash",
                 "description": "高速版，价格极低",
                 "is_default": True,
                 "is_reasoning": True,   # 推理模型，需禁用 thinking 以直接输出结构化内容
@@ -51,6 +53,8 @@ AI_PROVIDERS = [
         "description": "字节跳动 · 中文理解出色",
         "api_url": os.environ.get("DOUBAO_API_URL", "https://ark.cn-beijing.volces.com/api/v3"),
         "api_key": os.environ.get("DOUBAO_API_KEY", ""),
+        "region": os.environ.get("DOUBAO_REGION", "cn-beijing"),
+        "service_tier": os.environ.get("DOUBAO_SERVICE_TIER", "standard"),
         "timeout": int(os.environ.get("AI_TIMEOUT", "120")),
         "sub_models": [
             {
@@ -71,6 +75,8 @@ AI_PROVIDERS = [
         "description": "阿里云 · 长文本处理优秀",
         "api_url": os.environ.get("QWEN_API_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
         "api_key": os.environ.get("QWEN_API_KEY", ""),
+        "region": os.environ.get("QWEN_REGION", "cn-beijing"),
+        "service_tier": os.environ.get("QWEN_SERVICE_TIER", "standard"),
         "timeout": int(os.environ.get("AI_TIMEOUT", "120")),
         "sub_models": [
             {
@@ -105,6 +111,11 @@ AI_PROVIDERS = [
 # 已保存的筛选/质量评价任务可能仍引用旧 ID。旧 ID 仅用于兼容读取，
 # 不再出现在前端模型列表中，实际请求统一路由到当前的 Qwen/豆包模型。
 MODEL_ID_ALIASES = {
+    # Provider 响应中的 Qwen 模型名使用点号；平台模型 ID 使用连字符。
+    # 历史用量可能已把供应商模型名误存为平台 ID，保留映射以支持复算。
+    "qwen3.7-flash": "qwen3-7-flash",
+    "qwen3.7-plus": "qwen3-7-plus",
+    "qwen3.7-max": "qwen3-7-max",
     "qwen3-6-flash": "qwen3-7-flash",
     "qwen3-6-plus": "qwen3-7-plus",
     "qwen3-6-max-preview": "qwen3-7-max",
@@ -138,6 +149,8 @@ def get_model_config(model_id: str) -> Optional[dict]:
                 "model":        sm["model"],
                 "logo":         provider["logo"],
                 "provider":     provider["id"],
+                "region":       provider.get("region", ""),
+                "service_tier": provider.get("service_tier", "standard"),
                 "api_url":      provider["api_url"],
                 "api_key":      provider["api_key"],
                 "timeout":      provider["timeout"],

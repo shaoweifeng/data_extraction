@@ -21,6 +21,7 @@ from typing import Optional, TYPE_CHECKING
 from django.db import transaction
 from django.db.models import F
 from django.conf import settings
+from django.utils import timezone
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -76,7 +77,7 @@ def tokens_to_credits(total_tokens: int) -> int:
     return max(1, total_tokens // ratio)
 
 
-def estimate_credits(ref_count: int, model_ids: list = None) -> int:
+def estimate_credits(ref_count: int, model_ids: list = None, *, feature: str = 'ai_screen') -> int:
     """
     预估筛选 N 篇文献所需的 credits。
 
@@ -85,7 +86,21 @@ def estimate_credits(ref_count: int, model_ids: list = None) -> int:
 
     model_ids 参数保留接口兼容，实际不影响单篇费率——多模型时等价于 per_ref × model_count。
     """
-    per_ref = getattr(settings, 'BILLING_ESTIMATE_CREDITS_PER_REF', 2)
+    if (
+        getattr(settings, 'MODEL_WEIGHTED_BILLING_ENABLED', False)
+        and model_ids
+    ):
+        from core.services.billing_estimate_service import estimate_model_credits
+
+        return estimate_model_credits(
+            ref_count,
+            list(model_ids),
+            feature=feature,
+        )['reserve_credits']
+    if feature == 'qa_eval':
+        per_ref = getattr(settings, 'BILLING_ESTIMATE_QA_CREDITS_PER_REF_PER_MODEL', 27)
+    else:
+        per_ref = getattr(settings, 'BILLING_ESTIMATE_CREDITS_PER_REF', 2)
     model_count = max(1, len(model_ids)) if model_ids else 1
     return max(1, ref_count * per_ref * model_count)
 
@@ -101,6 +116,8 @@ def grant_credits(
     note: str = '',
     operator=None,
     idempotency_key: str | None = None,
+    batch_type: str | None = None,
+    expires_at=None,
 ) -> 'CreditTransaction':
     """
     赠送/充值/管理员调额（正数加，负数减）。
@@ -109,13 +126,41 @@ def grant_credits(
       - amount > 0 且 operator 非空  → 'recharge'（充值/调额）
       - amount < 0                    → 'adjust'（管理员扣减）
     """
-    CreditAccount, CreditTransaction, _ = _get_models()
-
     if amount == 0:
         raise ValueError('赠送或调整额度不能为 0')
     if idempotency_key and len(idempotency_key) > 128:
         raise ValueError('幂等键长度不能超过 128 个字符')
 
+    if getattr(settings, 'CREDIT_BATCH_LEDGER_ENABLED', False):
+        from core.services.credit_ledger_service import (
+            consume_batch_credits, grant_batch_credits,
+        )
+
+        if amount < 0:
+            return consume_batch_credits(
+                user,
+                -amount,
+                note=note or '管理员扣减',
+                idempotency_key=idempotency_key,
+                txn_type='adjust',
+            )
+        resolved_batch_type = batch_type or (
+            'WELCOME' if idempotency_key and 'welcome_grant:' in idempotency_key
+            else 'COMPENSATION'
+        )
+        batch_key = idempotency_key or f'{resolved_batch_type.lower()}:{user.pk}:{timezone.now().isoformat()}'
+        return grant_batch_credits(
+            user,
+            amount,
+            batch_type=resolved_batch_type,
+            batch_key=batch_key,
+            note=note or ('注册赠送' if resolved_batch_type == 'WELCOME' else '积分发放'),
+            operator=operator,
+            expires_at=expires_at,
+            txn_type='grant' if operator is None else 'recharge',
+        )
+
+    CreditAccount, CreditTransaction, _ = _get_models()
     account = CreditAccount.objects.select_for_update().get(user=user)
 
     if idempotency_key:
@@ -182,6 +227,17 @@ def consume_credits(
     if amount <= 0:
         return None
 
+    if getattr(settings, 'CREDIT_BATCH_LEDGER_ENABLED', False):
+        from core.services.credit_ledger_service import consume_batch_credits
+
+        return consume_batch_credits(
+            user,
+            amount,
+            task=task,
+            note=note or 'AI筛选扣费',
+            idempotency_key=idempotency_key,
+        )
+
     CreditAccount, CreditTransaction, _ = _get_models()
     account = CreditAccount.objects.select_for_update().get(user=user)
 
@@ -220,7 +276,15 @@ def consume_credits(
 
 
 @transaction.atomic
-def refund_credits(user, amount: int, task=None, note: str = '') -> Optional['CreditTransaction']:
+def refund_credits(
+    user,
+    amount: int,
+    task=None,
+    note: str = '',
+    *,
+    original_transaction=None,
+    idempotency_key: str | None = None,
+) -> Optional['CreditTransaction']:
     """
     退款/多退少补（原子操作）。
 
@@ -235,6 +299,18 @@ def refund_credits(user, amount: int, task=None, note: str = '') -> Optional['Cr
     """
     if amount <= 0:
         return None
+
+    if getattr(settings, 'CREDIT_BATCH_LEDGER_ENABLED', False):
+        if original_transaction is None:
+            raise ValueError('新版积分账本退款必须指定原消费流水')
+        from core.services.credit_ledger_service import refund_consumption
+
+        return refund_consumption(
+            original_transaction,
+            amount,
+            note=note,
+            idempotency_key=idempotency_key,
+        )
 
     CreditAccount, CreditTransaction, _ = _get_models()
     account = CreditAccount.objects.select_for_update().get(user=user)

@@ -1,5 +1,6 @@
 """统一的步骤任务创建与派发边界。"""
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -29,6 +30,22 @@ def create_step_task(project_id: int, step_key: str, user_id: int, config: dict,
     手动步骤可以传 ``exclusive=False``，其重复操作由步骤 action 自身管理。
     """
     from core.operations.services import assert_accepting_new_work
+
+    config = dict(config or {})
+    if step_key in {'ai_screen', 'qa_eval'}:
+        from django.contrib.auth import get_user_model
+        from core.services.entitlement_service import resolve_user_entitlements
+
+        task_user = get_user_model().objects.select_related('profile').get(pk=user_id)
+        entitlements = resolve_user_entitlements(task_user)
+        config.setdefault(
+            'billing_pricing_version',
+            settings.MODEL_WEIGHTED_BILLING_PRICING_VERSION,
+        )
+        config['entitlement_snapshot'] = entitlements.as_dict()
+        if step_key == 'ai_screen':
+            requested = int(config.get('concurrency') or entitlements.ai_call_slots)
+            config['concurrency'] = max(1, min(requested, entitlements.ai_call_slots))
 
     if not allow_during_maintenance:
         assert_accepting_new_work()

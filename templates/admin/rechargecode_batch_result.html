@@ -3,7 +3,8 @@
 {% block title %}批量生成结果{% endblock %}
 
 {% block content %}
-<h1>批量生成完成 — {{ codes|length }} 张 × {{ credits }} credits</h1>
+<h1>批量生成完成 — {{ codes|length }} 张 · {{ summary }}</h1>
+<p>发行批次：<strong>{{ batch_no }}</strong>。本次生成操作及每张兑换码均已写入 Admin 操作日志。</p>
 
 <div style="margin:16px 0">
   <a href="../" style="background:#417690;color:#fff;padding:8px 18px;border-radius:4px;text-decoration:none;font-size:13px">

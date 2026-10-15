@@ -70,6 +70,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/billing',
+    name: 'Billing',
+    component: () => import('@/features/billing/views/BillingView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/operations',
     name: 'Operations',
     component: () => import('@/features/operations/views/OperationsView.vue'),

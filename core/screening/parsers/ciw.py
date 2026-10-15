@@ -33,6 +33,7 @@ def _normalize_record(rec: Dict[str, List[str]], source_file: str, position: int
     pmid = clean(rec.get("PM", [""])[0]) if rec.get("PM") else ""
     ut = clean(rec.get("UT", [""])[0]) if rec.get("UT") else ""
     ur = clean(rec.get("UR", [""])[0]) if rec.get("UR") else ""
+    keywords = rec.get("DE", []) or rec.get("ID", [])
 
     if ur.lower().startswith(("http://", "https://")):
         url = ur
@@ -57,9 +58,17 @@ def _normalize_record(rec: Dict[str, List[str]], source_file: str, position: int
         "date": date,
         "address": address,
         "doi": doi,
+        "pmid": pmid,
         "abstract": abstract,
         "pmcid": "",
+        "isbn": clean(rec.get("BN", [""])[0]) if rec.get("BN") else "",
+        "issn": clean(rec.get("SN", [""])[0]) if rec.get("SN") else "",
         "url": url,
+        "keywords": keywords,
+        "language": clean(rec.get("LA", [""])[0]) if rec.get("LA") else "",
+        "publisher": clean(rec.get("PU", [""])[0]) if rec.get("PU") else "",
+        "database": clean(rec.get("DB", [""])[0]) if rec.get("DB") else "Web of Science",
+        "organization": "; ".join(rec.get("OG", [])).strip(),
         "source_file": source_file,
         "source_position": position,
         "record_number": ut,

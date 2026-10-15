@@ -5,9 +5,15 @@ from .models import (
     UserProfile, Permission, UserPermission, RoleTemplate,
     RoleTemplatePermission, Project, ProjectStage, StageStep,
     DataFile, DataFileVersion, Task, ManualReview, QAEvaluationRun,
-    QAFulltextAsset, QAModelSignalResult, QAReviewContext, SystemOperationState
+    QAFulltextAsset, QAModelSignalResult, QAReviewContext, ServiceContactSetting,
+    SystemOperationState,
 )
-from .models_billing import CreditAccount, CreditTransaction, TokenUsageLog, RechargeCode
+from .models_billing import (
+    CreditAccount, CreditTransaction, TokenUsageLog, RechargeCode,
+    PlanCatalog, PlanPriceVersion, UserPlanEntitlement, PlanBillingPeriod,
+    CreditGrantBatch, CreditAllocation, ModelBillingRate, ModelUsageDetail,
+    CreditReservation, CreditReservationAllocation,
+)
 
 
 class UserProfileAdminForm(forms.ModelForm):
@@ -25,8 +31,16 @@ class UserProfileAdminForm(forms.ModelForm):
     )
 
     concurrency_limit = forms.IntegerField(
-        label='AI筛选并发数',
+        label='旧版 AI 筛选并发数',
         min_value=1,
+    )
+    quota_projects_override = forms.IntegerField(
+        label='项目配额覆盖', required=False, min_value=-1,
+        help_text='留空时使用当前套餐或免费默认值；-1 表示不限额。',
+    )
+    ai_call_slots_override = forms.IntegerField(
+        label='AI 调用槽位覆盖', required=False, min_value=1,
+        help_text='留空时使用当前套餐或免费默认值。该值是用户跨任务共享的总槽位。',
     )
 
     class Meta:
@@ -39,9 +53,9 @@ class UserProfileAdminForm(forms.ModelForm):
         field = self.fields['concurrency_limit']
         field.widget.attrs['max'] = max_concurrency
         field.help_text = (
-            f'普通用户下次启动 AI 初筛时生效，可设范围 1～{max_concurrency}。'
-            '管理员角色仍使用系统的管理员并发配置。'
+            '仅供关闭新版套餐开关时兼容旧逻辑；新版请使用“AI 调用槽位覆盖”。'
         )
+        self.fields['ai_call_slots_override'].widget.attrs['max'] = max_concurrency
 
     def clean_concurrency_limit(self):
         value = self.cleaned_data['concurrency_limit']
@@ -50,11 +64,92 @@ class UserProfileAdminForm(forms.ModelForm):
             raise forms.ValidationError(f'并发数不能超过全局上限 {max_concurrency}')
         return value
 
+    def clean_ai_call_slots_override(self):
+        value = self.cleaned_data.get('ai_call_slots_override')
+        if value is not None and value > settings.AI_SCREEN_MAX_GLOBAL_THREADS:
+            raise forms.ValidationError(
+                f'槽位覆盖不能超过全局上限 {settings.AI_SCREEN_MAX_GLOBAL_THREADS}'
+            )
+        return value
+
+
+class BillingAuditAdmin(admin.ModelAdmin):
+    """计费审计表只允许查看，禁止人工改写历史快照。"""
+
+    actions = None
+
+    def get_readonly_fields(self, request, obj=None):
+        return tuple(field.name for field in self.model._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        raise PermissionError('计费审计模型不允许从 Admin 修改历史快照')
+
+
+class BillingVersionAdmin(admin.ModelAdmin):
+    """Draft versions are editable; published pricing snapshots are immutable."""
+
+    actions = ['publish_selected_versions']
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.status != 'draft':
+            return tuple(field.name for field in self.model._meta.fields)
+        return ('status', 'created_at')
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            current = self.model.objects.only('status').get(pk=obj.pk)
+            if current.status != 'draft':
+                raise PermissionError('已发布或停用的计费版本不可修改')
+        obj.status = 'draft'
+        super().save_model(request, obj, form, change)
+
+    @admin.action(description='发布所选草稿版本')
+    def publish_selected_versions(self, request, queryset):
+        from django.contrib import messages
+        from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+        from django.template.response import TemplateResponse
+
+        drafts = queryset.filter(status='draft')
+        if request.POST.get('confirm_publish') == 'yes':
+            targets = self.get_publish_queryset(drafts)
+            published_objects = list(targets)
+            count = targets.update(status='published')
+            for obj in published_objects:
+                obj.status = 'published'
+                self.log_change(request, obj, '通过计费版本发布操作设为已发布')
+            self.message_user(request, f'已发布 {count} 条版本记录。', messages.SUCCESS)
+            return None
+        context = {
+            **self.admin_site.each_context(request),
+            'title': '确认发布计费版本',
+            'opts': self.model._meta,
+            'queryset': drafts,
+            'action_checkbox_name': ACTION_CHECKBOX_NAME,
+            'action_name': 'publish_selected_versions',
+        }
+        return TemplateResponse(request, 'admin/billing_publish_confirm.html', context)
+
+    def get_publish_queryset(self, queryset):
+        return queryset
+
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     form = UserProfileAdminForm
-    list_display = ['user', 'role', 'concurrency_limit', 'quota_projects', 'quota_storage_mb',
+    list_display = ['user', 'role', 'ai_call_slots_override', 'quota_projects_override',
+                   'concurrency_limit', 'quota_projects', 'quota_storage_mb',
                    'is_approved', 'approved_at', 'created_at']
     list_editable = ['concurrency_limit', 'quota_projects', 'quota_storage_mb']
     list_filter = ['role', 'is_approved']
@@ -66,7 +161,10 @@ class UserProfileAdmin(admin.ModelAdmin):
             'fields': ('user', 'role')
         }),
         ('配额设置', {
-            'fields': ('quota_projects', 'quota_storage_mb', 'concurrency_limit')
+            'fields': (
+                'quota_projects_override', 'ai_call_slots_override',
+                'quota_projects', 'quota_storage_mb', 'concurrency_limit',
+            )
         }),
         ('审核状态', {
             'fields': ('is_approved', 'approved_at', 'approved_by')
@@ -293,6 +391,64 @@ class SystemOperationStateAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+class ServiceContactSettingAdminForm(forms.ModelForm):
+    class Meta:
+        model = ServiceContactSetting
+        fields = '__all__'
+
+    def clean_wechat_qr(self):
+        uploaded = self.cleaned_data.get('wechat_qr')
+        if not uploaded or not hasattr(uploaded, 'temporary_file_path') and not getattr(uploaded, 'content_type', None):
+            return uploaded
+
+        from core.service_contact.validators import validate_service_contact_qr
+        from core.services.image_validation import ImageValidationError
+
+        try:
+            return validate_service_contact_qr(uploaded).content
+        except ImageValidationError as exc:
+            raise forms.ValidationError(str(exc)) from exc
+
+
+@admin.register(ServiceContactSetting)
+class ServiceContactSettingAdmin(admin.ModelAdmin):
+    form = ServiceContactSettingAdminForm
+    list_display = [
+        'display_name', 'enabled', 'wechat_id', 'contact_email',
+        'service_hours', 'updated_by', 'updated_at',
+    ]
+    readonly_fields = ['updated_by', 'updated_at']
+    fieldsets = (
+        ('入口状态', {'fields': ('enabled', 'description')}),
+        ('联系方式', {
+            'fields': ('display_name', 'wechat_id', 'wechat_qr', 'contact_email', 'service_hours'),
+        }),
+        ('安全提示', {'fields': ('security_notice',)}),
+        ('审计信息', {'fields': ('updated_by', 'updated_at'), 'classes': ('collapse',)}),
+    )
+
+    def has_add_permission(self, request):
+        return not ServiceContactSetting.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        old_qr_name = ''
+        if change:
+            old_qr_name = (
+                ServiceContactSetting.objects.filter(pk=obj.pk)
+                .values_list('wechat_qr', flat=True)
+                .first() or ''
+            )
+        obj.updated_by = request.user
+        obj.full_clean(exclude=['wechat_qr'])
+        super().save_model(request, obj, form, change)
+        new_qr_name = obj.wechat_qr.name if obj.wechat_qr else ''
+        if old_qr_name and old_qr_name != new_qr_name:
+            obj.wechat_qr.storage.delete(old_qr_name)
+
+
 # ============================================================================
 # 计费相关 Admin（阶段二/六）
 # ============================================================================
@@ -311,7 +467,10 @@ class CreditTransactionInline(admin.TabularInline):
 
 @admin.register(CreditAccount)
 class CreditAccountAdmin(admin.ModelAdmin):
-    list_display  = ['user', 'balance', 'total_granted', 'total_consumed', 'updated_at']
+    list_display  = [
+        'user', 'balance', 'total_granted', 'total_consumed',
+        'ledger_difference', 'updated_at',
+    ]
     search_fields = ['user__username', 'user__email']
     readonly_fields = ['total_granted', 'total_consumed', 'created_at', 'updated_at']
     inlines = [CreditTransactionInline]
@@ -320,6 +479,12 @@ class CreditAccountAdmin(admin.ModelAdmin):
         ('账户', {'fields': ('user', 'balance', 'total_granted', 'total_consumed')}),
         ('时间戳', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
+
+    @admin.display(description='账本差额')
+    def ledger_difference(self, obj):
+        from core.services.credit_ledger_service import account_reconciliation
+
+        return account_reconciliation(obj)['difference']
 
 
 @admin.register(CreditTransaction)
@@ -355,12 +520,13 @@ class TokenUsageLogAdmin(admin.ModelAdmin):
 @admin.register(RechargeCode)
 class RechargeCodeAdmin(admin.ModelAdmin):
     list_display  = [
-        'code', 'credits', 'is_used', 'used_by_display', 'used_at',
+        'code', 'code_type', 'plan_price_version', 'credits', 'valid_months',
+        'batch_no', 'created_by', 'is_used', 'used_by_display', 'used_at',
         'expires_at', 'note', 'created_at',
     ]
-    list_filter   = ['is_used', 'created_at']
+    list_filter   = ['code_type', 'is_used', 'plan_price_version__plan', 'created_at']
     search_fields = ['code', 'note', 'used_by__username']
-    readonly_fields = ['is_used', 'used_by', 'used_at', 'created_at']
+    readonly_fields = ['created_by', 'is_used', 'used_by', 'used_at', 'created_at']
 
     @admin.display(description='使用者', ordering='used_by__username')
     def used_by_display(self, obj):
@@ -372,18 +538,26 @@ class RechargeCodeAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('兑换码信息', {
-            'fields': ('code', 'credits', 'note', 'expires_at'),
-            'description': '码格式建议：FREE-XXXX-XXXX，credits 为面值（正整数）',
+            'fields': (
+                'code', 'code_type', 'credits', 'plan_price_version',
+                'valid_months', 'batch_no', 'note', 'expires_at',
+            ),
+            'description': '积分码填写 credits；套餐码选择已发布价格版本并填写有效月数。',
         }),
         ('使用状态（只读）', {
             'fields': ('is_used', 'used_by', 'used_at'),
             'classes': ('collapse',),
         }),
         ('时间戳', {
-            'fields': ('created_at',),
+            'fields': ('created_by', 'created_at'),
             'classes': ('collapse',),
         }),
     )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
     def get_readonly_fields(self, request, obj=None):
         # 已使用的码：全部只读，防止误修改
@@ -401,50 +575,100 @@ class RechargeCodeAdmin(admin.ModelAdmin):
         return custom + urls
 
     def batch_generate_view(self, request):
-        import random, string
+        import secrets
+        from django.core.exceptions import PermissionDenied
+        from django.db import transaction
         from django.shortcuts import render
         from django.contrib import messages
-        from core.models_billing import RechargeCode
+        from django.utils import timezone
+        from django.utils.dateparse import parse_datetime
+        from core.services.recharge_code_service import (
+            create_secure_recharge_code,
+            normalize_recharge_code_prefix,
+        )
 
-        def _gen(prefix):
-            chars = string.ascii_uppercase + string.digits
-            return f"{prefix}-{''.join(random.choices(chars,k=4))}-{''.join(random.choices(chars,k=4))}"
+        if not self.has_add_permission(request):
+            raise PermissionDenied
 
         if request.method == 'POST':
             try:
                 count   = max(1, min(500, int(request.POST.get('count', 10))))
-                credits = max(1, int(request.POST.get('credits', 100)))
-                prefix  = (request.POST.get('prefix') or 'FREE').strip().upper()[:10]
+                code_type = request.POST.get('code_type', 'CREDIT').upper()
+                if code_type not in {'CREDIT', 'PLAN'}:
+                    raise ValueError('不支持的兑换码类型')
+                credits = max(0 if code_type == 'PLAN' else 1, int(request.POST.get('credits', 100)))
+                if code_type == 'PLAN':
+                    credits = 0
+                prefix = normalize_recharge_code_prefix(request.POST.get('prefix') or code_type)
                 note    = request.POST.get('note', '').strip()
                 expires = request.POST.get('expires_at', '').strip() or None
+                batch_no = request.POST.get('batch_no', '').strip()[:64]
+                if not batch_no:
+                    batch_no = f"ADMIN-{timezone.now():%Y%m%d-%H%M%S}-{secrets.token_hex(3).upper()}"
+                valid_months = max(1, min(36, int(request.POST.get('valid_months', 1))))
+                plan_version = None
+                if code_type == 'PLAN':
+                    from core.models_billing import PlanPriceVersion
+                    plan_version = PlanPriceVersion.objects.get(
+                        pk=int(request.POST.get('plan_price_version')),
+                        status='published',
+                    )
+
+                expires_at = None
+                if expires:
+                    expires_at = parse_datetime(expires + ':00') if len(expires) == 16 else parse_datetime(expires)
+                    if expires_at is None:
+                        raise ValueError('过期时间格式无效')
+                    if timezone.is_naive(expires_at):
+                        expires_at = timezone.make_aware(expires_at, timezone.get_current_timezone())
+                    if expires_at <= timezone.now():
+                        raise ValueError('过期时间必须晚于当前时间')
 
                 created = []
-                for _ in range(count):
-                    for _retry in range(10):
-                        code = _gen(prefix)
-                        if not RechargeCode.objects.filter(code=code).exists():
-                            break
-                    obj = RechargeCode(code=code, credits=credits, note=note)
-                    if expires:
-                        from django.utils.dateparse import parse_datetime
-                        obj.expires_at = parse_datetime(expires + ':00') if len(expires) == 16 else parse_datetime(expires)
-                    obj.save()
-                    created.append(code)
+                with transaction.atomic():
+                    for _ in range(count):
+                        obj = create_secure_recharge_code(
+                            prefix=prefix,
+                            code_type=code_type,
+                            credits=credits,
+                            plan_price_version=plan_version,
+                            valid_months=valid_months,
+                            batch_no=batch_no,
+                            note=note,
+                            expires_at=expires_at,
+                            created_by=request.user,
+                        )
+                        self.log_addition(
+                            request,
+                            obj,
+                            f'后台批量生成；发行批次 {batch_no}',
+                        )
+                        created.append(obj.code)
 
-                messages.success(request, f'成功生成 {len(created)} 张兑换码（{credits} credits/张）')
+                label = (
+                    f'{plan_version.plan.name} × {valid_months}个月'
+                    if plan_version else f'{credits} credits/张'
+                )
+                messages.success(request, f'成功生成 {len(created)} 张兑换码（{label}）')
                 return render(request, 'admin/rechargecode_batch_result.html', {
                     'title': '批量生成兑换码',
                     'codes': created,
                     'codes_text': '\n'.join(created),
                     'credits': credits,
+                    'summary': label,
+                    'batch_no': batch_no,
                     'opts': self.model._meta,
                 })
             except Exception as e:
                 messages.error(request, f'生成失败：{e}')
 
+        from core.models_billing import PlanPriceVersion
         return render(request, 'admin/rechargecode_batch_generate.html', {
             'title': '批量生成兑换码',
             'opts': self.model._meta,
+            'plan_versions': PlanPriceVersion.objects.filter(
+                status='published', plan__is_active=True,
+            ).select_related('plan').order_by('monthly_price_cny'),
         })
 
     def changelist_view(self, request, extra_context=None):
@@ -563,6 +787,104 @@ class QAModelSignalResultAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(PlanCatalog)
+class PlanCatalogAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'is_active', 'created_at']
+    list_filter = ['is_active']
+    search_fields = ['code', 'name']
+    readonly_fields = ['created_at', 'updated_at']
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PlanPriceVersion)
+class PlanPriceVersionAdmin(BillingVersionAdmin):
+    list_display = [
+        'plan', 'version', 'status', 'monthly_price_cny', 'included_credits',
+        'ai_call_slots', 'project_limit',
+    ]
+    list_filter = ['status', 'plan']
+    search_fields = ['plan__code', 'plan__name', 'version']
+
+
+@admin.register(UserPlanEntitlement)
+class UserPlanEntitlementAuditAdmin(BillingAuditAdmin):
+    list_display = ['user', 'price_version', 'status', 'starts_at', 'expires_at']
+    list_filter = ['status', 'price_version__plan']
+    raw_id_fields = ['user', 'source_recharge_code']
+
+
+@admin.register(PlanBillingPeriod)
+class PlanBillingPeriodAuditAdmin(BillingAuditAdmin):
+    list_display = ['entitlement', 'period_start', 'period_end', 'grant_status', 'grant_batch']
+    list_filter = ['grant_status']
+
+
+@admin.register(CreditGrantBatch)
+class CreditGrantBatchAuditAdmin(BillingAuditAdmin):
+    list_display = [
+        'batch_key', 'account', 'batch_type', 'granted_amount', 'remaining_amount',
+        'reserved_amount', 'expires_at',
+    ]
+    list_filter = ['batch_type', 'expires_at']
+
+
+@admin.register(CreditAllocation)
+class CreditAllocationAuditAdmin(BillingAuditAdmin):
+    list_display = ['transaction', 'batch', 'allocation_type', 'amount', 'created_at']
+    list_filter = ['allocation_type']
+
+
+@admin.register(ModelBillingRate)
+class ModelBillingRateAdmin(BillingVersionAdmin):
+    list_display = [
+        'rate_key', 'version', 'status', 'provider', 'model_id', 'region',
+        'service_tier', 'input_cny_per_million', 'output_cny_per_million',
+        'cache_read_cny_per_million', 'context_min_tokens', 'context_max_tokens',
+    ]
+    list_filter = ['status', 'version', 'provider', 'region', 'service_tier']
+    search_fields = ['rate_key', 'model_id', 'provider_model']
+
+    def get_publish_queryset(self, queryset):
+        versions = list(queryset.values_list('version', flat=True).distinct())
+        if not versions:
+            return self.model.objects.none()
+        return self.model.objects.filter(
+            version__in=versions,
+            status='draft',
+        )
+
+
+@admin.register(ModelUsageDetail)
+class ModelUsageDetailAuditAdmin(BillingAuditAdmin):
+    list_display = [
+        'usage_log', 'call_index', 'provider', 'model_id', 'input_tokens',
+        'output_tokens', 'cache_read_tokens', 'raw_credits', 'estimated_cost_cny',
+        'rate', 'attempt_reason', 'charge_bearer',
+    ]
+    list_filter = ['provider', 'model_id', 'attempt_reason', 'charge_bearer']
+    search_fields = ['provider_request_id', 'model_id', 'user__username']
+
+
+@admin.register(CreditReservation)
+class CreditReservationAuditAdmin(BillingAuditAdmin):
+    list_display = [
+        'idempotency_key', 'account', 'task', 'status', 'pricing_version',
+        'estimated_credits', 'reserved_credits', 'actual_credits',
+        'settled_credits', 'platform_covered_credits',
+    ]
+    list_filter = ['status', 'pricing_version']
+
+
+@admin.register(CreditReservationAllocation)
+class CreditReservationAllocationAuditAdmin(BillingAuditAdmin):
+    list_display = [
+        'reservation', 'batch', 'reserved_amount', 'consumed_amount',
+        'additional_consumed_amount', 'released_amount',
+    ]
 
 
 # 初筛数据库化模型按领域拆分，Admin 自动发现仍从 core.admin 进入。

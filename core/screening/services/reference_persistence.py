@@ -41,6 +41,9 @@ def _string_list(value: Any, *, separators=r'[;\n]') -> list[str]:
 
 
 def _pubmed_identifier(record: Mapping[str, Any]) -> str:
+    explicit = _text(record.get('pmid'))
+    if explicit:
+        return explicit
     source_type = _text(record.get('source_type')).upper()
     identifier = _text(record.get('source_identifier') or record.get('record_number'))
     if source_type == 'NBIB' and identifier.isdigit():
@@ -110,6 +113,8 @@ def build_reference(
         normalized_doi=normalized_doi,
         pmid=_pubmed_identifier(record),
         pmcid=_text(record.get('pmcid')),
+        isbn=_text(record.get('isbn')),
+        issn=_text(record.get('issn')),
         url=_text(record.get('url')),
         publication_type=_text(record.get('reference_type') or record.get('type')),
         volume=_text(record.get('volume')),
@@ -117,6 +122,9 @@ def build_reference(
         pages=_text(record.get('page')),
         keywords=_string_list(record.get('keywords')),
         language=_text(record.get('language')),
+        publisher=_text(record.get('publisher')),
+        database=_text(record.get('database')),
+        organization=_text(record.get('organization')),
         address=_text(record.get('address')),
         normalized_title_hash=hashlib.sha256(normalized_title.encode('utf-8')).hexdigest(),
         record_hash=hashlib.sha256(

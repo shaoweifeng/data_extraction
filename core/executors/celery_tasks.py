@@ -53,12 +53,25 @@ def _fail_screening_run_for_task(task_obj):
         fail_screening_run(run_id)
 
 
+def _release_credit_reservation(task_obj, *, status='released', reason=''):
+    if not task_obj or not getattr(settings, 'BILLING_RESERVATION_ENABLED', False):
+        return
+    try:
+        from core.services.credit_ledger_service import release_task_reservation
+
+        release_task_reservation(task_obj, status=status, reason=reason)
+    except Exception as exc:
+        logger.exception(
+            '[Celery] 释放积分预占失败: task_id=%s error=%s', task_obj.pk, exc,
+        )
+
+
 @shared_task(bind=True, max_retries=3)
 def execute_async_step(self, task_id: int, step_key: str, project_id: int):
     """
     Celery异步任务入口。
 
-    对于 ai_screen 步骤，在执行前先尝试抢占全局线程槽：
+    对于 AI 初筛和质量评价步骤，在执行前先尝试抢占全局及用户聚合槽位：
       - 成功 → 正常执行，完成后归还槽
       - 失败 → 设置 Task.status='queuing'，Celery retry 等待
     """
@@ -91,21 +104,35 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
 
             task_config = dict(task_obj.config or {})
 
-            if step_key == 'ai_screen':
+            if step_key in {'ai_screen', 'qa_eval'}:
                 from core.services.concurrency_service import (
-                    get_user_concurrency, try_acquire, get_queue_info,
+                    acquire_used_fallback, get_user_concurrency, get_queue_info,
+                    slots_for_task, try_acquire,
                 )
 
-                slots = get_user_concurrency(task_obj.created_by)
-                acquired = try_acquire(task_id, slots)
+                user_slots = get_user_concurrency(task_obj.created_by)
+                slots = slots_for_task(task_obj, user_slots)
+                acquired = try_acquire(
+                    task_id,
+                    slots,
+                    user_id=task_obj.created_by_id,
+                    user_limit=user_slots,
+                )
                 if not acquired:
-                    queue_info = get_queue_info(task_id, slots)
+                    queue_info = get_queue_info(
+                        task_id,
+                        slots,
+                        user_id=task_obj.created_by_id,
+                        user_limit=user_slots,
+                    )
                     task_config['queue_info'] = {
                         'position': queue_info['position'],
                         'queue_length': queue_info['queue_length'],
                         'slots_needed': slots,
                         'slots_free': queue_info['slots_free'],
                         'slots_total': queue_info['slots_total'],
+                        'user_slots_free': queue_info.get('user_slots_free', 0),
+                        'user_slots_total': queue_info.get('user_slots_total', user_slots),
                         'updated_at': timezone.now().isoformat(),
                     }
                     transition_task(
@@ -118,6 +145,13 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
                 else:
                     slot_acquired = True
                     task_config.pop('queue_info', None)
+                    task_config['ai_slot_lease'] = {
+                        'user_id': task_obj.created_by_id,
+                        'slots': slots,
+                        'user_limit': user_slots,
+                        'acquired_at': timezone.now().isoformat(),
+                        'redis_fallback': acquire_used_fallback(task_id),
+                    }
 
             if not should_retry_queue:
                 claim_updates = {'config': task_config, 'started_at': timezone.now()}
@@ -151,12 +185,14 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
         success = executor.execute()
         if success:
             executor.finalize(True)
+            _release_credit_reservation(task_obj, reason='任务完成但没有产生可结算用量')
             logger.info(f"[Celery] 任务成功完成: task_id={task_id}")
             return True
 
         task_obj = Task.objects.get(id=task_id)
         if task_obj.status in (TaskStatus.STOPPING, TaskStatus.STOPPED):
             executor.finalize(False)
+            _release_credit_reservation(task_obj, status='cancelled', reason='用户停止任务')
             _sync_import_batch_terminal_state(task_obj, cancelled=True)
             logger.info(f"[Celery] 任务被用户暂停: task_id={task_id}")
             return False
@@ -171,6 +207,7 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
         if task_obj and task_obj.status in (TaskStatus.STOPPING, TaskStatus.STOPPED):
             if executor:
                 executor.finalize(False, str(e))
+            _release_credit_reservation(task_obj, status='cancelled', reason=str(e))
             _sync_import_batch_terminal_state(task_obj, cancelled=True)
             logger.info(f"[Celery] 任务停止后不再重试: task_id={task_id}")
             return False
@@ -200,17 +237,24 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
 
         if executor:
             executor.finalize(False, str(e))
+        _release_credit_reservation(task_obj, status='released', reason=str(e))
         _fail_screening_run_for_task(task_obj)
         _sync_import_batch_terminal_state(task_obj, cancelled=False)
+        if task_obj and step_key in {'ai_screen', 'qa_eval'} and not slot_acquired:
+            try:
+                from core.services.concurrency_service import cancel_queue
+                cancel_queue(task_id, slots)
+            except Exception as queue_exc:
+                logger.warning('[Celery] 清理失败任务排队槽位失败: %s', queue_exc)
         logger.error(f"[Celery] 任务最终失败: task_id={task_id}, error={str(e)}")
         raise
 
     finally:
         # 无论成功/失败/停止，都归还槽位
-        if slot_acquired and step_key == 'ai_screen' and slots > 0:
+        if slot_acquired and step_key in {'ai_screen', 'qa_eval'} and slots > 0:
             try:
                 from core.services.concurrency_service import release
-                release(task_id, slots)
+                release(task_id, slots, user_id=task_obj.created_by_id if task_obj else 0)
             except Exception as e:
                 logger.warning(f"[Celery] 归还槽位失败: {e}")
 
@@ -258,6 +302,12 @@ def check_task_timeout(self):
                     # 用户可能恰好在超时检查期间停止了任务，不覆盖更新后的状态。
                     logger.info(f"[Celery] 任务状态已变化，跳过超时失败写入: task_id={task.id}")
                     continue
+
+                _release_credit_reservation(
+                    task,
+                    status='expired',
+                    reason=f'任务超时（{elapsed:.0f}秒 > {timeout}秒）',
+                )
 
                 # 撤销Celery任务
                 if task.celery_task_id:

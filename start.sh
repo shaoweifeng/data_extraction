@@ -68,6 +68,65 @@ run_manage() {
     PYTHONWARNINGS=ignore "$PYTHON_BIN" manage.py "$@"
 }
 
+redis_ping() {
+    "$PYTHON_BIN" -c '
+import os
+import redis
+
+client = redis.Redis.from_url(
+    os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0"),
+    socket_connect_timeout=1,
+    socket_timeout=1,
+)
+raise SystemExit(0 if client.ping() else 1)
+' >/dev/null 2>&1
+}
+
+redis_target_is_local() {
+    "$PYTHON_BIN" -c '
+import os
+from urllib.parse import urlparse
+
+hostname = urlparse(
+    os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+).hostname
+raise SystemExit(0 if hostname in {None, "", "localhost", "127.0.0.1", "::1"} else 1)
+' >/dev/null 2>&1
+}
+
+resolve_redis_server() {
+    local configured=${REDIS_SERVER_BIN:-}
+    local candidate
+
+    if [ -n "$configured" ]; then
+        if [[ "$configured" == */* ]]; then
+            [ -x "$configured" ] && printf '%s\n' "$configured" && return 0
+        else
+            candidate=$(command -v "$configured" 2>/dev/null || true)
+            [ -n "$candidate" ] && printf '%s\n' "$candidate" && return 0
+        fi
+        return 1
+    fi
+
+    candidate=$(command -v redis-server 2>/dev/null || true)
+    if [ -n "$candidate" ]; then
+        printf '%s\n' "$candidate"
+        return 0
+    fi
+
+    for candidate in \
+        /opt/homebrew/bin/redis-server \
+        /usr/local/bin/redis-server \
+        /usr/bin/redis-server \
+        /usr/local/redis/bin/redis-server; do
+        if [ -x "$candidate" ]; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
 is_running() {
     kill -0 "$1" 2>/dev/null
 }
@@ -86,7 +145,8 @@ matches_service_process() {
     local command
     command=$(ps -p "$pid" -o command= 2>/dev/null) || return 1
     case "$name" in
-        celery) [[ "$command" == *celery*platform_backend* ]] ;;
+        celery) [[ "$command" == *celery*platform_backend*worker* ]] ;;
+        celery_beat) [[ "$command" == *celery*platform_backend*beat* ]] ;;
         django) [[ "$command" == *gunicorn*platform_backend.wsgi* || "$command" == *"manage.py runserver"* ]] ;;
         vite) [[ "$command" == *vite* || "$command" == *"npm run dev"* ]] ;;
         *) return 1 ;;
@@ -96,7 +156,8 @@ matches_service_process() {
 discover_service_pid() {
     local name=$1
     case "$name" in
-        celery) pgrep -o -f "$CELERY_BIN -A platform_backend" 2>/dev/null || true ;;
+        celery) pgrep -o -f "$CELERY_BIN -A platform_backend worker" 2>/dev/null || true ;;
+        celery_beat) pgrep -o -f "$CELERY_BIN -A platform_backend beat" 2>/dev/null || true ;;
         django) pgrep -o -f "$GUNICORN_BIN platform_backend.wsgi" 2>/dev/null || true ;;
         vite) pgrep -o -f "$SCRIPT_DIR/web/node_modules/.bin/vite" 2>/dev/null || true ;;
     esac
@@ -131,7 +192,7 @@ service_is_running() {
 rollback_started_services() {
     local name pid
     echo "⚠️  启动未完成，正在回滚本次已启动的进程..."
-    for name in django vite celery; do
+    for name in django vite celery_beat celery; do
         pid=$(read_pid "$name")
         case "$pid" in
             ''|*[!0-9]*) ;;
@@ -161,6 +222,7 @@ mkdir -p "$MPLCONFIGDIR"
 DJANGO_LOG="$LOG_DIR/gunicorn_access.log"
 DJANGO_ERR="$LOG_DIR/gunicorn_error.log"
 CELERY_LOG="$LOG_DIR/celery.log"
+CELERY_BEAT_LOG="$LOG_DIR/celery_beat.log"
 VITE_LOG="$LOG_DIR/vite.log"
 
 # 0) 数据库配置（MySQL）
@@ -224,7 +286,7 @@ fi
 
 # start.sh 和 stop.sh 统一以 PID 文件并核对真实命令，避免两边判断矛盾。
 ALREADY_RUNNING=false
-for service_name in celery django vite; do
+for service_name in celery celery_beat django vite; do
     if service_is_running "$service_name"; then
         ALREADY_RUNNING=true
     fi
@@ -268,13 +330,48 @@ if [ "$SKIP_BUILD" = false ]; then
     cd "$SCRIPT_DIR"
 fi
 
-# 1. 启动 Redis（后台）
-if command -v redis-server > /dev/null; then
-    redis-server --daemonize yes 2>/dev/null || true
-    echo "✅ Redis 已启动"
+# 1. 确认 Redis 可用。优先复用现有实例，只在本地实例不可达时尝试启动。
+if redis_ping; then
+    echo "✅ Redis 已可用（复用当前运行实例）"
 else
-    echo "❌ 错误: 未找到 redis-server，请先安装 Redis"
-    exit 1
+    if ! redis_target_is_local; then
+        echo "❌ 配置的远程 Redis 当前不可用，启动脚本不会在本机创建替代实例"
+        echo "   请检查 CELERY_BROKER_URL、网络、认证信息和远程 Redis 服务状态"
+        exit 1
+    fi
+
+    REDIS_SERVER_PATH=$(resolve_redis_server || true)
+    if [ -z "$REDIS_SERVER_PATH" ]; then
+        echo "❌ 本地 Redis 不可用，且未找到 redis-server 可执行文件"
+        echo "   Homebrew 用户通常位于 /opt/homebrew/bin/redis-server"
+        echo "   也可以在 .env 中设置 REDIS_SERVER_BIN=/完整路径/redis-server"
+        exit 1
+    fi
+
+    if [ -n "${REDIS_SERVER_CONFIG:-}" ]; then
+        if [ ! -r "$REDIS_SERVER_CONFIG" ]; then
+            echo "❌ REDIS_SERVER_CONFIG 指向的配置文件不可读: $REDIS_SERVER_CONFIG"
+            exit 1
+        fi
+        "$REDIS_SERVER_PATH" "$REDIS_SERVER_CONFIG" --daemonize yes >/dev/null 2>&1 || true
+    else
+        "$REDIS_SERVER_PATH" --daemonize yes >/dev/null 2>&1 || true
+    fi
+
+    REDIS_READY=false
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        if redis_ping; then
+            REDIS_READY=true
+            break
+        fi
+        sleep 1
+    done
+    if [ "$REDIS_READY" != true ]; then
+        echo "❌ 已找到并尝试启动 Redis，但在 10 秒内仍无法连接"
+        echo "   请检查 CELERY_BROKER_URL、Redis 配置、端口占用和认证信息"
+        exit 1
+    fi
+    echo "✅ Redis 已启动并通过连接检查（$REDIS_SERVER_PATH）"
 fi
 
 # 2. 启动 Celery Worker（后台）
@@ -302,6 +399,21 @@ if ! is_running "$CELERY_PID" || ! matches_service_process "celery" "$CELERY_PID
 fi
 echo "✅ Celery Worker 已在后台启动 (PID: $CELERY_PID, 并发槽: 16, 模式: threads)"
 echo "   日志: $CELERY_LOG"
+
+# 套餐周期、积分到期等周期任务由独立 Beat 调度器触发；单独管理 PID，
+# 避免 Worker 重启或多实例部署时重复启动多个调度器。
+nohup "$CELERY_BIN" -A platform_backend beat --loglevel=info \
+    --schedule "$PID_DIR/celerybeat-schedule" >> "$CELERY_BEAT_LOG" 2>&1 &
+CELERY_BEAT_PID=$!
+echo $CELERY_BEAT_PID > "$PID_DIR/celery_beat.pid"
+sleep 1
+if ! is_running "$CELERY_BEAT_PID" || ! matches_service_process "celery_beat" "$CELERY_BEAT_PID"; then
+    echo "❌ Celery Beat 启动失败，请查看: $CELERY_BEAT_LOG"
+    rollback_started_services
+    exit 1
+fi
+echo "✅ Celery Beat 已在后台启动 (PID: $CELERY_BEAT_PID)"
+echo "   日志: $CELERY_BEAT_LOG"
 
 # 3. 开发模式：启动 Vite dev server
 if [ "$DEV_MODE" = true ]; then

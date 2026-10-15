@@ -25,7 +25,12 @@ def start_evaluation(project, user, ref_ids, model_ids):
     if evaluable_count == 0:
         raise ValueError('没有可评价的文献（请先选择支持 AI 评价的方法）')
 
-    estimated = AIQuotaService.preflight(user, evaluable_count, model_ids)
+    estimated = AIQuotaService.preflight(
+        user,
+        evaluable_count,
+        model_ids,
+        feature='qa_eval',
+    )
 
     from core.scheduler import TaskScheduler
 

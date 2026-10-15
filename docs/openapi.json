@@ -270,9 +270,13 @@
     "/qa/export/excel/": {"post": {"tags": ["Quality Assessment"], "responses": {"200": {"description": "Excel workbook", "content": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {"schema": {"type": "string", "format": "binary"}}}}}}},
     "/qa/export/status/": {"get": {"tags": ["Quality Assessment"], "responses": {"200": {"$ref": "#/components/responses/QaSuccess"}}}},
     "/billing/balance/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Current balance"}}}},
-    "/billing/estimate/": {"post": {"tags": ["Billing"], "responses": {"200": {"description": "Estimated credits"}}}},
+    "/billing/estimate/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Estimated credits"}}}},
     "/billing/redeem/": {"post": {"tags": ["Billing"], "responses": {"200": {"description": "Redeemed"}, "410": {"description": "Already used or expired"}}}},
-    "/billing/transactions/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Transactions"}}}}
+    "/billing/transactions/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Transactions"}}}},
+    "/billing/plans/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Published plans and current entitlement"}}}},
+    "/billing/batches/": {"get": {"tags": ["Billing"], "responses": {"200": {"description": "Current user's credit batches"}}}},
+    "/billing/service-contact/": {"get": {"tags": ["Billing"], "description": "Authenticated internal-test consultation contact. Returns only enabled=false when globally or administratively disabled.", "responses": {"200": {"description": "Service contact availability and public contact fields"}, "403": {"description": "Authentication required"}}}},
+    "/billing/service-contact/qr/": {"get": {"tags": ["Billing"], "description": "Authenticated stream for the privately stored service-contact QR image.", "responses": {"200": {"description": "PNG or JPEG QR image"}, "403": {"description": "Authentication required"}, "404": {"description": "Contact or QR image unavailable"}}}}
   },
   "components": {
     "securitySchemes": {

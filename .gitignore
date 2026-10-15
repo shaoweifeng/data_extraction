@@ -37,6 +37,7 @@ db.sqlite3-journal
 /private_media/
 # External API image uploads (kept explicit even though private_media is ignored above)
 /private_media/external_images/
+/private_media/service_contact/
 
 # Task workspaces
 /workspaces/

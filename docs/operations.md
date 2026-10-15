@@ -40,8 +40,26 @@
 | `EXTERNAL_IMAGE_UPLOAD_MAX_IMAGE_BYTES` | 可选 | 单张外部图片上限，默认 10 MiB |
 | `EXTERNAL_IMAGE_UPLOAD_MAX_REQUEST_BYTES` | 可选 | 单次请求体上限，默认 12 MiB |
 | `EXTERNAL_IMAGE_UPLOAD_MAX_PIXELS` | 可选 | 解码后最大像素数，默认 2500 万 |
+| `SERVICE_CONTACT_ENABLED` | 可选 | 内测套餐咨询入口总开关，默认开启；关闭后接口不返回任何联系方式 |
+| `SERVICE_CONTACT_UPLOAD_ROOT` | 可选 | 联系二维码私有目录；默认 `private_media/service_contact`，禁止映射为公开静态目录 |
+| `SERVICE_CONTACT_QR_MAX_BYTES` | 可选 | 联系二维码最大文件大小，默认 2 MiB |
+| `SERVICE_CONTACT_QR_MAX_PIXELS` | 可选 | 联系二维码最大像素数，默认 400 万 |
 
 完整示例见 `.env.example`。
+
+## 内测申请咨询入口
+
+该入口只用于让已登录用户通过微信或邮箱联系平台，不是下单或支付系统。它不会保存用户填写内容，也不会创建申请、金额、订单、支付流水或退款记录。套餐开通仍由管理员发放套餐兑换码完成。
+
+部署代码后先执行数据库迁移：
+
+```bash
+python manage.py migrate
+```
+
+然后使用超级管理员进入 Django Admin 的「服务联系方式」，创建唯一一条配置，填写联系人名称以及至少一种联系方式（微信号、二维码或邮箱），确认内容无误后再勾选「启用咨询入口」。二维码只支持 PNG/JPEG，最大 2 MiB，存放于私有目录并通过登录鉴权接口读取；不要通过 Nginx 或对象存储公开 URL 直接暴露该目录。
+
+如需紧急关闭入口，将 `.env` 中 `SERVICE_CONTACT_ENABLED=false` 并重启 Web 服务。即使数据库记录仍为启用，接口也只会返回 `enabled=false`，不会泄露原联系方式。修改联系人信息不需要重启服务。
 
 ## 启动检查
 

@@ -60,6 +60,17 @@ def _normalize_ris_entry(entry: Dict, file_path: str, position: int) -> Dict:
     if isinstance(doi, list):
         doi = doi[0] if doi else None
 
+    reference_type = first_value(entry, ['type_of_reference', 'type', 'TY'])
+    database = first_value(entry, ['name_of_database', 'database_provider', 'DB'])
+    accession_number = first_value(entry, ['accession_number', 'AN'])
+    source_identifier = first_value(entry, ['id', 'ID']) or accession_number
+    explicit_pmid = first_value(entry, ['pmid', 'PMID'])
+    pmid = explicit_pmid
+    if not pmid and accession_number and (database or '').casefold() in {'pubmed', 'medline'}:
+        pmid = accession_number.removeprefix('PMID:').strip()
+    serial_number = first_value(entry, ['serial_number', 'SN'])
+    is_book = (reference_type or '').upper() in {'BOOK', 'CHAP', 'EBOOK'}
+
     normalized = {
         'title': entry.get('title') or entry.get('primary_title'),
         'authors': entry.get('authors', []),
@@ -74,13 +85,22 @@ def _normalize_ris_entry(entry: Dict, file_path: str, position: int) -> Dict:
         'page': page,
         'date': first_value(entry, ['date', 'publication_date', 'DA', 'Y1']),
         'doi': doi,
-        'pmcid': first_value(entry, ['pmcid', 'PMCID']),
+        'pmid': pmid,
+        'pmcid': first_value(entry, ['pmcid', 'PMCID', 'custom2', 'C2']),
+        'isbn': first_value(entry, ['isbn', 'ISBN']) or (serial_number if is_book else None),
+        'issn': first_value(entry, ['issn']) or (None if is_book else serial_number),
         'abstract': entry.get('abstract'),
         'url': url,
         'address': joined_values(entry, ['author_address', 'address', 'AD']),
-        'reference_type': first_value(entry, ['type_of_reference', 'type', 'TY']),
+        'keywords': joined_values(entry, ['keywords', 'KW']),
+        'language': first_value(entry, ['language', 'LA']),
+        'publisher': first_value(entry, ['publisher', 'PB']),
+        'database': database,
+        'organization': joined_values(entry, ['organization', 'institution', 'custom1', 'C1']),
+        'reference_type': reference_type,
         'source_file': os.path.basename(file_path),
         'source_position': position,
+        'source_identifier': source_identifier,
         'source_type': 'RIS',
     }
     normalized['_raw_metadata'] = entry

@@ -119,7 +119,8 @@ class Command(BaseCommand):
                     'model_errors': {},
                 })
                 if options['live']:
-                    model_usage = {}
+                    from core.ai.usage_schema import merge_call_usage
+                    usage_totals = {'prompt': 0, 'completion': 0, 'total': 0, 'model_usage': {}}
                     for package, prompt in zip(packages, prompts):
                         for model_id in options['models']:
                             _, usage, errors = call_model_for_evidence(model_id, prompt, package)
@@ -127,24 +128,8 @@ class Command(BaseCommand):
                                 record['model_errors'].setdefault(model_id, []).extend(errors)
                             if not usage:
                                 continue
-                            target = model_usage.setdefault(model_id, {
-                                'prompt_tokens': 0, 'completion_tokens': 0,
-                                'total_tokens': 0, 'cached_prompt_tokens': 0, 'calls': 0,
-                            })
-                            prompt_tokens = int(usage.get('prompt', usage.get('prompt_tokens', 0)) or 0)
-                            completion_tokens = int(
-                                usage.get('completion', usage.get('completion_tokens', 0)) or 0
-                            )
-                            target['prompt_tokens'] += prompt_tokens
-                            target['completion_tokens'] += completion_tokens
-                            target['total_tokens'] += int(
-                                usage.get('total', usage.get('total_tokens', 0))
-                                or prompt_tokens + completion_tokens
-                            )
-                            target['cached_prompt_tokens'] += int(
-                                usage.get('cached_prompt_tokens', 0) or 0
-                            )
-                            target['calls'] += 1
+                            merge_call_usage(usage_totals, usage, model_id)
+                    model_usage = usage_totals['model_usage']
                     pricing = calculate_shadow_pricing(model_usage)
                     record['model_usage'] = model_usage
                     record['actual_total_tokens'] = sum(
@@ -158,10 +143,16 @@ class Command(BaseCommand):
                     for model_id, usage in model_usage.items():
                         target = aggregate_model_usage.setdefault(model_id, {
                             'prompt_tokens': 0, 'completion_tokens': 0,
-                            'total_tokens': 0, 'cached_prompt_tokens': 0, 'calls': 0,
+                            'total_tokens': 0, 'cached_prompt_tokens': 0,
+                            'cache_write_prompt_tokens': 0, 'calls': 0,
+                            'call_details': [],
                         })
-                        for key in target:
-                            target[key] += usage[key]
+                        for key in (
+                            'prompt_tokens', 'completion_tokens', 'total_tokens',
+                            'cached_prompt_tokens', 'cache_write_prompt_tokens', 'calls',
+                        ):
+                            target[key] += int(usage.get(key, 0) or 0)
+                        target['call_details'].extend(usage.get('call_details') or [])
             except Exception as exc:
                 record['error'] = f'{type(exc).__name__}: {exc}'[:500]
             records.append(record)

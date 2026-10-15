@@ -53,6 +53,17 @@ def _normalize_procite_record(rec: Dict) -> Dict:
         for value in affiliations
         if value and value.strip().rstrip(';').strip()
     )
+    reference_type = rec.get('%0', '').strip()
+    database = rec.get('%W', '').strip()
+    accession_number = rec.get('%M', '').strip()
+    serial_number = rec.get('%@', '').strip()
+    is_book = reference_type.casefold() in {
+        'book', 'book section', 'book chapter', 'edited book',
+    }
+    pmid = ''
+    if accession_number and database.casefold() in {'pubmed', 'medline'}:
+        pmid = accession_number.removeprefix('PMID:').strip()
+
     normalized = {
         'title': rec.get('%T', '').strip(),
         'authors': authors,
@@ -63,15 +74,21 @@ def _normalize_procite_record(rec: Dict) -> Dict:
         'page': rec.get('%P', '').strip(),
         'date': rec.get('%D', '').strip(),
         'doi': doi,
+        'pmid': pmid,
         'pmcid': '',
+        'isbn': serial_number if is_book else '',
+        'issn': '' if is_book else serial_number,
         'abstract': rec.get('%X', '').strip(),
         'url': url,
         # EndNote tagged text uses %+ for Author Address; %C is Place Published.
         'address': address,
-        'reference_type': rec.get('%0', '').strip(),
+        'reference_type': reference_type,
         'keywords': rec.get('%K', '').strip(),
         'publisher': rec.get('%I', '').strip(),
-        'database': rec.get('%W', '').strip(),
+        'database': database,
+        'language': rec.get('%G', '').strip(),
+        'organization': address,
+        'source_identifier': accession_number,
         'source_type': 'ENW',
     }
     normalized['_raw_metadata'] = rec

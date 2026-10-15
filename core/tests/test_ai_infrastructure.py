@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from core.ai import (
     AIQuotaService,
@@ -23,6 +23,11 @@ from core.screening.services.prompt_builder import ScreeningPromptBuilder
 User = get_user_model()
 
 
+@override_settings(
+    MODEL_WEIGHTED_BILLING_ENABLED=False,
+    BILLING_RESERVATION_ENABLED=False,
+    CREDIT_BATCH_LEDGER_ENABLED=False,
+)
 class SharedAIInfrastructureTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user('ai-user', password='pw')

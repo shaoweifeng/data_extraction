@@ -1,206 +1,211 @@
-"""
-全局 AI 筛选并发控制服务（阶段四）
+"""Redis-backed global and per-user aggregate AI call-slot leases."""
 
-设计：
-  - Redis key `ai_screen:slots`（整数）：当前已占用的线程槽数
-  - Redis ZSET `ai_screen:queue`（score=入队时间戳）：等待中的任务队列
-    member 格式："{task_id}:{slots_needed}"
-
-接口：
-  - get_user_concurrency(user)   → 该用户应使用的并发线程数
-  - try_acquire(task_id, slots)  → 原子尝试占槽，成功返回 True，否则入队返回 False
-  - release(task_id, slots)      → 归还槽位，并唤醒队首任务
-  - get_queue_position(task_id, slots) → 返回排队位置（1-based）和队列信息
-  - cancel_queue(task_id, slots) → 从队列中移除（用户取消排队）
-"""
-
-import time
 import logging
+import time
 
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Redis key
-_SLOTS_KEY = "ai_screen:slots"
-_QUEUE_KEY = "ai_screen:queue"
+_QUEUE_KEY = 'ai_slots:v2:queue'
+_LEASES_KEY = 'ai_slots:v2:leases'
+_FALLBACK_TASKS = set()
 
-# Lua 脚本：原子尝试占槽
-# 逻辑：
-#   1. 如果队列为空，或我已在队列且是队首 → 尝试占槽
-#   2. 占槽成功则从队列移除（如果在的话），返回 1
-#   3. 占槽失败 → 如果还不在队列里则入队（ZADD NX），返回 0
 _ACQUIRE_LUA = """
-local slots_key = KEYS[1]
-local queue_key = KEYS[2]
-local max_slots = tonumber(ARGV[1])
-local slots_need = tonumber(ARGV[2])
-local member = ARGV[3]
-local now_ts = tonumber(ARGV[4])
+local queue_key = KEYS[1]
+local leases_key = KEYS[2]
+local global_limit = tonumber(ARGV[1])
+local user_limit = tonumber(ARGV[2])
+local slots_need = tonumber(ARGV[3])
+local member = ARGV[4]
+local user_id = ARGV[5]
+local now_ts = tonumber(ARGV[6])
+local expires_ts = tonumber(ARGV[7])
+local queue_cutoff_ts = tonumber(ARGV[8])
 
-local used = tonumber(redis.call('GET', slots_key) or 0)
-local queue_head = redis.call('ZRANGE', queue_key, 0, 0)[1]
-
--- 只有在队列为空或自己是队首时才允许抢槽
-local can_try = (queue_head == nil or queue_head == false or queue_head == member)
-
-if can_try and (used + slots_need <= max_slots) then
-    redis.call('INCRBY', slots_key, slots_need)
+redis.call('ZREMRANGEBYSCORE', leases_key, '-inf', now_ts)
+redis.call('ZREMRANGEBYSCORE', queue_key, '-inf', queue_cutoff_ts)
+if redis.call('ZSCORE', leases_key, member) ~= false then
+    redis.call('ZADD', leases_key, expires_ts, member)
     redis.call('ZREM', queue_key, member)
     return 1
-else
-    -- 不在队列里则入队（NX 防止重复入队改变score）
-    local score = redis.call('ZSCORE', queue_key, member)
-    if score == false then
-        redis.call('ZADD', queue_key, now_ts, member)
-    end
-    return 0
 end
+
+local global_used = 0
+local user_used = 0
+local leases = redis.call('ZRANGE', leases_key, 0, -1)
+for _, lease in ipairs(leases) do
+    local _, _, lease_user, lease_slots = string.find(lease, '^[^:]+:([^:]+):([^:]+)$')
+    local n = tonumber(lease_slots) or 0
+    global_used = global_used + n
+    if lease_user == user_id then user_used = user_used + n end
+end
+
+local queue_head = redis.call('ZRANGE', queue_key, 0, 0)[1]
+local can_try = (queue_head == nil or queue_head == false or queue_head == member)
+if can_try and global_used + slots_need <= global_limit and user_used + slots_need <= user_limit then
+    redis.call('ZADD', leases_key, expires_ts, member)
+    redis.call('ZREM', queue_key, member)
+    return 1
+end
+if redis.call('ZSCORE', queue_key, member) == false then
+    redis.call('ZADD', queue_key, now_ts, member)
+end
+return 0
 """
 
-# Lua 脚本：归还槽位
 _RELEASE_LUA = """
-local slots_key = KEYS[1]
-local slots_need = tonumber(ARGV[1])
-local current = tonumber(redis.call('GET', slots_key) or 0)
-local new_val = math.max(0, current - slots_need)
-redis.call('SET', slots_key, new_val)
-return new_val
+local queue_key = KEYS[1]
+local leases_key = KEYS[2]
+local task_id = ARGV[1]
+local prefix = task_id .. ':'
+for _, member in ipairs(redis.call('ZRANGE', leases_key, 0, -1)) do
+    if string.sub(member, 1, string.len(prefix)) == prefix then
+        redis.call('ZREM', leases_key, member)
+    end
+end
+for _, member in ipairs(redis.call('ZRANGE', queue_key, 0, -1)) do
+    if string.sub(member, 1, string.len(prefix)) == prefix then
+        redis.call('ZREM', queue_key, member)
+    end
+end
+return 1
 """
 
 
 def _get_redis():
-    """获取 Django-Celery 复用的 Redis 连接（不引入新依赖）。"""
     import redis as redis_lib
-    url = getattr(settings, 'CELERY_BROKER_URL', 'redis://localhost:6379/0')
-    return redis_lib.from_url(url, decode_responses=True)
+
+    return redis_lib.from_url(
+        getattr(settings, 'CELERY_BROKER_URL', 'redis://localhost:6379/0'),
+        decode_responses=True,
+    )
 
 
 def get_user_concurrency(user) -> int:
-    """
-    获取用户的 AI 筛选并发线程数。
-
-    优先级：
-      1. superuser / admin 角色 → AI_SCREEN_ADMIN_CONCURRENCY（默认 16）
-      2. profile.concurrency_limit 有值 → 使用该值
-      3. fallback → AI_SCREEN_DEFAULT_CONCURRENCY（默认 2）
-    """
-    admin_conc = getattr(settings, 'AI_SCREEN_ADMIN_CONCURRENCY', 16)
-    default_conc = getattr(settings, 'AI_SCREEN_DEFAULT_CONCURRENCY', 2)
-
+    """Resolve the single entitlement source instead of legacy profile fields."""
     if user is None:
-        return default_conc
+        return int(getattr(settings, 'PLAN_FREE_AI_CALL_SLOTS', 2))
+    from core.services.entitlement_service import resolve_user_entitlements
 
-    profile = getattr(user, 'profile', None)
-    if user.is_superuser or (profile and profile.role == 'admin'):
-        return admin_conc
-
-    if profile and profile.concurrency_limit:
-        return int(profile.concurrency_limit)
-
-    return default_conc
+    return max(1, int(resolve_user_entitlements(user).ai_call_slots))
 
 
-def _make_member(task_id: int, slots: int) -> str:
-    return f"{task_id}:{slots}"
+def slots_for_task(task, user_limit: int) -> int:
+    """Screening uses its worker pool; QA currently issues one call at a time."""
+    if task.task_type == 'ai_screen':
+        configured = (task.config or {}).get('concurrency')
+        return min(user_limit, max(1, int(configured or user_limit)))
+    return 1
 
 
-def try_acquire(task_id: int, slots: int) -> bool:
-    """
-    原子尝试为 task_id 占用 slots 个线程槽。
+def _make_member(task_id: int, user_id: int, slots: int) -> str:
+    return f'{task_id}:{user_id}:{slots}'
 
-    Returns:
-        True  → 占槽成功，任务可以立即开始
-        False → 槽位不足，已入队等待
-    """
-    max_slots = getattr(settings, 'AI_SCREEN_MAX_GLOBAL_THREADS', 64)
-    member = _make_member(task_id, slots)
+
+def try_acquire(task_id: int, slots: int, *, user_id: int = 0, user_limit: int | None = None) -> bool:
+    global_limit = int(getattr(settings, 'AI_SCREEN_MAX_GLOBAL_THREADS', 64))
+    user_limit = max(1, int(user_limit or global_limit))
+    now = time.time()
+    ttl = max(60, int(getattr(settings, 'AI_SLOT_LEASE_TTL_SECONDS', 86400)))
+    queue_ttl = max(60, int(getattr(settings, 'AI_SLOT_QUEUE_TTL_SECONDS', ttl)))
+    member = _make_member(task_id, user_id, slots)
     try:
-        r = _get_redis()
-        result = r.eval(
-            _ACQUIRE_LUA,
-            2,
-            _SLOTS_KEY, _QUEUE_KEY,
-            str(max_slots), str(slots), member, str(time.time()),
+        acquired = bool(_get_redis().eval(
+            _ACQUIRE_LUA, 2, _QUEUE_KEY, _LEASES_KEY,
+            str(global_limit), str(user_limit), str(slots), member,
+            str(user_id), str(now), str(now + ttl), str(now - queue_ttl),
+        ))
+        logger.info(
+            '[并发] task=%s user=%s slots=%s result=%s',
+            task_id, user_id, slots, 'acquired' if acquired else 'queued',
         )
-        acquired = bool(result)
-        if acquired:
-            logger.info(f"[并发] task={task_id} 抢到 {slots} 槽")
-        else:
-            logger.info(f"[并发] task={task_id} 槽不足，进入排队队列")
+        _FALLBACK_TASKS.discard(task_id)
         return acquired
-    except Exception as e:
-        logger.warning(f"[并发] try_acquire 失败（降级为直接执行）: {e}")
-        return True  # Redis 不可用时降级放行
+    except Exception as exc:
+        logger.warning('[并发] Redis 占槽失败，降级执行 task=%s: %s', task_id, exc)
+        _FALLBACK_TASKS.add(task_id)
+        return True
 
 
-def release(task_id: int, slots: int) -> None:
-    """归还 slots 个线程槽；等待任务由已有 Celery retry 定时重试。"""
-    member = _make_member(task_id, slots)
+def acquire_used_fallback(task_id: int) -> bool:
+    """Return and clear the current-process audit marker for a fail-open claim."""
+    if task_id in _FALLBACK_TASKS:
+        _FALLBACK_TASKS.discard(task_id)
+        return True
+    return False
+
+
+def release(task_id: int, slots: int = 0, *, user_id: int = 0) -> None:
+    try:
+        _get_redis().eval(_RELEASE_LUA, 2, _QUEUE_KEY, _LEASES_KEY, str(task_id))
+        logger.info('[并发] task=%s user=%s 已归还槽位', task_id, user_id)
+    except Exception as exc:
+        logger.warning('[并发] release 失败: %s', exc)
+
+
+def _lease_usage(r, now: float, user_id: int) -> tuple[int, int]:
+    r.zremrangebyscore(_LEASES_KEY, '-inf', now)
+    global_used = 0
+    user_used = 0
+    for member in r.zrange(_LEASES_KEY, 0, -1):
+        try:
+            _, lease_user, lease_slots = member.split(':', 2)
+            lease_slots = int(lease_slots)
+        except (TypeError, ValueError):
+            continue
+        global_used += lease_slots
+        if str(lease_user) == str(user_id):
+            user_used += lease_slots
+    return global_used, user_used
+
+
+def get_queue_info(
+    task_id: int,
+    slots: int,
+    *,
+    user_id: int = 0,
+    user_limit: int | None = None,
+) -> dict:
+    global_limit = int(getattr(settings, 'AI_SCREEN_MAX_GLOBAL_THREADS', 64))
+    user_limit = max(1, int(user_limit or global_limit))
+    member = _make_member(task_id, user_id, slots)
     try:
         r = _get_redis()
-        new_val = r.eval(_RELEASE_LUA, 1, _SLOTS_KEY, str(slots))
-        # 清理自己（正常情况已在 acquire 时移除，这里保底）
-        r.zrem(_QUEUE_KEY, member)
-        logger.info(f"[并发] task={task_id} 归还 {slots} 槽，当前已用: {new_val}")
-    except Exception as e:
-        logger.warning(f"[并发] release 失败: {e}")
-
-
-def get_queue_info(task_id: int, slots: int) -> dict:
-    """
-    返回该任务在队列中的位置和全局槽使用情况。
-
-    Returns:
-        {
-            "position": 3,          # 在队列中的位置（1-based），0 表示不在队列
-            "queue_length": 5,      # 队列总长度
-            "slots_used": 40,       # 当前已占用槽数
-            "slots_total": max_slots,  # 来自 settings.AI_SCREEN_MAX_GLOBAL_THREADS
-            "slots_free": 24,       # 当前剩余槽数
-        }
-    """
-    max_slots = getattr(settings, 'AI_SCREEN_MAX_GLOBAL_THREADS', 64)
-    member = _make_member(task_id, slots)
-    try:
-        r = _get_redis()
-        used = int(r.get(_SLOTS_KEY) or 0)
-        rank = r.zrank(_QUEUE_KEY, member)   # 0-based，None 表示不在队列
-        queue_len = r.zcard(_QUEUE_KEY)
+        queue_ttl = max(60, int(getattr(settings, 'AI_SLOT_QUEUE_TTL_SECONDS', 86400)))
+        r.zremrangebyscore(_QUEUE_KEY, '-inf', time.time() - queue_ttl)
+        global_used, user_used = _lease_usage(r, time.time(), user_id)
+        rank = r.zrank(_QUEUE_KEY, member)
         return {
-            "position": (rank + 1) if rank is not None else 0,
-            "queue_length": queue_len,
-            "slots_used": used,
-            "slots_total": max_slots,
-            "slots_free": max(0, max_slots - used),
+            'position': rank + 1 if rank is not None else 0,
+            'queue_length': r.zcard(_QUEUE_KEY),
+            'slots_used': global_used,
+            'slots_total': global_limit,
+            'slots_free': max(0, global_limit - global_used),
+            'user_slots_used': user_used,
+            'user_slots_total': user_limit,
+            'user_slots_free': max(0, user_limit - user_used),
         }
-    except Exception as e:
-        logger.warning(f"[并发] get_queue_info 失败: {e}")
-        return {"position": 0, "queue_length": 0, "slots_used": 0,
-                "slots_total": max_slots, "slots_free": max_slots}
+    except Exception as exc:
+        logger.warning('[并发] get_queue_info 失败: %s', exc)
+        return {
+            'position': 0, 'queue_length': 0, 'slots_used': 0,
+            'slots_total': global_limit, 'slots_free': global_limit,
+            'user_slots_used': 0, 'user_slots_total': user_limit,
+            'user_slots_free': user_limit,
+        }
 
 
-def cancel_queue(task_id: int, slots: int) -> None:
-    """从排队 ZSET 中移除该任务（用户取消/任务被删除时调用）。"""
-    member = _make_member(task_id, slots)
-    try:
-        r = _get_redis()
-        r.zrem(_QUEUE_KEY, member)
-        logger.info(f"[并发] task={task_id} 已从队列移除")
-    except Exception as e:
-        logger.warning(f"[并发] cancel_queue 失败: {e}")
+def cancel_queue(task_id: int, slots: int = 0) -> None:
+    release(task_id, slots)
 
 
 def reset_slots(force: bool = False) -> None:
-    """
-    紧急重置槽计数（运维用，防止崩溃导致槽泄漏）。
-    force=True 时直接清零，否则只重置为 0。
-    """
     try:
         r = _get_redis()
-        r.set(_SLOTS_KEY, 0)
+        r.delete(_LEASES_KEY)
         if force:
             r.delete(_QUEUE_KEY)
-        logger.warning("[并发] 槽计数已重置")
-    except Exception as e:
-        logger.error(f"[并发] reset_slots 失败: {e}")
+        logger.warning('[并发] AI 槽位租约已重置')
+    except Exception as exc:
+        logger.error('[并发] reset_slots 失败: %s', exc)

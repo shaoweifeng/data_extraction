@@ -140,7 +140,13 @@ class AIScreenHandler(BaseStepHandler):
         if is_unlimited_ai_user(user):
             self.logger.info('[计费] 管理员账户，跳过余额预检')
             return
-        estimated = AIQuotaService.preflight(user, reference_count, model_ids)
+        estimated = AIQuotaService.preflight(
+            user,
+            reference_count,
+            model_ids,
+            feature='ai_screen',
+            task=self.task_obj,
+        )
         self.logger.info(f'[计费] 余额预检通过，预估消耗 {estimated} credits')
 
     def _concurrency(self) -> int:

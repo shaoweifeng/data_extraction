@@ -92,6 +92,11 @@ def parse_bib(file_path: str) -> Iterator[Dict]:
             year = entry.get('year')
             month = entry.get('month')
             date = f"{month} {year}" if month and year else str(year) if year else None
+            keywords = [
+                item.strip()
+                for item in re.split(r'[,;]', entry.get('keywords', ''))
+                if item.strip()
+            ]
 
             normalized = {
                 'title': entry.get('title'),
@@ -103,10 +108,18 @@ def parse_bib(file_path: str) -> Iterator[Dict]:
                 'page': entry.get('pages'),
                 'date': date,
                 'doi': entry.get('doi'),
+                'pmid': entry.get('pmid') or entry.get('PMID'),
                 'pmcid': entry.get('pmcid') or entry.get('PMCID'),
+                'isbn': entry.get('isbn'),
+                'issn': entry.get('issn'),
                 'abstract': entry.get('abstract'),
                 'url': url,
                 'address': entry.get('address'),
+                'keywords': keywords,
+                'language': entry.get('language'),
+                'publisher': entry.get('publisher'),
+                'database': entry.get('database'),
+                'organization': entry.get('organization') or entry.get('institution'),
                 'reference_type': entry.get('ENTRYTYPE') or entry.get('type'),
                 'source_file': os.path.basename(file_path),
                 'source_position': candidate_position,

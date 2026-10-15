@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import tempfile
@@ -31,21 +32,31 @@ class LifecycleScriptTests(SimpleTestCase):
         self.assertNotIn('$SCRIPT_DIR/venv/bin/', stop_content)
         self.assertIn('PYTHON_BIN=${PYTHON_BIN:-python}', content)
         self.assertIn('PYTHON_BIN=${PYTHON_BIN:-python}', stop_content)
-        discovery = 'pgrep -o -f "$CELERY_BIN -A platform_backend"'
-        self.assertIn(discovery, content)
-        self.assertIn(discovery, stop_content)
+        worker_discovery = 'pgrep -o -f "$CELERY_BIN -A platform_backend worker"'
+        beat_discovery = 'pgrep -o -f "$CELERY_BIN -A platform_backend beat"'
+        self.assertIn(worker_discovery, content)
+        self.assertIn(worker_discovery, stop_content)
+        self.assertIn(beat_discovery, content)
+        self.assertIn(beat_discovery, stop_content)
+        self.assertIn('celery_beat.pid', content)
+        self.assertIn('service_pid_is_running "celery_beat"', stop_content)
+        self.assertIn('stop_with_timeout "celery_beat" 30', stop_content)
         self.assertIn('operations_status --json --no-celery', stop_content)
         self.assertNotIn('operations_safe()', stop_content)
-        self.assertIn(
-            'if ! service_pid_is_running "celery" && ! service_pid_is_running "django"',
-            stop_content,
-        )
         self.assertLess(
             content.index('ALREADY_RUNNING=false'),
             content.index('# ── 前端构建（非开发模式）'),
         )
         self.assertIn('run_manage migrate --check', content)
         self.assertIn('run_manage reconcile_interrupted_tasks --apply', content)
+        self.assertIn('if redis_ping; then', content)
+        self.assertIn('/opt/homebrew/bin/redis-server', content)
+        self.assertIn('REDIS_SERVER_BIN', content)
+        self.assertNotIn('if command -v redis-server > /dev/null; then', content)
+        self.assertLess(
+            content.index('if redis_ping; then'),
+            content.index('REDIS_SERVER_PATH=$(resolve_redis_server || true)'),
+        )
 
     def test_force_kill_is_explicitly_gated(self):
         content = (ROOT / 'stop.sh').read_text(encoding='utf-8')
@@ -61,12 +72,18 @@ class LifecycleScriptTests(SimpleTestCase):
             pid_dir.mkdir()
             stale_pid_file = pid_dir / 'celery.pid'
             stale_pid_file.write_text('99999999\n', encoding='utf-8')
+            env = os.environ.copy()
+            # Isolate process discovery from real developer services that may be
+            # running while the test suite executes.
+            env['CELERY_BIN'] = 'metaflow-test-no-celery-process'
+            env['GUNICORN_BIN'] = 'metaflow-test-no-gunicorn-process'
             result = subprocess.run(
                 ['bash', str(script)],
                 capture_output=True,
                 text=True,
                 timeout=5,
                 check=False,
+                env=env,
             )
 
         self.assertEqual(result.returncode, 0, result.stderr)

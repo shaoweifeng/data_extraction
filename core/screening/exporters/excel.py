@@ -14,6 +14,19 @@ class ScreeningExcelExporter:
     def __getattr__(self, name):
         return getattr(self._handler, name)
 
+    @staticmethod
+    def _cell_value(value):
+        """Convert structured bibliography values into stable Excel text cells."""
+        if value is None:
+            return ''
+        if isinstance(value, (list, tuple, set)):
+            return '; '.join(str(item).strip() for item in value if str(item).strip())
+        if isinstance(value, dict):
+            return '; '.join(
+                f'{key}: {item}' for key, item in value.items() if item not in (None, '')
+            )
+        return value
+
     def _generate_excel(self, results: Iterable[Dict], export_type: str,
                         model_suffix: str, ts: str,
                         manual_reviews: Dict,
@@ -33,8 +46,9 @@ class ScreeningExcelExporter:
             headers = [
                 "id", "include_or_not", "manual_override", "exclusion_reason_id", "exclusion_reason",
                 "ReferenceType", "Title", "Author", "Year", "Journal",
-                "Volume", "Issue", "Page", "Date", "Doi", "PMCID", "Abstract", "URL", "Address",
-                "reference_id",
+                "Volume", "Issue", "Page", "Date", "Doi", "PMID", "PMCID", "ISBN", "ISSN",
+                "Abstract", "URL", "Address", "Keywords", "Language", "Publisher", "Database", "Organization",
+                "SourceIdentifier", "reference_id",
             ]
             # 追加自定义提取字段
             extraction_field_names = self._load_extraction_field_names()
@@ -119,15 +133,26 @@ class ScreeningExcelExporter:
                     "Page": xml_fields.get("Page", result.get("page", "")),
                     "Date": xml_fields.get("Date", result.get("date", "")),
                     "Doi": xml_fields.get("Doi", "") or result.get("doi", ""),
+                    "PMID": xml_fields.get("PMID", result.get("pmid", "")),
                     "PMCID": xml_fields.get("PMCID", result.get("pmcid", "")),
+                    "ISBN": xml_fields.get("ISBN", result.get("isbn", "")),
+                    "ISSN": xml_fields.get("ISSN", result.get("issn", "")),
                     "Abstract": xml_fields.get("Abstract", "") or result.get("abstract", ""),
                     "URL": xml_fields.get("URL", "") or result.get("url", ""),
                     "Address": xml_fields.get("Address", result.get("address", "")),
+                    "Keywords": xml_fields.get("Keywords", result.get("keywords", "")),
+                    "Language": xml_fields.get("Language", result.get("language", "")),
+                    "Publisher": xml_fields.get("Publisher", result.get("publisher", "")),
+                    "Database": xml_fields.get("Database", result.get("database", "")),
+                    "Organization": xml_fields.get("Organization", result.get("organization", "")),
+                    "SourceIdentifier": xml_fields.get(
+                        "SourceIdentifier", result.get("source_identifier", "")
+                    ),
                     "reference_id": reference_id,
                 }
                 for fn in extraction_field_names:
                     row[fn] = extracted.get(fn, "")
-                sheet.append([row.get(header, '') for header in headers])
+                sheet.append([self._cell_value(row.get(header, '')) for header in headers])
                 row_count += 1
 
             workbook.save(excel_path)

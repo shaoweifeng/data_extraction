@@ -83,27 +83,8 @@ def _review_context(reference) -> dict | None:
 
 
 def _merge_usage(target: dict, usage: dict | None, model_id: str) -> None:
-    if not usage:
-        return
-    prompt = int(usage.get('prompt', usage.get('prompt_tokens', 0)) or 0)
-    completion = int(usage.get('completion', usage.get('completion_tokens', 0)) or 0)
-    total = int(usage.get('total', usage.get('total_tokens', 0)) or prompt + completion)
-    cached = int(usage.get('cached_prompt_tokens', 0) or 0)
-    target['prompt'] = int(target.get('prompt', 0)) + prompt
-    target['completion'] = int(target.get('completion', 0)) + completion
-    target['total'] = int(target.get('total', 0)) + total
-    model_usage = target.setdefault('model_usage', {}).setdefault(model_id, {
-        'prompt_tokens': 0,
-        'completion_tokens': 0,
-        'total_tokens': 0,
-        'cached_prompt_tokens': 0,
-        'calls': 0,
-    })
-    model_usage['prompt_tokens'] += prompt
-    model_usage['completion_tokens'] += completion
-    model_usage['total_tokens'] += total
-    model_usage['cached_prompt_tokens'] += cached
-    model_usage['calls'] += 1
+    from core.ai.usage_schema import merge_call_usage
+    merge_call_usage(target, usage, model_id)
 
 
 def _page_label(evidence: list[dict]) -> str:
@@ -433,13 +414,16 @@ class EvidenceV2Orchestrator:
             current_usage[key] = int(current_usage.get(key, 0)) + int(stats.get(key, 0))
         for model_id, values in stats.get('model_usage', {}).items():
             target = current_usage.setdefault('model_usage', {}).setdefault(model_id, {
-                key: 0 for key in (
-                    'prompt_tokens', 'completion_tokens', 'total_tokens',
-                    'cached_prompt_tokens', 'calls',
-                )
+                'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0,
+                'cached_prompt_tokens': 0, 'cache_write_prompt_tokens': 0,
+                'calls': 0, 'call_details': [],
             })
-            for key, value in values.items():
-                target[key] = int(target.get(key, 0)) + int(value or 0)
+            for key in (
+                'prompt_tokens', 'completion_tokens', 'total_tokens',
+                'cached_prompt_tokens', 'cache_write_prompt_tokens', 'calls',
+            ):
+                target[key] = int(target.get(key, 0)) + int(values.get(key, 0) or 0)
+            target['call_details'].extend(values.get('call_details') or [])
         self.run.token_usage = current_usage
         self.run.save(update_fields=[
             'method_config_version', 'token_usage', 'updated_at',

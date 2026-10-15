@@ -5,6 +5,9 @@ from __future__ import annotations
 from decimal import Decimal, ROUND_CEILING, ROUND_HALF_UP
 
 from core.services.ai_models_config import MODEL_ID_ALIASES
+from core.ai.billing_calculator import (
+    RateSnapshot, calculate_task_pricing, flatten_model_usage,
+)
 
 
 PRICING_VERSION = 'ai-credit-v1'
@@ -79,3 +82,36 @@ def calculate_shadow_pricing(model_usage: dict | None) -> dict:
         'shadow_credits': shadow_credits,
         'unknown_models': unknown_models,
     }
+
+
+def calculate_versioned_pricing(
+    model_usage: dict | None,
+    *,
+    pricing_version: str,
+    rates=None,
+    allow_draft: bool = False,
+) -> dict:
+    """Replay normalized usage against one immutable database rate version.
+
+    This is deliberately separate from ``calculate_shadow_pricing``.  Stages
+    0～3 must not alter the legacy credits actually deducted from users.
+    """
+    if rates is None:
+        from core.models_billing import ModelBillingRate
+
+        statuses = ['published']
+        if allow_draft:
+            statuses.append('draft')
+        rates = ModelBillingRate.objects.filter(
+            version=pricing_version,
+            status__in=statuses,
+        ).order_by('model_id', 'context_min_tokens')
+    snapshots = [
+        rate if isinstance(rate, RateSnapshot) else RateSnapshot.from_model(rate)
+        for rate in rates
+    ]
+    return calculate_task_pricing(
+        flatten_model_usage(model_usage),
+        snapshots,
+        pricing_version=pricing_version,
+    )

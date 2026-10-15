@@ -2,6 +2,7 @@
 
 from django.test import SimpleTestCase
 
+from core.executors.ai_providers import get_provider
 from core.services.ai_models_config import get_model_config, get_models_for_frontend
 
 
@@ -15,6 +16,12 @@ class AIModelCatalogTests(SimpleTestCase):
         ]
 
         self.assertEqual(defaults, ['deepseek-v4-flash'])
+
+    def test_deepseek_flash_platform_id_uses_current_provider_model(self):
+        config = get_model_config('deepseek-v4-flash')
+
+        self.assertEqual(config['id'], 'deepseek-v4-flash')
+        self.assertEqual(config['model'], 'deepseek-flash')
 
     def test_frontend_exposes_qwen37_models(self):
         providers = {item['id']: item for item in get_models_for_frontend()}
@@ -38,6 +45,26 @@ class AIModelCatalogTests(SimpleTestCase):
                 config = get_model_config(legacy_id)
                 self.assertEqual(config['id'], config_id)
                 self.assertEqual(config['model'], api_model)
+
+    def test_provider_model_names_route_to_platform_model_ids(self):
+        expected = {
+            'qwen3.7-flash': 'qwen3-7-flash',
+            'qwen3.7-plus': 'qwen3-7-plus',
+            'qwen3.7-max': 'qwen3-7-max',
+        }
+
+        for provider_model, platform_model_id in expected.items():
+            with self.subTest(provider_model=provider_model):
+                self.assertEqual(get_model_config(provider_model)['id'], platform_model_id)
+
+    def test_provider_receives_billing_identity_fields(self):
+        provider = get_provider('qwen3-7-flash')
+
+        self.assertEqual(provider.platform_model_id, 'qwen3-7-flash')
+        self.assertEqual(provider.model, 'qwen3.7-flash')
+        self.assertEqual(provider.provider_id, 'qwen')
+        self.assertEqual(provider.region, 'cn-beijing')
+        self.assertEqual(provider.service_tier, 'standard')
 
     def test_all_frontend_models_expose_thinking_control(self):
         for provider in get_models_for_frontend():

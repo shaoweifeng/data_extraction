@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="module">
+      <h2>即将发布以下计费版本</h2>
+      <p>发布后记录将成为不可修改的历史快照。后续调价必须新增版本，不能覆盖本次发布内容。</p>
+      <ul>
+        {% for object in queryset %}<li>{{ object }}</li>{% empty %}<li>没有可发布的草稿。</li>{% endfor %}
+      </ul>
+    </div>
+    {% for object in queryset %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ object.pk }}">
+    {% endfor %}
+    <input type="hidden" name="action" value="{{ action_name }}">
+    <input type="hidden" name="confirm_publish" value="yes">
+    <input type="hidden" name="post" value="yes">
+    <div class="submit-row">
+      <a href="../" class="button cancel-link">取消</a>
+      <input type="submit" value="确认发布" class="default">
+    </div>
+  </form>
+{% endblock %}

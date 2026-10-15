@@ -6,6 +6,8 @@ from .api.billing_views import (
     estimate as billing_estimate,
     redeem as billing_redeem,
     transactions as billing_transactions,
+    plans as billing_plans,
+    credit_batches as billing_credit_batches,
 )
 from .screening.api.review_views import (
     review_list,
@@ -33,6 +35,7 @@ from .operations.api_views import (
     operations_resume_tasks, operations_state, operations_status, presence_heartbeat,
     system_status,
 )
+from .service_contact.api_views import service_contact, service_contact_qr
 
 # 注册 ViewSets
 router = DefaultRouter()
@@ -68,6 +71,10 @@ urlpatterns = [
     path('billing/estimate/',     billing_estimate,     name='billing_estimate'),
     path('billing/redeem/',       billing_redeem,       name='billing_redeem'),
     path('billing/transactions/', billing_transactions, name='billing_transactions'),
+    path('billing/plans/',        billing_plans,        name='billing_plans'),
+    path('billing/batches/',      billing_credit_batches, name='billing_credit_batches'),
+    path('billing/service-contact/', service_contact, name='billing_service_contact'),
+    path('billing/service-contact/qr/', service_contact_qr, name='billing_service_contact_qr'),
 
     # 用户反馈
     path('feedback/', include('core.feedback.urls')),

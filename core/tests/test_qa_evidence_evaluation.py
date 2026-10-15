@@ -139,7 +139,12 @@ class EvidenceResponseValidationTests(SimpleTestCase):
         self.assertEqual(valid[0]['validation_status'], 'no_evidence_unclear')
 
 
-@override_settings(QA_EVIDENCE_RETRIEVAL_ENABLED=True)
+@override_settings(
+    QA_EVIDENCE_RETRIEVAL_ENABLED=True,
+    MODEL_WEIGHTED_BILLING_ENABLED=False,
+    BILLING_RESERVATION_ENABLED=False,
+    CREDIT_BATCH_LEDGER_ENABLED=False,
+)
 class EvidenceEvaluationOrchestrationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user('evidence-user', password='pw')

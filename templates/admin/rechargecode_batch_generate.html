@@ -25,17 +25,45 @@
     </div>
 
     <div style="margin-bottom:16px">
+      <label style="display:block;font-weight:bold;margin-bottom:4px">兑换码类型</label>
+      <select name="code_type" id="code-type" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px">
+        <option value="CREDIT">积分码</option>
+        <option value="PLAN">套餐码</option>
+      </select>
+    </div>
+
+    <div id="plan-fields" style="display:none">
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-weight:bold;margin-bottom:4px">套餐价格版本</label>
+        <select name="plan_price_version" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px">
+          {% for item in plan_versions %}
+          <option value="{{ item.id }}">{{ item.plan.name }} · ¥{{ item.monthly_price_cny }}/月 · {{ item.included_credits }} 积分</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-weight:bold;margin-bottom:4px">有效月数</label>
+        <input type="number" name="valid_months" value="1" min="1" max="36" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box">
+      </div>
+    </div>
+
+    <div id="credit-fields" style="margin-bottom:16px">
       <label style="display:block;font-weight:bold;margin-bottom:4px">每张面值（credits）</label>
-      <input type="number" name="credits" value="100" min="1"
+      <input type="number" name="credits" value="100" min="0"
              style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box">
     </div>
 
     <div style="margin-bottom:16px">
-      <label style="display:block;font-weight:bold;margin-bottom:4px">码前缀（最多10字符，仅大写字母）</label>
-      <input type="text" name="prefix" value="FREE" maxlength="10"
+      <label style="display:block;font-weight:bold;margin-bottom:4px">发行批次（可选）</label>
+      <input type="text" name="batch_no" maxlength="64" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box" placeholder="如：2026-INTERNAL-01">
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-weight:bold;margin-bottom:4px">码前缀（最多10字符，仅大写字母或数字）</label>
+      <input type="text" name="prefix" value="" maxlength="10"
              style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box"
-             placeholder="FREE">
-      <p style="color:#888;font-size:12px;margin-top:4px">最终格式：PREFIX-XXXX-XXXX</p>
+             placeholder="留空时根据类型使用 CREDIT 或 PLAN">
+      <p style="color:#888;font-size:12px;margin-top:4px">最终格式：PREFIX-XXXXX-XXXXX-XXXXX（75 位随机强度）</p>
     </div>
 
     <div style="margin-bottom:16px">
@@ -58,4 +86,16 @@
     <a href="../" style="margin-left:12px;color:#888;font-size:13px">返回列表</a>
   </form>
 </div>
+<script>
+  const typeSelect = document.getElementById('code-type');
+  const planFields = document.getElementById('plan-fields');
+  const creditFields = document.getElementById('credit-fields');
+  function syncCodeType() {
+    const isPlan = typeSelect.value === 'PLAN';
+    planFields.style.display = isPlan ? 'block' : 'none';
+    creditFields.style.display = isPlan ? 'none' : 'block';
+  }
+  typeSelect.addEventListener('change', syncCodeType);
+  syncCodeType();
+</script>
 {% endblock %}

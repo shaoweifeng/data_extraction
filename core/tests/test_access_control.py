@@ -73,6 +73,36 @@ class ProjectAccessPolicyTests(AccessFixture):
         self.assertEqual(client.get(f'/api/users/{self.other.id}/').status_code, 404)
         self.assertEqual(self.login(self.admin).get(f'/api/users/{self.other.id}/').status_code, 200)
 
+    def test_prompt_configuration_is_admin_only_and_not_disclosed(self):
+        self.project.metadata = {
+            **(self.project.metadata or {}),
+            'custom_prompt': 'PRIVATE ADMIN PROMPT',
+            'use_custom_prompt': True,
+        }
+        self.project.save(update_fields=['metadata'])
+        owner_client = self.login(self.owner)
+
+        for method, path, payload in (
+            ('get', f'/api/projects/{self.project.id}/get_prompt/', None),
+            ('post', f'/api/projects/{self.project.id}/save_prompt/', {
+                'custom_prompt': '{screening_criteria} {literature_record}',
+            }),
+            ('post', f'/api/projects/{self.project.id}/reset_prompt/', {}),
+        ):
+            response = getattr(owner_client, method)(
+                path,
+                data=payload,
+                content_type='application/json',
+            ) if method == 'post' else owner_client.get(path)
+            self.assertEqual(response.status_code, 403)
+            self.assertNotContains(response, 'PRIVATE ADMIN PROMPT', status_code=403)
+
+        admin_response = self.login(self.admin).get(
+            f'/api/projects/{self.project.id}/get_prompt/',
+        )
+        self.assertEqual(admin_response.status_code, 200)
+        self.assertEqual(admin_response.json()['custom_prompt'], 'PRIVATE ADMIN PROMPT')
+
 
 class QaAndCsrfContractTests(AccessFixture):
     def test_import_without_current_screening_run_preserves_qa_results(self):

@@ -18,7 +18,9 @@
 """
 
 from datetime import datetime
+import hashlib
 from pathlib import Path
+import re
 from typing import List, Dict, Optional
 
 import logging
@@ -27,6 +29,16 @@ logger = logging.getLogger(__name__)
 from core.executors.registry import register
 from core.executors.step_handler import BaseStepHandler
 from core.artifacts.types import ArtifactType
+
+
+MODEL_FILENAME_TAGS = {
+    'deepseek-v4-flash': 'ds-flash',
+    'deepseek-v4-pro': 'ds-pro',
+    'doubao-seed-2-1-turbo': 'db-turbo',
+    'qwen3-7-flash': 'qw-flash',
+    'qwen3-7-plus': 'qw-plus',
+    'qwen3-7-max': 'qw-max',
+}
 
 @register("export")
 class ExportHandler(BaseStepHandler):
@@ -70,7 +82,8 @@ class ExportHandler(BaseStepHandler):
         criteria_list = self._load_criteria_list()
         self.logger.info(f"[导出] 排除标准条数: {len(criteria_list)}")
 
-        model_suffix = self._get_model_suffix()
+        model_ids = self._get_model_ids()
+        model_suffix = self._get_model_suffix(model_ids)
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         stats = {
             'total': 0,
@@ -157,19 +170,23 @@ class ExportHandler(BaseStepHandler):
             self.save_output_file(
                 excel_path, excel_path.name, f"初筛结果 Excel（{scope_label}）", "output",
                 ArtifactType.SCREENING_EXPORT_XLSX,
-                metadata={'export_type': export_type},
+                metadata={'export_type': export_type, 'model_ids': model_ids},
             )
         if ris_path and ris_path.exists():
             self.save_output_file(
                 ris_path, ris_path.name, "初筛结果 RIS（纳入文献）", "output",
                 ArtifactType.SCREENING_EXPORT_RIS,
-                metadata={'export_type': 'included'},
+                metadata={'export_type': 'included', 'model_ids': model_ids},
             )
         if xml_path.exists():
             self.save_output_file(
                 xml_path, xml_path.name, f"初筛结果 XML（{scope_label}）", "output",
                 ArtifactType.SCREENING_EXPORT_XML,
-                metadata={'record_count': xml_count, 'export_type': export_type},
+                metadata={
+                    'record_count': xml_count,
+                    'export_type': export_type,
+                    'model_ids': model_ids,
+                },
             )
 
         # 7. 更新步骤元数据
@@ -186,12 +203,9 @@ class ExportHandler(BaseStepHandler):
 
     # ── 私有方法 ─────────────────────────────────────────────────────────
 
-    def _get_model_suffix(self) -> str:
+    def _get_model_ids(self) -> List[str]:
         """
-        读取本次 ai_screen 任务使用的模型列表，返回文件名后缀。
-        - 单模型 → 模型显示名称（如 deepseek-chat）
-        - 多模型 → 各模型名简写拼接（如 ds-chat+gpt4o），超过 40 字符则用 "Nmodels"
-        - 兜底   → 'default'
+        读取本次导出对应的模型 ID；任务配置优先，最近一次初筛任务兜底。
         """
         # 优先从 export 任务自带 config 中读
         model_ids: List[str] = self.config.get("ai_models") or []
@@ -214,33 +228,33 @@ class ExportHandler(BaseStepHandler):
                     if single:
                         model_ids = [single]
 
+        return list(dict.fromkeys(model_ids))
+
+    @staticmethod
+    def _model_filename_tag(model_id: str) -> str:
+        known = MODEL_FILENAME_TAGS.get(model_id)
+        if known:
+            return known
+
+        safe = re.sub(r'[^A-Za-z0-9._-]+', '-', model_id).strip('._-') or 'model'
+        if len(safe) <= 18:
+            return safe
+        digest = hashlib.sha256(safe.encode('utf-8')).hexdigest()[:6]
+        return f'{safe[:11].rstrip("._-")}-{digest}'
+
+    def _get_model_suffix(self, model_ids: Optional[List[str]] = None) -> str:
+        """生成短且稳定的模型文件名标识；完整模型列表保存在产物元数据。"""
+        model_ids = model_ids if model_ids is not None else self._get_model_ids()
         if not model_ids:
-            return "default"
+            return 'default'
 
-        # 将 model_id 转换为显示名
-        try:
-            from core.services.ai_models_config import get_models_for_frontend_flat
-            id_to_name = {m["id"]: m["name"] for m in get_models_for_frontend_flat()}
-        except Exception:
-            id_to_name = {}
+        tags = [self._model_filename_tag(model_id) for model_id in model_ids]
+        if len(tags) <= 3:
+            return '+'.join(tags)
 
-        display_names = []
-        for mid in model_ids:
-            name = id_to_name.get(mid, mid)
-            # 简化：去掉常见冗余前缀/后缀
-            short = (name.replace("deepseek-", "ds-")
-                        .replace("gpt-", "gpt")
-                        .replace("-preview", "")
-                        .replace(" ", "_"))
-            display_names.append(short)
-
-        if len(display_names) == 1:
-            return display_names[0]
-
-        joined = "+".join(display_names)
-        if len(joined) > 40:
-            joined = f"{len(display_names)}models"
-        return joined
+        canonical = '+'.join(model_ids)
+        digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:8]
+        return f'{len(tags)}models-{digest}'
 
     def _iter_prepared_database_results(
         self,
@@ -293,10 +307,19 @@ class ExportHandler(BaseStepHandler):
                 'Page': reference.pages,
                 'Date': reference.publication_date,
                 'Doi': reference.doi,
+                'PMID': reference.pmid,
                 'PMCID': reference.pmcid,
+                'ISBN': reference.isbn,
+                'ISSN': reference.issn,
                 'Abstract': reference.abstract,
                 'URL': reference.url,
                 'Address': reference.address,
+                'Keywords': '; '.join(reference.keywords or []),
+                'Language': reference.language,
+                'Publisher': reference.publisher,
+                'Database': reference.database,
+                'Organization': reference.organization,
+                'SourceIdentifier': reference.source_identifier,
             }
             result['_export_include_excel'] = should_export
             if should_export:

@@ -29,10 +29,13 @@ def get_provider(name: str = None, config: dict = None,
         model_cfg = get_model_config(provider_name)
         if model_cfg:
             config = {
+                "id":           model_cfg["id"],
                 "api_url":      model_cfg["api_url"],
                 "api_key":      model_cfg["api_key"],
                 "model":        model_cfg["model"],
                 "provider":     model_cfg.get("provider", ""),
+                "region":       model_cfg.get("region", ""),
+                "service_tier": model_cfg.get("service_tier", "standard"),
                 "timeout":      model_cfg["timeout"],
                 "is_reasoning": model_cfg.get("is_reasoning", False),  # 推理模型标志
                 "thinking_enabled": thinking_enabled is True,

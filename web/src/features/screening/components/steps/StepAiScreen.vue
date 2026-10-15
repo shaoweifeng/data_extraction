@@ -122,7 +122,7 @@
             </button>
           </span>
           <span v-if="selectedModels.length > 1" class="ml-2 text-xs text-amber-600">
-            <i class="fas fa-info-circle mr-0.5"></i>已选 {{ selectedModels.length }} 个，预估消耗 ×{{ selectedModels.length }}
+            <i class="fas fa-info-circle mr-0.5"></i>已选 {{ selectedModels.length }} 个，按各模型费率动态预估
           </span>
         </div>
 
@@ -159,6 +159,9 @@
               >
                 <span class="ai-submodel-name">{{ sm.name }}</span>
                 <span class="ai-submodel-desc">{{ sm.description }}</span>
+                <span v-if="modelEstimateMap[sm.id]" class="ai-submodel-multiplier">
+                  约 {{ modelEstimateMap[sm.id].multiplier }}×
+                </span>
                 <i v-if="isModelSelected(sm.id)" class="fas fa-check ai-submodel-check"></i>
               </button>
             </div>
@@ -167,7 +170,7 @@
       </div>
 
       <!-- Prompt 设置区 -->
-      <div class="ai-prompt-section">
+      <div v-if="auth.isAdmin" class="ai-prompt-section">
         <button
           @click="promptPanelOpen = !promptPanelOpen"
           class="ai-prompt-toggle-btn"
@@ -181,7 +184,7 @@
           <i :class="promptPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-gray-400 text-xs"></i>
         </button>
 
-        <div v-show="promptPanelOpen" class="ai-prompt-panel">
+        <div v-if="promptPanelOpen" class="ai-prompt-panel">
           <!-- 默认/自定义 切换 -->
           <div class="flex gap-5 text-sm mb-3">
             <label class="flex items-center gap-2 cursor-pointer">
@@ -329,10 +332,9 @@
             <div class="ai-stat-label">⏳ 待筛</div>
           </div>
         </div>
-        <div v-if="s.latestAiScreenTask?.result?.token_stats" class="ai-token-summary">
+        <div v-if="s.latestAiScreenTask?.result?.token_stats?.credits_consumed != null" class="ai-token-summary">
           <i class="fas fa-coins mr-1 text-amber-500"></i>
-          本次共消耗 <b>{{ s.latestAiScreenTask.result.token_stats.total_tokens?.toLocaleString() }}</b> tokens
-          ≈ <b>{{ s.latestAiScreenTask.result.token_stats.credits_estimate }}</b> credits
+          本次实际消耗 <b>{{ s.latestAiScreenTask.result.token_stats.credits_consumed }}</b> 积分
         </div>
         <div class="ai-used-models" v-if="usedModels.length">
           <i class="fas fa-layer-group mr-1 text-indigo-400"></i>
@@ -348,7 +350,8 @@
             <i class="fas fa-coins mr-1"></i>余额：<b>{{ billing.balance ?? '...' }}</b> credits
           </span>
           <span class="billing-item" v-if="s.pendingTotal > 0">
-            预估：<b>{{ billing.estimated ?? '...' }}</b> credits（{{ s.pendingTotal }} 篇，{{ selectedModels.length }} 个模型）
+            预计：<b>{{ billing.baseEstimated ?? '...' }}～{{ billing.estimated ?? '...' }}</b> credits
+            （{{ s.pendingTotal }} 篇，{{ selectedModels.length }} 个模型）
           </span>
           <span v-if="billing.sufficient === false" class="billing-warn">
             <i class="fas fa-exclamation-triangle mr-0.5"></i>余额不足
@@ -363,7 +366,9 @@
             <i v-if="s.isProcessing" class="fas fa-spinner fa-spin mr-2"></i>
             {{ s.isProcessing ? 'AI 正在筛选...' : s.latestAiScreenTask?.status === 'completed' ? '重新筛选' : '启动 AI 筛选' }}
           </button>
-          <p v-if="billing.sufficient === false" class="text-xs text-red-500 text-center">余额不足，请联系管理员充值</p>
+          <p v-if="billing.sufficient === false" class="text-xs text-red-500 text-center">
+            余额不足，请前往 <RouterLink to="/billing" class="font-semibold underline">套餐与积分</RouterLink> 兑换
+          </p>
           <p v-if="selectedModels.length === 0" class="text-xs text-orange-500 text-center">请至少选择一个已配置的模型</p>
         </template>
         <template v-else-if="s.latestAiScreenTask.status === 'queuing'">
@@ -404,6 +409,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useScreeningStore } from '@/features/screening/store'
 import { useProjectStore } from '@/features/projects/store'
 import { useTaskStore } from '@/features/workflow/store'
+import { useAuthStore } from '@/features/account/store'
 import { createAiScreenController } from '@/features/screening/composables/useAiScreenController'
 import { prepareAiScreenRestart } from '@/features/screening/aiScreenRestart'
 import { extractListData } from '@/utils/format'
@@ -411,9 +417,11 @@ import { extractListData } from '@/utils/format'
 const s = useScreeningStore()
 const project = useProjectStore()
 const taskStore = useTaskStore()
+const auth = useAuthStore()
 const controller = createAiScreenController(() => project.currentProject?.id)
 
-const billing = ref({ balance: null, estimated: null, sufficient: null })
+const billing = ref({ balance: null, baseEstimated: null, estimated: null, sufficient: null })
+const modelEstimateMap = ref({})
 const queueInfo = ref({ position: 0, queueLength: 0, slotsNeeded: 0, slotsFree: 0, slotsTotal: 0 })
 const promptPanelOpen = ref(false)
 const promptSaveStatus = ref('')
@@ -594,11 +602,12 @@ onMounted(async () => {
     const step  = stage?.steps?.find((st) => st.step_key === 'criteria')
     if (step?.metadata?.criteria?.length) s.criteriaList = [...step.metadata.criteria]
   }
-  await Promise.all([
+  const initialRequests = [
     loadAiModels(),
-    loadPrompt(),
     taskStore.fetchRecentTasks(projectId, project.stagesData),
-  ])
+  ]
+  if (auth.isAdmin) initialRequests.push(loadPrompt())
+  await Promise.all(initialRequests)
   if (!isCurrentProject(projectId)) return
   await loadPending()
   await loadAiScreenStats()
@@ -610,7 +619,7 @@ onMounted(async () => {
 
 // ── Prompt ──────────────────────────────────────────────────
 async function loadPrompt() {
-  if (!project.currentProject) return
+  if (!auth.isAdmin || !project.currentProject) return
   const projectId = project.currentProject.id
   try {
     const res = await controller.loadPrompt(projectId)
@@ -622,7 +631,7 @@ async function loadPrompt() {
 }
 
 async function savePrompt() {
-  if (!project.currentProject) return
+  if (!auth.isAdmin || !project.currentProject) return
   if (s.useCustomPrompt && !hasRequiredPromptPlaceholders.value) return
   promptSaveStatus.value = ''
   try {
@@ -636,7 +645,7 @@ async function savePrompt() {
 }
 
 async function resetPrompt() {
-  if (!project.currentProject) return
+  if (!auth.isAdmin || !project.currentProject) return
   try {
     await controller.resetPrompt()
     s.useCustomPrompt = false
@@ -652,7 +661,7 @@ async function loadBilling() {
     const balRes = await controller.loadBalance()
     const balData = balRes.data
     if (balData.is_unlimited) {
-      billing.value = { balance: '∞', estimated: null, sufficient: true }
+      billing.value = { balance: '∞', baseEstimated: null, estimated: null, sufficient: true }
       return
     }
     billing.value.balance = balData.balance
@@ -660,13 +669,28 @@ async function loadBilling() {
       const modelIds = selectedModels.value.map(m => m.id).join(',')
       const estRes = await controller.estimate(s.pendingTotal, modelIds)
       billing.value.estimated = estRes.data.estimated_credits
+      billing.value.baseEstimated = estRes.data.estimate_detail?.base_credits ?? estRes.data.estimated_credits
       billing.value.sufficient = estRes.data.sufficient
     } else {
       billing.value.estimated = null
+      billing.value.baseEstimated = null
       billing.value.sufficient = true
     }
   } catch (e) {
     console.error('加载余额失败', e)
+  }
+}
+
+async function loadModelMultipliers() {
+  const ids = flatModels.value.filter(m => m.configured).map(m => m.id)
+  if (!ids.length) return
+  try {
+    const res = await controller.estimate(1, ids.join(','))
+    modelEstimateMap.value = Object.fromEntries(
+      (res.data.estimate_detail?.models || []).map(item => [item.model_id, item]),
+    )
+  } catch (e) {
+    console.error('加载模型积分倍率失败', e)
   }
 }
 
@@ -689,6 +713,7 @@ async function loadAiModels() {
         }
       }
     }
+    await loadModelMultipliers()
   } catch (e) {
     console.error('加载模型列表失败', e)
   } finally {
@@ -1266,6 +1291,16 @@ onUnmounted(() => {
 .ai-submodel-desc {
   font-size: 0.68rem;
   color: #94a3b8;
+}
+.ai-submodel-multiplier {
+  flex-shrink: 0;
+  color: #7c3aed;
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 999px;
+  padding: 0.08rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 .ai-submodel-btn-active .ai-submodel-name { color: #4338ca; }
 .ai-submodel-btn-active .ai-submodel-desc { color: #818cf8; }

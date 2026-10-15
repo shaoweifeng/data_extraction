@@ -33,7 +33,12 @@ from core.services.billing_service import grant_credits
 from core.services.project_service import initialize_project
 
 
-@override_settings(BILLING_CREDIT_TOKEN_RATIO=1000)
+@override_settings(
+    BILLING_CREDIT_TOKEN_RATIO=1000,
+    MODEL_WEIGHTED_BILLING_ENABLED=False,
+    BILLING_RESERVATION_ENABLED=False,
+    CREDIT_BATCH_LEDGER_ENABLED=False,
+)
 class ScreeningAIDatabaseTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user('screening-ai-user', password='pw')

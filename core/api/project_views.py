@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from django.db import transaction
 
 from ..models import ActivityLog, Project
 from ..serializers import ProjectSerializer, ProjectStageSerializer
@@ -18,15 +20,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         from ..services import check_create_permission, initialize_project
 
-        user = self.request.user
+        # Lock the owner row across quota check and project creation so two
+        # concurrent requests cannot both pass the same remaining slot.
+        with transaction.atomic():
+            user = get_user_model().objects.select_for_update().select_related(
+                'profile',
+            ).get(pk=self.request.user.pk)
+            try:
+                check_create_permission(user)
+            except PermissionError as e:
+                raise PermissionDenied(str(e))
 
-        try:
-            check_create_permission(user)
-        except PermissionError as e:
-            raise PermissionDenied(str(e))
-
-        project = serializer.save(owner=user)
-        initialize_project(project, user)
+            project = serializer.save(owner=user)
+            initialize_project(project, user)
 
     def perform_destroy(self, instance):
         from ..services import delete_project
@@ -158,6 +164,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def get_prompt(self, request, pk=None):
         from ..services import get_prompt
+        from core.services.access_policy import ProjectAccessPolicy
+
+        if not ProjectAccessPolicy.is_platform_admin(request.user):
+            raise PermissionDenied('Prompt 设置仅管理员可用')
 
         project = self.get_object()
         return Response(get_prompt(project))
@@ -184,6 +194,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def save_prompt(self, request, pk=None):
         from ..services import save_prompt
+        from core.services.access_policy import ProjectAccessPolicy
+
+        if not ProjectAccessPolicy.is_platform_admin(request.user):
+            raise PermissionDenied('Prompt 设置仅管理员可用')
 
         project = self.get_object()
         custom_prompt = request.data.get('custom_prompt', '').strip()
@@ -198,6 +212,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def reset_prompt(self, request, pk=None):
         from ..services import reset_prompt
+        from core.services.access_policy import ProjectAccessPolicy
+
+        if not ProjectAccessPolicy.is_platform_admin(request.user):
+            raise PermissionDenied('Prompt 设置仅管理员可用')
 
         project = self.get_object()
         return Response(reset_prompt(project, request.user))

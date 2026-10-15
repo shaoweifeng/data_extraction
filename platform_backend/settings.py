@@ -331,6 +331,49 @@ BILLING_FREE_CREDITS_ON_REGISTER = int(os.getenv('BILLING_FREE_CREDITS_ON_REGIST
 # 余额不足时的预估每篇 credits（阶段三接入计费后用于预扣估算）
 BILLING_ESTIMATE_CREDITS_PER_REF = int(os.getenv('BILLING_ESTIMATE_CREDITS_PER_REF', '2'))
 
+# 新套餐/加权计费在阶段 0～3 只建模与影子回放，默认全部关闭。
+PLAN_BILLING_ENABLED = os.getenv('PLAN_BILLING_ENABLED', 'false').lower() == 'true'
+
+# 内测套餐咨询入口。二维码存放在私有目录，只能通过登录后的鉴权接口读取。
+SERVICE_CONTACT_ENABLED = os.getenv('SERVICE_CONTACT_ENABLED', 'true').lower() == 'true'
+SERVICE_CONTACT_UPLOAD_ROOT = os.getenv('SERVICE_CONTACT_UPLOAD_ROOT') or os.path.join(
+    BASE_DIR, 'private_media', 'service_contact'
+)
+SERVICE_CONTACT_QR_MAX_BYTES = int(os.getenv(
+    'SERVICE_CONTACT_QR_MAX_BYTES', str(2 * 1024 * 1024)
+))
+SERVICE_CONTACT_QR_MAX_PIXELS = int(os.getenv(
+    'SERVICE_CONTACT_QR_MAX_PIXELS', str(4_000_000)
+))
+MODEL_WEIGHTED_BILLING_ENABLED = os.getenv(
+    'MODEL_WEIGHTED_BILLING_ENABLED', 'false',
+).lower() == 'true'
+BILLING_RESERVATION_ENABLED = os.getenv(
+    'BILLING_RESERVATION_ENABLED', 'false',
+).lower() == 'true'
+CREDIT_BATCH_LEDGER_ENABLED = os.getenv(
+    'CREDIT_BATCH_LEDGER_ENABLED', 'false',
+).lower() == 'true'
+MODEL_WEIGHTED_BILLING_PRICING_VERSION = os.getenv(
+    'MODEL_WEIGHTED_BILLING_PRICING_VERSION', 'credit-v2-2026-10-14-r2',
+)
+MODEL_WEIGHTED_BILLING_ALLOW_DRAFT = os.getenv(
+    'MODEL_WEIGHTED_BILLING_ALLOW_DRAFT', 'false',
+).lower() == 'true'
+BILLING_RESERVATION_TTL_SECONDS = int(os.getenv(
+    'BILLING_RESERVATION_TTL_SECONDS', '86400',
+))
+BILLING_ESTIMATE_QA_CREDITS_PER_REF_PER_MODEL = int(os.getenv(
+    'BILLING_ESTIMATE_QA_CREDITS_PER_REF_PER_MODEL', '27',
+))
+BILLING_FX_FALLBACK_CNY_PER_USD = os.getenv(
+    'BILLING_FX_FALLBACK_CNY_PER_USD', '7.20',
+)
+PLAN_FREE_PROJECT_LIMIT = int(os.getenv('PLAN_FREE_PROJECT_LIMIT', '1'))
+PLAN_FREE_AI_CALL_SLOTS = int(os.getenv('PLAN_FREE_AI_CALL_SLOTS', '2'))
+AI_SLOT_LEASE_TTL_SECONDS = int(os.getenv('AI_SLOT_LEASE_TTL_SECONDS', '86400'))
+AI_SLOT_QUEUE_TTL_SECONDS = int(os.getenv('AI_SLOT_QUEUE_TTL_SECONDS', '86400'))
+
 # ============================================================================
 # 阶段五：注册防刷配置
 # ============================================================================
@@ -477,9 +520,15 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Shanghai'
 CELERY_BROKER_POOL_LIMIT = 1  # 限制 broker 连接池，避免 prefork 模型下竞争
 CELERY_RESULT_DB_SHORT_LIVED_SESSIONS = True  # 每次任务结果写入后关闭会话，避免连接泄漏
-CELERY_IMPORTS = ('core.quality.tasks',)
+CELERY_IMPORTS = ('core.quality.tasks', 'core.operations.tasks')
 # 子进程超过该 RSS（KB）后由 Celery 在任务结束时回收，限制恶意/复杂 PDF 的内存累积。
 CELERY_WORKER_MAX_MEMORY_PER_CHILD = int(os.getenv('CELERY_WORKER_MAX_MEMORY_PER_CHILD', '524288'))
+CELERY_BEAT_SCHEDULE = {
+    'process-due-plan-periods-hourly': {
+        'task': 'core.operations.process_due_plan_periods',
+        'schedule': 3600.0,
+    },
+}
 
 # CORS Settings：开发环境允许跨域，生产环境必须显式配置白名单。
 CORS_ALLOW_ALL_ORIGINS = DEBUG

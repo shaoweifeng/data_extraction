@@ -195,7 +195,7 @@ class TaskScheduler:
         if task.status not in (TaskStatus.QUEUING, TaskStatus.RUNNING, TaskStatus.PENDING):
             return False
 
-        if task.status == TaskStatus.QUEUING and task.task_type == 'ai_screen':
+        if task.status == TaskStatus.QUEUING and task.task_type in {'ai_screen', 'qa_eval'}:
             from core.services.concurrency_service import cancel_queue, get_user_concurrency
 
             cancel_queue(task.id, get_user_concurrency(task.created_by))

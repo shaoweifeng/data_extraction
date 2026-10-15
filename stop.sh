@@ -70,7 +70,8 @@ matches_service_process() {
     local command
     command=$(ps -p "$pid" -o command= 2>/dev/null) || return 1
     case "$name" in
-        celery) [[ "$command" == *celery*platform_backend* ]] ;;
+        celery) [[ "$command" == *celery*platform_backend*worker* ]] ;;
+        celery_beat) [[ "$command" == *celery*platform_backend*beat* ]] ;;
         django) [[ "$command" == *gunicorn*platform_backend.wsgi* || "$command" == *"manage.py runserver"* ]] ;;
         vite) [[ "$command" == *vite* || "$command" == *"npm run dev"* ]] ;;
         *) return 1 ;;
@@ -80,7 +81,8 @@ matches_service_process() {
 discover_service_pid() {
     local name=$1
     case "$name" in
-        celery) pgrep -o -f "$CELERY_BIN -A platform_backend" 2>/dev/null || true ;;
+        celery) pgrep -o -f "$CELERY_BIN -A platform_backend worker" 2>/dev/null || true ;;
+        celery_beat) pgrep -o -f "$CELERY_BIN -A platform_backend beat" 2>/dev/null || true ;;
         django) pgrep -o -f "$GUNICORN_BIN platform_backend.wsgi" 2>/dev/null || true ;;
         vite) pgrep -o -f "$SCRIPT_DIR/web/node_modules/.bin/vite" 2>/dev/null || true ;;
     esac
@@ -89,7 +91,7 @@ discover_service_pid() {
 has_managed_process() {
     local name pid
     local found=false
-    for name in celery django vite; do
+    for name in celery celery_beat django vite; do
         pid=$(read_pid "$name")
         if [ -n "$pid" ]; then
             case "$pid" in
@@ -185,7 +187,9 @@ if ! has_managed_process; then
 fi
 
 # 纯前端开发服务不承载用户任务，无需访问数据库或进入维护流程。
-if ! service_pid_is_running "celery" && ! service_pid_is_running "django"; then
+if ! service_pid_is_running "celery" \
+    && ! service_pid_is_running "celery_beat" \
+    && ! service_pid_is_running "django"; then
     stop_with_timeout "vite" 30 || exit 1
     echo "✅ 前端开发服务已停止。"
     exit 0
@@ -235,6 +239,7 @@ else
 fi
 
 # Celery TERM is a warm shutdown: stop consuming and wait for active tasks.
+stop_with_timeout "celery_beat" 30 || exit 1
 stop_with_timeout "celery" "$TASK_TIMEOUT" || exit 1
 # Gunicorn TERM waits for in-flight HTTP requests to finish.
 stop_with_timeout "django" "$WEB_TIMEOUT" || exit 1

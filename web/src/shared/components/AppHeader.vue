@@ -57,8 +57,8 @@
         <i class="fas fa-comment-dots"></i><span>反馈</span>
       </button>
 
-      <!-- 余额展示（点击进个人中心充值） -->
-      <div class="header-balance" @click="onUserClick" title="查看个人中心 / 充值">
+      <!-- 余额展示（点击进入套餐与账单） -->
+      <div class="header-balance" @click="router.push('/billing')" title="查看套餐与积分账单">
         <i class="fas fa-coins header-balance-icon"></i>
         <span class="header-balance-val">
           <template v-if="balance !== null">{{ balance }}</template>
