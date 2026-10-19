@@ -18,6 +18,7 @@ from django.core.files import File
 from django.db.models import Count, Q
 
 from core.models import ActivityLog, DataFile, StageStep
+from core.services.storage_quota_service import user_storage_quota_guard
 from core.artifacts.types import ArtifactType
 from core.workflow.domain.statuses import StageStepStatus
 from core.workflow.services.lifecycle import transition_step
@@ -32,19 +33,21 @@ def persist_generated_artifact(
     artifact_metadata = dict(metadata or {})
     if artifact_type:
         artifact_metadata['artifact_type'] = artifact_type
-    with Path(file_path).open('rb') as source_file:
-        return DataFile.objects.create(
-            project=project,
-            stage=stage,
-            step=step,
-            filename=filename,
-            file=File(source_file, name=filename),
-            data_category=category,
-            source='tool_generated',
-            description=description,
-            metadata=artifact_metadata,
-            created_by=creator,
-        )
+    incoming_bytes = Path(file_path).stat().st_size
+    with user_storage_quota_guard(project.owner, incoming_bytes):
+        with Path(file_path).open('rb') as source_file:
+            return DataFile.objects.create(
+                project=project,
+                stage=stage,
+                step=step,
+                filename=filename,
+                file=File(source_file, name=filename),
+                data_category=category,
+                source='tool_generated',
+                description=description,
+                metadata=artifact_metadata,
+                created_by=creator,
+            )
 
 
 def cleanup_expired_workspaces(root: Path, cutoff_timestamp: float) -> int:

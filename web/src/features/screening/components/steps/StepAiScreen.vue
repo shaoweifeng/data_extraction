@@ -170,7 +170,7 @@
       </div>
 
       <!-- Prompt 设置区 -->
-      <div v-if="auth.isAdmin" class="ai-prompt-section">
+      <div v-if="auth.canConfigureScreeningPrompt" class="ai-prompt-section">
         <button
           @click="promptPanelOpen = !promptPanelOpen"
           class="ai-prompt-toggle-btn"
@@ -606,7 +606,7 @@ onMounted(async () => {
     loadAiModels(),
     taskStore.fetchRecentTasks(projectId, project.stagesData),
   ]
-  if (auth.isAdmin) initialRequests.push(loadPrompt())
+  if (auth.canConfigureScreeningPrompt) initialRequests.push(loadPrompt())
   await Promise.all(initialRequests)
   if (!isCurrentProject(projectId)) return
   await loadPending()
@@ -619,7 +619,7 @@ onMounted(async () => {
 
 // ── Prompt ──────────────────────────────────────────────────
 async function loadPrompt() {
-  if (!auth.isAdmin || !project.currentProject) return
+  if (!auth.canConfigureScreeningPrompt || !project.currentProject) return
   const projectId = project.currentProject.id
   try {
     const res = await controller.loadPrompt(projectId)
@@ -631,7 +631,7 @@ async function loadPrompt() {
 }
 
 async function savePrompt() {
-  if (!auth.isAdmin || !project.currentProject) return
+  if (!auth.canConfigureScreeningPrompt || !project.currentProject) return
   if (s.useCustomPrompt && !hasRequiredPromptPlaceholders.value) return
   promptSaveStatus.value = ''
   try {
@@ -645,7 +645,7 @@ async function savePrompt() {
 }
 
 async function resetPrompt() {
-  if (!auth.isAdmin || !project.currentProject) return
+  if (!auth.canConfigureScreeningPrompt || !project.currentProject) return
   try {
     await controller.resetPrompt()
     s.useCustomPrompt = false

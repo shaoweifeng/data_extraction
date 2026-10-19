@@ -72,6 +72,7 @@ class ModelAwareEstimateTests(TestCase):
     CREDIT_BATCH_LEDGER_ENABLED=True,
     PLAN_FREE_PROJECT_LIMIT=1,
     PLAN_FREE_AI_CALL_SLOTS=2,
+    PLAN_FREE_STORAGE_MB=5120,
     AI_SCREEN_MAX_GLOBAL_THREADS=64,
 )
 class PlanBillingServiceTests(TestCase):
@@ -83,6 +84,7 @@ class PlanBillingServiceTests(TestCase):
         self.pro = self._version('PRO', 'Pro', 899, 120000, 16, 20)
 
     def _version(self, code, name, price, credits, slots, projects):
+        storage_by_plan = {'LITE': 20480, 'PLUS': 51200, 'PRO': 102400}
         plan, _ = PlanCatalog.objects.update_or_create(
             code=code, defaults={'name': name, 'is_active': True},
         )
@@ -93,6 +95,7 @@ class PlanBillingServiceTests(TestCase):
                 'status': 'published', 'monthly_price_cny': price,
                 'valid_months': 1, 'included_credits': credits,
                 'ai_call_slots': slots, 'project_limit': projects,
+                'storage_limit_mb': storage_by_plan[code],
             },
         )
         return version
@@ -105,7 +108,10 @@ class PlanBillingServiceTests(TestCase):
 
     def test_free_then_active_plan_and_admin_override_precedence(self):
         free = resolve_user_entitlements(self.user)
-        self.assertEqual((free.plan_code, free.project_limit, free.ai_call_slots), ('FREE', 1, 2))
+        self.assertEqual(
+            (free.plan_code, free.project_limit, free.ai_call_slots, free.storage_limit_mb),
+            ('FREE', 1, 2, 5120),
+        )
 
         self._code('LITE-ONE', self.lite)
         entitlement = redeem_plan_code(self.user, 'LITE-ONE', now=self.now)
@@ -121,14 +127,26 @@ class PlanBillingServiceTests(TestCase):
         entitlement.expires_at = timezone.now() + timedelta(days=20)
         entitlement.save(update_fields=['starts_at', 'expires_at'])
         active = resolve_user_entitlements(self.user, sync=False)
-        self.assertEqual((active.plan_code, active.project_limit, active.ai_call_slots), ('LITE', 5, 4))
+        self.assertEqual(
+            (active.plan_code, active.project_limit, active.ai_call_slots, active.storage_limit_mb),
+            ('LITE', 5, 4, 20480),
+        )
 
         profile = self.user.profile
         profile.quota_projects_override = 7
         profile.ai_call_slots_override = 6
-        profile.save(update_fields=['quota_projects_override', 'ai_call_slots_override'])
+        profile.quota_storage_mb_override = 30720
+        profile.save(update_fields=[
+            'quota_projects_override', 'ai_call_slots_override', 'quota_storage_mb_override',
+        ])
         overridden = resolve_user_entitlements(self.user, sync=False)
-        self.assertEqual((overridden.source, overridden.project_limit, overridden.ai_call_slots), ('admin_override', 7, 6))
+        self.assertEqual(
+            (
+                overridden.source, overridden.project_limit,
+                overridden.ai_call_slots, overridden.storage_limit_mb,
+            ),
+            ('admin_override', 7, 6, 30720),
+        )
 
     def test_same_plan_multi_month_renewal_is_idempotently_scheduled(self):
         self._code('LITE-FIRST', self.lite)

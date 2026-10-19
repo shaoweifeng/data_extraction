@@ -20,14 +20,15 @@ class UserProfileAdminForm(forms.ModelForm):
     """Validate user quotas and concurrency edited through Django Admin."""
 
     quota_projects = forms.IntegerField(
-        label='项目配额',
+        label='旧版项目配额',
         min_value=-1,
-        help_text='可创建的项目数；-1 表示不限额，0 表示不能再创建项目。',
+        help_text='仅兼容旧逻辑；新版实际上限由套餐或“项目配额覆盖”决定。',
     )
-    quota_storage_mb = forms.IntegerField(
-        label='存储配额(MB)',
+    quota_storage_mb_override = forms.IntegerField(
+        label='存储配额覆盖(MB)',
         min_value=-1,
-        help_text='用户存储配额；-1 表示不限额。',
+        required=False,
+        help_text='留空时跟随当前套餐；-1 表示不限。计入索引、PDF、派生文本、导出产物和反馈图片。',
     )
 
     concurrency_limit = forms.IntegerField(
@@ -148,23 +149,41 @@ class BillingVersionAdmin(admin.ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     form = UserProfileAdminForm
-    list_display = ['user', 'role', 'ai_call_slots_override', 'quota_projects_override',
-                   'concurrency_limit', 'quota_projects', 'quota_storage_mb',
-                   'is_approved', 'approved_at', 'created_at']
-    list_editable = ['concurrency_limit', 'quota_projects', 'quota_storage_mb']
+    list_display = [
+        'user', 'role', 'current_plan', 'effective_ai_call_slots',
+        'effective_project_limit', 'storage_quota_display',
+        'is_approved', 'approved_at', 'created_at',
+    ]
     list_filter = ['role', 'is_approved']
     search_fields = ['user__username', 'user__email']
-    readonly_fields = ['created_at', 'updated_at']
+    list_select_related = ['user']
+    readonly_fields = [
+        'current_plan', 'effective_ai_call_slots', 'effective_project_limit',
+        'storage_usage_display', 'quota_projects', 'concurrency_limit',
+        'quota_storage_mb',
+        'created_at', 'updated_at',
+    ]
     
     fieldsets = (
         ('用户信息', {
             'fields': ('user', 'role')
         }),
-        ('配额设置', {
+        ('当前生效权益', {
+            'fields': (
+                'current_plan', 'effective_ai_call_slots', 'effective_project_limit',
+                'storage_usage_display',
+            )
+        }),
+        ('管理员覆盖与存储限制', {
             'fields': (
                 'quota_projects_override', 'ai_call_slots_override',
-                'quota_projects', 'quota_storage_mb', 'concurrency_limit',
+                'quota_storage_mb_override',
             )
+        }),
+        ('旧版兼容字段', {
+            'fields': ('quota_projects', 'concurrency_limit', 'quota_storage_mb'),
+            'classes': ('collapse',),
+            'description': '新版套餐开启后不参与实际权益计算。',
         }),
         ('审核状态', {
             'fields': ('is_approved', 'approved_at', 'approved_by')
@@ -174,6 +193,50 @@ class UserProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def _entitlements(self, obj):
+        cached = getattr(obj, '_admin_entitlements_cache', None)
+        if cached is None:
+            from core.services.entitlement_service import resolve_user_entitlements
+
+            cached = resolve_user_entitlements(obj.user, sync=False)
+            obj._admin_entitlements_cache = cached
+        return cached
+
+    @admin.display(description='当前套餐')
+    def current_plan(self, obj):
+        if not obj or not obj.pk:
+            return '-'
+        value = self._entitlements(obj)
+        return f'{value.plan_name} ({value.plan_code})'
+
+    @admin.display(description='实际 AI 调用槽位', ordering='ai_call_slots_override')
+    def effective_ai_call_slots(self, obj):
+        return self._entitlements(obj).ai_call_slots if obj and obj.pk else '-'
+
+    @admin.display(description='实际项目上限', ordering='quota_projects_override')
+    def effective_project_limit(self, obj):
+        if not obj or not obj.pk:
+            return '-'
+        value = self._entitlements(obj).project_limit
+        return '不限' if value < 0 else value
+
+    @admin.display(description='存储上限')
+    def storage_quota_display(self, obj):
+        if not obj or not obj.pk:
+            return '-'
+        value = self._entitlements(obj).storage_limit_mb
+        return '不限' if value < 0 else f'{value} MB'
+
+    @admin.display(description='存储用量 / 上限')
+    def storage_usage_display(self, obj):
+        if not obj or not obj.pk:
+            return '-'
+        from core.services.storage_quota_service import storage_quota_snapshot
+
+        snapshot = storage_quota_snapshot(obj.user)
+        limit = '不限' if snapshot.limit_mb is None else f'{snapshot.limit_mb} MB'
+        return f'{snapshot.used_mb:.1f} MB / {limit}'
 
 
 @admin.register(Permission)
@@ -804,7 +867,7 @@ class PlanCatalogAdmin(admin.ModelAdmin):
 class PlanPriceVersionAdmin(BillingVersionAdmin):
     list_display = [
         'plan', 'version', 'status', 'monthly_price_cny', 'included_credits',
-        'ai_call_slots', 'project_limit',
+        'ai_call_slots', 'project_limit', 'storage_limit_mb',
     ]
     list_filter = ['status', 'plan']
     search_fields = ['plan__code', 'plan__name', 'version']

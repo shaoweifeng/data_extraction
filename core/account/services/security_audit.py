@@ -1,8 +1,12 @@
 import hashlib
 import hmac
 import ipaddress
+import json
 
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Model, QuerySet
+from django.db.models.manager import BaseManager
 
 from ..models import AccountAdminAuditEvent, AccountSecurityEvent
 
@@ -36,6 +40,22 @@ def request_fingerprints(request):
     }
 
 
+def audit_json_value(value):
+    """Convert Admin form values into stable JSON without losing audit context."""
+    if isinstance(value, dict):
+        return {str(key): audit_json_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [audit_json_value(item) for item in value]
+    if isinstance(value, (QuerySet, BaseManager)):
+        return [audit_json_value(item) for item in value.all()]
+    if isinstance(value, Model):
+        return {'id': value.pk, 'label': str(value)}
+    try:
+        return json.loads(json.dumps(value, cls=DjangoJSONEncoder))
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def record_security_event(*, request, event_type, outcome, user=None, identifier='', detail=None):
     try:
         AccountSecurityEvent.objects.create(
@@ -60,7 +80,7 @@ def record_admin_event(*, request, action, target_user=None, reason='', before=N
         target_username_snapshot=getattr(target_user, 'username', ''),
         action=action,
         reason=(reason or '')[:500],
-        before=before or {},
-        after=after or {},
+        before=audit_json_value(before or {}),
+        after=audit_json_value(after or {}),
         ip_hash=request_fingerprints(request)['ip_hash'],
     )

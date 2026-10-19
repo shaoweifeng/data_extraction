@@ -13,8 +13,8 @@
     <!-- 统计数据 -->
     <div v-if="displayStats" class="stat-section">
 
-      <!-- AI 初筛结果（仅管理员可见） -->
-      <div v-if="auth.isAdmin" class="stat-block">
+      <!-- AI 初筛结果（研究者和管理员可见） -->
+      <div v-if="auth.canViewResearchDiagnostics" class="stat-block">
         <div class="stat-block-title">
           <i class="fas fa-robot"></i> AI 初筛结果
         </div>
@@ -38,8 +38,8 @@
         </div>
       </div>
 
-      <!-- 人工审阅修正（只有参与了人工审阅才显示；仅管理员可见） -->
-      <template v-if="auth.isAdmin && displayStats.reviewed > 0">
+      <!-- 人工审阅修正（只有参与了人工审阅才显示） -->
+      <template v-if="auth.canViewResearchDiagnostics && displayStats.reviewed > 0">
         <div class="stat-block">
           <div class="stat-block-title">
             <i class="fas fa-user-edit"></i> 人工审阅情况
@@ -66,13 +66,13 @@
         </div>
       </template>
 
-      <!-- 最终筛选结果：管理员 → 人工审阅后才显示；普通用户 → 始终显示 -->
-      <template v-if="auth.isAdmin ? displayStats.reviewed > 0 : true">
+      <!-- 最终筛选结果：专业视图在人工审阅后显示；基础视图始终显示 -->
+      <template v-if="auth.canViewResearchDiagnostics ? displayStats.reviewed > 0 : true">
         <div class="stat-block stat-block-final">
           <div class="stat-block-title">
             <i class="fas fa-check-double text-teal-600"></i> 最终筛选结果
             <span class="stat-block-sub">（已审阅文献取人工结论，未审阅文献取 AI 结论）</span>
-            <span v-if="auth.isAdmin && displayStats.ai_accuracy !== null && displayStats.ai_accuracy !== undefined"
+            <span v-if="auth.canViewResearchDiagnostics && displayStats.ai_accuracy !== null && displayStats.ai_accuracy !== undefined"
                   class="ml-auto text-xs font-semibold"
                   :class="displayStats.ai_accuracy >= 80 ? 'text-green-600' : displayStats.ai_accuracy >= 60 ? 'text-amber-600' : 'text-red-600'">
               AI 准确率 {{ displayStats.ai_accuracy }}%

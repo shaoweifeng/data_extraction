@@ -17,12 +17,16 @@ class UserProfileLimitsAdminTests(TestCase):
         self.user = User.objects.create_user('limits-user')
         self.profile = self.user.profile
 
-    def form_data(self, concurrency_limit=2, quota_projects=10, quota_storage_mb=5120):
+    def form_data(
+        self, concurrency_limit=2, quota_projects=10,
+        quota_storage_mb=5120, quota_storage_mb_override='',
+    ):
         return {
             'user': self.user.pk,
             'role': 'user',
             'quota_projects': quota_projects,
             'quota_storage_mb': quota_storage_mb,
+            'quota_storage_mb_override': quota_storage_mb_override,
             'is_approved': True,
             'is_banned': False,
             'concurrency_limit': concurrency_limit,
@@ -32,23 +36,32 @@ class UserProfileLimitsAdminTests(TestCase):
 
     def test_admin_exposes_limits_in_list_and_detail(self):
         profile_admin = UserProfileAdmin(UserProfile, admin.site)
-        editable_limits = {
-            'concurrency_limit',
-            'quota_projects',
-            'quota_storage_mb',
+        effective_fields = {
+            'current_plan',
+            'effective_ai_call_slots',
+            'effective_project_limit',
+            'storage_usage_display',
         }
 
-        self.assertTrue(editable_limits.issubset(profile_admin.list_display))
-        self.assertTrue(editable_limits.issubset(profile_admin.list_editable))
-        quota_fields = set(dict(profile_admin.fieldsets)['配额设置']['fields'])
-        self.assertTrue(editable_limits.issubset(quota_fields))
+        self.assertTrue(effective_fields - {'storage_usage_display'} <= set(profile_admin.list_display))
+        self.assertTrue(effective_fields <= set(profile_admin.readonly_fields))
+        override_fields = set(dict(profile_admin.fieldsets)['管理员覆盖与存储限制']['fields'])
+        self.assertEqual(
+            override_fields,
+            {'quota_projects_override', 'ai_call_slots_override', 'quota_storage_mb_override'},
+        )
+        legacy_fields = set(dict(profile_admin.fieldsets)['旧版兼容字段']['fields'])
+        self.assertEqual(
+            legacy_fields,
+            {'quota_projects', 'concurrency_limit', 'quota_storage_mb'},
+        )
 
     def test_admin_accepts_valid_limits(self):
         form = UserProfileAdminForm(
             data=self.form_data(
                 concurrency_limit=8,
                 quota_projects=25,
-                quota_storage_mb=10240,
+                quota_storage_mb_override=10240,
             ),
             instance=self.profile,
         )
@@ -58,11 +71,11 @@ class UserProfileLimitsAdminTests(TestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.concurrency_limit, 8)
         self.assertEqual(self.profile.quota_projects, 25)
-        self.assertEqual(self.profile.quota_storage_mb, 10240)
+        self.assertEqual(self.profile.quota_storage_mb_override, 10240)
 
     def test_admin_accepts_unlimited_quota_sentinel(self):
         form = UserProfileAdminForm(
-            data=self.form_data(quota_projects=-1, quota_storage_mb=-1),
+            data=self.form_data(quota_projects=-1, quota_storage_mb_override=-1),
             instance=self.profile,
         )
 
@@ -73,7 +86,7 @@ class UserProfileLimitsAdminTests(TestCase):
             ({'concurrency_limit': 0}, 'concurrency_limit'),
             ({'concurrency_limit': 9}, 'concurrency_limit'),
             ({'quota_projects': -2}, 'quota_projects'),
-            ({'quota_storage_mb': -2}, 'quota_storage_mb'),
+            ({'quota_storage_mb_override': -2}, 'quota_storage_mb_override'),
         )
         for overrides, field_name in cases:
             with self.subTest(overrides=overrides):

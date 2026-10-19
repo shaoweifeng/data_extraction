@@ -346,6 +346,7 @@ def plans(request):
             'included_credits': row.included_credits,
             'ai_call_slots': row.ai_call_slots,
             'project_limit': row.project_limit,
+            'storage_limit_mb': row.storage_limit_mb,
             'valid_months': row.valid_months,
         } for row in rows],
     })

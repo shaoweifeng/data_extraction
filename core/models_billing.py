@@ -308,6 +308,9 @@ class PlanPriceVersion(models.Model):
     included_credits = models.PositiveIntegerField(verbose_name="每周期积分")
     ai_call_slots = models.PositiveSmallIntegerField(verbose_name="用户聚合 AI 调用槽位")
     project_limit = models.PositiveIntegerField(verbose_name="项目上限")
+    storage_limit_mb = models.PositiveIntegerField(
+        default=5120, verbose_name="存储上限(MB)",
+    )
     effective_from = models.DateTimeField(null=True, blank=True, verbose_name="生效时间")
     effective_until = models.DateTimeField(null=True, blank=True, verbose_name="失效时间")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")

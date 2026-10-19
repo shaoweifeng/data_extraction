@@ -36,11 +36,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
     quota_projects    = serializers.SerializerMethodField()
     quota_storage_mb  = serializers.SerializerMethodField()
     plan = serializers.SerializerMethodField()
+    can_view_research_diagnostics = serializers.BooleanField(read_only=True)
+    can_configure_screening_prompt = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = UserProfile
         fields = ['id', 'username', 'email', 'role', 'quota_projects', 'quota_storage_mb',
                   'is_approved', 'is_banned', 'concurrency_limit', 'is_admin',
+                  'can_view_research_diagnostics', 'can_configure_screening_prompt',
                   'plan', 'approved_at', 'created_at']
         read_only_fields = ['approved_at', 'created_at']
 
@@ -66,8 +69,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return self._resolved_entitlements(obj).as_dict()
 
     def get_quota_storage_mb(self, obj):
-        """admin/superuser 存储配额，与实际限制一致（当前无硬性限制，返回原始值）"""
-        return obj.quota_storage_mb
+        """Return the per-user persistent storage limit now enforced on writes."""
+        return self._resolved_entitlements(obj).storage_limit_mb
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -376,7 +379,7 @@ class DataFileSerializer(serializers.ModelSerializer):
         user = getattr(request, 'user', None)
         from core.services.access_policy import ProjectAccessPolicy
 
-        if ProjectAccessPolicy.is_platform_admin(user):
+        if ProjectAccessPolicy.can_view_research_diagnostics(user):
             return representation
         metadata = dict(representation.get('metadata') or {})
         summary = metadata.get('parse_summary')

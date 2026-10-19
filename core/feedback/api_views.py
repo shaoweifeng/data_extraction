@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.operations.services import is_platform_admin
+from core.services.storage_quota_service import StorageQuotaExceeded
 
 from .models import FeedbackAttachment, FeedbackDailyQuota, UserFeedback
 from .serializers import FeedbackSubmissionSerializer
@@ -99,6 +100,8 @@ def feedback_submit(request):
         response = _error(exc.code, str(exc), status.HTTP_429_TOO_MANY_REQUESTS)
         response['Retry-After'] = '60' if exc.code == 'FEEDBACK_BURST_LIMIT' else '86400'
         return response
+    except StorageQuotaExceeded as exc:
+        return _error(exc.code.upper(), str(exc), status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
     except ValueError as exc:
         return _error('INVALID_PROJECT', str(exc), status.HTTP_400_BAD_REQUEST)
 

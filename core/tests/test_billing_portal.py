@@ -68,6 +68,8 @@ class BillingPortalApiTests(TestCase):
         self.assertEqual(data['current']['plan_code'], 'FREE')
         self.assertEqual(data['scheduled'][0]['plan_code'], 'PLUS')
         self.assertEqual({row['plan_code'] for row in data['plans']}, {'LITE', 'PLUS', 'PRO'})
+        storage = {row['plan_code']: row['storage_limit_mb'] for row in data['plans']}
+        self.assertEqual(storage, {'LITE': 20480, 'PLUS': 51200, 'PRO': 102400})
 
     def test_transaction_usage_exposes_model_tokens_but_not_internal_cost(self):
         transaction = consume_batch_credits(

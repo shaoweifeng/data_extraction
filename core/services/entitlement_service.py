@@ -22,6 +22,7 @@ class ResolvedEntitlements:
     source: str
     project_limit: int
     ai_call_slots: int
+    storage_limit_mb: int
     entitlement_id: int | None = None
     starts_at: str | None = None
     expires_at: str | None = None
@@ -130,16 +131,21 @@ def resolve_user_entitlements(user, *, sync=True) -> ResolvedEntitlements:
     profile = getattr(user, 'profile', None)
     project_override = getattr(profile, 'quota_projects_override', None)
     slots_override = getattr(profile, 'ai_call_slots_override', None)
+    storage_override = getattr(profile, 'quota_storage_mb_override', None)
 
     if _is_admin(user):
         return ResolvedEntitlements(
             plan_code='ADMIN',
             plan_name='管理员',
-            source='admin_override' if project_override is not None or slots_override is not None else 'admin',
+            source='admin_override' if any(
+                value is not None
+                for value in (project_override, slots_override, storage_override)
+            ) else 'admin',
             project_limit=project_override if project_override is not None else -1,
             ai_call_slots=slots_override if slots_override is not None else int(
                 getattr(settings, 'AI_SCREEN_ADMIN_CONCURRENCY', 16)
             ),
+            storage_limit_mb=storage_override if storage_override is not None else -1,
         )
 
     now = timezone.now()
@@ -148,6 +154,7 @@ def resolve_user_entitlements(user, *, sync=True) -> ResolvedEntitlements:
         version = active.price_version
         project_limit = version.project_limit
         ai_call_slots = version.ai_call_slots
+        storage_limit_mb = version.storage_limit_mb
         source = 'plan'
         code = version.plan.code
         name = version.plan.name
@@ -157,6 +164,7 @@ def resolve_user_entitlements(user, *, sync=True) -> ResolvedEntitlements:
     else:
         project_limit = int(getattr(settings, 'PLAN_FREE_PROJECT_LIMIT', 1))
         ai_call_slots = int(getattr(settings, 'PLAN_FREE_AI_CALL_SLOTS', 2))
+        storage_limit_mb = int(getattr(settings, 'PLAN_FREE_STORAGE_MB', 5120))
         source = 'free'
         code = 'FREE'
         name = '免费体验'
@@ -164,7 +172,10 @@ def resolve_user_entitlements(user, *, sync=True) -> ResolvedEntitlements:
         starts_at = None
         expires_at = None
 
-    if project_override is not None or slots_override is not None:
+    if any(
+        value is not None
+        for value in (project_override, slots_override, storage_override)
+    ):
         source = 'admin_override'
     return ResolvedEntitlements(
         plan_code=code,
@@ -172,6 +183,9 @@ def resolve_user_entitlements(user, *, sync=True) -> ResolvedEntitlements:
         source=source,
         project_limit=project_override if project_override is not None else project_limit,
         ai_call_slots=slots_override if slots_override is not None else ai_call_slots,
+        storage_limit_mb=(
+            storage_override if storage_override is not None else storage_limit_mb
+        ),
         entitlement_id=entitlement_id,
         starts_at=starts_at,
         expires_at=expires_at,

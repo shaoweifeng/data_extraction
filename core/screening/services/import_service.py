@@ -24,6 +24,10 @@ from core.screening.models import (
 from core.screening.services.import_errors import ScreeningImportError
 from core.screening.services.import_limits import ImportLimits
 from core.screening.services.import_validation import validate_uploads
+from core.services.storage_quota_service import (
+    StorageQuotaExceeded,
+    enforce_user_storage_quota,
+)
 from core.workflow.domain.statuses import StageStepStatus
 from core.workflow.services.lifecycle import transition_step
 from core.workflow.services.task_launcher import (
@@ -110,7 +114,21 @@ def create_add_import(*, project: Project, user, uploaded_files):
 
     try:
         with transaction.atomic():
-            get_user_model().objects.select_for_update().get(pk=user.pk)
+            locked_user = (
+                get_user_model().objects.select_for_update().select_related('profile').get(pk=user.pk)
+            )
+            incoming_bytes = sum(item.size for item in validated)
+            try:
+                enforce_user_storage_quota(locked_user, incoming_bytes)
+            except StorageQuotaExceeded as exc:
+                raise ScreeningImportError(
+                    exc.code, str(exc), http_status=413,
+                    details={
+                        'used_bytes': exc.snapshot.used_bytes,
+                        'limit_bytes': exc.snapshot.limit_bytes,
+                        'incoming_bytes': exc.incoming_bytes,
+                    },
+                ) from exc
             project = Project.objects.select_for_update().get(pk=project.pk)
             corpus, _ = ScreeningCorpus.objects.select_for_update().get_or_create(project=project)
 
@@ -174,7 +192,7 @@ def create_add_import(*, project: Project, user, uploaded_files):
                 base_revision=corpus.revision,
                 target_revision=corpus.revision + 1,
                 file_count=len(validated),
-                total_bytes=sum(item.size for item in validated),
+                total_bytes=incoming_bytes,
                 config_snapshot=limits.snapshot(),
                 parser_version='v1.5.0',
             )

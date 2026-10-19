@@ -120,6 +120,16 @@ class ScreeningImportApiTests(TransactionTestCase):
             self.assertTrue(Path(item.raw_file.path).is_file())
             self.assertNotIn(item.original_filename, Path(item.raw_file.name).name)
 
+    def test_batch_upload_rejects_user_storage_quota_overflow(self):
+        self.user.profile.quota_storage_mb_override = 0
+        self.user.profile.save(update_fields=['quota_storage_mb_override'])
+
+        response = self.upload_batch(ris_file())
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.json()['error']['code'], 'storage_quota_exceeded')
+        self.assertFalse(ReferenceImportBatch.objects.filter(project=self.project).exists())
+
     def test_generic_file_endpoint_rejects_screening_index_uploads(self):
         response = self.client.post(
             '/api/files/',

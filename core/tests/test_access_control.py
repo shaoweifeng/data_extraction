@@ -5,6 +5,10 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
 from core.models import Project, QAChart, QAChartSettings, QAReference
+from core.api.common import check_permission
+from core.ai.quota import is_unlimited_ai_user
+from core.operations.services import is_platform_admin as is_operations_admin
+from core.serializers import UserSerializer
 from core.services.access_policy import ProjectAccessPolicy
 from core.services.project_service import initialize_project
 
@@ -19,11 +23,16 @@ class AccessFixture(TestCase):
         self.admin = User.objects.create_user('admin', password='pw')
         self.admin.profile.role = 'admin'
         self.admin.profile.save(update_fields=['role'])
+        self.researcher = User.objects.create_user('researcher', password='pw')
+        self.researcher.profile.role = 'researcher'
+        self.researcher.profile.save(update_fields=['role'])
 
         self.project = Project.objects.create(name='所有者项目', owner=self.owner)
         self.other_project = Project.objects.create(name='其他项目', owner=self.other)
+        self.researcher_project = Project.objects.create(name='研究者项目', owner=self.researcher)
         initialize_project(self.project, self.owner)
         initialize_project(self.other_project, self.other)
+        initialize_project(self.researcher_project, self.researcher)
         self.review_step = self.project.stages.get(stage_key='SCREEN_1').steps.get(step_key='review')
 
     def login(self, user, enforce_csrf=False):
@@ -40,7 +49,25 @@ class ProjectAccessPolicyTests(AccessFixture):
         )
 
     def test_admin_sees_all_projects(self):
-        self.assertEqual(ProjectAccessPolicy.visible_projects(self.admin).count(), 2)
+        self.assertEqual(ProjectAccessPolicy.visible_projects(self.admin).count(), 3)
+
+    def test_researcher_keeps_standard_permissions_and_project_isolation(self):
+        self.assertTrue(check_permission(self.researcher, 'project.create'))
+        self.assertTrue(check_permission(self.researcher, 'file.upload'))
+        self.assertFalse(ProjectAccessPolicy.is_platform_admin(self.researcher))
+        self.assertFalse(is_operations_admin(self.researcher))
+        self.assertFalse(is_unlimited_ai_user(self.researcher))
+        self.assertFalse(self.researcher.is_staff)
+        self.assertFalse(self.researcher.is_superuser)
+        self.assertTrue(ProjectAccessPolicy.can_view_research_diagnostics(self.researcher))
+        self.assertTrue(ProjectAccessPolicy.can_configure_screening_prompt(self.researcher))
+        profile_data = UserSerializer(self.researcher).data['profile']
+        self.assertTrue(profile_data['can_view_research_diagnostics'])
+        self.assertTrue(profile_data['can_configure_screening_prompt'])
+        self.assertQuerySetEqual(
+            ProjectAccessPolicy.visible_projects(self.researcher),
+            [self.researcher_project],
+        )
 
     def test_nested_resources_are_not_visible_across_projects(self):
         client = self.login(self.owner)
@@ -73,7 +100,7 @@ class ProjectAccessPolicyTests(AccessFixture):
         self.assertEqual(client.get(f'/api/users/{self.other.id}/').status_code, 404)
         self.assertEqual(self.login(self.admin).get(f'/api/users/{self.other.id}/').status_code, 200)
 
-    def test_prompt_configuration_is_admin_only_and_not_disclosed(self):
+    def test_prompt_configuration_is_hidden_from_regular_users(self):
         self.project.metadata = {
             **(self.project.metadata or {}),
             'custom_prompt': 'PRIVATE ADMIN PROMPT',
@@ -102,6 +129,30 @@ class ProjectAccessPolicyTests(AccessFixture):
         )
         self.assertEqual(admin_response.status_code, 200)
         self.assertEqual(admin_response.json()['custom_prompt'], 'PRIVATE ADMIN PROMPT')
+
+    def test_researcher_can_configure_prompt_only_for_owned_project(self):
+        client = self.login(self.researcher)
+        own_path = f'/api/projects/{self.researcher_project.id}'
+        prompt = '{screening_criteria}\n{literature_record}'
+
+        response = client.post(
+            f'{own_path}/save_prompt/',
+            data={'custom_prompt': prompt, 'use_custom_prompt': True},
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.researcher_project.refresh_from_db()
+        self.assertEqual(self.researcher_project.metadata['custom_prompt'], prompt)
+
+        response = client.get(f'{own_path}/get_prompt/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['custom_prompt'], prompt)
+
+        response = client.post(f'{own_path}/reset_prompt/', data={}, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+
+        foreign_response = client.get(f'/api/projects/{self.project.id}/get_prompt/')
+        self.assertEqual(foreign_response.status_code, 404)
 
 
 class QaAndCsrfContractTests(AccessFixture):

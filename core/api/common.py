@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from ..models import UserPermission
 
 
-# 普通 user 角色默认拥有的权限码（与 project_service._check_permission 保持一致）
+# 普通用户和研究者默认拥有的基础业务权限码
 USER_DEFAULT_PERMISSIONS = {
     'project.create', 'project.view', 'project.view_own', 'project.edit', 'project.edit_own',
     'project.delete_own',
@@ -26,7 +26,8 @@ def check_permission(user, permission_code: str) -> bool:
     优先级：
       1. is_superuser → 通过
       2. profile.role == 'admin' → 通过（全权限）
-      3. profile.role == 'user' + permission_code 在 USER_DEFAULT_PERMISSIONS → 通过
+      3. profile.role in ('user', 'researcher') + permission_code 在
+         USER_DEFAULT_PERMISSIONS → 通过
       4. 旧 plat_userpermission 表有对应记录 → 通过（历史数据兼容）
     """
     if user.is_superuser:
@@ -36,7 +37,11 @@ def check_permission(user, permission_code: str) -> bool:
     if profile and profile.role == 'admin':
         return True
 
-    if profile and profile.role == 'user' and permission_code in USER_DEFAULT_PERMISSIONS:
+    if (
+        profile
+        and profile.role in {'user', 'researcher'}
+        and permission_code in USER_DEFAULT_PERMISSIONS
+    ):
         return True
 
     # 兜底：旧 RBAC 表

@@ -166,8 +166,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         from ..services import get_prompt
         from core.services.access_policy import ProjectAccessPolicy
 
-        if not ProjectAccessPolicy.is_platform_admin(request.user):
-            raise PermissionDenied('Prompt 设置仅管理员可用')
+        if not ProjectAccessPolicy.can_configure_screening_prompt(request.user):
+            raise PermissionDenied('Prompt 设置仅研究者或管理员可用')
 
         project = self.get_object()
         return Response(get_prompt(project))
@@ -196,8 +196,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         from ..services import save_prompt
         from core.services.access_policy import ProjectAccessPolicy
 
-        if not ProjectAccessPolicy.is_platform_admin(request.user):
-            raise PermissionDenied('Prompt 设置仅管理员可用')
+        if not ProjectAccessPolicy.can_configure_screening_prompt(request.user):
+            raise PermissionDenied('Prompt 设置仅研究者或管理员可用')
 
         project = self.get_object()
         custom_prompt = request.data.get('custom_prompt', '').strip()
@@ -214,8 +214,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         from ..services import reset_prompt
         from core.services.access_policy import ProjectAccessPolicy
 
-        if not ProjectAccessPolicy.is_platform_admin(request.user):
-            raise PermissionDenied('Prompt 设置仅管理员可用')
+        if not ProjectAccessPolicy.can_configure_screening_prompt(request.user):
+            raise PermissionDenied('Prompt 设置仅研究者或管理员可用')
 
         project = self.get_object()
         return Response(reset_prompt(project, request.user))

@@ -172,6 +172,18 @@ class OriginalFileDownloadTests(TestCase):
         self.assertEqual(response.json()['missing_abstract_entries'], 1)
         self.assertEqual(response.json()['issues'][0]['code'], 'missing_abstract')
 
+    def test_parse_report_endpoint_returns_full_diagnostics_to_researcher(self):
+        self._create_parse_report()
+        self.user.profile.role = 'researcher'
+        self.user.profile.save(update_fields=['role'])
+        self.client.force_login(self.user)
+
+        response = self.client.get(f'/api/files/{self.data_file.id}/parse-report/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['missing_abstract_entries'], 1)
+        self.assertEqual(response.json()['issues'][0]['code'], 'missing_abstract')
+
     def test_file_list_hides_parse_summary_diagnostics_from_regular_user(self):
         self.data_file.metadata = {
             'parse_summary': {
@@ -207,6 +219,29 @@ class OriginalFileDownloadTests(TestCase):
         }
         self.data_file.save(update_fields=['metadata'])
         self.user.profile.role = 'admin'
+        self.user.profile.save(update_fields=['role'])
+        self.client.force_login(self.user)
+
+        response = self.client.get('/api/files/', {
+            'project': self.project.id,
+            'data_category': 'input',
+        })
+
+        summary = response.json()['results'][0]['metadata']['parse_summary']
+        self.assertEqual(summary['status'], 'warning')
+        self.assertEqual(summary['missing_abstract_entries'], 1)
+
+    def test_file_list_keeps_parse_summary_diagnostics_for_researcher(self):
+        self.data_file.metadata = {
+            'parse_summary': {
+                'status': 'warning',
+                'detected_entries': 2,
+                'parsed_entries': 2,
+                'missing_abstract_entries': 1,
+            },
+        }
+        self.data_file.save(update_fields=['metadata'])
+        self.user.profile.role = 'researcher'
         self.user.profile.save(update_fields=['role'])
         self.client.force_login(self.user)
 

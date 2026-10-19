@@ -17,6 +17,27 @@ export const useAuthStore = defineStore('auth', () => {
     return !!u.is_superuser || u.profile?.role === 'admin' || u.profile?.is_admin === true
   })
 
+  const isResearcher = computed(() => {
+    const u = user.value
+    return !!u && !isAdmin.value && u.profile?.role === 'researcher'
+  })
+
+  const canViewResearchDiagnostics = computed(() => {
+    const profile = user.value?.profile
+    return isAdmin.value || (!!profile && (
+      profile.can_view_research_diagnostics === true
+      || profile.role === 'researcher'
+    ))
+  })
+
+  const canConfigureScreeningPrompt = computed(() => {
+    const profile = user.value?.profile
+    return isAdmin.value || (!!profile && (
+      profile.can_configure_screening_prompt === true
+      || profile.role === 'researcher'
+    ))
+  })
+
   async function fetchCurrentUser() {
     user.value = await authApi.fetchCurrentUser()
     initialized.value = true
@@ -41,7 +62,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    user, initialized, isAdmin, fetchCurrentUser, login, register,
+    user, initialized, isAdmin, isResearcher,
+    canViewResearchDiagnostics, canConfigureScreeningPrompt,
+    fetchCurrentUser, login, register,
     resendVerificationEmail, logout,
   }
 })

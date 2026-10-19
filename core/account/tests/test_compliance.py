@@ -1,14 +1,20 @@
 import json
-from datetime import timedelta
+from datetime import date, timedelta
+from decimal import Decimal
 from io import StringIO
+from uuid import UUID
 
+from django.contrib import admin as django_admin
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.test import RequestFactory
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
+from ..admin import PlatformUserAdmin
 from ..models import AccountAdminAuditEvent, AccountSecurityEvent, AgreementAcceptance
 from ..services.legal import get_current_legal_document
+from ..services.security_audit import record_admin_event
 
 User = get_user_model()
 
@@ -73,6 +79,49 @@ class AccountAdminAuditTests(TestCase):
         audit = AccountAdminAuditEvent.objects.get(action='account_ban')
         self.assertEqual(audit.actor, self.admin)
         self.assertEqual(audit.reason, '异常登录调查')
+
+    def test_audit_event_normalizes_non_json_admin_values(self):
+        request = RequestFactory().post('/admin/auth/user/')
+        request.user = self.admin
+
+        record_admin_event(
+            request=request,
+            action='user_change',
+            target_user=self.target,
+            before={
+                'changed_at': timezone.now(),
+                'day': date(2026, 10, 19),
+                'amount': Decimal('12.50'),
+                'request_id': UUID('12345678-1234-5678-1234-567812345678'),
+                'user': self.target,
+            },
+        )
+
+        audit = AccountAdminAuditEvent.objects.get(action='user_change')
+        self.assertIsInstance(audit.before['changed_at'], str)
+        self.assertEqual(audit.before['day'], '2026-10-19')
+        self.assertEqual(audit.before['amount'], '12.50')
+        self.assertEqual(audit.before['user']['id'], self.target.pk)
+
+    def test_user_admin_save_model_accepts_datetime_changed_field(self):
+        request = RequestFactory().post(f'/admin/auth/user/{self.target.pk}/change/')
+        request.user = self.admin
+        form = type('ChangedUserForm', (), {'changed_data': ['date_joined']})()
+
+        PlatformUserAdmin(User, django_admin.site).save_model(
+            request,
+            self.target,
+            form,
+            change=True,
+        )
+
+        audit = AccountAdminAuditEvent.objects.get(action='user_change')
+        self.assertTrue(
+            audit.before['date_joined'].startswith(
+                self.target.date_joined.strftime('%Y-%m-%dT%H:%M:%S.'),
+            )
+        )
+        self.assertEqual(audit.after['date_joined'], audit.before['date_joined'])
 
     def test_user_delete_cascades_acceptance_and_preserves_audit_snapshot(self):
         document = get_current_legal_document('terms')

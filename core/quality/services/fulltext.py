@@ -19,6 +19,10 @@ from core.quality.services.fulltext_chunks import (
 )
 from core.quality.services.pdf_scanner import scan_pdf
 from core.quality.storage import materialized_storage_path
+from core.services.storage_quota_service import (
+    StorageQuotaExceeded,
+    user_storage_quota_guard,
+)
 
 
 EXTRACTION_VERSION = 'qa-text-v2-pages'
@@ -107,10 +111,11 @@ def validate_uploads(project, files):
 
 def create_fulltext_assets(project, files):
     checked = validate_uploads(project, files)
+    incoming_bytes = sum(uploaded.size for uploaded, _safe_name, _sha256 in checked)
     created = []
     stored = []
     try:
-        with transaction.atomic():
+        with user_storage_quota_guard(project.owner, incoming_bytes), transaction.atomic():
             for uploaded, safe_name, sha256 in checked:
                 ref = QAReference.objects.create(
                     project=project,
@@ -136,6 +141,10 @@ def create_fulltext_assets(project, files):
         raise FulltextUploadError(
             'duplicate_fulltext', '相同 PDF 已被并发上传到该项目。', status=409,
         ) from exc
+    except StorageQuotaExceeded as exc:
+        for storage, name in stored:
+            storage.delete(name)
+        raise FulltextUploadError(exc.code, str(exc), status=413) from exc
     except Exception:
         for storage, name in stored:
             storage.delete(name)
@@ -366,16 +375,35 @@ def process_fulltext_asset(asset_id, *, force=False):
         if extracted:
             text_bytes = extracted.encode('utf-8')
             chunk_bytes = serialize_chunks(chunks)
-            asset.extracted_text_file.save('extracted.txt', ContentFile(text_bytes), save=False)
-            asset.extracted_text_sha256 = hashlib.sha256(text_bytes).hexdigest()
-            asset.extracted_text_chars = len(extracted)
-            asset.extraction_version = EXTRACTION_VERSION
-            asset.extracted_page_count = extraction['extracted_page_count']
-            asset.extraction_truncated = extraction['truncated']
-            asset.truncated_at_page = extraction['truncated_at_page']
-            if chunk_bytes:
-                asset.chunk_index_file.save('chunks.jsonl', ContentFile(chunk_bytes), save=False)
-                asset.chunk_index_sha256 = hashlib.sha256(chunk_bytes).hexdigest()
+            previous_derived_bytes = 0
+            if previous_derived:
+                for field_name in _DERIVED_FILE_FIELDS:
+                    field_file = getattr(asset, field_name)
+                    if field_file and field_file.name:
+                        try:
+                            previous_derived_bytes += field_file.storage.size(field_file.name)
+                        except (OSError, ValueError, NotImplementedError):
+                            pass
+            with user_storage_quota_guard(
+                asset.project.owner,
+                max(0, len(text_bytes) + len(chunk_bytes) - previous_derived_bytes),
+            ):
+                asset.extracted_text_file.save('extracted.txt', ContentFile(text_bytes), save=False)
+                asset.extracted_text_sha256 = hashlib.sha256(text_bytes).hexdigest()
+                asset.extracted_text_chars = len(extracted)
+                asset.extraction_version = EXTRACTION_VERSION
+                asset.extracted_page_count = extraction['extracted_page_count']
+                asset.extraction_truncated = extraction['truncated']
+                asset.truncated_at_page = extraction['truncated_at_page']
+                if chunk_bytes:
+                    asset.chunk_index_file.save('chunks.jsonl', ContentFile(chunk_bytes), save=False)
+                    asset.chunk_index_sha256 = hashlib.sha256(chunk_bytes).hexdigest()
+                asset.save(update_fields=[
+                    'extracted_text_file', 'chunk_index_file', 'extracted_text_sha256',
+                    'extracted_text_chars', 'extraction_version', 'extracted_page_count',
+                    'extraction_truncated', 'truncated_at_page', 'chunk_index_sha256',
+                    'updated_at',
+                ])
             asset.chunk_count = len(chunks)
             asset.chunking_version = CHUNKING_VERSION
             asset.extraction_status = 'completed'
@@ -393,6 +421,18 @@ def process_fulltext_asset(asset_id, *, force=False):
             _delete_replaced_files(asset, previous_derived)
         ref_updates['fulltext_status'] = 'available'
         QAReference.objects.filter(pk=asset.qa_reference_id).update(**ref_updates)
+    except StorageQuotaExceeded as exc:
+        if previous_derived:
+            _delete_new_files(asset, previous_derived)
+            _restore_derived_data(asset, previous_derived)
+            asset.status = 'ready'
+            asset.error_code = exc.code
+            asset.error_message = str(exc)[:500]
+            asset.save()
+        else:
+            _delete_derived_files(asset)
+            _reset_extraction_metadata(asset)
+            _reject(asset, exc.code, str(exc), failed=True)
     except Exception:
         if previous_derived:
             _delete_new_files(asset, previous_derived)

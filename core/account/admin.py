@@ -36,7 +36,52 @@ class UserProfileInline(admin.StackedInline):
     fk_name = 'user'
     extra = 0
     can_delete = False
-    fields = ('role', 'is_banned', 'quota_projects', 'quota_storage_mb', 'concurrency_limit')
+    fields = (
+        'role', 'is_banned', 'current_plan', 'effective_ai_call_slots',
+        'effective_project_limit', 'storage_usage_display',
+        'quota_projects_override', 'ai_call_slots_override', 'quota_storage_mb_override',
+        'quota_projects', 'concurrency_limit', 'quota_storage_mb',
+    )
+    readonly_fields = (
+        'current_plan', 'effective_ai_call_slots', 'effective_project_limit',
+        'storage_usage_display', 'quota_projects', 'concurrency_limit', 'quota_storage_mb',
+    )
+
+    @admin.display(description='当前套餐')
+    def current_plan(self, obj):
+        if not obj or not obj.pk:
+            return '-'
+        from core.services.entitlement_service import resolve_user_entitlements
+
+        value = resolve_user_entitlements(obj.user, sync=False)
+        return f'{value.plan_name} ({value.plan_code})'
+
+    @admin.display(description='实际 AI 调用槽位')
+    def effective_ai_call_slots(self, obj):
+        if not obj or not obj.pk:
+            return '-'
+        from core.services.entitlement_service import resolve_user_entitlements
+
+        return resolve_user_entitlements(obj.user, sync=False).ai_call_slots
+
+    @admin.display(description='实际项目上限')
+    def effective_project_limit(self, obj):
+        if not obj or not obj.pk:
+            return '-'
+        from core.services.entitlement_service import resolve_user_entitlements
+
+        value = resolve_user_entitlements(obj.user, sync=False).project_limit
+        return '不限' if value < 0 else value
+
+    @admin.display(description='存储用量 / 上限')
+    def storage_usage_display(self, obj):
+        if not obj or not obj.pk:
+            return '-'
+        from core.services.storage_quota_service import storage_quota_snapshot
+
+        snapshot = storage_quota_snapshot(obj.user)
+        limit = '不限' if snapshot.limit_mb is None else f'{snapshot.limit_mb} MB'
+        return f'{snapshot.used_mb:.1f} MB / {limit}'
 
 
 class CreditAccountInline(admin.StackedInline):

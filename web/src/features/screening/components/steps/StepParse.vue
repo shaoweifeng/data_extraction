@@ -121,16 +121,16 @@
             <h4>解析结果</h4>
             <p>仅统计已经成功发布到当前文献集的索引文件</p>
           </div>
-          <span v-if="auth.isAdmin" class="parse-health" :class="`parse-health--${parseOverview.status}`">
+          <span v-if="auth.canViewResearchDiagnostics" class="parse-health" :class="`parse-health--${parseOverview.status}`">
             {{ overviewStatusText }}
           </span>
         </div>
         <div class="parse-overview__grid">
           <div class="parse-metric"><strong>{{ parseOverview.totalFiles }}</strong><span>索引文件</span></div>
-          <div v-if="auth.isAdmin" class="parse-metric"><strong>{{ parseOverview.detected }}</strong><span>检测条目</span></div>
+          <div v-if="auth.canViewResearchDiagnostics" class="parse-metric"><strong>{{ parseOverview.detected }}</strong><span>检测条目</span></div>
           <div class="parse-metric parse-metric--success"><strong>{{ parseOverview.parsed }}</strong><span>成功解析</span></div>
-          <div v-if="auth.isAdmin" class="parse-metric parse-metric--error"><strong>{{ parseOverview.skipped }}</strong><span>异常跳过</span></div>
-          <div v-if="auth.isAdmin" class="parse-metric parse-metric--warning"><strong>{{ parseOverview.missingAbstract }}</strong><span>摘要缺失</span></div>
+          <div v-if="auth.canViewResearchDiagnostics" class="parse-metric parse-metric--error"><strong>{{ parseOverview.skipped }}</strong><span>异常跳过</span></div>
+          <div v-if="auth.canViewResearchDiagnostics" class="parse-metric parse-metric--warning"><strong>{{ parseOverview.missingAbstract }}</strong><span>摘要缺失</span></div>
         </div>
       </div>
       <div class="flex items-center justify-between mb-3">
@@ -190,17 +190,17 @@
                   </button>
                   <div class="parse-file-actions">
                     <template v-if="file.metadata?.parse_summary">
-                      <span v-if="auth.isAdmin && file.metadata.parse_summary.status === 'failed'" class="parse-badge parse-badge--error">解析失败</span>
+                      <span v-if="auth.canViewResearchDiagnostics && file.metadata.parse_summary.status === 'failed'" class="parse-badge parse-badge--error">解析失败</span>
                       <span v-else class="parse-badge parse-badge--success">
-                        <template v-if="auth.isAdmin">
+                        <template v-if="auth.canViewResearchDiagnostics">
                           成功 {{ file.metadata.parse_summary.parsed_entries }}/{{ file.metadata.parse_summary.detected_entries }}
                         </template>
                         <template v-else>成功 {{ file.metadata.parse_summary.parsed_entries }}</template>
                       </span>
-                      <span v-if="auth.isAdmin && file.metadata.parse_summary.skipped_entries" class="parse-badge parse-badge--error">
+                      <span v-if="auth.canViewResearchDiagnostics && file.metadata.parse_summary.skipped_entries" class="parse-badge parse-badge--error">
                         异常 {{ file.metadata.parse_summary.skipped_entries }}
                       </span>
-                      <span v-if="auth.isAdmin && file.metadata.parse_summary.missing_abstract_entries" class="parse-badge parse-badge--warning">
+                      <span v-if="auth.canViewResearchDiagnostics && file.metadata.parse_summary.missing_abstract_entries" class="parse-badge parse-badge--warning">
                         缺摘要 {{ file.metadata.parse_summary.missing_abstract_entries }}
                       </span>
                       <button class="parse-expand-btn" title="查看解析详情" @click="toggleParseReport(file)">
@@ -229,11 +229,11 @@
                     <div class="parse-detail__summary">
                       <span>格式 <strong>{{ reportByFile[file.id].format?.toUpperCase() }}</strong></span>
                       <span>成功 <strong>{{ reportByFile[file.id].parsed_entries }}</strong></span>
-                      <span v-if="auth.isAdmin">检测 <strong>{{ reportByFile[file.id].detected_entries }}</strong></span>
-                      <span v-if="auth.isAdmin">跳过 <strong>{{ reportByFile[file.id].skipped_entries }}</strong></span>
-                      <span v-if="auth.isAdmin">摘要缺失 <strong>{{ reportByFile[file.id].missing_abstract_entries }}</strong></span>
+                      <span v-if="auth.canViewResearchDiagnostics">检测 <strong>{{ reportByFile[file.id].detected_entries }}</strong></span>
+                      <span v-if="auth.canViewResearchDiagnostics">跳过 <strong>{{ reportByFile[file.id].skipped_entries }}</strong></span>
+                      <span v-if="auth.canViewResearchDiagnostics">摘要缺失 <strong>{{ reportByFile[file.id].missing_abstract_entries }}</strong></span>
                     </div>
-                    <div v-if="auth.isAdmin && reportByFile[file.id].issues?.length" class="parse-issues">
+                    <div v-if="auth.canViewResearchDiagnostics && reportByFile[file.id].issues?.length" class="parse-issues">
                       <div v-for="(issue, index) in reportByFile[file.id].issues" :key="`${issue.code}-${index}`" class="parse-issue">
                         <span class="parse-issue__level" :class="`parse-issue__level--${issue.severity}`">{{ issue.severity === 'error' ? '错误' : '警告' }}</span>
                         <div class="parse-issue__body">
@@ -247,7 +247,7 @@
                         </div>
                       </div>
                     </div>
-                    <div v-else-if="auth.isAdmin" class="parse-detail__empty parse-detail__empty--success">
+                    <div v-else-if="auth.canViewResearchDiagnostics" class="parse-detail__empty parse-detail__empty--success">
                       <i class="fas fa-check-circle"></i> 未发现解析异常或字段缺失
                     </div>
                     <div v-else class="parse-detail__empty parse-detail__empty--success">

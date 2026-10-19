@@ -2,10 +2,12 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
 from core.services.access_policy import ProjectAccessPolicy
+from core.services.storage_quota_service import enforce_user_storage_quota
 
 from .models import FeedbackAttachment, FeedbackDailyQuota, UserFeedback
 
@@ -30,6 +32,9 @@ def submit_feedback(*, user, client_request_id, data, images, user_agent=''):
 
     try:
         with transaction.atomic():
+            locked_user = (
+                get_user_model().objects.select_for_update().select_related('profile').get(pk=user.pk)
+            )
             quota = FeedbackDailyQuota.objects.select_for_update().get(
                 user=user,
                 quota_date=quota_date,
@@ -44,6 +49,11 @@ def submit_feedback(*, user, client_request_id, data, images, user_agent=''):
                     remaining_today=max(0, settings.FEEDBACK_DAILY_LIMIT - quota.used_count),
                     created=False,
                 )
+
+            enforce_user_storage_quota(
+                locked_user,
+                sum(image.file_size for image in images),
+            )
 
             if quota.used_count >= settings.FEEDBACK_DAILY_LIMIT:
                 raise FeedbackLimitExceeded('FEEDBACK_DAILY_LIMIT', '今日反馈次数已用完，请明天再试')

@@ -82,6 +82,17 @@ class QAFulltextTests(TestCase):
             asset.raw_file.storage.url(asset.raw_file.name)
         delay.assert_called_once_with(ref.id)
 
+    def test_upload_rejects_user_storage_quota_overflow(self):
+        self.user.profile.quota_storage_mb_override = 0
+        self.user.profile.save(update_fields=['quota_storage_mb_override'])
+
+        response, delay = self.upload()
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.json()['error']['code'], 'storage_quota_exceeded')
+        self.assertFalse(QAReference.objects.filter(project=self.project).exists())
+        delay.assert_not_called()
+
     def test_rejects_spoofed_pdf_and_wrong_mime(self):
         response, _ = self.upload(b'not a pdf')
         self.assertEqual(response.status_code, 400)
@@ -300,6 +311,30 @@ class QAFulltextTests(TestCase):
         asset.refresh_from_db()
         self.assertEqual(asset.status, 'ready')
         self.assertEqual(asset.error_code, 'pdf_rebuild_failed')
+        self.assertEqual(asset.extracted_text_file.name, text_name)
+        self.assertEqual(asset.chunk_index_file.name, chunk_name)
+        self.assertEqual(asset.extracted_text_sha256, text_hash)
+        self.assertEqual(asset.chunk_index_sha256, chunk_hash)
+        self.assertTrue(asset.extracted_text_file.storage.exists(text_name))
+        self.assertTrue(asset.chunk_index_file.storage.exists(chunk_name))
+
+    def test_quota_failed_force_rebuild_preserves_previous_derived_files(self):
+        response, _ = self.upload()
+        asset_id = response.json()['data']['refs'][0]['fulltext_asset']['id']
+        process_fulltext_asset(asset_id)
+        asset = QAFulltextAsset.objects.get(pk=asset_id)
+        text_name = asset.extracted_text_file.name
+        chunk_name = asset.chunk_index_file.name
+        text_hash = asset.extracted_text_sha256
+        chunk_hash = asset.chunk_index_sha256
+        self.user.profile.quota_storage_mb_override = 0
+        self.user.profile.save(update_fields=['quota_storage_mb_override'])
+
+        process_fulltext_asset(asset_id, force=True)
+
+        asset.refresh_from_db()
+        self.assertEqual(asset.status, 'ready')
+        self.assertEqual(asset.error_code, 'storage_quota_exceeded')
         self.assertEqual(asset.extracted_text_file.name, text_name)
         self.assertEqual(asset.chunk_index_file.name, chunk_name)
         self.assertEqual(asset.extracted_text_sha256, text_hash)

@@ -26,8 +26,8 @@ class UserProfile(models.Model):
     ROLE_CHOICES = [
         ('admin', '管理员'),
         ('user', '普通用户'),
-        # 以下为旧值，保留仅为兼容历史数据迁移，不再新用
         ('researcher', '研究者'),
+        # 旧值，仅为兼容历史数据保留，不再新用
         ('viewer', '访客'),
     ]
 
@@ -47,6 +47,10 @@ class UserProfile(models.Model):
     ai_call_slots_override = models.IntegerField(
         null=True, blank=True, verbose_name="AI调用槽位覆盖",
     )
+    quota_storage_mb_override = models.IntegerField(
+        null=True, blank=True, verbose_name="存储配额覆盖(MB)",
+        help_text="留空时跟随套餐；-1 表示不限。",
+    )
     approved_at = models.DateTimeField(null=True, blank=True, verbose_name="审核时间")
     approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='approved_users', verbose_name="审核人")
@@ -62,6 +66,21 @@ class UserProfile(models.Model):
     def is_admin(self):
         """是否管理员：role=admin 或 Django 超级用户"""
         return self.role == 'admin' or self.user.is_superuser
+
+    @property
+    def is_researcher(self):
+        """是否研究者账户（不含管理员）。"""
+        return self.role == 'researcher' and not self.user.is_superuser
+
+    @property
+    def can_view_research_diagnostics(self):
+        """是否可查看解析诊断、AI 准确率等专业信息。"""
+        return self.is_admin or self.role == 'researcher'
+
+    @property
+    def can_configure_screening_prompt(self):
+        """是否可配置本人可访问项目的 AI 初筛 Prompt。"""
+        return self.is_admin or self.role == 'researcher'
 
     def __str__(self):
         return f"{self.user.username} ({self.get_role_display()})"

@@ -35,6 +35,7 @@
             <div class="entitlement-tags">
               <span>{{ limitText(currentPlan.project_limit, '个项目') }}</span>
               <span>{{ number(currentPlan.ai_call_slots) }} 个 AI 调用槽位</span>
+              <span>{{ storageText(currentPlan.storage_limit_mb) }}</span>
             </div>
             <div v-if="currentPlan.expires_at" class="summary-foot">
               有效至 {{ formatDate(currentPlan.expires_at) }}
@@ -94,6 +95,7 @@
                 <li><i class="fas fa-check"></i><strong>{{ number(plan.included_credits) }}</strong> 积分 / 月</li>
                 <li><i class="fas fa-check"></i>最多 {{ plan.project_limit }} 个项目</li>
                 <li><i class="fas fa-check"></i>{{ plan.ai_call_slots }} 个共享 AI 调用槽位</li>
+                <li><i class="fas fa-check"></i>{{ storageText(plan.storage_limit_mb) }}</li>
                 <li><i class="fas fa-check"></i>完整初筛、质量评价与导出能力</li>
               </ul>
               <button
@@ -320,6 +322,12 @@ function number(value) { return Number(value || 0).toLocaleString('zh-CN') }
 function money(value) { return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }
 function decimal(value) { return Number(value || 0).toLocaleString('zh-CN', { maximumFractionDigits: 2 }) }
 function limitText(value, unit) { return Number(value) < 0 ? '项目数量不限' : `最多 ${number(value)} ${unit}` }
+function storageText(value) {
+  const amount = Number(value)
+  if (amount < 0) return '存储空间不限'
+  if (amount >= 1024 && amount % 1024 === 0) return `${number(amount / 1024)} GB 存储空间`
+  return `${number(amount)} MB 存储空间`
+}
 function formatDate(value) { return value ? new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value)) : '—' }
 function formatTime(value) { return value ? new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value)) : '—' }
 function transactionIcon(type) {

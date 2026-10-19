@@ -23,6 +23,28 @@ class ProjectAccessPolicy:
         profile = getattr(user, 'profile', None)
         return bool(user.is_superuser or (profile and profile.role == 'admin'))
 
+    @staticmethod
+    def can_view_research_diagnostics(user) -> bool:
+        """研究诊断信息可见性，不会扩大项目访问范围。"""
+        if not user or not user.is_authenticated:
+            return False
+        profile = getattr(user, 'profile', None)
+        return bool(
+            ProjectAccessPolicy.is_platform_admin(user)
+            or (profile and profile.role == 'researcher')
+        )
+
+    @staticmethod
+    def can_configure_screening_prompt(user) -> bool:
+        """Prompt 可由管理员或研究者在自己可访问的项目内配置。"""
+        if not user or not user.is_authenticated:
+            return False
+        profile = getattr(user, 'profile', None)
+        return bool(
+            ProjectAccessPolicy.is_platform_admin(user)
+            or (profile and profile.role == 'researcher')
+        )
+
     @classmethod
     def visible_projects(cls, user):
         if not user or not user.is_authenticated:

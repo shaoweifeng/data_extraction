@@ -15,6 +15,10 @@ from ..artifacts.types import ArtifactType
 from ..serializers import DataFileSerializer
 from ..services.access_policy import ProjectAccessPolicy
 from core.screening.services.import_validation import FORMAT_BY_EXTENSION
+from core.services.storage_quota_service import (
+    StorageQuotaExceeded,
+    user_storage_quota_guard,
+)
 
 
 class DataFileViewSet(viewsets.ModelViewSet):
@@ -118,7 +122,7 @@ class DataFileViewSet(viewsets.ModelViewSet):
         try:
             report_file.file.open('rb')
             report = json.load(report_file.file)
-            if not ProjectAccessPolicy.is_platform_admin(request.user):
+            if not ProjectAccessPolicy.can_view_research_diagnostics(request.user):
                 report = {
                     key: report[key]
                     for key in (
@@ -200,15 +204,21 @@ class DataFileViewSet(viewsets.ModelViewSet):
         _filename = uploaded_file.name if uploaded_file else serializer.validated_data.get('filename', '')
         _project = serializer.validated_data.get('project')
 
-        serializer.save(created_by=user)
+        try:
+            with user_storage_quota_guard(user, uploaded_file.size if uploaded_file else 0):
+                serializer.save(created_by=user)
 
-        if _project:
-            ActivityLog.objects.create(
-                project=_project,
-                operation_type='file_add',
-                operation_detail={'filename': _filename},
-                created_by=user,
-            )
+                if _project:
+                    ActivityLog.objects.create(
+                        project=_project,
+                        operation_type='file_add',
+                        operation_detail={'filename': _filename},
+                        created_by=user,
+                    )
+        except StorageQuotaExceeded as exc:
+            raise drf_serializers.ValidationError({
+                'error': {'code': exc.code, 'message': str(exc)},
+            }) from exc
 
     def perform_destroy(self, instance):
         from ..services import reset_downstream_on_input_delete
