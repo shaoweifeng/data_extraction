@@ -786,6 +786,130 @@ class ManualReview(models.Model):
         return f"{self.project.name} | 文献 {self.reference_id} | {self.get_decision_display()}"
 
 
+
+
+# ============================================================================
+# 文献复筛模块（SCREEN_2）
+# 全部表前缀 plat_rescreen_，对初筛/质量评价既有表零改动
+# ============================================================================
+
+class RescreenReference(models.Model):
+    """复筛文献记录。
+
+    设计原则：
+    - 从初筛导入的题录与用户直接上传的 PDF 最终都归一成一条复筛文献；
+    - 全文状态只保留前端 PRD 确认的三态：bound / unbound / bind_failed；
+    - AI 结论与人工最终决定分列存储，导出和后续质量评价以人工决定为准。
+    """
+
+    SOURCE_CHOICES = [
+        ('screening_import',    '从初筛导入'),
+        ('bibliography_upload', '上传题录'),
+        ('pdf_upload',          '上传全文PDF'),
+    ]
+    FULLTEXT_STATUS_CHOICES = [
+        ('bound',       '已绑定'),
+        ('unbound',     '未绑定'),
+        ('bind_failed', '绑定失败'),
+    ]
+    AI_STATUS_CHOICES = [
+        ('not_started',     '未开始'),
+        ('queued',          '排队中'),
+        ('running',         '复筛中'),
+        ('completed',       '已完成'),
+        ('partial_failed',  '部分失败'),
+        ('failed',          '失败'),
+        ('skipped_unbound', '跳过（无全文）'),
+    ]
+    DECISION_CHOICES = [
+        ('included', '纳入'),
+        ('excluded', '排除'),
+        ('pending',  '待定'),
+    ]
+    CONSENSUS_CHOICES = [
+        ('',           '未生成'),
+        ('consistent', '一致'),
+        ('divergent',  '分歧'),
+        ('single',     '单模型'),
+        ('pending',    '待处理'),
+    ]
+
+    project       = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='rescreen_references', verbose_name='所属项目')
+    title         = models.CharField(max_length=500, verbose_name='文献标题')
+    first_author  = models.CharField(max_length=200, blank=True, default='', verbose_name='第一作者')
+    authors       = models.JSONField(default=list, blank=True, verbose_name='作者列表')
+    year          = models.IntegerField(null=True, blank=True, verbose_name='发表年份')
+    journal       = models.CharField(max_length=300, blank=True, default='', verbose_name='期刊')
+    abstract      = models.TextField(blank=True, default='', verbose_name='摘要')
+    doi           = models.CharField(max_length=200, blank=True, default='', verbose_name='DOI')
+    pmid          = models.CharField(max_length=100, blank=True, default='', verbose_name='PMID')
+    source_type   = models.CharField(max_length=50, choices=SOURCE_CHOICES, default='screening_import', verbose_name='来源类型')
+    source_ref_id = models.IntegerField(null=True, blank=True, verbose_name='来源记录ID')
+    source_xml    = models.CharField(max_length=500, blank=True, default='', verbose_name='来源XML文件名')
+
+    fulltext_file       = models.ForeignKey(DataFile, null=True, blank=True, on_delete=models.SET_NULL, related_name='rescreen_references', verbose_name='全文PDF文件')
+    fulltext_status     = models.CharField(max_length=20, choices=FULLTEXT_STATUS_CHOICES, default='unbound', verbose_name='全文状态')
+    fulltext_error      = models.TextField(blank=True, default='', verbose_name='全文绑定失败原因')
+    fulltext_source     = models.CharField(max_length=50, blank=True, default='', verbose_name='全文来源')
+    fulltext_source_url = models.URLField(max_length=1000, blank=True, default='', verbose_name='全文来源URL')
+    fulltext_license    = models.CharField(max_length=200, blank=True, default='', verbose_name='全文许可')
+    fulltext_resolver   = models.CharField(max_length=100, blank=True, default='', verbose_name='全文查找器')
+    fulltext_checked_at = models.DateTimeField(null=True, blank=True, verbose_name='全文最近查找时间')
+    fulltext_attempts   = models.JSONField(default=list, blank=True, verbose_name='全文查找记录')
+
+    ai_status           = models.CharField(max_length=30, choices=AI_STATUS_CHOICES, default='not_started', verbose_name='AI复筛状态')
+    ai_decision         = models.CharField(max_length=20, blank=True, default='', verbose_name='AI复筛决定')
+    ai_reason           = models.TextField(blank=True, default='', verbose_name='AI复筛理由')
+    ai_evidence         = models.JSONField(default=list, blank=True, verbose_name='AI证据片段')
+    consensus_status    = models.CharField(max_length=20, choices=CONSENSUS_CHOICES, blank=True, default='', verbose_name='AI一致性状态')
+    multi_model_results = models.JSONField(default=list, blank=True, verbose_name='多模型复筛结果')
+
+    human_decision  = models.CharField(max_length=20, choices=DECISION_CHOICES, blank=True, default='', verbose_name='人工最终决定')
+    exclusion_reason = models.TextField(blank=True, default='', verbose_name='人工排除理由')
+    review_note     = models.TextField(blank=True, default='', verbose_name='人工审阅备注')
+    reviewed_by     = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rescreen_reviews', verbose_name='审阅人')
+    reviewed_at     = models.DateTimeField(null=True, blank=True, verbose_name='审阅时间')
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'plat_rescreen_reference'
+        verbose_name = '复筛文献'
+        verbose_name_plural = '复筛文献'
+        ordering = ['id']
+        indexes = [
+            models.Index(fields=['project', 'fulltext_status'], name='idx_rsr_proj_fulltext'),
+            models.Index(fields=['project', 'human_decision'], name='idx_rsr_proj_human'),
+            models.Index(fields=['project', 'ai_status'], name='idx_rsr_proj_ai'),
+            models.Index(fields=['project', 'source_xml'], name='idx_rsr_proj_source'),
+        ]
+
+    def __str__(self):
+        return self.title[:80]
+
+
+class RescreenCriteria(models.Model):
+    """复筛纳排标准。
+
+    criteria_list 直接复用前端“自定义标准/排除理由”的数组结构，避免把初筛标准拆成复杂子表。
+    """
+
+    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='rescreen_criteria', verbose_name='所属项目')
+    criteria_list = models.JSONField(default=list, blank=True, verbose_name='纳排标准列表')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_rescreen_criteria', verbose_name='更新人')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'plat_rescreen_criteria'
+        verbose_name = '复筛纳排标准'
+        verbose_name_plural = '复筛纳排标准'
+
+    def __str__(self):
+        return f'{self.project.name} 复筛标准'
+
+
 # ============================================================================
 # 文献质量评价模块（QUALITY_EVAL）
 # 全部表前缀 plat_qa_，对已有表零改动

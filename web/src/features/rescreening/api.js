@@ -1,0 +1,18 @@
+import http, { httpNoTimeout } from '@/shared/api/http'
+
+export const fetchRefs = projectId => http.get('/rescreening/refs/', { params: { project_id: projectId } })
+export const importFromScreening = projectId => http.post('/rescreening/refs/import/', { project_id: projectId })
+export const uploadBibliography = form => http.post('/rescreening/refs/upload-bibliography/', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+export const uploadFulltext = form => http.post('/rescreening/fulltexts/upload/', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+export const autoSearchFulltexts = payload => httpNoTimeout.post('/rescreening/fulltexts/auto-search/', payload)
+export const replaceFulltext = form => http.post('/rescreening/fulltexts/replace/', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+export const fetchCriteria = projectId => http.get('/rescreening/criteria/', { params: { project_id: projectId } })
+export const saveCriteria = payload => http.post('/rescreening/criteria/', payload)
+export const startAiRescreen = payload => http.post('/rescreening/ai/start/', payload)
+export const fetchAiProgress = projectId => http.get('/rescreening/ai/progress/', { params: { project_id: projectId } })
+export const fetchReviewStats = projectId => http.get('/rescreening/review/stats/', { params: { project_id: projectId } })
+export const fetchReviewList = params => http.get('/rescreening/review/list/', { params })
+export const saveReview = (refId, payload) => http.patch(`/rescreening/review/${refId}/`, payload)
+export const batchInclude = payload => http.post('/rescreening/review/batch-include/', payload)
+export const exportExcel = payload => http.post('/rescreening/export/excel/', payload, { responseType: 'blob' })
+export const exportPdfPackage = payload => http.post('/rescreening/export/pdf-package/', payload, { responseType: 'blob' })

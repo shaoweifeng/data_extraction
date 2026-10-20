@@ -27,16 +27,16 @@
               />
             </div>
             <!-- 步骤内容 + 右侧任务栏 -->
-            <div class="ws-body" :key="`screen-${project.currentProject?.id}`">
+            <div :key="`screen-${project.currentProject?.id}`" class="ws-body">
               <div class="ws-step-wrap">
                 <div class="ws-step-content" :class="{ 'review-mode': screening.currentStep === 6 }">
-                  <StepParse    v-if="screening.currentStep === 1" />
-                  <StepDedup    v-else-if="screening.currentStep === 2" />
+                  <StepParse v-if="screening.currentStep === 1" />
+                  <StepDedup v-else-if="screening.currentStep === 2" />
                   <StepCriteria v-else-if="screening.currentStep === 3" />
-                  <StepFields   v-else-if="screening.currentStep === 4" />
+                  <StepFields v-else-if="screening.currentStep === 4" />
                   <StepAiScreen v-else-if="screening.currentStep === 5" />
-                  <StepReview   v-else-if="screening.currentStep === 6" />
-                  <StepExport   v-else-if="screening.currentStep === 7" />
+                  <StepReview v-else-if="screening.currentStep === 6" />
+                  <StepExport v-else-if="screening.currentStep === 7" />
                 </div>
                 <div class="ws-step-footer">
                   <StepNav />
@@ -44,11 +44,52 @@
               </div>
               <div class="ws-task-sidebar" :class="{ 'ws-task-sidebar--collapsed': sidebarCollapsed }">
                 <!-- 收起时只显示展开按钮 -->
-                <button v-if="sidebarCollapsed" class="ws-sidebar-expand-btn" @click="sidebarCollapsed = false" title="展开任务面板">
+                <button v-if="sidebarCollapsed" class="ws-sidebar-expand-btn" title="展开任务面板" @click="sidebarCollapsed = false">
                   <i class="fas fa-chevron-left"></i>
                   <span class="ws-sidebar-expand-label">任务</span>
                 </button>
                 <TaskSidebar v-else @toggle="sidebarCollapsed = true" />
+              </div>
+            </div>
+          </template>
+
+          <!-- ── SCREEN_2：文献复筛 ── -->
+          <template v-else-if="project.currentStage === 'SCREEN_2'">
+            <div class="ws-step-bar">
+              <div class="step-indicator">
+                <template v-for="(step, idx) in rescreenSteps" :key="step.key">
+                  <button
+                    :class="['step-node', getRescreenNodeClass(step)]"
+                    @click="jumpToRescreenStep(step.index)"
+                  >
+                    <span class="step-node-num">
+                      <i v-if="step.index < rescreen.maxReachedStep && rescreen.currentStep !== step.index" class="fas fa-check step-check-icon"></i>
+                      <span v-else>{{ step.index }}</span>
+                    </span>
+                    <span class="step-node-label">{{ step.label }}</span>
+                  </button>
+                  <div
+                    v-if="idx < rescreenSteps.length - 1"
+                    :class="['step-line', step.index < rescreen.maxReachedStep ? 'step-line-done' : '']"
+                  ></div>
+                </template>
+              </div>
+            </div>
+            <div class="ws-body">
+              <div class="ws-step-wrap">
+                <div class="ws-step-content" :class="{ 'rescreen-review-mode': rescreen.currentStep === 5 }">
+                  <RescreenWorkspaceView />
+                </div>
+                <div class="ws-step-footer">
+                  <RescreenStepNav />
+                </div>
+              </div>
+              <div class="ws-task-sidebar" :class="{ 'ws-task-sidebar--collapsed': rescreenSidebarCollapsed }">
+                <button v-if="rescreenSidebarCollapsed" class="ws-sidebar-expand-btn" title="展开任务面板" @click="rescreenSidebarCollapsed = false">
+                  <i class="fas fa-chevron-left"></i>
+                  <span class="ws-sidebar-expand-label">任务</span>
+                </button>
+                <TaskSidebar v-else @toggle="rescreenSidebarCollapsed = true" />
               </div>
             </div>
           </template>
@@ -88,13 +129,13 @@
                 <div class="ws-step-footer">
                   <QAStepNav :next-disabled="qaNextDisabled">
                     <template #center>
-                      <span class="qa-footer-tip" v-if="qaFooterTip">{{ qaFooterTip }}</span>
+                      <span v-if="qaFooterTip" class="qa-footer-tip">{{ qaFooterTip }}</span>
                     </template>
                   </QAStepNav>
                 </div>
               </div>
               <div class="ws-task-sidebar" :class="{ 'ws-task-sidebar--collapsed': qaSidebarCollapsed }">
-                <button v-if="qaSidebarCollapsed" class="ws-sidebar-expand-btn" @click="qaSidebarCollapsed = false" title="展开任务面板">
+                <button v-if="qaSidebarCollapsed" class="ws-sidebar-expand-btn" title="展开任务面板" @click="qaSidebarCollapsed = false">
                   <i class="fas fa-chevron-left"></i>
                   <span class="ws-sidebar-expand-label">任务</span>
                 </button>
@@ -141,9 +182,13 @@ import StepExport from '@/features/screening/components/steps/StepExport.vue'
 import QAWorkspaceView from '@/features/quality/components/QualityWorkspace.vue'
 import QAStepNav from '@/features/quality/components/QAStepNav.vue'
 import { useQAStore } from '@/features/quality/store'
+import { useRescreenStore, RESCREEN_STEPS } from '@/features/rescreening/store'
+import RescreenWorkspaceView from '@/features/rescreening/components/RescreenWorkspace.vue'
+import RescreenStepNav from '@/features/rescreening/components/RescreenStepNav.vue'
 import {
   SCREENING_STEPS,
   QUALITY_STEPS,
+  RESCREENING_STEPS,
   isQualityNextDisabled,
   qualityFooterTip,
 } from '@/features/projects/workspaceNavigation'
@@ -154,18 +199,21 @@ const project = useProjectStore()
 const screening = useScreeningStore()
 const taskStore = useTaskStore()
 const qa = useQAStore()
+const rescreen = useRescreenStore()
 
 const VALID_STAGES = new Set(['SEARCH', 'SCREEN_1', 'SCREEN_2', 'QUALITY', 'EXTRACT', 'META'])
 
 const loading = ref(true)
 const sidebarCollapsed = ref(false)
 const qaSidebarCollapsed = ref(false)
+const rescreenSidebarCollapsed = ref(false)
 
 // QA 页脚：下一步禁用条件 + 中间提示文字
 const qaNextDisabled = computed(() => isQualityNextDisabled(qa.currentStep, qa.refs, qa.evalCompleted))
 const qaFooterTip = computed(() => qualityFooterTip(qa.currentStep, qa.refs))
 const screen1Steps = SCREENING_STEPS
 const qaSteps = QUALITY_STEPS
+const rescreenSteps = RESCREENING_STEPS || RESCREEN_STEPS
 const qaStepKeys = {
   upload: 'qa_upload',
   method: 'qa_method',
@@ -192,6 +240,17 @@ function jumpToQAStep(index) {
   qa.currentStep = index
 }
 
+function getRescreenNodeClass(step) {
+  if (rescreen.currentStep === step.index) return 'step-node-active'
+  if (step.index <= rescreen.maxReachedStep) return 'step-node-done'
+  return 'step-node-idle'
+}
+
+function jumpToRescreenStep(index) {
+  if (index > rescreen.maxReachedStep) return
+  rescreen.goToStep(index)
+}
+
 const stageMeta = {
   SEARCH:   { name: '文献检索',   icon: 'fas fa-search',       bg: '#eff6ff', color: '#3b82f6' },
   SCREEN_2: { name: '文献复筛',   icon: 'fas fa-tasks',        bg: '#faf5ff', color: '#8b5cf6' },
@@ -215,14 +274,19 @@ async function initializeWorkspace(projectId) {
     screening.reset()
     taskStore.reset()
     qa.reset()
+    rescreen.reset()
     await project.selectProject(found)
     if (generation !== workspaceGeneration || project.currentProject?.id !== projectId) return
   }
 
-  await Promise.all([
+  const loaders = [
     taskStore.fetchRecentTasks(projectId, project.stagesData),
     taskStore.fetchActivityLogs(projectId),
-  ])
+  ]
+  if (project.currentStage === 'SCREEN_2') {
+    loaders.push(rescreen.loadProject(projectId))
+  }
+  await Promise.all(loaders)
   if (generation !== workspaceGeneration || project.currentProject?.id !== projectId) return
   loading.value = false
 }
@@ -298,6 +362,10 @@ watch(
 .ws-step-content.qa-review-mode {
   overflow: hidden;
   padding: 20px 24px;
+}
+.ws-step-content.rescreen-review-mode {
+  overflow: hidden;
+  padding: 16px;
 }
 
 

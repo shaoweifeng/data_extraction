@@ -17,6 +17,15 @@ export const QUALITY_STEPS = [
   { index: 6, key: 'export', label: '导出报告' },
 ]
 
+export const RESCREENING_STEPS = [
+  { index: 1, key: 'upload', label: '上传/导入' },
+  { index: 2, key: 'fulltext', label: '全文查找绑定' },
+  { index: 3, key: 'criteria', label: '纳排标准' },
+  { index: 4, key: 'ai_rescreen', label: 'AI 全文复筛' },
+  { index: 5, key: 'review', label: '人工审阅' },
+  { index: 6, key: 'export', label: '结果导出' },
+]
+
 export function inferQualityMaxStep(refs = [], stageSteps = []) {
   const exportStep = stageSteps.find(item => item.step_key === 'qa_export')
   if (['completed', 'skipped'].includes(exportStep?.status)) return 6

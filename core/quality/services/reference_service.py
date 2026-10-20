@@ -3,8 +3,9 @@
 from collections import Counter
 
 from django.db import transaction
+from django.db.models import Count
 
-from core.models import QAChart, QAChartSettings, QAReference
+from core.models import QAChart, QAChartSettings, QAReference, RescreenReference
 from core.screening.services.final_results import iter_resolved_screening_records
 from core.screening.services.import_limits import ImportLimits
 from core.screening.services.screening_run_service import current_completed_screening_run
@@ -84,12 +85,62 @@ def _rebuild_from_database(project, screening_run) -> dict:
         'ref_ids': ref_ids,
         'screening_run_id': screening_run.id,
         'corpus_revision': screening_run.corpus_revision,
+        'source_stage': 'SCREEN_1',
+    }
+
+
+def _rebuild_from_rescreening(project) -> dict:
+    """Rebuild QA snapshots from manually included SCREEN_2 references."""
+    imported_ids = []
+    qs = RescreenReference.objects.filter(
+        project=project,
+        human_decision='included',
+    ).select_related('fulltext_file').order_by('id')
+
+    for rescreen_ref in qs:
+        ref = QAReference.objects.create(
+            project=project,
+            title=rescreen_ref.title or f'复筛文献 {rescreen_ref.id}',
+            first_author=(rescreen_ref.first_author or '')[:200],
+            year=_safe_int(rescreen_ref.year),
+            journal=(rescreen_ref.journal or '')[:300],
+            abstract=rescreen_ref.abstract or '',
+            doi=(rescreen_ref.doi or '')[:200],
+            source_type='screening_import',
+            source_screening_decision='included',
+            fulltext_file=rescreen_ref.fulltext_file,
+            fulltext_status='available' if rescreen_ref.fulltext_file_id else 'pending',
+        )
+        imported_ids.append(ref.id)
+
+    total = project.rescreen_references.count()
+    skipped = max(total - len(imported_ids), 0)
+    skipped_by_decision = {
+        decision or 'not_reviewed': count
+        for decision, count in project.rescreen_references.exclude(human_decision='included')
+        .values_list('human_decision')
+        .order_by()
+        .annotate(count=Count('id'))
+    }
+    return {
+        'imported': len(imported_ids),
+        'skipped': skipped,
+        'skipped_by_decision': skipped_by_decision,
+        'ref_ids': imported_ids,
+        'screening_run_id': None,
+        'corpus_revision': None,
+        'source_stage': 'SCREEN_2',
     }
 
 
 @transaction.atomic
 def rebuild_from_screening(project, source_stage='SCREEN_1'):
-    """Rebuild QA snapshots from one explicit, current screening result source."""
+    """Rebuild QA snapshots from one explicit, current screening/rescreening result source."""
+    _clear_quality_results(project)
+
+    if source_stage == 'SCREEN_2':
+        return _rebuild_from_rescreening(project)
+
     screening_run = current_completed_screening_run(project.id) if source_stage == 'SCREEN_1' else None
     if screening_run is None:
         raise QualityImportError(
@@ -97,7 +148,6 @@ def rebuild_from_screening(project, source_stage='SCREEN_1'):
             '当前文献集没有匹配的已完成 AI 初筛运行，请完成本版本筛选后再导入质量评价。',
         )
 
-    _clear_quality_results(project)
     return _rebuild_from_database(project, screening_run)
 
 

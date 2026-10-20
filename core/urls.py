@@ -29,6 +29,23 @@ from .quality.api.review_views import (
 )
 from .quality.api.chart_views import chart_generate, chart_preview, chart_info, chart_settings_get, chart_settings_save
 from .quality.api.export_views import export_excel, export_status
+from .rescreening.api_views import (
+    ai_progress as rescreen_ai_progress,
+    ai_start as rescreen_ai_start,
+    criteria as rescreen_criteria,
+    fulltext_auto_search as rescreen_fulltext_auto_search,
+    fulltext_replace as rescreen_fulltext_replace,
+    fulltext_upload as rescreen_fulltext_upload,
+    refs_import as rescreen_refs_import,
+    refs_list as rescreen_refs_list,
+    refs_upload_bibliography as rescreen_refs_upload_bibliography,
+    review_batch_include as rescreen_review_batch_include,
+    review_list as rescreen_review_list,
+    review_stats as rescreen_review_stats,
+    review_update as rescreen_review_update,
+    export_excel as rescreen_export_excel,
+    export_pdf_package as rescreen_export_pdf_package,
+)
 from .api.schema_views import openapi_schema
 from .operations.api_views import (
     health_live, health_ready, operations_announcement, operations_pause_tasks,
@@ -112,6 +129,24 @@ urlpatterns = [
 
     # RESTful API
     path('', include(router.urls)),
+
+
+    # ── 文献复筛 API ───────────────────────────────────────────────────
+    path('rescreening/refs/',                    rescreen_refs_list,              name='rescreen_refs_list'),
+    path('rescreening/refs/import/',             rescreen_refs_import,            name='rescreen_refs_import'),
+    path('rescreening/refs/upload-bibliography/', rescreen_refs_upload_bibliography, name='rescreen_refs_upload_bibliography'),
+    path('rescreening/fulltexts/upload/',        rescreen_fulltext_upload,        name='rescreen_fulltext_upload'),
+    path('rescreening/fulltexts/auto-search/',   rescreen_fulltext_auto_search,   name='rescreen_fulltext_auto_search'),
+    path('rescreening/fulltexts/replace/',       rescreen_fulltext_replace,       name='rescreen_fulltext_replace'),
+    path('rescreening/criteria/',                rescreen_criteria,               name='rescreen_criteria'),
+    path('rescreening/ai/start/',                rescreen_ai_start,               name='rescreen_ai_start'),
+    path('rescreening/ai/progress/',             rescreen_ai_progress,            name='rescreen_ai_progress'),
+    path('rescreening/review/list/',             rescreen_review_list,            name='rescreen_review_list'),
+    path('rescreening/review/stats/',            rescreen_review_stats,           name='rescreen_review_stats'),
+    path('rescreening/review/<int:ref_id>/',     rescreen_review_update,          name='rescreen_review_update'),
+    path('rescreening/review/batch-include/',    rescreen_review_batch_include,   name='rescreen_review_batch_include'),
+    path('rescreening/export/excel/',             rescreen_export_excel,           name='rescreen_export_excel'),
+    path('rescreening/export/pdf-package/',       rescreen_export_pdf_package,     name='rescreen_export_pdf_package'),
 
     # ── 文献质量评价 API ───────────────────────────────────────────────
     path('qa/methods/',                        methods_list,          name='qa_methods_list'),

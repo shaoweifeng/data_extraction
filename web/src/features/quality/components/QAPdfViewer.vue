@@ -1,6 +1,6 @@
 <!-- 质量评价 PDF 预览：仅负责展示。 -->
 <template>
-  <div class="pdf-viewer" ref="viewerEl">
+  <div ref="viewerEl" class="pdf-viewer">
     <div class="viewer-toolbar">
       <span class="viewer-title">
         <i class="fas fa-file-pdf" style="color:#e74c3c"></i>
@@ -32,7 +32,7 @@
       <!-- Blob URL iframe，避免 Electron 里 Chrome PDF 插件的内部请求被拒 -->
       <iframe
         v-else-if="blobUrl"
-        :src="blobUrl"
+        :src="iframeSrc"
         class="pdf-iframe"
         frameborder="0"
       ></iframe>
@@ -46,11 +46,12 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   pdfUrl:   { type: String, default: '' },
   filename: { type: String, default: 'document.pdf' },
+  page:     { type: [Number, String], default: '' },
 })
 
 const viewerEl = ref(null)
@@ -59,6 +60,12 @@ const loading  = ref(false)
 const error    = ref('')
 
 let currentBlobUrl = ''
+
+const iframeSrc = computed(() => {
+  if (!blobUrl.value) return ''
+  const page = String(props.page || '').trim()
+  return page ? `${blobUrl.value}#page=${encodeURIComponent(page)}` : blobUrl.value
+})
 
 function revokeCurrent() {
   if (currentBlobUrl) {

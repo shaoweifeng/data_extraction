@@ -226,6 +226,103 @@ STEP_CONFIGURATIONS = {
     },
 
     # ------------------------------------------------------------------------
+    # 阶段3: 文献复筛 - 手动交互步骤
+    # ------------------------------------------------------------------------
+    "rescreen_upload": {
+        "name": "上传/导入",
+        "stage_key": "SCREEN_2",
+        "execution_mode": "manual",
+        "description": "从初筛导入题录或上传题录/PDF 全文",
+        "dependencies": [],
+        "timeout": None,
+        "ui_actions": ["import_from_screening", "upload_bibliography", "upload_pdf"],
+        "monitoring": {"progress_type": "manual_count", "progress_unit": "refs"},
+        "metadata_template": {}
+    },
+    "rescreen_fulltext": {
+        "name": "全文查找绑定",
+        "stage_key": "SCREEN_2",
+        "execution_mode": "manual",
+        "description": "自动查找全文，并允许用户上传或更改 PDF 绑定",
+        "dependencies": [],
+        "timeout": None,
+        "ui_actions": ["auto_search_fulltext", "upload_pdf", "replace_pdf"],
+        "monitoring": {"progress_type": "manual_count", "progress_unit": "refs"},
+        "metadata_template": {}
+    },
+    "rescreen_criteria": {
+        "name": "纳排标准",
+        "stage_key": "SCREEN_2",
+        "execution_mode": "manual",
+        "description": "填写复筛纳排标准与自定义排除理由",
+        "dependencies": [],
+        "timeout": None,
+        "ui_actions": ["edit_criteria"],
+        "monitoring": {"progress_type": "boolean", "checkpoints": []},
+        "metadata_template": {}
+    },
+    "rescreen_review": {
+        "name": "人工审阅",
+        "stage_key": "SCREEN_2",
+        "execution_mode": "manual",
+        "description": "结合 AI 复筛建议与 PDF 全文完成人工最终纳排",
+        "dependencies": [],
+        "timeout": None,
+        "ui_actions": ["review", "batch_include_consistent"],
+        "monitoring": {"progress_type": "manual_count", "progress_unit": "refs"},
+        "metadata_template": {}
+    },
+    "rescreen_export": {
+        "name": "结果导出",
+        "stage_key": "SCREEN_2",
+        "execution_mode": "manual",
+        "description": "导出复筛结果与对应 PDF 包",
+        "dependencies": [],
+        "timeout": None,
+        "ui_actions": ["export_excel", "export_pdf_package"],
+        "monitoring": {"progress_type": "boolean", "checkpoints": []},
+        "metadata_template": {}
+    },
+
+    # ------------------------------------------------------------------------
+    # 阶段3: 文献复筛 - AI 全文复筛（异步）
+    # ------------------------------------------------------------------------
+    "rescreen_ai": {
+        "name": "AI全文复筛",
+        "stage_key": "SCREEN_2",
+        "execution_mode": "async",
+        "description": "调用 AI 基于已绑定 PDF 全文进行复筛，产出建议结论，最终仍需人工审阅确认",
+        "timeout": 7200,
+        "batch_size": 8,
+        "enable_thinking": False,
+        "resume_capability": False,
+        "dependencies": [],
+        "inputs": ["rescreen_references.fulltext_file", "rescreen_criteria.criteria_list"],
+        "outputs": ["rescreen_references.ai_decision", "rescreen_references.ai_evidence"],
+        "retry_policy": {
+            "max_retries": 1,
+            "retry_delay": 10,
+            "retry_on": ["timeout", "rate_limit", "api_error", "network_error"]
+        },
+        "monitoring": {
+            "progress_type": "percentage",
+            "progress_unit": "refs",
+            "real_time_update": True,
+            "update_interval": 5,
+            "websocket_channel": "project_{project_id}.rescreening"
+        },
+        "metadata_template": {
+            "total_refs": 0,
+            "processed_refs": 0,
+            "included_refs": 0,
+            "excluded_refs": 0,
+            "error_refs": 0,
+            "start_time": None,
+            "end_time": None
+        }
+    },
+
+    # ------------------------------------------------------------------------
     # 子步骤: 人工审阅（纯交互，order=45）
     # ------------------------------------------------------------------------
     "review": {
@@ -510,7 +607,14 @@ STAGE_DEFINITIONS = [
         "stage_key": "SCREEN_2",
         "name": "文献复筛",
         "order": 30,
-        "steps": []
+        "steps": [
+            {"step_key": "rescreen_upload", "name": "上传/导入", "order": 10, "can_skip": False},
+            {"step_key": "rescreen_fulltext", "name": "全文查找绑定", "order": 20, "can_skip": False},
+            {"step_key": "rescreen_criteria", "name": "纳排标准", "order": 30, "can_skip": False},
+            {"step_key": "rescreen_ai", "name": "AI全文复筛", "order": 40, "can_skip": False},
+            {"step_key": "rescreen_review", "name": "人工审阅", "order": 50, "can_skip": False},
+            {"step_key": "rescreen_export", "name": "结果导出", "order": 60, "can_skip": True}
+        ]
     },
     {
         "stage_key": "QUALITY",
