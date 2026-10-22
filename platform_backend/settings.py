@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+
+from celery.schedules import crontab
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
@@ -525,12 +527,35 @@ CELERY_RESULT_DB_SHORT_LIVED_SESSIONS = True  # 每次任务结果写入后关�
 CELERY_IMPORTS = ('core.quality.tasks', 'core.operations.tasks')
 # 子进程超过该 RSS（KB）后由 Celery 在任务结束时回收，限制恶意/复杂 PDF 的内存累积。
 CELERY_WORKER_MAX_MEMORY_PER_CHILD = int(os.getenv('CELERY_WORKER_MAX_MEMORY_PER_CHILD', '524288'))
+FILE_RETENTION_CLEANUP_ENABLED = os.getenv(
+    'FILE_RETENTION_CLEANUP_ENABLED', 'true',
+).lower() == 'true'
+FILE_RETENTION_CLEANUP_HOUR = int(os.getenv('FILE_RETENTION_CLEANUP_HOUR', '4'))
+if not 0 <= FILE_RETENTION_CLEANUP_HOUR <= 23:
+    raise ImproperlyConfigured('FILE_RETENTION_CLEANUP_HOUR 必须是 0～23 的整数。')
+
 CELERY_BEAT_SCHEDULE = {
     'process-due-plan-periods-hourly': {
         'task': 'core.operations.process_due_plan_periods',
         'schedule': 3600.0,
     },
 }
+if FILE_RETENTION_CLEANUP_ENABLED:
+    # 从设定小时开始错峰清理，避免多个目录扫描任务同时争抢磁盘 I/O。
+    CELERY_BEAT_SCHEDULE.update({
+        'cleanup-old-task-workspaces-daily': {
+            'task': 'core.executors.celery_tasks.cleanup_old_workspaces',
+            'schedule': crontab(minute=0, hour=FILE_RETENTION_CLEANUP_HOUR),
+        },
+        'cleanup-abandoned-screening-imports-daily': {
+            'task': 'core.executors.celery_tasks.cleanup_abandoned_screening_imports',
+            'schedule': crontab(minute=10, hour=FILE_RETENTION_CLEANUP_HOUR),
+        },
+        'cleanup-qa-fulltext-files-daily': {
+            'task': 'core.quality.tasks.cleanup_qa_fulltext_files',
+            'schedule': crontab(minute=20, hour=FILE_RETENTION_CLEANUP_HOUR),
+        },
+    })
 
 # CORS Settings：开发环境允许跨域，生产环境必须显式配置白名单。
 CORS_ALLOW_ALL_ORIGINS = DEBUG

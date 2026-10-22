@@ -222,6 +222,25 @@ GET /api/health/ready/
 
 `live` 只表示 Web 进程存活；`ready` 同时检查 MySQL、Redis及维护状态。
 
+## 文件保留策略自动清理
+
+Celery Beat 默认按 `Asia/Shanghai` 时区每天凌晨 4 点开始执行文件保留策略：
+
+- 04:00 清理超过 `TASK_WORKSPACE_RETENTION_DAYS` 的任务工作目录；
+- 04:10 清理超过 `SCREENING_IMPORT_FAILED_RETENTION_DAYS` 的失败或已取消索引原文件；
+- 04:20 清理超过 `QA_FULLTEXT_FAILED_RETENTION_DAYS` 的失败全文，以及超过
+  `QA_EXTRACTED_TEXT_RETENTION_DAYS` 且评价已完成的派生文本。
+
+调度开关和开始小时可通过环境变量调整：
+
+```bash
+FILE_RETENTION_CLEANUP_ENABLED=true
+FILE_RETENTION_CLEANUP_HOUR=4
+```
+
+修改配置后需要重启 Celery Beat 才会加载新调度。清理只处理满足状态和保留期限的文件，
+不会删除正常项目的原始索引、可用全文或数据库审计记录。
+
 ## 数据库备份与恢复
 
 备份前停止写任务或进入维护窗口：
