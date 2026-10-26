@@ -570,8 +570,12 @@ CSRF_TRUSTED_ORIGINS = _csv_env(
 )
 
 # 生产 Cookie/HTTPS 安全基线。反向代理必须正确设置 X-Forwarded-Proto。
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = (
+    os.getenv('SESSION_COOKIE_SECURE') or str(not DEBUG)
+).lower() == 'true'
+CSRF_COOKIE_SECURE = (
+    os.getenv('CSRF_COOKIE_SECURE') or str(not DEBUG)
+).lower() == 'true'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
