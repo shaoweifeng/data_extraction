@@ -40,6 +40,10 @@
             <div v-if="currentPlan.expires_at" class="summary-foot">
               有效至 {{ formatDate(currentPlan.expires_at) }}
             </div>
+            <div v-if="currentPlan.addon_ai_call_slots" class="summary-foot addon-summary">
+              基础 {{ currentPlan.base_ai_call_slots }} 并发 · 升级包目标 {{ currentPlan.addon_ai_call_slots }} 并发<br>
+              升级包有效至 {{ formatDate(currentPlan.addon_expires_at) }}（最终以当前有效并发为准）
+            </div>
           </article>
 
           <article class="summary-card expiry-summary">
@@ -67,7 +71,7 @@
 
         <section class="section-card">
           <div class="section-heading">
-            <div><p class="eyebrow">个人套餐</p><h2>选择适合你的处理规模</h2></div>
+            <div><p class="eyebrow">套餐与加购</p><h2>选择适合你的处理规模</h2></div>
             <span class="section-note">申请使用 · 暂不公开售卖</span>
           </div>
           <div class="internal-test-notice">
@@ -77,7 +81,10 @@
               <span>下列价格为未来正式服务参考价。如需体验或了解适用方案，请通过“申请咨询”与我们联系。</span>
             </div>
           </div>
-          <div class="plan-grid">
+          <nav class="product-tabs" aria-label="服务类型">
+            <button v-for="tab in productTabs" :key="tab.key" type="button" :aria-pressed="productTab === tab.key" :class="{ active: productTab === tab.key }" @click="productTab = tab.key">{{ tab.label }}</button>
+          </nav>
+          <div v-if="productTab === 'plans'" class="plan-grid">
             <article
               v-for="plan in plansData?.plans || []"
               :key="plan.version"
@@ -109,10 +116,12 @@
             </article>
           </div>
 
+          <AddonProducts v-else :kind="productTab" :products="plansData?.addons || []" :current="currentPlan" :contact-enabled="serviceContact.enabled" @consult="openConsult" @show-plans="productTab = 'plans'" />
+
           <div class="redeem-panel">
             <div class="redeem-copy">
               <i class="fas fa-ticket"></i>
-              <div><strong>兑换套餐或积分</strong><span>套餐码会开通权益，积分码只增加可用积分。</span></div>
+              <div><strong>兑换套餐、积分或并发</strong><span>订阅积分包与并发包需有有效套餐；追加体验积分无需套餐。</span></div>
             </div>
             <div class="redeem-form">
               <input v-model="redeemCode" maxlength="32" placeholder="输入兑换码" :disabled="redeeming" @keyup.enter="submitRedeem" />
@@ -137,7 +146,7 @@
               <thead><tr><th>来源</th><th>发放</th><th>可用</th><th>预占</th><th>到期时间</th><th>状态</th></tr></thead>
               <tbody>
                 <tr v-for="batch in batches.results" :key="batch.id">
-                  <td><span class="source-badge">{{ batch.plan_name || batch.batch_type_display }}</span></td>
+                  <td><span class="source-badge">{{ batch.addon_name || batch.plan_name || batch.batch_type_display }}</span></td>
                   <td>{{ number(batch.granted_amount) }}</td>
                   <td class="strong-cell">{{ number(batch.remaining_amount) }}</td>
                   <td>{{ number(batch.reserved_amount) }}</td>
@@ -271,6 +280,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/shared/components/AppHeader.vue'
+import AddonProducts from '../components/AddonProducts.vue'
+import { addonConsultationDetails } from '../products'
 import * as billingApi from '@/features/billing/api'
 import { useAuthStore } from '@/features/account/store'
 
@@ -303,6 +314,8 @@ const defaultServiceContact = {
 }
 const serviceContact = ref({ ...defaultServiceContact })
 const selectedPlan = ref(null)
+const productTab = ref('plans')
+const productTabs = [{ key: 'plans', label: '个人套餐' }, { key: 'credits', label: '积分补充' }, { key: 'concurrency', label: '并发升级' }]
 const copiedKey = ref('')
 const qrLoadFailed = ref(false)
 const qrPreviewOpen = ref(false)
@@ -315,7 +328,7 @@ const hasContactMethods = computed(() => Boolean(
 const consultationText = computed(() => {
   const planName = selectedPlan.value?.name || selectedPlan.value?.plan_code || '个人套餐'
   const account = auth.user?.email || auth.user?.username || '请填写平台注册账号'
-  return `您好，我想咨询 MetaFlow ${planName} 的内测使用。\n平台账号：${account}`
+  return `您好，我想咨询 MetaFlow ${planName} 的内测使用。${addonConsultationDetails(selectedPlan.value)}\n平台账号：${account}`
 })
 
 function number(value) { return Number(value || 0).toLocaleString('zh-CN') }
@@ -416,6 +429,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onEscape))
 </script>
 
 <style scoped>
+.product-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px;padding:5px;background:#f1f5f9;border-radius:12px}.product-tabs button{flex:1;min-width:100px;padding:10px 16px;border:0;border-radius:9px;background:transparent;color:#64748b;font-weight:700;cursor:pointer}.product-tabs button.active{background:#fff;color:#4f46e5;box-shadow:0 2px 7px #0f172a0d}.addon-summary{margin-top:10px;line-height:1.7}
 .billing-page{min-height:100vh;background:#f5f7fb;color:#1e293b}.billing-shell{width:min(1180px,calc(100% - 40px));margin:0 auto;padding:34px 0 56px}.page-heading,.section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}.page-heading{margin-bottom:24px}.page-heading h1,.section-heading h2{margin:2px 0 6px;font-weight:800;letter-spacing:-.02em}.page-heading h1{font-size:1.8rem}.section-heading h2{font-size:1.2rem}.page-heading p,.section-note{margin:0;color:#64748b;font-size:.86rem}.eyebrow{text-transform:uppercase;letter-spacing:.12em!important;color:#6366f1!important;font-size:.7rem!important;font-weight:800;margin:0!important}.ghost-btn{border:1px solid #dbe2ea;background:#fff;color:#475569;border-radius:10px;padding:9px 14px;cursor:pointer}.ghost-btn:hover{border-color:#a5b4fc;color:#4f46e5}.loading-panel,.empty-state{padding:42px;text-align:center;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;border-radius:14px}.summary-grid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:16px;margin-bottom:20px}.summary-card,.section-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.04)}.summary-card{padding:20px}.balance-summary{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:0}.summary-label{font-size:.78rem;color:#64748b;display:flex;gap:7px;align-items:center}.balance-summary .summary-label,.balance-summary .summary-foot{color:rgba(255,255,255,.8)}.summary-value{font-size:2rem;font-weight:850;margin:11px 0 7px}.plan-name{font-size:1.45rem}.muted-value{color:#94a3b8}.summary-foot{font-size:.76rem;color:#94a3b8}.entitlement-tags{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.entitlement-tags span{background:#eef2ff;color:#4f46e5;border-radius:999px;padding:4px 8px;font-size:.7rem;font-weight:700}.scheduled-banner{display:flex;align-items:center;gap:12px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:12px;padding:12px 16px;margin-bottom:20px}.scheduled-banner div{display:flex;flex-direction:column;gap:2px}.scheduled-banner span{font-size:.78rem}.section-card{padding:24px;margin-top:18px}.section-heading{margin-bottom:18px}.section-heading.compact{align-items:center}.internal-test-notice{display:flex;align-items:flex-start;gap:12px;margin:-2px 0 18px;padding:13px 15px;border:1px solid #c7d2fe;border-radius:12px;background:#f5f3ff;color:#4338ca}.internal-test-notice>i{margin-top:2px}.internal-test-notice div{display:flex;flex-direction:column;gap:3px}.internal-test-notice span{font-size:.76rem;color:#6366f1;line-height:1.55}.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.plan-card{border:1px solid #e2e8f0;border-radius:14px;padding:20px;position:relative;display:flex;flex-direction:column}.plan-card.featured{border-color:#a5b4fc;box-shadow:0 10px 28px rgba(99,102,241,.1)}.plan-card.current{border:2px solid #6366f1}.plan-card-top{display:flex;justify-content:space-between;align-items:flex-start}.plan-card h3{margin:3px 0;font-size:1.25rem}.current-badge,.recommend-badge{font-size:.66rem;padding:4px 8px;border-radius:999px;font-weight:700}.current-badge{background:#eef2ff;color:#4f46e5}.recommend-badge{background:#fef3c7;color:#a16207}.plan-description{min-height:34px;color:#64748b;font-size:.78rem}.plan-price{display:flex;align-items:baseline;gap:4px;margin:17px 0;flex-wrap:wrap}.plan-price b{font-size:1.75rem}.plan-price span{font-size:.76rem;color:#94a3b8}.plan-price small{width:100%;color:#a16207;font-size:.66rem}.plan-card ul{list-style:none;margin:0 0 24px;padding:0;display:flex;flex-direction:column;gap:10px;color:#475569;font-size:.8rem}.plan-card li{display:flex;align-items:center;gap:8px}.plan-card li i{color:#22c55e;font-size:.7rem}.consult-btn{width:100%;margin-top:auto;padding:10px 14px;border:0;border-radius:9px;background:#4f46e5;color:#fff;font-weight:750;cursor:pointer}.consult-btn:hover{background:#4338ca}.redeem-panel{margin-top:18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:13px;padding:16px}.redeem-copy{display:flex;align-items:center;gap:11px}.redeem-copy>i{width:36px;height:36px;display:grid;place-items:center;background:#ede9fe;color:#7c3aed;border-radius:10px}.redeem-copy div{display:flex;flex-direction:column}.redeem-copy span{font-size:.75rem;color:#64748b}.redeem-form{display:flex;gap:9px;margin-top:13px}.redeem-form input{flex:1;border:1px solid #dbe2ea;border-radius:9px;padding:10px 12px;outline:0}.redeem-form input:focus{border-color:#818cf8;box-shadow:0 0 0 3px #eef2ff}.redeem-form button{border:0;border-radius:9px;background:#4f46e5;color:#fff;font-weight:700;padding:0 18px;cursor:pointer}.redeem-form button:disabled{background:#c7d2fe}.form-message{margin:10px 0 0;font-size:.8rem;display:flex;gap:6px}.form-message.success{color:#15803d}.form-message.error{color:#b91c1c}.table-scroll{overflow-x:auto}.data-table{width:100%;border-collapse:collapse;font-size:.8rem}.data-table th{text-align:left;color:#64748b;font-size:.72rem;padding:9px;border-bottom:1px solid #e2e8f0}.data-table td{padding:11px 9px;border-bottom:1px solid #f1f5f9}.strong-cell{font-weight:800;color:#4f46e5}.source-badge,.status-pill{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:.68rem;font-weight:700}.source-badge{background:#f1f5f9;color:#475569}.status-pill.active{background:#dcfce7;color:#15803d}.status-pill.expired{background:#f1f5f9;color:#94a3b8}.ledger-list{border-top:1px solid #f1f5f9}.ledger-row{border-bottom:1px solid #f1f5f9}.ledger-main{width:100%;border:0;background:transparent;display:grid;grid-template-columns:38px 1fr auto 18px;align-items:center;gap:12px;padding:13px 4px;text-align:left;cursor:pointer}.ledger-main:hover{background:#fafbff}.ledger-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f1f5f9;color:#64748b}.ledger-icon.type-consume{background:#fff7ed;color:#ea580c}.ledger-icon.type-recharge,.ledger-icon.type-grant{background:#ecfdf5;color:#059669}.ledger-copy{display:flex;flex-direction:column;gap:3px}.ledger-copy strong{font-size:.84rem}.ledger-copy small,.ledger-amount small{font-size:.7rem;color:#94a3b8}.ledger-amount{font-size:.92rem;font-weight:800;text-align:right;display:flex;flex-direction:column}.ledger-amount.positive{color:#16a34a}.ledger-amount.negative{color:#dc2626}.ledger-amount.zero{color:#64748b}.expand-icon{font-size:.68rem;color:#94a3b8}.usage-detail{background:#f8fafc;border-radius:10px;margin:0 4px 12px;padding:13px}.usage-block+.usage-block{margin-top:12px}.usage-meta{display:flex;gap:12px;flex-wrap:wrap;color:#64748b;font-size:.7rem;margin-bottom:9px}.model-usage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.model-usage-card{background:#fff;border:1px solid #e2e8f0;border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:3px;font-size:.71rem;color:#64748b}.model-usage-card strong{font-size:.78rem;color:#334155}.model-usage-card b{color:#4f46e5;margin-top:3px}.pagination{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:15px;font-size:.78rem;color:#64748b}.pagination button{width:30px;height:30px;border:1px solid #dbe2ea;background:#fff;border-radius:7px}.pagination button:disabled{opacity:.4}.contact-modal-backdrop{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.55);backdrop-filter:blur(4px)}.contact-modal{position:relative;width:min(620px,100%);max-height:calc(100vh - 40px);overflow:auto;border-radius:20px;background:#fff;padding:26px;box-shadow:0 24px 70px rgba(15,23,42,.3)}.modal-close{position:absolute;right:16px;top:16px;width:34px;height:34px;border:0;border-radius:9px;background:#f1f5f9;color:#64748b;cursor:pointer}.modal-heading{display:flex;align-items:flex-start;gap:13px;padding-right:35px}.modal-heading h2{margin:4px 0;font-size:1.25rem}.modal-heading p:last-child{margin:0;color:#64748b;font-size:.8rem}.modal-icon{flex:0 0 42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#ede9fe;color:#6d28d9}.contact-layout{display:grid;grid-template-columns:160px 1fr;gap:16px;margin-top:20px}.qr-panel{border:1px solid #e2e8f0;border-radius:12px;padding:10px;text-align:center}.qr-panel img{width:138px;height:138px;object-fit:contain;display:block}.qr-panel span,.qr-panel small{display:block;margin-top:7px;font-size:.68rem;color:#64748b}.contact-details{display:flex;flex-direction:column;gap:9px}.contact-row{display:grid;grid-template-columns:86px 1fr auto;gap:8px;align-items:center;border:1px solid #e2e8f0;border-radius:10px;padding:10px}.contact-row>span{font-size:.7rem;color:#64748b}.contact-row strong{font-size:.78rem;overflow-wrap:anywhere}.contact-row button{border:0;background:#eef2ff;color:#4f46e5;border-radius:7px;padding:5px 8px;font-size:.68rem;cursor:pointer}.contact-row.no-action{grid-template-columns:86px 1fr}.default-contact-state{display:flex;align-items:flex-start;gap:10px;margin-top:18px;padding:13px 14px;border:1px solid #fde68a;border-radius:11px;background:#fffbeb;color:#92400e}.default-contact-state div{display:flex;flex-direction:column;gap:3px}.default-contact-state span{font-size:.72rem;line-height:1.5}.consult-copy-box{margin-top:16px;padding:14px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0}.consult-copy-box>div{display:flex;justify-content:space-between;gap:12px}.consult-copy-box span{font-size:.7rem;color:#64748b}.consult-copy-box p{white-space:pre-line;margin:10px 0;font-size:.8rem;color:#334155;line-height:1.6}.consult-copy-box button{border:0;border-radius:8px;background:#4f46e5;color:#fff;padding:8px 11px;font-size:.74rem;font-weight:700;cursor:pointer}.consult-copy-box button i{margin-right:6px}.security-notice{display:flex;align-items:flex-start;gap:7px;margin:13px 0 0;color:#92400e;font-size:.7rem;line-height:1.5}.security-notice i{margin-top:2px}@media(max-width:850px){.summary-grid,.plan-grid{grid-template-columns:1fr}.billing-shell{width:min(100% - 24px,1180px);padding-top:20px}.page-heading{align-items:flex-start}.section-card{padding:17px}.section-heading{align-items:flex-start;flex-direction:column;gap:5px}}@media(max-width:560px){.page-heading{flex-direction:column}.redeem-form{flex-direction:column}.redeem-form button{padding:10px}.ledger-main{grid-template-columns:36px 1fr auto}.expand-icon{display:none}.summary-value{font-size:1.7rem}.contact-modal{padding:20px}.contact-layout{grid-template-columns:1fr}.qr-panel{width:160px;margin:0 auto}.contact-row{grid-template-columns:80px 1fr auto}.consult-copy-box>div{flex-direction:column;gap:3px}}
 .contact-layout.without-qr{grid-template-columns:minmax(0,1fr)}
 .contact-layout.without-qr .contact-details{grid-column:1;width:100%}

@@ -376,6 +376,13 @@ class QAEvalHandler:
             return self._eval_one_ref_with_evidence(ref)
         return self._eval_one_ref_legacy(ref)
 
+    def _model_workers(self):
+        # The worker currently reserves one shared QA call slot. Never launch
+        # multiple provider requests against that single reservation.
+        lease = (getattr(getattr(self, 'task_obj', None), 'config', None) or {}).get('ai_slot_lease')
+        slots = int(lease['slots']) if lease else 4
+        return max(1, min(len(self.model_ids), 4, slots))
+
     def _eval_one_ref_with_evidence_v2(self, ref) -> Optional[dict]:
         """Evaluate a span-indexed reference through the auditable V2 protocol."""
         from core.quality.services.evidence_orchestrator_v2 import EvidenceV2Orchestrator
@@ -470,7 +477,7 @@ class QAEvalHandler:
                 all_model_errors[model_id] = errors
                 add_usage(usage, model_id)
             else:
-                max_workers = min(len(self.model_ids), 4)
+                max_workers = self._model_workers()
                 with ThreadPoolExecutor(max_workers=max_workers) as pool:
                     futures = {
                         pool.submit(call_model_for_evidence, model_id, prompt, package): model_id
@@ -630,7 +637,7 @@ class QAEvalHandler:
             all_model_raw[self.model_ids[0]] = results
             _add_token(usage, self.model_ids[0])
         else:
-            max_workers = min(len(self.model_ids), 4)
+            max_workers = self._model_workers()
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
                 futures = {
                     pool.submit(_call_model_for_ref, mid, prompt, signal_items_cfg): mid
@@ -911,7 +918,13 @@ class QAEvalStepHandler(BaseStepHandler):
             selected_models=model_ids,
         )
 
-        # 调用评价引擎（逐篇评价，内部已处理异常）
+        def stop_or_wait_for_slots():
+            from core.services.concurrency_service import refresh_task_slots
+            if self.executor.check_stop_signal():
+                return True
+            return not refresh_task_slots(self.task_obj, stop_checker=self.executor.check_stop_signal)
+
+        # 在引擎原有安全边界重新申请槽位，支持并发包到期降档。
         engine = QAEvalHandler(
             project_id=self.project_id,
             ref_ids=ref_ids_to_eval,
@@ -920,7 +933,7 @@ class QAEvalStepHandler(BaseStepHandler):
             user_id=user_id,
             resume_ref_ids=cfg.get('resume_ref_ids', []),
             resume_all_incomplete=bool(cfg.get('resume_incomplete_only')),
-            stop_checker=self.executor.check_stop_signal,
+            stop_checker=stop_or_wait_for_slots,
         )
         # 透传 task_obj，供结算时写入 TokenUsageLog
         engine.task_obj = self.task_obj
@@ -936,7 +949,7 @@ class QAEvalStepHandler(BaseStepHandler):
         ).select_related('fulltext_file', 'fulltext_asset'))
 
         for ref_index, ref in enumerate(refs):
-            if self.executor.check_stop_signal():
+            if stop_or_wait_for_slots():
                 self.logger.warning('[QA] 检测到停止信号，中断评价')
                 remaining_ids = [item.id for item in refs[ref_index:]]
                 QAReference.objects.filter(

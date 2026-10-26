@@ -25,6 +25,14 @@ local queue_cutoff_ts = tonumber(ARGV[8])
 
 redis.call('ZREMRANGEBYSCORE', leases_key, '-inf', now_ts)
 redis.call('ZREMRANGEBYSCORE', queue_key, '-inf', queue_cutoff_ts)
+-- A queued task may change its requested size after an entitlement expires.
+-- Remove its obsolete queue member or it can block its own new request.
+local task_prefix = string.match(member, '^[^:]+:')
+for _, queued in ipairs(redis.call('ZRANGE', queue_key, 0, -1)) do
+    if queued ~= member and string.sub(queued, 1, string.len(task_prefix)) == task_prefix then
+        redis.call('ZREM', queue_key, queued)
+    end
+end
 if redis.call('ZSCORE', leases_key, member) ~= false then
     redis.call('ZADD', leases_key, expires_ts, member)
     redis.call('ZREM', queue_key, member)
@@ -97,6 +105,32 @@ def slots_for_task(task, user_limit: int) -> int:
         configured = (task.config or {}).get('concurrency')
         return min(user_limit, max(1, int(configured or user_limit)))
     return 1
+
+
+def refresh_task_slots(task, *, stop_checker=lambda: False) -> int:
+    """Reacquire only at a safe boundary, after all current calls have finished.
+
+    Release before waiting so downgraded tasks cannot deadlock by retaining
+    old leases. Requests already sent to providers are never interrupted.
+    """
+    if not (task.config or {}).get('ai_slot_lease'):
+        return slots_for_task(task, get_user_concurrency(task.created_by))
+    release(task.pk)
+    while not stop_checker():
+        user_limit = get_user_concurrency(task.created_by)
+        slots = slots_for_task(task, user_limit)
+        if try_acquire(task.pk, slots, user_id=task.created_by_id, user_limit=user_limit):
+            lease = {
+                'user_id': task.created_by_id, 'slots': slots, 'user_limit': user_limit,
+                'redis_fallback': acquire_used_fallback(task.pk),
+            }
+            task.refresh_from_db(fields=['config'])
+            task.config = {**(task.config or {}), 'ai_slot_lease': lease}
+            task.save(update_fields=['config'])
+            return slots
+        time.sleep(1)
+    release(task.pk)
+    return 0
 
 
 def _make_member(task_id: int, user_id: int, slots: int) -> str:

@@ -321,7 +321,7 @@ class Command(BaseCommand):
 
     def _environment(self):
         with connection.cursor() as cursor:
-            cursor.execute('SELECT VERSION()')
+            cursor.execute('SELECT sqlite_version()' if connection.vendor == 'sqlite' else 'SELECT VERSION()')
             db_version = cursor.fetchone()[0]
         return {
             'os': platform.platform(),

@@ -176,6 +176,17 @@ def redeem(request):
     if not code_str:
         return Response({"error": "code 不能为空"}, status=http_status.HTTP_400_BAD_REQUEST)
 
+    if RechargeCode.objects.filter(code=code_str, code_type='ADDON').exists():
+        from core.services.billing_addon_service import AddonError, redeem_addon_code
+        from core.services.entitlement_service import resolve_user_entitlements
+        from core.services.billing_service import get_balance
+        try:
+            result = redeem_addon_code(request.user, code_str)
+        except AddonError as exc:
+            return Response({'error': str(exc), 'code': 'addon_unavailable'}, status=400)
+        return Response({**result, 'new_balance': get_balance(request.user),
+                         'plan': resolve_user_entitlements(request.user).as_dict()})
+
     if getattr(settings, 'CREDIT_BATCH_LEDGER_ENABLED', False):
         from core.services.credit_ledger_service import CreditLedgerError, redeem_credit_code
 
@@ -312,6 +323,7 @@ def plans(request):
     """Return published personal plan versions and the caller's current rights."""
     from core.models_billing import PlanPriceVersion, UserPlanEntitlement
     from core.services.entitlement_service import resolve_user_entitlements
+    from core.services.billing_addon_service import catalog
 
     now = timezone.now()
     rows = (
@@ -330,6 +342,7 @@ def plans(request):
     ).select_related('price_version__plan').order_by('starts_at', 'pk')
     return Response({
         'current': resolve_user_entitlements(request.user).as_dict(),
+        'addons': catalog(request.user),
         'scheduled': [{
             'plan_code': item.price_version.plan.code,
             'plan_name': item.price_version.plan.name,
@@ -376,6 +389,7 @@ def credit_batches(request):
         })
     rows = CreditGrantBatch.objects.filter(account=account).select_related(
         'entitlement__price_version__plan',
+        'addon_version__product',
     ).order_by(
         models.F('expires_at').asc(nulls_last=True), '-created_at',
     )
@@ -391,6 +405,7 @@ def credit_batches(request):
             'id': row.pk,
             'batch_type': row.batch_type,
             'batch_type_display': row.get_batch_type_display(),
+            'addon_name': row.addon_version.product.name if row.addon_version_id else '',
             'granted_amount': row.granted_amount,
             'remaining_amount': row.remaining_amount,
             'reserved_amount': row.reserved_amount,

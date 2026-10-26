@@ -26,6 +26,9 @@ class ResolvedEntitlements:
     entitlement_id: int | None = None
     starts_at: str | None = None
     expires_at: str | None = None
+    base_ai_call_slots: int | None = None
+    addon_ai_call_slots: int | None = None
+    addon_expires_at: str | None = None
 
     def as_dict(self):
         return asdict(self)
@@ -177,18 +180,31 @@ def resolve_user_entitlements(user, *, sync=True) -> ResolvedEntitlements:
         for value in (project_override, slots_override, storage_override)
     ):
         source = 'admin_override'
+    from core.services.billing_addon_service import active_concurrency_grant
+    grant = active_concurrency_grant(user, now)
+    addon_slots = grant.version.target_slots if grant else 0
+    addon_end = None
+    if grant:
+        from core.models_billing import UserConcurrencyGrant
+        addon_end = UserConcurrencyGrant.objects.filter(
+            user=user, cancelled=False, expires_at__gt=now,
+            version__target_slots=addon_slots,
+        ).order_by('-expires_at').values_list('expires_at', flat=True).first()
     return ResolvedEntitlements(
         plan_code=code,
         plan_name=name,
         source=source,
         project_limit=project_override if project_override is not None else project_limit,
-        ai_call_slots=slots_override if slots_override is not None else ai_call_slots,
+        ai_call_slots=slots_override if slots_override is not None else max(ai_call_slots, addon_slots),
         storage_limit_mb=(
             storage_override if storage_override is not None else storage_limit_mb
         ),
         entitlement_id=entitlement_id,
         starts_at=starts_at,
         expires_at=expires_at,
+        base_ai_call_slots=ai_call_slots,
+        addon_ai_call_slots=addon_slots,
+        addon_expires_at=addon_end.isoformat() if addon_end else None,
     )
 
 

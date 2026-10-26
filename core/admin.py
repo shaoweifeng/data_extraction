@@ -13,6 +13,7 @@ from .models_billing import (
     PlanCatalog, PlanPriceVersion, UserPlanEntitlement, PlanBillingPeriod,
     CreditGrantBatch, CreditAllocation, ModelBillingRate, ModelUsageDetail,
     CreditReservation, CreditReservationAllocation,
+    AddonProduct, AddonProductVersion, UserConcurrencyGrant,
 )
 
 
@@ -583,7 +584,7 @@ class TokenUsageLogAdmin(admin.ModelAdmin):
 @admin.register(RechargeCode)
 class RechargeCodeAdmin(admin.ModelAdmin):
     list_display  = [
-        'code', 'code_type', 'plan_price_version', 'credits', 'valid_months',
+        'code', 'code_type', 'plan_price_version', 'addon_version', 'credits', 'valid_months',
         'batch_no', 'created_by', 'is_used', 'used_by_display', 'used_at',
         'expires_at', 'note', 'created_at',
     ]
@@ -602,10 +603,10 @@ class RechargeCodeAdmin(admin.ModelAdmin):
     fieldsets = (
         ('兑换码信息', {
             'fields': (
-                'code', 'code_type', 'credits', 'plan_price_version',
+                'code', 'code_type', 'credits', 'plan_price_version', 'addon_version',
                 'valid_months', 'batch_no', 'note', 'expires_at',
             ),
-            'description': '积分码填写 credits；套餐码选择已发布价格版本并填写有效月数。',
+            'description': '积分码填写 credits；套餐码选择套餐版本；加购码选择商品版本且 credits 填 0。商品权益及有效期均由版本决定。',
         }),
         ('使用状态（只读）', {
             'fields': ('is_used', 'used_by', 'used_at'),
@@ -657,10 +658,10 @@ class RechargeCodeAdmin(admin.ModelAdmin):
             try:
                 count   = max(1, min(500, int(request.POST.get('count', 10))))
                 code_type = request.POST.get('code_type', 'CREDIT').upper()
-                if code_type not in {'CREDIT', 'PLAN'}:
+                if code_type not in {'CREDIT', 'PLAN', 'ADDON'}:
                     raise ValueError('不支持的兑换码类型')
                 credits = max(0 if code_type == 'PLAN' else 1, int(request.POST.get('credits', 100)))
-                if code_type == 'PLAN':
+                if code_type in {'PLAN', 'ADDON'}:
                     credits = 0
                 prefix = normalize_recharge_code_prefix(request.POST.get('prefix') or code_type)
                 note    = request.POST.get('note', '').strip()
@@ -670,6 +671,11 @@ class RechargeCodeAdmin(admin.ModelAdmin):
                     batch_no = f"ADMIN-{timezone.now():%Y%m%d-%H%M%S}-{secrets.token_hex(3).upper()}"
                 valid_months = max(1, min(36, int(request.POST.get('valid_months', 1))))
                 plan_version = None
+                addon_version = None
+                if code_type == 'ADDON':
+                    addon_version = AddonProductVersion.objects.get(
+                        pk=int(request.POST.get('addon_version')), status='published', product__is_active=True,
+                    )
                 if code_type == 'PLAN':
                     from core.models_billing import PlanPriceVersion
                     plan_version = PlanPriceVersion.objects.get(
@@ -695,6 +701,7 @@ class RechargeCodeAdmin(admin.ModelAdmin):
                             code_type=code_type,
                             credits=credits,
                             plan_price_version=plan_version,
+                            addon_version=addon_version,
                             valid_months=valid_months,
                             batch_no=batch_no,
                             note=note,
@@ -712,6 +719,8 @@ class RechargeCodeAdmin(admin.ModelAdmin):
                     f'{plan_version.plan.name} × {valid_months}个月'
                     if plan_version else f'{credits} credits/张'
                 )
+                if addon_version:
+                    label = str(addon_version)
                 messages.success(request, f'成功生成 {len(created)} 张兑换码（{label}）')
                 return render(request, 'admin/rechargecode_batch_result.html', {
                     'title': '批量生成兑换码',
@@ -729,6 +738,7 @@ class RechargeCodeAdmin(admin.ModelAdmin):
         return render(request, 'admin/rechargecode_batch_generate.html', {
             'title': '批量生成兑换码',
             'opts': self.model._meta,
+            'addon_versions': AddonProductVersion.objects.filter(status='published', product__is_active=True).select_related('product'),
             'plan_versions': PlanPriceVersion.objects.filter(
                 status='published', plan__is_active=True,
             ).select_related('plan').order_by('monthly_price_cny'),
@@ -861,6 +871,49 @@ class PlanCatalogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(AddonProduct)
+class AddonProductAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'kind', 'is_active', 'sort_order']
+    list_filter = ['kind', 'is_active']
+
+    def get_readonly_fields(self, request, obj=None):
+        return ('code', 'kind') if obj and obj.versions.exists() else ()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AddonProductVersion)
+class AddonProductVersionAdmin(BillingVersionAdmin):
+    list_display = ['product', 'version', 'status', 'reference_price_cny', 'reference_cost',
+                    'credits', 'target_slots', 'valid_months', 'requires_subscription']
+    list_filter = ['kind', 'status']
+    actions = ['publish_selected_versions', 'revoke_selected_versions']
+
+    @admin.display(description='模型参考成本（不含平台成本）')
+    def reference_cost(self, obj):
+        from decimal import Decimal
+        return f'¥{obj.credits * Decimal("0.00216"):.2f}' if obj.credits else '容量成本待测'
+
+    def get_publish_queryset(self, queryset):
+        for obj in queryset:
+            obj.full_clean()
+        return queryset
+
+    @admin.action(description='撤销所选商品版本（未使用码将不可兑换）')
+    def revoke_selected_versions(self, request, queryset):
+        for obj in queryset.filter(status='published'):
+            obj.status = 'revoked'
+            obj.save(update_fields=['status'])
+            self.log_change(request, obj, '撤销商品版本；已生效权益不受影响')
+
+
+@admin.register(UserConcurrencyGrant)
+class UserConcurrencyGrantAdmin(BillingAuditAdmin):
+    list_display = ['user', 'version', 'starts_at', 'expires_at', 'cancelled']
+    raw_id_fields = ['user', 'source_code']
 
 
 @admin.register(PlanPriceVersion)

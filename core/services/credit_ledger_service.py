@@ -569,7 +569,9 @@ def release_task_reservation(task, *, status='released', reason='') -> int:
 @transaction.atomic
 def redeem_credit_code(user, code_str: str):
     from core.models_billing import RechargeCode
+    from django.contrib.auth import get_user_model
 
+    user = get_user_model().objects.select_for_update().get(pk=user.pk)
     code = RechargeCode.objects.select_for_update().filter(code=code_str).first()
     if code is None:
         raise CreditLedgerError('code_not_found')

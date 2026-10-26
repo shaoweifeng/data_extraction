@@ -29,6 +29,7 @@
       <select name="code_type" id="code-type" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px">
         <option value="CREDIT">积分码</option>
         <option value="PLAN">套餐码</option>
+        <option value="ADDON">加购商品码（积分包 / 体验 / 并发）</option>
       </select>
     </div>
 
@@ -45,6 +46,16 @@
         <label style="display:block;font-weight:bold;margin-bottom:4px">有效月数</label>
         <input type="number" name="valid_months" value="1" min="1" max="36" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box">
       </div>
+    </div>
+
+    <div id="addon-fields" style="display:none;margin-bottom:16px">
+      <label for="addon-version">加购商品版本（权益及有效期由版本决定）</label>
+      <select id="addon-version" name="addon_version" style="width:100%;padding:8px">
+        {% for item in addon_versions %}
+        <option value="{{ item.id }}">{{ item.product.name }} · ¥{{ item.reference_price_cny }} · {{ item.valid_months }}个月 · {{ item.version }}</option>
+        {% endfor %}
+      </select>
+      <p>订阅积分包和并发包在兑换时校验有效套餐；追加体验每份 5,000 积分。通用积分码仅用于历史兼容或人工发放。</p>
     </div>
 
     <div id="credit-fields" style="margin-bottom:16px">
@@ -93,7 +104,8 @@
   function syncCodeType() {
     const isPlan = typeSelect.value === 'PLAN';
     planFields.style.display = isPlan ? 'block' : 'none';
-    creditFields.style.display = isPlan ? 'none' : 'block';
+    creditFields.style.display = typeSelect.value === 'CREDIT' ? 'block' : 'none';
+    document.getElementById('addon-fields').style.display = typeSelect.value === 'ADDON' ? 'block' : 'none';
   }
   typeSelect.addEventListener('change', syncCodeType);
   syncCodeType();

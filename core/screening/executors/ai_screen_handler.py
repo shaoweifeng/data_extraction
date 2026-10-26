@@ -63,6 +63,10 @@ class AIScreenHandler(BaseStepHandler):
                     })
                     return False
 
+                from core.services.concurrency_service import refresh_task_slots
+                concurrency = refresh_task_slots(self.task_obj, stop_checker=self.check_stop_signal)
+                if not concurrency:
+                    continue
                 rows = next_result_batch(run, concurrency)
                 if not rows:
                     break
@@ -150,12 +154,11 @@ class AIScreenHandler(BaseStepHandler):
         self.logger.info(f'[计费] 余额预检通过，预估消耗 {estimated} credits')
 
     def _concurrency(self) -> int:
-        if 'concurrency' in self.config:
-            return max(1, int(self.config['concurrency']))
         from core.services.concurrency_service import get_user_concurrency
 
         user = self.task_obj.created_by if self.task_obj else None
-        return max(1, int(get_user_concurrency(user)))
+        limit = get_user_concurrency(user)
+        return min(limit, max(1, int(self.config.get('concurrency') or limit)))
 
     def _report_progress(self, current: int, total: int) -> None:
         self._send_heartbeat(current, total)

@@ -193,7 +193,7 @@ class RechargeCode(models.Model):
     credits    = models.IntegerField(verbose_name="面值(credits)")
     code_type  = models.CharField(
         max_length=16,
-        choices=[('CREDIT', '积分码'), ('PLAN', '套餐码')],
+        choices=[('CREDIT', '积分码'), ('PLAN', '套餐码'), ('ADDON', '加购商品码')],
         default='CREDIT',
         verbose_name="兑换码类型",
     )
@@ -201,6 +201,10 @@ class RechargeCode(models.Model):
         'PlanPriceVersion', null=True, blank=True,
         on_delete=models.PROTECT,
         related_name='recharge_codes', verbose_name="套餐价格版本",
+    )
+    addon_version = models.ForeignKey(
+        'AddonProductVersion', null=True, blank=True, on_delete=models.PROTECT,
+        related_name='recharge_codes', verbose_name='加购商品版本',
     )
     valid_months = models.PositiveSmallIntegerField(default=1, verbose_name="套餐有效月数")
     batch_no = models.CharField(max_length=64, blank=True, default='', verbose_name="发行批次")
@@ -233,7 +237,9 @@ class RechargeCode(models.Model):
             status_str = f"已被 {self.used_by.username} 使用"
         else:
             status_str = "已使用（原用户已删除）"
-        if self.code_type == 'PLAN' and self.plan_price_version_id:
+        if self.code_type == 'ADDON' and self.addon_version_id:
+            value = str(self.addon_version)
+        elif self.code_type == 'PLAN' and self.plan_price_version_id:
             value = f"{self.plan_price_version.plan.name} × {self.valid_months}个月"
         else:
             value = f"{self.credits} credits"
@@ -244,7 +250,7 @@ class RechargeCode(models.Model):
         from django.utils import timezone
         if self.is_used:
             return False
-        if self.expires_at and self.expires_at < timezone.now():
+        if self.expires_at and self.expires_at <= timezone.now():
             return False
         return True
 
@@ -252,6 +258,15 @@ class RechargeCode(models.Model):
         from django.core.exceptions import ValidationError
 
         errors = {}
+        if self.code_type == 'ADDON':
+            if not self.addon_version_id:
+                errors['addon_version'] = '加购码必须选择商品版本。'
+            elif self.addon_version.status != 'published':
+                errors['addon_version'] = '只能关联已发布商品版本。'
+            if self.credits != 0 or self.plan_price_version_id:
+                errors['credits'] = '加购码权益由商品版本决定，credits 必须为 0，不能关联套餐。'
+        elif self.addon_version_id:
+            errors['addon_version'] = '只有加购码可以关联加购商品。'
         if self.code_type == 'CREDIT':
             if self.credits <= 0:
                 errors['credits'] = '积分码面值必须大于 0。'
@@ -266,6 +281,89 @@ class RechargeCode(models.Model):
                 errors['valid_months'] = '套餐有效月数必须大于 0。'
         if errors:
             raise ValidationError(errors)
+
+
+class AddonProduct(models.Model):
+    KIND_CHOICES = [('CREDIT', '订阅积分包'), ('TRIAL', '追加体验积分'), ('CONCURRENCY', '并发升级')]
+    code = models.CharField(max_length=40, unique=True, verbose_name='商品编码')
+    name = models.CharField(max_length=80, verbose_name='名称')
+    kind = models.CharField(max_length=16, choices=KIND_CHOICES, verbose_name='类型')
+    is_active = models.BooleanField(default=True, verbose_name='上架')
+    sort_order = models.PositiveIntegerField(default=0, verbose_name='排序')
+
+    class Meta:
+        db_table = 'plat_addon_product'
+        verbose_name = '加购商品'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+
+
+class AddonProductVersion(models.Model):
+    product = models.ForeignKey(AddonProduct, on_delete=models.PROTECT, related_name='versions')
+    version = models.CharField(max_length=80, unique=True, verbose_name='版本号')
+    status = models.CharField(max_length=16, choices=[('draft', '草稿'), ('published', '已发布'), ('revoked', '已撤销')], default='draft')
+    kind = models.CharField(max_length=16, choices=AddonProduct.KIND_CHOICES)
+    reference_price_cny = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='参考售价')
+    credits = models.PositiveIntegerField(default=0, verbose_name='积分')
+    target_slots = models.PositiveSmallIntegerField(default=0, verbose_name='目标并发')
+    valid_months = models.PositiveSmallIntegerField(default=12, verbose_name='权益有效月数')
+    requires_subscription = models.BooleanField(default=True, verbose_name='要求有效套餐')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'plat_addon_product_version'
+        verbose_name = '加购商品版本'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return f'{self.product.name} · {self.version}'
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.product_id and self.kind != self.product.kind:
+            raise ValidationError('版本类型必须与商品类型一致。')
+        if self.reference_price_cny < 0 or self.valid_months < 1:
+            raise ValidationError('价格不得为负，有效月数必须大于 0。')
+        if self.kind == 'CONCURRENCY':
+            if self.target_slots not in (4, 8, 16) or self.credits or not self.requires_subscription:
+                raise ValidationError('并发包必须要求套餐，目标为 4/8/16，积分为 0。')
+        elif self.kind in ('CREDIT', 'TRIAL'):
+            if not self.credits or self.target_slots or self.requires_subscription != (self.kind == 'CREDIT'):
+                raise ValidationError('积分包必须有积分且无并发；仅订阅积分包要求套餐。')
+        else:
+            raise ValidationError('未知商品类型。')
+
+    def save(self, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if self.pk:
+            previous = type(self).objects.filter(pk=self.pk).values().first()
+            if previous and previous['status'] != 'draft':
+                changed = any(
+                    previous[field.attname] != getattr(self, field.attname)
+                    for field in self._meta.fields if field.name != 'status'
+                )
+                if changed or (previous['status'] == 'revoked' and self.status != 'revoked'):
+                    raise ValidationError('已发布商品版本不可修改，请创建新版本。')
+        super().save(*args, **kwargs)
+
+
+class UserConcurrencyGrant(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='concurrency_grants')
+    version = models.ForeignKey(AddonProductVersion, on_delete=models.PROTECT)
+    source_code = models.OneToOneField(RechargeCode, on_delete=models.PROTECT)
+    starts_at = models.DateTimeField()
+    expires_at = models.DateTimeField(db_index=True)
+    cancelled = models.BooleanField(default=False)
+    anchor_day = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        db_table = 'plat_user_concurrency_grant'
+        verbose_name = '用户并发升级权益'
+        verbose_name_plural = verbose_name
+        indexes = [models.Index(fields=['user', 'expires_at'])]
+        constraints = [models.CheckConstraint(condition=models.Q(expires_at__gt=models.F('starts_at')), name='addon_grant_positive_period')]
 
 
 # ============================================================================
@@ -397,6 +495,7 @@ class CreditGrantBatch(models.Model):
     ]
 
     account = models.ForeignKey(CreditAccount, on_delete=models.CASCADE, related_name='grant_batches')
+    addon_version = models.ForeignKey(AddonProductVersion, null=True, blank=True, on_delete=models.PROTECT)
     batch_type = models.CharField(max_length=20, choices=TYPE_CHOICES, db_index=True)
     batch_key = models.CharField(max_length=160, unique=True, verbose_name="批次幂等键")
     granted_amount = models.PositiveIntegerField(verbose_name="发放积分")
