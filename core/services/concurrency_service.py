@@ -119,7 +119,8 @@ def refresh_task_slots(task, *, stop_checker=lambda: False) -> int:
     while not stop_checker():
         user_limit = get_user_concurrency(task.created_by)
         slots = slots_for_task(task, user_limit)
-        if try_acquire(task.pk, slots, user_id=task.created_by_id, user_limit=user_limit):
+        if try_acquire(task.pk, slots, user_id=task.created_by_id, user_limit=user_limit,
+                       **({'strict': True} if task.task_type == 'rescreen_ai' else {})):
             lease = {
                 'user_id': task.created_by_id, 'slots': slots, 'user_limit': user_limit,
                 'redis_fallback': acquire_used_fallback(task.pk),
@@ -137,11 +138,15 @@ def _make_member(task_id: int, user_id: int, slots: int) -> str:
     return f'{task_id}:{user_id}:{slots}'
 
 
-def try_acquire(task_id: int, slots: int, *, user_id: int = 0, user_limit: int | None = None) -> bool:
+def try_acquire(task_id: int, slots: int, *, user_id: int = 0, user_limit: int | None = None, strict=False) -> bool:
     global_limit = int(getattr(settings, 'AI_SCREEN_MAX_GLOBAL_THREADS', 64))
     user_limit = max(1, int(user_limit or global_limit))
     now = time.time()
     ttl = max(60, int(getattr(settings, 'AI_SLOT_LEASE_TTL_SECONDS', 86400)))
+    if strict:
+        # A long provider call must not outlive its leased slot. The worker's
+        # hard timeout/recovery owns cleanup if it dies between call boundaries.
+        ttl = max(ttl, settings.RESCREEN_AI_HARD_TIME_LIMIT + 300)
     queue_ttl = max(60, int(getattr(settings, 'AI_SLOT_QUEUE_TTL_SECONDS', ttl)))
     member = _make_member(task_id, user_id, slots)
     try:
@@ -157,6 +162,8 @@ def try_acquire(task_id: int, slots: int, *, user_id: int = 0, user_limit: int |
         _FALLBACK_TASKS.discard(task_id)
         return acquired
     except Exception as exc:
+        if strict:
+            raise RuntimeError('AI 并发服务不可用，复筛不会绕过槽位限制') from exc
         logger.warning('[并发] Redis 占槽失败，降级执行 task=%s: %s', task_id, exc)
         _FALLBACK_TASKS.add(task_id)
         return True

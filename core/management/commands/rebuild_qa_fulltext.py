@@ -18,6 +18,7 @@ class Command(BaseCommand):
         scope.add_argument('--project-id', type=int)
         scope.add_argument('--retry-report')
         parser.add_argument('--limit', type=int, default=100)
+        parser.add_argument('--asset-kind', choices=['qa', 'shared'], default='qa')
         parser.add_argument('--dry-run', action='store_true')
         parser.add_argument('--resume', action='store_true')
         parser.add_argument('--report')
@@ -27,7 +28,9 @@ class Command(BaseCommand):
         if limit <= 0 or limit > 1000:
             raise CommandError('--limit 必须在 1 到 1000 之间。')
 
-        queryset = QAFulltextAsset.objects.exclude(raw_file='').order_by('id')
+        from core.fulltext.models import FulltextAsset
+        model = FulltextAsset if options['asset_kind'] == 'shared' else QAFulltextAsset
+        queryset = model.objects.exclude(raw_file='').order_by('id')
         if options['asset_id'] is not None:
             queryset = queryset.filter(pk=options['asset_id'])
         elif options['project_id'] is not None:
@@ -58,8 +61,15 @@ class Command(BaseCommand):
         failed = []
         for asset_id in asset_ids:
             try:
-                process_fulltext_asset(asset_id, force=True)
-                asset = QAFulltextAsset.objects.only(
+                if options['asset_kind'] == 'shared':
+                    from core.fulltext.services import rebuild_asset
+                    from core.fulltext.processing import process_asset
+                    shared = model.objects.select_related('project__owner').get(pk=asset_id)
+                    rebuild_asset(shared, shared.project.owner, schedule=False)
+                    process_asset(asset_id)
+                else:
+                    process_fulltext_asset(asset_id, force=True)
+                asset = model.objects.only(
                     'status', 'error_code', 'chunk_count',
                 ).get(pk=asset_id)
                 if asset.status == 'ready':

@@ -23,11 +23,11 @@ def export_excel(request):
     from core.models import ActivityLog
     from core.quality.exporters.excel import export_qa_excel
 
-    filename, content = export_qa_excel(
-        project,
-        body['quality_method'],
-        body['include_unconfirmed'],
-    )
+    from core.quality.exporters.source_metadata import SourceMetadataExportTooLarge
+    try:
+        filename, content = export_qa_excel(project, body['quality_method'], body['include_unconfirmed'])
+    except SourceMetadataExportTooLarge as exc:
+        return _json_err(str(exc), 413)
     response = HttpResponse(
         content,
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

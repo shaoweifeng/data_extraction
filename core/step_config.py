@@ -289,6 +289,33 @@ STEP_CONFIGURATIONS = {
     # ========================================================================
     # 阶段3: 文献复筛（手动）
     # ========================================================================
+    "rescreen_import": {
+        "name": "导入复筛题录", "stage_key": "SCREEN_2", "execution_mode": "async",
+        "dependencies": [], "timeout": 1800,
+        "retry_policy": {"max_retries": 0},
+        "monitoring": {"progress_type": "count", "progress_unit": "refs"},
+        "metadata_template": {},
+    },
+    "rescreen_pdf": {
+        "name": "处理私有全文", "stage_key": "SCREEN_2", "execution_mode": "async",
+        "dependencies": [], "retry_policy": {"max_retries": 0}, "metadata_template": {},
+    },
+    "rescreen_fetch": {
+        "name": "查找文献全文", "stage_key": "SCREEN_2", "execution_mode": "async",
+        "dependencies": [], "retry_policy": {"max_retries": 0}, "metadata_template": {},
+    },
+    "rescreen_export": {
+        "name": "导出复筛结果", "stage_key": "SCREEN_2", "execution_mode": "async",
+        "timeout": 1920,
+        "dependencies": [], "retry_policy": {"max_retries": 0}, "metadata_template": {},
+        "monitoring": {"progress_type": "count", "progress_unit": "refs"},
+    },
+    "rescreen_ai": {
+        "name": "AI全文复筛", "stage_key": "SCREEN_2", "execution_mode": "async",
+        "dependencies": [], "timeout": 21720,
+        "retry_policy": {"max_retries": 0}, "metadata_template": {},
+        "monitoring": {"progress_type": "count", "progress_unit": "refs"},
+    },
     "SCREEN_2": {
         "name": "文献复筛",
         "stage_key": "SCREEN_2",
@@ -510,7 +537,13 @@ STAGE_DEFINITIONS = [
         "stage_key": "SCREEN_2",
         "name": "文献复筛",
         "order": 30,
-        "steps": []
+        "steps": [
+            {"step_key": "rescreen_import", "name": "导入复筛题录", "order": 10, "can_skip": False},
+            {"step_key": "rescreen_pdf", "name": "处理私有全文", "order": 15, "can_skip": False},
+            {"step_key": "rescreen_fetch", "name": "查找文献全文", "order": 20, "can_skip": True},
+            {"step_key": "rescreen_ai", "name": "AI全文复筛", "order": 30, "can_skip": True},
+            {"step_key": "rescreen_export", "name": "导出复筛结果", "order": 50, "can_skip": False},
+        ]
     },
     {
         "stage_key": "QUALITY",
@@ -702,6 +735,12 @@ def get_timeout(step_key: str) -> int:
     Returns:
         超时秒数，None表示无限制
     """
+    if step_key == 'rescreen_ai':
+        from django.conf import settings
+        return settings.RESCREEN_AI_HARD_TIME_LIMIT
+    if step_key == 'rescreen_export':
+        from django.conf import settings
+        return settings.RESCREEN_EXPORT_HARD_TIME_LIMIT
     config = get_step_config(step_key)
     return config.get("timeout")
 

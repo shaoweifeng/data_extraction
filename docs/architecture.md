@@ -56,6 +56,7 @@ web/src/
 - 管理员可以访问所有项目；普通用户只能访问自己的项目。
 - 暂不实现成员协作。
 - QA 从初筛导入时先清空该项目当前 QA 文献、评价结果、图表和关联设置。
+- 复筛归属 `core/rescreening` 与 `features/rescreening`；私有 PDF 归属 `core/fulltext`，QA 通过公共资产适配器读取。复筛至 QA 只增量追加人工确认纳入项；来源变化先确认差异，已有 QA 快照及人工/AI 成果不自动覆盖。导出任务生命周期与格式渲染分别归属 `services/exports.py` 和 `services/export_rendering.py`。
 - 未人工审阅的初筛文件默认采用 AI 判断。
 - 删除项目为直接清空，不保留软删除或回收站。
 - 图表由 Python/Matplotlib 异步生成，不依赖 R 或 robvis。

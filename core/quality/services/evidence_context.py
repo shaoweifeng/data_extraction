@@ -37,10 +37,11 @@ def get_signal_evidence_context(
         raise EvidenceRetrievalError('该证据块不属于当前评价结果。')
 
     try:
-        asset = signal_item.qa_ref.fulltext_asset
+        from core.fulltext.access import asset_for_qa
+        asset = asset_for_qa(signal_item.qa_ref)
     except Exception as exc:
         raise EvidenceRetrievalError('该文献的全文证据已不可用。') from exc
-    if asset.project_id != signal_item.qa_ref.project_id:
+    if not asset or asset.project_id != signal_item.qa_ref.project_id:
         raise EvidenceRetrievalError('全文资产与项目不匹配。')
 
     chunks = load_verified_chunks(asset)

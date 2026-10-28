@@ -30,6 +30,7 @@ from core.ai import (
 )
 
 logger = logging.getLogger(__name__)
+from core.fulltext.access import asset_for_qa
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -38,11 +39,10 @@ logger = logging.getLogger(__name__)
 
 def extract_pdf_meta(ref_id: int):
     """Compatibility wrapper for callers predating the full-text asset service."""
-    from core.models import QAFulltextAsset
-    from core.quality.services.fulltext import process_fulltext_asset
+    from core.models import QAReference
+    from core.fulltext.access import process_for_qa
     try:
-        asset_id = QAFulltextAsset.objects.only('id').get(qa_reference_id=ref_id).id
-        process_fulltext_asset(asset_id)
+        process_for_qa(QAReference.objects.select_related('shared_fulltext_asset', 'fulltext_asset').get(pk=ref_id))
     except Exception as e:
         logger.warning('extract_pdf_meta ref_id=%s failed=%s', ref_id, type(e).__name__)
 
@@ -268,7 +268,7 @@ class QAEvalHandler:
         refs = list(QAReference.objects.filter(
             pk__in=self.ref_ids,
             quality_method__in=ai_supported_method_keys(),
-        ).select_related('fulltext_file', 'fulltext_asset'))
+        ).select_related('fulltext_file', 'fulltext_asset', 'shared_fulltext_asset'))
 
         logger.info(f'[QA] 开始评价 project_id={self.project_id}，共 {len(refs)} 篇，模式={self.eval_mode}，模型={self.model_ids}')
 
@@ -362,7 +362,7 @@ class QAEvalHandler:
     def _eval_one_ref(self, ref) -> Optional[dict]:
         self.was_stopped = False
         self.last_ref_token_stats = None
-        asset = getattr(ref, 'fulltext_asset', None)
+        asset = asset_for_qa(ref)
         from core.quality.services.evidence_rollout import evidence_retrieval_enabled_for
         from core.quality.services.fulltext_chunks import CHUNKING_VERSION
         if (
@@ -757,7 +757,7 @@ class QAEvalHandler:
         - content=None:       无内容，需跳过
         """
         # 新链路优先读取已经校验并提取的私有文本，不在 AI 线程重复解析 PDF。
-        asset = getattr(ref, 'fulltext_asset', None)
+        asset = asset_for_qa(ref)
         if asset and asset.status == 'ready' and asset.extraction_status == 'completed':
             try:
                 asset.extracted_text_file.open('rb')
@@ -946,7 +946,7 @@ class QAEvalStepHandler(BaseStepHandler):
         refs = list(QAReference.objects.filter(
             pk__in=ref_ids_to_eval,
             quality_method__in=ai_supported_method_keys(),
-        ).select_related('fulltext_file', 'fulltext_asset'))
+        ).select_related('fulltext_file', 'fulltext_asset', 'shared_fulltext_asset'))
 
         for ref_index, ref in enumerate(refs):
             if stop_or_wait_for_slots():

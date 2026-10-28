@@ -30,6 +30,7 @@ from typing import Dict
 
 from django.utils import timezone
 from django.db import transaction
+from core.ai.features import AI_TASK_TYPES
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +103,8 @@ class TaskScheduler:
         Returns:
             创建的任务对象
         """
+        if step_key in ('rescreen_import', 'rescreen_pdf', 'rescreen_fetch', 'rescreen_ai', 'rescreen_export'):
+            raise ValueError('请通过复筛页面的专用接口启动任务。')
         config = get_step_config(step_key)
         mode = config.get("execution_mode", "sync")
 
@@ -195,7 +198,7 @@ class TaskScheduler:
         if task.status not in (TaskStatus.QUEUING, TaskStatus.RUNNING, TaskStatus.PENDING):
             return False
 
-        if task.status == TaskStatus.QUEUING and task.task_type in {'ai_screen', 'qa_eval'}:
+        if task.status == TaskStatus.QUEUING and task.task_type in AI_TASK_TYPES:
             from core.services.concurrency_service import cancel_queue, get_user_concurrency
 
             cancel_queue(task.id, get_user_concurrency(task.created_by))
@@ -231,6 +234,17 @@ class TaskScheduler:
                 expected_from={TaskStatus.STOPPING},
             )
 
+        if task.task_type == 'rescreen_import':
+            from core.rescreening.services.lifecycle import finish_unpublished_batch
+            batch_id = (task.config or {}).get('rescreen_import_batch_id')
+            if batch_id:
+                finish_unpublished_batch(batch_id, cancelled=True, requested=True, task_id=task.pk)
+        from core.fulltext.lifecycle import finish_task
+        finish_task(task, cancelled=True, requested=True)
+        from core.rescreening.services.ai_runs import finish_task as finish_rescreen
+        finish_rescreen(task, cancelled=True, requested=True)
+        from core.rescreening.services.exports import finish_task as finish_export
+        finish_export(task, cancelled=True)
         return True
 
     def resume_task(self, task_id: int, *, maintenance_resume: bool = False) -> Task:
@@ -247,6 +261,13 @@ class TaskScheduler:
         """
         import time as _time
         old_task = Task.objects.get(id=task_id, project=self.project)
+        if old_task.task_type == 'rescreen_ai':
+            from core.rescreening.services.ai_runs import retry_run
+            run = retry_run(run_id=old_task.config['rescreen_run_id'], user=old_task.created_by,
+                            maintenance=maintenance_resume)
+            return run.task
+        if old_task.task_type in ('rescreen_import', 'rescreen_pdf', 'rescreen_fetch', 'rescreen_export'):
+            raise ValueError('复筛专用任务请在对应页面重试或重新生成。')
 
         if old_task.status != TaskStatus.STOPPED:
             raise ValueError("只能恢复已停止的任务")

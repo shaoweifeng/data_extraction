@@ -68,6 +68,8 @@ def user_storage_usage_bytes(user) -> int:
     from core.feedback.models import FeedbackAttachment
     from core.models import DataFile, QAFulltextAsset
     from core.screening.models import ReferenceImportFile
+    from core.rescreening.models import RescreenImportFile, RescreenExport
+    from core.fulltext.models import FulltextAsset
 
     # DataFile rows for screening source imports deliberately have an empty
     # ``file`` value; their private raw file is counted by ReferenceImportFile.
@@ -90,7 +92,16 @@ def user_storage_usage_bytes(user) -> int:
         FeedbackAttachment.objects.filter(feedback__reporter_user_id=user.pk),
         'file_size',
     )
-    return data_files + screening_imports + qa_raw + qa_derived + feedback
+    rescreen_imports = _sum(RescreenImportFile.objects.filter(batch__project__owner=user), 'size_bytes')
+    shared_assets = FulltextAsset.objects.filter(project__owner=user)
+    shared_bytes = _sum(shared_assets, 'size_bytes') + sum(
+        _stored_size(field_file)
+        for asset in shared_assets.only('extracted_text_file', 'chunk_index_file').iterator()
+        for field_file in (asset.extracted_text_file, asset.chunk_index_file)
+    )
+    export_jobs = RescreenExport.objects.filter(project__owner=user)
+    exports = _sum(export_jobs, 'output_size') + _sum(export_jobs, 'snapshot_size')
+    return data_files + screening_imports + qa_raw + qa_derived + feedback + rescreen_imports + shared_bytes + exports
 
 
 def storage_quota_snapshot(user) -> StorageQuotaSnapshot:

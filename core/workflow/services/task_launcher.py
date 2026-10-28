@@ -7,6 +7,7 @@ from django.utils import timezone
 from core.models import Project, Task
 from core.workflow.domain.statuses import TaskStatus
 from core.workflow.services.lifecycle import transition_task
+from core.ai.features import AI_TASK_TYPES
 
 
 ACTIVE_EXECUTION_STATUSES = (
@@ -32,7 +33,7 @@ def create_step_task(project_id: int, step_key: str, user_id: int, config: dict,
     from core.operations.services import assert_accepting_new_work
 
     config = dict(config or {})
-    if step_key in {'ai_screen', 'qa_eval'}:
+    if step_key in AI_TASK_TYPES:
         from django.contrib.auth import get_user_model
         from core.services.entitlement_service import resolve_user_entitlements
 
@@ -73,7 +74,19 @@ def dispatch_step_task(task: Task, step_key: str | None = None) -> Task:
 
     step_key = step_key or task.task_type
     try:
-        result = execute_async_step.delay(task.id, step_key, task.project_id)
+        if step_key == 'rescreen_ai':
+            result = execute_async_step.apply_async(args=(task.id, step_key, task.project_id),
+                soft_time_limit=settings.RESCREEN_AI_SOFT_TIME_LIMIT, time_limit=settings.RESCREEN_AI_HARD_TIME_LIMIT)
+        elif step_key == 'rescreen_export':
+            result = execute_async_step.apply_async(args=(task.id, step_key, task.project_id),
+                soft_time_limit=settings.RESCREEN_EXPORT_SOFT_TIME_LIMIT, time_limit=settings.RESCREEN_EXPORT_HARD_TIME_LIMIT)
+        elif step_key in ('rescreen_pdf', 'rescreen_fetch'):
+            soft, hard = ((settings.QA_PDF_PROCESS_SOFT_TIME_LIMIT, settings.QA_PDF_PROCESS_HARD_TIME_LIMIT)
+                if step_key == 'rescreen_pdf' else (settings.FULLTEXT_LOOKUP_SOFT_TIME_LIMIT, settings.FULLTEXT_LOOKUP_HARD_TIME_LIMIT))
+            result = execute_async_step.apply_async(args=(task.id, step_key, task.project_id),
+                soft_time_limit=soft, time_limit=hard)
+        else:
+            result = execute_async_step.delay(task.id, step_key, task.project_id)
     except Exception as exc:
         transition_task(
             task,

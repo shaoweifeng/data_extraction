@@ -103,6 +103,12 @@
             </div>
           </template>
 
+          <RescreenWorkspace
+            v-else-if="project.currentStage === 'SCREEN_2'"
+            :key="`rescreen-${project.currentProject?.id}`"
+            :project-id="project.currentProject.id"
+          />
+
           <!-- ── 其他阶段：占位页 ── -->
           <template v-else>
             <div class="ws-placeholder">
@@ -140,6 +146,7 @@ import StepReview from '@/features/screening/components/steps/StepReview.vue'
 import StepExport from '@/features/screening/components/steps/StepExport.vue'
 import QAWorkspaceView from '@/features/quality/components/QualityWorkspace.vue'
 import QAStepNav from '@/features/quality/components/QAStepNav.vue'
+import RescreenWorkspace from '@/features/rescreening/components/RescreenWorkspace.vue'
 import { useQAStore } from '@/features/quality/store'
 import {
   SCREENING_STEPS,

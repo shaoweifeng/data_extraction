@@ -382,10 +382,13 @@ _load_verified_chunks = load_verified_chunks
 def build_reference_evidence_packages(reference) -> list[dict]:
     """Load and retrieve evidence strictly inside one reference and project boundary."""
     try:
-        asset = reference.fulltext_asset
+        from core.fulltext.access import asset_for_qa
+        asset = asset_for_qa(reference)
+    except ValueError as exc:
+        raise EvidenceRetrievalError(str(exc)) from exc
     except Exception as exc:
         raise EvidenceRetrievalError('文献没有可用的全文资产。') from exc
-    if asset.qa_reference_id != reference.id or asset.project_id != reference.project_id:
+    if not asset or asset.project_id != reference.project_id:
         raise EvidenceRetrievalError('全文资产与文献或项目不匹配。')
     if asset.status != 'ready' or asset.extraction_status != 'completed':
         raise EvidenceRetrievalError('全文资产尚未完成处理。')

@@ -43,7 +43,7 @@ def ref_list(request):
     if not project:
         return _json_err('无权访问该项目或项目不存在', 404)
     base_refs = QAReference.objects.filter(project=project)
-    refs = base_refs.select_related('fulltext_file', 'fulltext_asset').order_by('id')
+    refs = base_refs.select_related('fulltext_file', 'fulltext_asset', 'shared_fulltext_asset').order_by('id')
 
     query = (request.GET.get('q') or '').strip()
     if query:
@@ -130,6 +130,18 @@ def ref_import(request):
     from core.models import ActivityLog
     from core.quality.services.reference_service import QualityImportError, rebuild_from_screening
 
+    if body['source_stage'] == 'SCREEN_2':
+        from core.rescreening.services.qa_handoff import handoff
+        from core.rescreening.errors import RescreenError
+        from core.rescreening.api.import_views import _accepting_work
+        try:
+            _accepting_work()
+            result = handoff(project=project, user=request.user, confirmation_token=body.get('confirmation_token'),
+                             acknowledge_differences=body['acknowledge_differences'])
+        except RescreenError as exc:
+            return _json_err({'code': exc.code, 'message': str(exc)}, exc.status)
+        return _json_ok(result)
+
     try:
         result = rebuild_from_screening(project, body['source_stage'])
     except QualityImportError as exc:
@@ -207,13 +219,8 @@ def fulltext_download(request, asset_id):
     ).first()
     if not asset or not asset.raw_file:
         return _json_err('无权访问该全文或文件不存在', 404)
-    asset.raw_file.open('rb')
-    return FileResponse(
-        asset.raw_file,
-        as_attachment=False,
-        filename=Path(asset.original_filename).name,
-        content_type='application/pdf',
-    )
+    from core.fulltext.downloads import pdf_response
+    return pdf_response(request, asset)
 
 
 @login_required

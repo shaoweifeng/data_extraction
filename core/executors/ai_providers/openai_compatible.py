@@ -156,13 +156,15 @@ class OpenAICompatibleProvider(BaseAIProvider):
 
         # 截断超长内容（API 限制）
         if len(full_prompt) > 100000:
+            if self.config.get('reject_prompt_truncation'):
+                raise ValueError('请求正文超过 Provider 字符预算，拒绝静默截断')
             full_prompt = full_prompt[:100000] + "\n\n[内容已截断...]"
 
         payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": full_prompt}],
             "temperature": 0.1,
-            "max_tokens": 4000,
+            "max_tokens": int(self.config.get('max_output_tokens', 4000)),
         }
         # 各厂商的 OpenAI 兼容接口使用不同扩展字段：Qwen 使用顶层布尔值，
         # DeepSeek 与豆包使用 thinking.type。初筛默认关闭，任务可显式开启。

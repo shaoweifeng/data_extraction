@@ -83,7 +83,8 @@ def evaluation_audit(request):
     if not ref:
         return _json_err('文献不存在', 404)
     try:
-        asset = ref.fulltext_asset
+        from core.fulltext.access import asset_for_qa
+        asset = asset_for_qa(ref)
     except Exception:
         asset = None
     versions = set()

@@ -268,6 +268,24 @@ class ProjectStageSerializer(serializers.ModelSerializer):
     progress_percentage = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
 
+    def _rescreen_state(self, obj):
+        from core.rescreening.services.workspace import workspace_state
+        if not hasattr(self, '_rescreen_cache'):
+            self._rescreen_cache = {}
+        if obj.pk not in self._rescreen_cache:
+            self._rescreen_cache[obj.pk] = workspace_state(obj.project, None)
+        return self._rescreen_cache[obj.pk]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.stage_key == 'SCREEN_2':
+            state = self._rescreen_state(instance)
+            completed = state['steps'][5]['completed']
+            data['status'] = 'completed' if completed else 'in_progress' if state['counts']['total'] or state['busy'] else 'pending'
+            if not completed:
+                data['completed_at'] = None
+        return data
+
     class Meta:
         model = ProjectStage
         fields = ['id', 'stage_key', 'name', 'order', 'status',
@@ -278,6 +296,9 @@ class ProjectStageSerializer(serializers.ModelSerializer):
 
     def get_progress_percentage(self, obj):
         """聚合子步骤进度"""
+        if obj.stage_key == 'SCREEN_2':
+            state = self._rescreen_state(obj)
+            return 100.0 if state['steps'][5]['completed'] else round(sum(step['completed'] for step in state['steps']) / 6 * 100, 1)
         steps = obj.steps.all()
         if not steps:
             # 状态映射

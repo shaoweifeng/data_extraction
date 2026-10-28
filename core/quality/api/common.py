@@ -7,6 +7,7 @@ from django.http import JsonResponse
 
 from core.models import QAReference, QASignalItem, QADomainResult
 from core.services.access_policy import ProjectAccessPolicy
+from core.fulltext.access import asset_for_qa, download_url_for_qa
 
 
 def _json_ok(data=None, status=200):
@@ -71,12 +72,9 @@ def _format_validation_errors(errors):
 
 
 def _serialize_ref(ref: QAReference) -> dict:
-    try:
-        asset = ref.fulltext_asset
-    except ObjectDoesNotExist:
-        asset = None
+    asset = asset_for_qa(ref)
     if asset:
-        fulltext_url = f'/api/qa/fulltext-assets/{asset.id}/download/'
+        fulltext_url = download_url_for_qa(ref, asset)
     elif ref.fulltext_file_id:
         fulltext_url = f'/api/files/{ref.fulltext_file_id}/download/'
     else:
@@ -93,10 +91,12 @@ def _serialize_ref(ref: QAReference) -> dict:
         'source_reference_id': ref.source_reference_id,
         'source_screening_run_id': ref.source_screening_run_id,
         'source_screening_decision': ref.source_screening_decision,
+        'source_rescreen_reference_id': ref.source_rescreen_reference_id,
         'fulltext_status':ref.fulltext_status,
         'fulltext_file_id': ref.fulltext_file_id,
         'fulltext_url':   fulltext_url,
         'fulltext_asset': None if not asset else {
+            'kind': 'shared' if ref.shared_fulltext_asset_id else 'qa',
             'id': asset.id,
             'status': asset.status,
             'scan_status': asset.scan_status,

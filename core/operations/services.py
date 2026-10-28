@@ -13,6 +13,7 @@ from django.utils import timezone
 
 from core.models import SystemOperationState, Task
 from core.workflow.domain.statuses import TaskStatus
+from core.ai.features import AI_TASK_TYPES
 
 
 logger = logging.getLogger(__name__)
@@ -290,7 +291,7 @@ def pause_long_running_tasks():
 
     candidates = list(Task.objects.filter(
         status__in=(TaskStatus.QUEUING, TaskStatus.PENDING, TaskStatus.RUNNING),
-        task_type__in=('ai_screen', 'qa_eval'),
+        task_type__in=AI_TASK_TYPES,
     ).order_by('created_at'))
     paused, failed = [], []
     for task in candidates:
@@ -314,7 +315,7 @@ def resume_maintenance_tasks():
 
     candidates = list(Task.objects.filter(
         status=TaskStatus.STOPPED,
-        task_type__in=('ai_screen', 'qa_eval'),
+        task_type__in=AI_TASK_TYPES,
         config__paused_by_maintenance=True,
     ).order_by('created_at'))
     resumed, failed = [], []
@@ -336,7 +337,7 @@ def reconcile_interrupted_tasks(*, apply=False):
     ).select_related('project').order_by('created_at'))
     report = {'found': [], 'repaired': [], 'dry_run': not apply}
     for task in interrupted:
-        resumable = task.task_type in ('ai_screen', 'qa_eval')
+        resumable = task.task_type in AI_TASK_TYPES
         item = {
             'task_id': task.id,
             'project_id': task.project_id,
@@ -366,12 +367,18 @@ def reconcile_interrupted_tasks(*, apply=False):
                 if ref_ids:
                     refs = refs.filter(pk__in=ref_ids)
                 refs.update(ai_eval_status='pending')
+            elif task.task_type == 'rescreen_ai':
+                from core.rescreening.services.ai_runs import finish_task
+                finish_task(task, cancelled=True)
         else:
             Task.objects.filter(pk=task.pk).update(
                 status=TaskStatus.FAILED,
                 completed_at=timezone.now(),
                 error_message='服务重启时发现任务被中断，请重新执行该步骤',
             )
+            if task.task_type == 'rescreen_export':
+                from core.rescreening.services.exports import finish_task
+                finish_task(task)
         report['repaired'].append(item)
 
     if apply:

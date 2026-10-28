@@ -49,6 +49,8 @@ router.register(r'activity-logs', api.ActivityLogViewSet, basename='activity-log
 router.register(r'screening-imports', api.ScreeningImportViewSet, basename='screening-import')
 
 urlpatterns = [
+    path('fulltext/', include('core.fulltext.urls')),
+    path('rescreening/', include('core.rescreening.urls')),
     path('health/live/', health_live, name='health_live'),
     path('health/ready/', health_ready, name='health_ready'),
     path('system/status/', system_status, name='system_status'),

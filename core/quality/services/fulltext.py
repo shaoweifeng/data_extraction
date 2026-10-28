@@ -25,8 +25,7 @@ from core.services.storage_quota_service import (
 )
 
 
-EXTRACTION_VERSION = 'qa-text-v2-pages'
-PAGE_MARKER_TEMPLATE = '<<<QA_PAGE:{page_number}>>>\n'
+from core.fulltext.extraction import EXTRACTION_VERSION, PAGE_MARKER_TEMPLATE, extract_page_text
 logger = logging.getLogger(__name__)
 _DERIVED_FILE_FIELDS = ('extracted_text_file', 'chunk_index_file')
 _DERIVED_METADATA_FIELDS = (
@@ -67,16 +66,12 @@ def validate_fulltext_settings():
 
 
 def _hash_and_check(uploaded_file):
-    digest = hashlib.sha256()
-    header = b''
-    for chunk in uploaded_file.chunks():
-        if len(header) < 5:
-            header += chunk[:5 - len(header)]
-        digest.update(chunk)
-    uploaded_file.seek(0)
-    if header != b'%PDF-':
-        raise FulltextUploadError('invalid_pdf_signature', '文件内容不是有效的 PDF。')
-    return digest.hexdigest()
+    from core.fulltext.errors import FulltextError
+    from core.fulltext.validation import hash_and_check
+    try:
+        return hash_and_check(uploaded_file)
+    except FulltextError as exc:
+        raise FulltextUploadError(exc.code, str(exc), status=exc.status) from exc
 
 
 def validate_uploads(project, files):
@@ -226,53 +221,6 @@ def _delete_new_files(asset, snapshot):
                 logger.warning('清理失败重建产生的新文件失败 field=%s', field_name, exc_info=True)
 
 
-def extract_page_text(document, *, max_chars):
-    """Extract every page until the total rendered-text character budget is reached."""
-    pages = []
-    rendered = []
-    rendered_chars = 0
-    inspected_pages = 0
-    truncated = False
-    truncated_at_page = None
-
-    for page_index in range(len(document)):
-        page_number = page_index + 1
-        inspected_pages = page_number
-        raw_text = (document[page_index].get_text() or '').replace('\r\n', '\n').replace('\r', '\n')
-        text = raw_text.strip()
-        if not text:
-            continue
-
-        marker = PAGE_MARKER_TEMPLATE.format(page_number=page_number)
-        prefix = marker if not rendered else f'\n\n{marker}'
-        remaining = max_chars - rendered_chars
-        if remaining <= len(prefix):
-            truncated = True
-            truncated_at_page = page_number
-            break
-
-        available = remaining - len(prefix)
-        selected = text[:available]
-        rendered.append(prefix + selected)
-        rendered_chars += len(prefix) + len(selected)
-        pages.append(PageText(page_number=page_number, text=selected))
-
-        if len(selected) < len(text):
-            truncated = True
-            truncated_at_page = page_number
-            break
-        if rendered_chars >= max_chars and page_number < len(document):
-            truncated = True
-            truncated_at_page = page_number + 1
-            break
-
-    return {
-        'text': ''.join(rendered),
-        'pages': pages,
-        'extracted_page_count': inspected_pages,
-        'truncated': truncated,
-        'truncated_at_page': truncated_at_page,
-    }
 
 
 def process_fulltext_asset(asset_id, *, force=False):

@@ -30,15 +30,19 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--asset-id', type=int, required=True)
+        parser.add_argument('--asset-kind', choices=['qa', 'shared'], default='qa')
         parser.add_argument('--output', required=True)
         parser.add_argument('--find', action='append', default=[])
 
     def handle(self, *args, **options):
         try:
-            asset = QAFulltextAsset.objects.select_related('project', 'qa_reference').get(
+            from core.fulltext.models import FulltextAsset
+            model = FulltextAsset if options['asset_kind'] == 'shared' else QAFulltextAsset
+            related = ('project',) if options['asset_kind'] == 'shared' else ('project', 'qa_reference')
+            asset = model.objects.select_related(*related).get(
                 pk=options['asset_id']
             )
-        except QAFulltextAsset.DoesNotExist as exc:
+        except model.DoesNotExist as exc:
             raise CommandError('质量评价全文资产不存在。') from exc
 
         output_dir = Path(options['output']).expanduser().resolve()
@@ -82,7 +86,8 @@ class Command(BaseCommand):
         report = {
             'asset_id': asset.id,
             'project_id': asset.project_id,
-            'reference_id': asset.qa_reference_id,
+            'reference_id': getattr(asset, 'qa_reference_id', None),
+            'asset_kind': options['asset_kind'],
             'original_filename': asset.original_filename,
             'status': asset.status,
             'extraction_status': asset.extraction_status,
@@ -101,7 +106,7 @@ class Command(BaseCommand):
             'searches': matches,
         }
 
-        stem = f'qa-fulltext-asset-{asset.id}'
+        stem = f'{options["asset_kind"]}-fulltext-asset-{asset.id}'
         json_path = output_dir / f'{stem}.json'
         markdown_path = output_dir / f'{stem}.md'
         json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -110,7 +115,7 @@ class Command(BaseCommand):
             f'# QA 全文资产 {asset.id} 验收报告',
             '',
             f'- 项目 ID：{asset.project_id}',
-            f'- 文献 ID：{asset.qa_reference_id}',
+            f'- 文献 ID：{getattr(asset, "qa_reference_id", None)}',
             f'- 原文件名：{asset.original_filename}',
             f'- 状态：{asset.status} / {asset.extraction_status}',
             f'- PDF 页数 / 实际检查页数：{asset.page_count} / {asset.extracted_page_count}',

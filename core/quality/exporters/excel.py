@@ -152,6 +152,17 @@ def export_qa_excel(project, quality_method, include_unconfirmed=False):
                     item.consistency, item.system_recommendation, item.human_judgment,
                 ])
 
+    # Keep the immutable full bibliography/vendor metadata from rescreening, not just QA's narrow display columns.
+    from core.quality.exporters.source_metadata import append_source_metadata
+    append_source_metadata(wb, refs)
+
+    # Bibliography, model reasons and human notes are data, never spreadsheet formulas.
+    for sheet in wb.worksheets:
+        for row in sheet.iter_rows():
+            for cell in row:
+                if isinstance(cell.value, str):
+                    cell.data_type = 's'
+
     # 返回文件流
     buf = io.BytesIO()
     wb.save(buf)

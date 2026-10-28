@@ -20,6 +20,8 @@ class IdListField(serializers.ListField):
 
 
 class QARefImportInputSerializer(serializers.Serializer):
+    confirmation_token = serializers.CharField(max_length=64, required=False)
+    acknowledge_differences = serializers.BooleanField(default=False)
     project_id = serializers.IntegerField(min_value=1)
     source_stage = serializers.ChoiceField(
         choices=['SCREEN_1', 'SCREEN_2'], default='SCREEN_1'

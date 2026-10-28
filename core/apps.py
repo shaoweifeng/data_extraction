@@ -14,5 +14,8 @@ class CoreConfig(AppConfig):
 
         validate_import_settings()
         validate_fulltext_settings()
+        from core.fulltext.settings_checks import validate_settings
+        validate_settings()
         import core.screening.signals  # noqa: F401
         import core.quality.signals  # noqa: F401
+        import core.rescreening.signals  # noqa: F401

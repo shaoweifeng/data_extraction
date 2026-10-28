@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 TASK_TYPE_DISPLAY: dict = {
+    'rescreen_import': '复筛题录导入',
+    'rescreen_pdf': '私有全文处理',
+    'rescreen_fetch': '全文查找',
+    'rescreen_ai': 'AI全文复筛',
     'parse': '文献解析',
     'dedup': '文献去重',
     'ai_screen': 'AI初筛',

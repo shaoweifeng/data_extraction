@@ -94,6 +94,8 @@ class AIUsageContext:
     task: Any
     model_ids: Iterable[str]
     idempotency_key: str | None = None
+    pricing_version: str | None = None
+    rate_snapshots: Any = None
 
 
 class AIUsageSettlementService:
@@ -131,7 +133,7 @@ class AIUsageSettlementService:
         pricing_version = shadow['pricing_version']
         credits = legacy_credits
         estimated_cost = shadow['estimated_cost_cny']
-        if getattr(settings, 'MODEL_WEIGHTED_BILLING_ENABLED', False):
+        if context.pricing_version or getattr(settings, 'MODEL_WEIGHTED_BILLING_ENABLED', False):
             from core.ai.pricing import calculate_versioned_pricing
 
             reservation = None
@@ -139,12 +141,15 @@ class AIUsageSettlementService:
                 reservation = CreditReservation.objects.filter(task=context.task).first()
             pricing_version = (
                 reservation.pricing_version if reservation
-                else settings.MODEL_WEIGHTED_BILLING_PRICING_VERSION
+                else context.pricing_version or (
+                    (context.task.config or {}).get('billing_pricing_version', settings.MODEL_WEIGHTED_BILLING_PRICING_VERSION)
+                    if context.task else settings.MODEL_WEIGHTED_BILLING_PRICING_VERSION)
             )
             weighted = calculate_versioned_pricing(
                 stats.get('model_usage'),
                 pricing_version=pricing_version,
                 allow_draft=getattr(settings, 'MODEL_WEIGHTED_BILLING_ALLOW_DRAFT', False),
+                rates=context.rate_snapshots,
             )
             if weighted['task_credits'] is None:
                 raise ValueError(f'存在未匹配费率，拒绝结算: {weighted["unknown_calls"]}')
@@ -172,6 +177,9 @@ class AIUsageSettlementService:
             f'{context.feature} · {project_name} · 模型:{model_name}'
             f'（{stats.get("ref_count", 0)}篇/{total_tokens} tokens）'
         )
+        if context.feature == 'ai_rescreen':
+            from core.ai.features import AI_FEATURE_LABELS
+            detail = f'{AI_FEATURE_LABELS[context.feature]} · {project_name} · 模型:{model_name}（{stats.get("ref_count", 0)}篇）'[:255]
 
         if is_unlimited_ai_user(context.user):
             transaction_record = log_admin_usage(
@@ -179,10 +187,12 @@ class AIUsageSettlementService:
                 credits,
                 task=context.task,
                 idempotency_key=context.idempotency_key,
-                note=f'{context.feature}(免费) · {project_name} · 模型:{model_name}'
-                     f'（{stats.get("ref_count", 0)}篇/{total_tokens} tokens，等值{credits} credits）',
+                note=(f'{detail}（管理员免费，等值{credits}积分）'[:255]
+                      if context.feature == 'ai_rescreen' else
+                      f'{context.feature}(免费) · {project_name} · 模型:{model_name}'
+                      f'（{stats.get("ref_count", 0)}篇/{total_tokens} tokens，等值{credits} credits）'),
             )
-        elif getattr(settings, 'BILLING_RESERVATION_ENABLED', False):
+        elif context.pricing_version or getattr(settings, 'BILLING_RESERVATION_ENABLED', False):
             if not context.task:
                 raise ValueError('启用积分预占后，AI 结算必须关联任务')
             reservation = CreditReservation.objects.select_for_update().filter(
@@ -192,7 +202,13 @@ class AIUsageSettlementService:
                 raise ValueError('任务缺少积分预占，拒绝结算')
             from core.services.credit_ledger_service import settle_reservation
 
-            transaction_record = settle_reservation(reservation, credits, note=detail)
+            # An interrupted request can return after recovery released its
+            # hold. Such late calls are explicitly platform-borne; keep their
+            # audit without reopening or charging a terminal reservation.
+            if (context.pricing_version and credits == 0 and reservation.status in ('released', 'cancelled', 'expired')):
+                transaction_record = None
+            else:
+                transaction_record = settle_reservation(reservation, credits, note=detail)
             reservation.refresh_from_db()
             stats['credits_consumed'] = reservation.settled_credits
             stats['credits_actual'] = reservation.actual_credits
@@ -227,7 +243,7 @@ class AIUsageSettlementService:
                 transaction=transaction_record,
                 defaults=usage_defaults,
             )
-        elif context.task and getattr(settings, 'BILLING_RESERVATION_ENABLED', False):
+        elif context.task and (context.pricing_version or getattr(settings, 'BILLING_RESERVATION_ENABLED', False)):
             usage_log, _ = TokenUsageLog.objects.update_or_create(
                 task=context.task,
                 pricing_version=pricing_version,

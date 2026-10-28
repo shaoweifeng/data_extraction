@@ -1,9 +1,7 @@
 """Private storage helpers for quality-evaluation full text assets."""
 
 import os
-from contextlib import contextmanager
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
 from django.conf import settings
@@ -54,38 +52,4 @@ def qa_fulltext_storage():
     return storages['qa_fulltext']
 
 
-@contextmanager
-def materialized_storage_path(field_file, *, suffix=''):
-    """Yield a parser-compatible path for local or remote Django storage.
-
-    Object storage normally has no ``path()``. In that case the object is copied
-    into a bounded-lifetime temporary file and removed immediately afterwards.
-    """
-    try:
-        path = field_file.path
-    except (AttributeError, NotImplementedError):
-        path = None
-    if path and os.path.exists(path):
-        yield path
-        return
-
-    temp = NamedTemporaryFile(prefix='qa-fulltext-', suffix=suffix, delete=False)
-    temp_path = temp.name
-    try:
-        field_file.open('rb')
-        with temp:
-            while True:
-                chunk = field_file.read(1024 * 1024)
-                if not chunk:
-                    break
-                temp.write(chunk)
-        yield temp_path
-    finally:
-        try:
-            field_file.close()
-        except Exception:
-            pass
-        try:
-            os.unlink(temp_path)
-        except FileNotFoundError:
-            pass
+from core.fulltext.storage import materialized_storage_path  # noqa: F401 compatibility export

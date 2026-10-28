@@ -852,6 +852,10 @@ class QAReference(models.Model):
     source_screening_decision = models.CharField(
         max_length=20, blank=True, default='', verbose_name="导入时最终筛选决定",
     )
+    source_rescreen_reference = models.ForeignKey('core.RescreenReference', null=True, blank=True, on_delete=models.SET_NULL, related_name='qa_references')
+    source_rescreen_run_item = models.ForeignKey('core.RescreenRunItem', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    source_rescreen_review = models.ForeignKey('core.RescreenReview', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    shared_fulltext_asset = models.ForeignKey('core.FulltextAsset', null=True, blank=True, on_delete=models.RESTRICT, related_name='qa_references')
     fulltext_file  = models.ForeignKey(DataFile, null=True, blank=True, on_delete=models.SET_NULL, related_name='qa_references', verbose_name="全文PDF文件")
     fulltext_status= models.CharField(max_length=20, choices=FULLTEXT_STATUS_CHOICES, default='pending', verbose_name="全文状态")
     quality_method = models.CharField(max_length=20, choices=METHOD_CHOICES, blank=True, default='', verbose_name="质量评价方法")
@@ -867,6 +871,7 @@ class QAReference(models.Model):
 
     class Meta:
         db_table             = 'plat_qa_reference'
+        constraints = [models.UniqueConstraint(fields=['project', 'source_rescreen_reference'], name='qa_rescreen_source_unique')]
         verbose_name         = "待评价文献"
         verbose_name_plural  = "待评价文献"
         ordering             = ['id']
@@ -1300,3 +1305,5 @@ class QAChartSettings(models.Model):
 # core 是一个 Django app；数据库化初筛模型按领域放在 core.screening 中，
 # 在此导入以便 Django 的模型发现与迁移自动检测仍归属 core app。
 from core.screening import models as _screening_models  # noqa: E402,F401
+from core.fulltext import models as _fulltext_models  # noqa: E402,F401
+from core.rescreening import models as _rescreening_models  # noqa: E402,F401

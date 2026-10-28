@@ -39,19 +39,19 @@
               <option value="SCREEN_1">从文献初筛导入</option>
               <option value="SCREEN_2">从文献复筛导入</option>
             </select>
-            <button class="btn-primary" @click="confirmImport" :disabled="importing">
-              <i class="fas fa-download" v-if="!importing"></i>
-              <i class="fas fa-spinner fa-spin" v-else></i>
+            <button class="btn-primary" :disabled="importing" @click="confirmImport">
+              <i v-if="!importing" class="fas fa-download"></i>
+              <i v-else class="fas fa-spinner fa-spin"></i>
               {{ importing ? '导入中...' : '开始导入' }}
             </button>
           </div>
           <p style="font-size:0.72rem;color:#f59e0b;margin-top:10px" @click.stop>
             <i class="fas fa-exclamation-triangle"></i>
-            导入将重置文献列表及所有已有评价记录
+            {{ importStage === 'SCREEN_2' ? '复筛采用增量导入，保留已有 QA 及所有评价成果；来源变化先预览确认。' : '从初筛导入将重置文献列表及所有已有评价记录' }}
           </p>
           <div v-if="importResult" class="import-result" @click.stop>
-            <span class="result-ok" v-if="importResult.imported !== undefined">✓ 成功导入 {{ importResult.imported }} 篇最终纳入文献</span>
-            <span class="result-err" v-if="importResult.error">✗ {{ importResult.error }}</span>
+            <span v-if="importResult.imported !== undefined" class="result-ok">✓ 成功导入 {{ importResult.imported }} 篇最终纳入文献</span>
+            <span v-if="importResult.error" class="result-err">✗ {{ importResult.error }}</span>
           </div>
         </div>
       </template>
@@ -168,6 +168,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useQAStore } from '@/features/quality/store'
 import { useProjectStore } from '@/features/projects/store'
 import QAPagination from './QAPagination.vue'
+import { qaPreview, qaHandoff } from '@/features/rescreening/api'
 
 const qa = useQAStore()
 const project = useProjectStore()
@@ -224,19 +225,26 @@ async function doImport() {
   importing.value = true
   importResult.value = null
   try {
-    const result = await qa.importFromScreening(project.currentProject.id, importStage.value)
+    let result
+    if (importStage.value === 'SCREEN_2') {
+      const preview = await qaPreview(project.currentProject.id)
+      const changed = preview.counts.changed + preview.counts.no_longer_included
+      if (!confirm(`复筛当前纳入 ${preview.counts.included} 篇，将新增 ${preview.counts.new} 篇，保留已有 ${preview.counts.existing} 篇。\n${changed ? `有 ${changed} 篇来源变化或不再纳入，原 QA 及成果将保留不变。\n` : ''}确认增量导入？`)) return
+      result = await qaHandoff(project.currentProject.id, { confirmation_token: preview.confirmation_token, acknowledge_differences: !!changed })
+    } else result = await qa.importFromScreening(project.currentProject.id, importStage.value)
     importResult.value = result
+    // Existing QA footer/method/evaluation capabilities still derive readiness from this facade.
     await qa.fetchRefs(project.currentProject.id)
     await loadPage(1)
   } catch (e) {
-    importResult.value = { error: e?.response?.data?.error || '导入失败' }
+    importResult.value = { error: e?.response?.data?.error?.message || e?.response?.data?.error || '导入失败' }
   } finally {
     importing.value = false
   }
 }
 
 function confirmImport() {
-  if (pageData.value.summary.total > 0) {
+  if (importStage.value !== 'SCREEN_2' && pageData.value.summary.total > 0) {
     if (!confirm(`当前已有 ${pageData.value.summary.total} 篇文献及相关评价记录。\n导入将清空所有已有数据并重新导入最终纳入文献，是否继续？`)) return
   }
   doImport()

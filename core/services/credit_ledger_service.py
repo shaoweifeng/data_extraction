@@ -390,6 +390,35 @@ def reserve_credits(
 
 
 @transaction.atomic
+def extend_reservation(reservation, required_credits: int):
+    """Grow a live hold atomically before another provider call (never after it)."""
+    from core.models_billing import CreditAccount, CreditReservation, CreditReservationAllocation
+
+    ref = CreditReservation.objects.only('account_id').get(pk=reservation.pk)
+    account = CreditAccount.objects.select_for_update().get(pk=ref.account_id)
+    reservation = CreditReservation.objects.select_for_update().get(pk=reservation.pk)
+    if reservation.status != 'reserved':
+        raise CreditLedgerError('只有活动预占可补充额度')
+    amount = max(0, int(required_credits) - reservation.reserved_credits)
+    if not amount:
+        return reservation
+    allocations = _consume_available_locked(account, amount)
+    for batch, reserved in allocations:
+        batch.reserved_amount += reserved
+        batch.save(update_fields=['reserved_amount', 'updated_at'])
+        allocation, _ = CreditReservationAllocation.objects.get_or_create(
+            reservation=reservation, batch=batch, defaults={'reserved_amount': 0})
+        allocation.reserved_amount += reserved
+        allocation.save(update_fields=['reserved_amount', 'updated_at'])
+    reservation.reserved_credits += amount
+    reservation.estimated_credits = max(reservation.estimated_credits, reservation.reserved_credits)
+    reservation.save(update_fields=['reserved_credits', 'estimated_credits', 'updated_at'])
+    account.balance -= amount
+    account.save(update_fields=['balance', 'updated_at'])
+    return reservation
+
+
+@transaction.atomic
 def settle_reservation(reservation, actual_credits: int, *, note: str = ''):
     from core.models_billing import (
         CreditAccount, CreditAllocation, CreditGrantBatch, CreditReservation,

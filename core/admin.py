@@ -15,6 +15,7 @@ from .models_billing import (
     CreditReservation, CreditReservationAllocation,
     AddonProduct, AddonProductVersion, UserConcurrencyGrant,
 )
+from core.rescreening import admin as _rescreening_admin  # noqa: F401
 
 
 class UserProfileAdminForm(forms.ModelForm):

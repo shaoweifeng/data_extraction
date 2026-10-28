@@ -34,6 +34,14 @@ class Command(BaseCommand):
 
         released = 0
         for reservation in CreditReservation.objects.filter(pk__in=reservation_ids):
+            if reservation.task_id and reservation.task.task_type == 'rescreen_ai':
+                if reservation.task.status in ('pending', 'queuing', 'running', 'stopping'):
+                    self.stdout.write(f'跳过仍在活动的复筛预占 task={reservation.task_id}')
+                    continue
+                from core.rescreening.services.ai_billing import settle_task
+                # Known incurred usage takes precedence over expiry refunds.
+                settle_task(reservation.task)
+                continue
             released += release_reservation(
                 reservation,
                 status='expired',

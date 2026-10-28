@@ -26,11 +26,23 @@ from core.models import Task
 from core.step_config import get_step_config, is_async_step
 from core.workflow.domain.statuses import ProjectStageStatus, TaskStatus
 from core.workflow.services.lifecycle import InvalidStateTransition, transition_task
+from core.ai.features import AI_TASK_TYPES
 
 logger = logging.getLogger(__name__)
 
 
 def _sync_import_batch_terminal_state(task_obj, *, cancelled=False):
+    if task_obj:
+        from core.rescreening.services.exports import finish_task as finish_export
+        finish_export(task_obj, cancelled=cancelled)
+        from core.rescreening.services.ai_runs import finish_task as finish_rescreen
+        finish_rescreen(task_obj, cancelled=cancelled)
+        from core.fulltext.lifecycle import finish_task
+        finish_task(task_obj, cancelled=cancelled)
+    rescreen_batch_id = (task_obj.config or {}).get('rescreen_import_batch_id') if task_obj else None
+    if rescreen_batch_id:
+        from core.rescreening.services.lifecycle import finish_unpublished_batch
+        finish_unpublished_batch(rescreen_batch_id, cancelled=cancelled, task_id=task_obj.pk)
     batch_id = (task_obj.config or {}).get('import_batch_id') if task_obj else None
     if not batch_id:
         return
@@ -57,6 +69,9 @@ def _release_credit_reservation(task_obj, *, status='released', reason=''):
     if not task_obj or not getattr(settings, 'BILLING_RESERVATION_ENABLED', False):
         return
     try:
+        if task_obj.task_type == 'rescreen_ai':
+            from core.rescreening.services.ai_billing import settle_task
+            settle_task(task_obj)
         from core.services.credit_ledger_service import release_task_reservation
 
         release_task_reservation(task_obj, status=status, reason=reason)
@@ -104,7 +119,7 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
 
             task_config = dict(task_obj.config or {})
 
-            if step_key in {'ai_screen', 'qa_eval'}:
+            if step_key in AI_TASK_TYPES:
                 from core.services.concurrency_service import (
                     acquire_used_fallback, get_user_concurrency, get_queue_info,
                     slots_for_task, try_acquire,
@@ -117,6 +132,7 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
                     slots,
                     user_id=task_obj.created_by_id,
                     user_limit=user_slots,
+                    **({'strict': True} if step_key == 'rescreen_ai' else {}),
                 )
                 if not acquired:
                     queue_info = get_queue_info(
@@ -240,7 +256,7 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
         _release_credit_reservation(task_obj, status='released', reason=str(e))
         _fail_screening_run_for_task(task_obj)
         _sync_import_batch_terminal_state(task_obj, cancelled=False)
-        if task_obj and step_key in {'ai_screen', 'qa_eval'} and not slot_acquired:
+        if task_obj and step_key in AI_TASK_TYPES and not slot_acquired:
             try:
                 from core.services.concurrency_service import cancel_queue
                 cancel_queue(task_id, slots)
@@ -251,7 +267,7 @@ def execute_async_step(self, task_id: int, step_key: str, project_id: int):
 
     finally:
         # 无论成功/失败/停止，都归还槽位
-        if slot_acquired and step_key in {'ai_screen', 'qa_eval'} and slots > 0:
+        if slot_acquired and step_key in AI_TASK_TYPES and slots > 0:
             try:
                 from core.services.concurrency_service import release
                 release(task_id, slots, user_id=task_obj.created_by_id if task_obj else 0)
@@ -303,6 +319,13 @@ def check_task_timeout(self):
                     logger.info(f"[Celery] 任务状态已变化，跳过超时失败写入: task_id={task.id}")
                     continue
 
+                # Stop an expired rescreen worker before recovering its journal;
+                # otherwise a late live response could arrive after settlement.
+                if task.task_type == 'rescreen_ai' and task.celery_task_id:
+                    from platform_backend.celery import app as celery_app
+                    celery_app.control.revoke(task.celery_task_id, terminate=True)
+                if task.task_type in ('rescreen_ai', 'rescreen_export'):
+                    _sync_import_batch_terminal_state(task)
                 _release_credit_reservation(
                     task,
                     status='expired',
@@ -310,7 +333,7 @@ def check_task_timeout(self):
                 )
 
                 # 撤销Celery任务
-                if task.celery_task_id:
+                if task.celery_task_id and task.task_type != 'rescreen_ai':
                     from celery import Celery
                     app = Celery('platform_backend')
                     app.control.revoke(task.celery_task_id, terminate=True)
@@ -342,8 +365,14 @@ def cleanup_old_workspaces():
 @shared_task
 def cleanup_abandoned_screening_imports():
     from core.screening.services.import_service import cleanup_abandoned_import_files
+    from core.rescreening.services.cleanup import cleanup_failed_imports
 
     result = cleanup_abandoned_import_files()
+    rescreen = cleanup_failed_imports()
+    result['rescreen_purged_files'] = rescreen['purged_files']
+    result['rescreen_purged_bytes'] = rescreen['purged_bytes']
+    from core.fulltext.cleanup import cleanup_fulltext
+    result['fulltext'] = cleanup_fulltext()
     if result['purged_files']:
         logger.info(
             '[Celery] 清理了 %s 个废弃索引文件（%s bytes）',

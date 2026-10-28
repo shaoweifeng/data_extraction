@@ -71,3 +71,16 @@ class AddonRedisSlotTests(SimpleTestCase):
         self.assertTrue(slots.try_acquire(2, 4, user_id=10, user_limit=4))
         self.assertEqual(self.redis.zcard(slots._QUEUE_KEY), 0)
         self.assertEqual(self.redis.zrange(slots._LEASES_KEY, 0, -1), ['2:10:4'])
+
+    def test_screening_quality_and_rescreen_share_the_same_user_pool(self):
+        from types import SimpleNamespace
+        screening = SimpleNamespace(task_type='ai_screen', config={'concurrency': 2})
+        quality = SimpleNamespace(task_type='qa_eval', config={})
+        rescreen = SimpleNamespace(task_type='rescreen_ai', config={})
+        for task_id, task in enumerate((screening, quality, rescreen), 10):
+            self.assertTrue(slots.try_acquire(task_id, slots.slots_for_task(task, 4),
+                user_id=99, user_limit=4, strict=True))
+        self.assertEqual(slots.get_queue_info(12, 1, user_id=99, user_limit=4)['user_slots_used'], 4)
+        self.assertFalse(slots.try_acquire(13, 1, user_id=99, user_limit=4, strict=True))
+        slots.release(12)
+        self.assertTrue(slots.try_acquire(13, 1, user_id=99, user_limit=4, strict=True))

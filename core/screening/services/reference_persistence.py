@@ -8,6 +8,7 @@ import re
 from typing import Any, Mapping
 
 from django.db import DatabaseError
+from core.bibliography import bibliography_fields
 
 from core.screening.models import (
     ReferenceImportBatch,
@@ -101,31 +102,9 @@ def build_reference(
         source_file_id=import_file.source_file_id,
         source_record_index=position,
         source_record_key=source_identifier,
-        source_identifier=source_identifier,
         introduced_revision=batch.target_revision,
-        title=title,
-        abstract=_text(record.get('abstract')),
-        authors=_string_list(record.get('authors')),
-        journal=_text(record.get('journal')),
-        publication_year=_text(record.get('year')),
-        publication_date=_text(record.get('date')),
-        doi=_text(record.get('doi')),
+        **bibliography_fields(record),
         normalized_doi=normalized_doi,
-        pmid=_pubmed_identifier(record),
-        pmcid=_text(record.get('pmcid')),
-        isbn=_text(record.get('isbn')),
-        issn=_text(record.get('issn')),
-        url=_text(record.get('url')),
-        publication_type=_text(record.get('reference_type') or record.get('type')),
-        volume=_text(record.get('volume')),
-        issue=_text(record.get('issue')),
-        pages=_text(record.get('page')),
-        keywords=_string_list(record.get('keywords')),
-        language=_text(record.get('language')),
-        publisher=_text(record.get('publisher')),
-        database=_text(record.get('database')),
-        organization=_text(record.get('organization')),
-        address=_text(record.get('address')),
         normalized_title_hash=hashlib.sha256(normalized_title.encode('utf-8')).hexdigest(),
         record_hash=hashlib.sha256(
             json.dumps(
