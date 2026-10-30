@@ -123,6 +123,45 @@ class RescreenWorkspaceTests(SharedFulltextFixture):
         self.assertEqual(self.client.get(url, {'project_id': self.project.pk}).status_code, 403)
         self.assertEqual(self.client.get(f'/api/rescreening/references/{self.ref.pk}/review/').status_code, 404)
 
+    def test_review_tabs_use_global_counts_and_sql_filters(self):
+        self.config()
+        suggestion = self.suggestion()
+        suggestion.consensus = 'conflict'
+        suggestion.save(update_fields=['consensus'])
+        self.save(decision='pending')
+        state = workspace_state(self.project, self.user)
+        self.assertEqual(state['counts']['conflict'], 1)
+        self.assertEqual(state['counts']['pending'], 1)
+        url = '/api/rescreening/workspace/references/'
+        for status in ('conflict', 'pending'):
+            response = self.client.get(url, {'project_id': self.project.pk, 'status': status, 'page_size': 1})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data['data']['total'], 1)
+            self.assertEqual(response.data['data']['items'][0]['source_type'], 'pdf')
+        self.config(expected_version=1, criteria=['排除非随机研究'])
+        state = workspace_state(self.project, self.user)
+        self.assertEqual(state['counts']['pending'], 0)
+        self.assertEqual(state['counts']['conflict'], 0)
+        self.assertEqual(state['counts']['needs_reconfirmation'], 1)
+        for status in ('conflict', 'pending'):
+            response = self.client.get(url, {'project_id': self.project.pk, 'status': status})
+            self.assertEqual(response.data['data']['total'], 0)
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.get(url, {'project_id': self.project.pk, 'status': 'conflict'}).status_code, 403)
+
+    def test_fulltext_cards_count_all_references_not_current_page(self):
+        state = workspace_state(self.project, self.user)
+        self.assertEqual((state['counts']['bound'], state['counts']['missing'], state['counts']['fulltext_failed']), (1, 0, 0))
+        asset = self.ref.current_binding.asset
+        asset.status = 'failed'
+        asset.save(update_fields=['status'])
+        state = workspace_state(self.project, self.user)
+        self.assertEqual((state['counts']['bound'], state['counts']['ready'], state['counts']['fulltext_failed']), (0, 0, 1))
+        from core.rescreening.services.fulltext_binding import bind_fulltext
+        bind_fulltext(reference=self.ref, asset=None, user=self.user, expected_version=self.ref.input_version)
+        state = workspace_state(self.project, self.user)
+        self.assertEqual((state['counts']['bound'], state['counts']['missing'], state['counts']['fulltext_failed']), (0, 1, 0))
+
     def test_save_api_refreshes_stats_and_history(self):
         detail = self.client.get(f'/api/rescreening/references/{self.ref.pk}/review/').data['data']
         response = self.client.post(f'/api/rescreening/references/{self.ref.pk}/review/', {

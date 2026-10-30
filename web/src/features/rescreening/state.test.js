@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { pageNumber, stepNumber, safePdfUrl, criteriaLines, toggleSelection, errorMessage } from './state'
+import { pageNumber, stepNumber, safePdfUrl, criteriaLines, toggleSelection, errorMessage, label, decisionLabel, fulltextLabel } from './state'
 
 describe('rescreening state contracts', () => {
+  it('distinguishes pending decisions from pending tasks and localizes fulltext status', () => {
+    expect(label('pending')).toBe('待处理')
+    expect(decisionLabel('pending')).toBe('待定')
+    expect(decisionLabel('conflict')).toBe('模型意见不一致')
+    expect(fulltextLabel('ready')).toBe('已绑定')
+    expect(fulltextLabel('missing')).toBe('未绑定')
+    expect(fulltextLabel('extracting')).toBe('提取中')
+  })
   it('only enables steps from server state, not from a visited-step counter', () => {
     const state = { steps: [{ index: 1, enabled: true }, { index: 5, enabled: false }] }
     expect(stepNumber(5, state)).toBe(1)

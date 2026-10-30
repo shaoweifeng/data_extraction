@@ -181,11 +181,15 @@ export function createRescreenWorkspace(api = defaultApi) {
       api.lookupItems(id, { page, page_size: size }),
     )
   }
-  async function selectReference(id) {
+  function clearReference() {
+    for (const key of ['detail', 'aiDetail', 'history'])
+      epochs[key] = (epochs[key] || 0) + 1
     state.detail = null
     state.aiDetail = null
     state.history = emptyPage()
-    epochs.aiDetail = (epochs.aiDetail || 0) + 1
+  }
+  async function selectReference(id) {
+    clearReference()
     const detail = await resource('detail', () => api.review(id))
     if (detail?.suggestion_id)
       await resource('aiDetail', () => api.item(detail.suggestion_id))
@@ -364,6 +368,7 @@ export function createRescreenWorkspace(api = defaultApi) {
     loadRunItems,
     loadLookup,
     selectReference,
+    clearReference,
     loadHistory,
     schedule,
     stopPolling,

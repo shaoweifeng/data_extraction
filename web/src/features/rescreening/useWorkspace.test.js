@@ -19,6 +19,20 @@ function fakeApi() {
 afterEach(() => vi.useRealTimers())
 
 describe('rescreen workspace controller', () => {
+  it('does not reopen a reference after closing its drawer or selecting an empty filter', async () => {
+    const api = fakeApi(), ws = createRescreenWorkspace(api)
+    await ws.initialize(1)
+    const slow = deferred()
+    api.review.mockReturnValue(slow.promise)
+    const selecting = ws.selectReference(42)
+    ws.clearReference()
+    slow.resolve({ id: 42, suggestion_id: 50 })
+    await selecting
+    expect(ws.state.detail).toBeNull()
+    expect(ws.state.aiDetail).toBeNull()
+    expect(api.item).not.toHaveBeenCalled()
+    ws.dispose()
+  })
   it('refreshes exports on step 6 and discards old-project export responses', async () => {
     const api = fakeApi(), ws = createRescreenWorkspace(api)
     await ws.initialize(1, '6')

@@ -1,6 +1,6 @@
 export const STEPS = [
   '上传 / 导入',
-  '全文获取',
+  '全文查找绑定',
   '排除标准',
   'AI 全文复筛',
   '人工审阅',
@@ -39,8 +39,11 @@ export const labels = {
   offered: '待确认',
   downloaded: '已下载',
   bound: '已绑定',
+  conflict: '模型意见不一致',
 }
 export const label = (value) => labels[value] || value || '—'
+export const decisionLabel = (value) => value === 'pending' ? '待定' : label(value)
+export const fulltextLabel = (value) => ({ ready: '已绑定', missing: '未绑定', failed: '处理失败', rejected: '校验未通过' }[value] || label(value))
 export const emptyPage = () => ({
   items: [],
   total: 0,

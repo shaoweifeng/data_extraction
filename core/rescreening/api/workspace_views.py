@@ -49,7 +49,9 @@ def references(request):
                           current_binding__asset__extraction_truncated=False),
                'missing': Q(current_binding__isnull=True),
                'unreviewed': Q(review_valid=False) | Q(current_review__decision='pending'),
-               'reconfirm': Q(review_valid=False, current_review__isnull=False)}
+               'reconfirm': Q(review_valid=False, current_review__isnull=False),
+               'pending': Q(review_valid=True, current_review__decision='pending'),
+               'conflict': Q(suggestion_decision='conflict')}
     if status in ('included', 'excluded', 'not_retrieved'):
         queryset = queryset.filter(review_valid=True, current_review__decision=status)
     elif status:

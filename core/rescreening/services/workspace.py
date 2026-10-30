@@ -77,6 +77,7 @@ def reference_query(project):
     latest = RescreenRunItem.objects.filter(reference_id=OuterRef('pk'), input_version=OuterRef('input_version'),
         run__criteria_revision=criteria).order_by('-run_id')
     queryset = RescreenReference.objects.active().filter(project=project).annotate(
+        source_type=F('import_batch__source_type'),
         suggestion_id=Subquery(latest.values('pk')[:1]),
         suggestion_revision=Subquery(latest.values('result_revision')[:1]),
         suggestion_status=Subquery(latest.values('status')[:1]),
@@ -97,6 +98,7 @@ def reference_payload(ref):
     review = ref.current_review
     return {'id': ref.pk, 'title': ref.title, 'authors': ref.authors, 'publication_year': ref.publication_year,
             'doi': ref.doi, 'journal': ref.journal, 'input_version': ref.input_version,
+            'source_type': ref.source_type,
             'asset_id': asset.pk if asset else None, 'fulltext_status': asset.status if asset else 'missing',
             'ai_ready': ready, 'suggestion_id': ref.suggestion_id, 'suggestion_revision': ref.suggestion_revision or 0,
             'suggestion_status': ref.suggestion_status, 'suggestion': ref.suggestion_decision,
@@ -111,6 +113,11 @@ def workspace_state(project, user):
     ready = Q(current_binding__asset__status='ready', current_binding__asset__extraction_status='completed',
               current_binding__asset__extraction_truncated=False)
     counts = refs.aggregate(total=Count('pk'), ready=Count('pk', filter=ready),
+        bound=Count('pk', filter=Q(current_binding__asset__status='ready')),
+        missing=Count('pk', filter=Q(current_binding__isnull=True)),
+        fulltext_failed=Count('pk', filter=Q(current_binding__asset__status__in=('failed', 'rejected'))),
+        pending=Count('pk', filter=Q(review_valid=True, current_review__decision='pending')),
+        conflict=Count('pk', filter=Q(suggestion_decision='conflict')),
         included=Count('pk', filter=Q(review_valid=True, current_review__decision='included')),
         excluded=Count('pk', filter=Q(review_valid=True, current_review__decision='excluded')),
         not_retrieved=Count('pk', filter=Q(review_valid=True, current_review__decision='not_retrieved')),
