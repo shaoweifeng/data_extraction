@@ -6,6 +6,18 @@ from .models import RescreenCorpus, RescreenImportBatch, RescreenImportFile, Res
 class RescreenAuditAdmin(admin.ModelAdmin):
     actions = None
 
+    @admin.display(description='复筛文献编号', ordering='reference_id')
+    def reference_number(self, obj):
+        return obj.reference_id
+
+    @admin.display(description='全文资产编号', ordering='asset_id')
+    def asset_number(self, obj):
+        return obj.asset_id
+
+    @admin.display(description='人工审核编号', ordering='review_id')
+    def review_number(self, obj):
+        return obj.review_id
+
     def get_readonly_fields(self, request, obj=None):
         return tuple(field.name for field in self.model._meta.fields if field.name not in (self.exclude or ()))
 
@@ -63,7 +75,7 @@ class ExportAdmin(RescreenAuditAdmin):
 
 @admin.register(RescreenExportItem)
 class ExportItemAdmin(RescreenAuditAdmin):
-    list_display = ['id', 'export', 'reference_id_snapshot', 'asset_id']
+    list_display = ['id', 'export', 'reference_id_snapshot', 'asset_number']
 
 
 @admin.register(FulltextAsset)
@@ -81,7 +93,7 @@ class LookupJobAdmin(RescreenAuditAdmin):
 
 @admin.register(FulltextLookupItem)
 class LookupItemAdmin(RescreenAuditAdmin):
-    list_display = ['id', 'job', 'reference_id', 'status', 'error_code']
+    list_display = ['id', 'job', 'reference_number', 'status', 'error_code']
 
 
 @admin.register(FulltextCandidate)
@@ -97,7 +109,7 @@ class RunAdmin(RescreenAuditAdmin):
 
 @admin.register(RescreenRunItem)
 class RunItemAdmin(RescreenAuditAdmin):
-    list_display = ['id', 'run', 'reference_id', 'status', 'consensus', 'input_version']
+    list_display = ['id', 'run', 'reference_number', 'status', 'consensus', 'input_version']
 
 
 @admin.register(RescreenModelResult)
@@ -117,9 +129,9 @@ class SettingsAdmin(RescreenAuditAdmin):
 
 @admin.register(RescreenReview)
 class ReviewAdmin(RescreenAuditAdmin):
-    list_display = ['reference_id', 'input_version', 'decision', 'version', 'reviewed_by', 'updated_at']
+    list_display = ['reference_number', 'input_version', 'decision', 'version', 'reviewed_by', 'updated_at']
 
 
 @admin.register(RescreenReviewEvent)
 class ReviewEventAdmin(RescreenAuditAdmin):
-    list_display = ['review_id', 'version', 'created_by', 'created_at']
+    list_display = ['review_number', 'version', 'created_by', 'created_at']

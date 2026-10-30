@@ -852,10 +852,10 @@ class QAReference(models.Model):
     source_screening_decision = models.CharField(
         max_length=20, blank=True, default='', verbose_name="导入时最终筛选决定",
     )
-    source_rescreen_reference = models.ForeignKey('core.RescreenReference', null=True, blank=True, on_delete=models.SET_NULL, related_name='qa_references')
-    source_rescreen_run_item = models.ForeignKey('core.RescreenRunItem', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
-    source_rescreen_review = models.ForeignKey('core.RescreenReview', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
-    shared_fulltext_asset = models.ForeignKey('core.FulltextAsset', null=True, blank=True, on_delete=models.RESTRICT, related_name='qa_references')
+    source_rescreen_reference = models.ForeignKey('core.RescreenReference', null=True, blank=True, on_delete=models.SET_NULL, related_name='qa_references', verbose_name='来源复筛文献')
+    source_rescreen_run_item = models.ForeignKey('core.RescreenRunItem', null=True, blank=True, on_delete=models.SET_NULL, related_name='+', verbose_name='来源复筛运行条目')
+    source_rescreen_review = models.ForeignKey('core.RescreenReview', null=True, blank=True, on_delete=models.SET_NULL, related_name='+', verbose_name='来源复筛审核')
+    shared_fulltext_asset = models.ForeignKey('core.FulltextAsset', null=True, blank=True, on_delete=models.RESTRICT, related_name='qa_references', verbose_name='共享全文资产')
     fulltext_file  = models.ForeignKey(DataFile, null=True, blank=True, on_delete=models.SET_NULL, related_name='qa_references', verbose_name="全文PDF文件")
     fulltext_status= models.CharField(max_length=20, choices=FULLTEXT_STATUS_CHOICES, default='pending', verbose_name="全文状态")
     quality_method = models.CharField(max_length=20, choices=METHOD_CHOICES, blank=True, default='', verbose_name="质量评价方法")
