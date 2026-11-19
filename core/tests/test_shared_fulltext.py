@@ -218,6 +218,41 @@ class SharedFulltextTests(SharedFulltextFixture):
         self.assertTrue(result.result)
         self.assertEqual(FulltextAsset.objects.get().status, 'ready')
 
+    def test_interleaved_pdf_tasks_keep_asset_config_and_terminal_state_independent(self):
+        from core.executors.executor import StepExecutor
+        from core.step_config import get_step_config
+
+        assets, _ = create_assets(project=self.project, user=self.user, files=[
+            SimpleUploadedFile('first.pdf', make_pdf(text='First asset'), content_type='application/pdf'),
+            SimpleUploadedFile('second.pdf', make_pdf(text='Second asset'), content_type='application/pdf'),
+        ], create_references=True)
+        first, second = [
+            StepExecutor(asset.processing_task_id, 'rescreen_pdf', self.project.pk)
+            for asset in assets
+        ]
+        self.addCleanup(first.logger.close)
+        self.addCleanup(second.logger.close)
+        for executor, asset in zip((first, second), assets):
+            executor.config.update(asset.processing_task.config)
+            executor.initialize()
+
+        self.assertEqual(first.config['fulltext_asset_id'], assets[0].pk)
+        self.assertEqual(second.config['fulltext_asset_id'], assets[1].pk)
+        self.assertNotIn('fulltext_asset_id', get_step_config('rescreen_pdf'))
+        first.create_stop_signal()
+        self.assertTrue(first.check_stop_signal())
+        self.assertFalse(second.check_stop_signal())
+        with self.assertRaises(FulltextError):
+            first.execute()
+        first.finalize(False, '模拟单篇处理失败')
+        self.assertTrue(second.execute())
+        second.finalize(True)
+        for asset, status in zip(assets, ('failed', 'ready')):
+            asset.refresh_from_db()
+            self.assertEqual(asset.status, status)
+        self.assertEqual(Task.objects.get(pk=first.task_id).status, 'failed')
+        self.assertEqual(Task.objects.get(pk=second.task_id).status, 'completed')
+
     def test_pending_limit_and_file_size_boundaries(self):
         with override_settings(FULLTEXT_MAX_PENDING_PER_USER=1):
             self.upload()

@@ -73,7 +73,7 @@ class BaseExecutor(ABC):
     def initialize(self):
         """初始化任务"""
         from core.models import Task, Project, ProjectStage, StageStep
-        from core.step_config import get_stage_definition
+        from core.step_config import get_stage_definition, is_task_scoped_step
 
         self.project_obj = Project.objects.get(id=self.project_id)
         self.task_obj = Task.objects.get(id=self.task_id)
@@ -115,6 +115,11 @@ class BaseExecutor(ABC):
             },
             expected_from={TaskStatus.PENDING, TaskStatus.QUEUING, TaskStatus.RUNNING},
         )
+
+        # 独立资产任务共用步骤外键用于归类，但不写共享步骤的执行状态。
+        if is_task_scoped_step(self.step_key):
+            self.logger.info(f"[启动] {self.config.get('name', self.step_key)} - 项目: {self.project_obj.name}")
+            return
 
         # 已完成/已跳过的步骤可以被用户再次执行，但状态机明确要求
         # 它们先回到 pending，不允许直接跳到 in_progress。
@@ -160,8 +165,10 @@ class BaseExecutor(ABC):
 
     def finalize(self, success: bool, error_msg: str = None):
         """收尾工作"""
+        from core.step_config import is_task_scoped_step
+
         try:
-            if self.step_obj:
+            if self.step_obj and not is_task_scoped_step(self.step_key):
                 self.task_obj.refresh_from_db()  # 先刷新 task 状态，再决定 step 状态
                 if self.task_obj.status in (TaskStatus.STOPPING, TaskStatus.STOPPED):
                     step_target = StageStepStatus.STOPPED

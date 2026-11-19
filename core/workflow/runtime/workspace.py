@@ -27,11 +27,14 @@ class WorkspaceManager:
 
     @property
     def stop_file(self) -> Path:
+        from core.step_config import is_task_scoped_step
+
+        name = f'{self.step_key}_task_{self.task_id}' if is_task_scoped_step(self.step_key) else self.step_key
         return (
             Path(settings.BASE_DIR)
             / 'workspaces'
             / f'project_{self.project_id}'
-            / f'{self.step_key}.STOP'
+            / f'{name}.STOP'
         )
 
     def has_stop_signal(self) -> bool:
@@ -54,8 +57,7 @@ class WorkspaceManager:
         return self.stop_file
 
     def clear_stop_signal(self) -> None:
-        if self.stop_file.exists():
-            self.stop_file.unlink()
+        self.stop_file.unlink(missing_ok=True)
 
     @staticmethod
     def copy_input_files(input_files, target_dir: Path) -> None:

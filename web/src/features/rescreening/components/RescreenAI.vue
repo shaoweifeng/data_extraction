@@ -1,132 +1,30 @@
 <template>
   <div class="ai-layout">
-    <section class="ai-left">
-      <div class="rs-head">
+    <section class="ai-left panel" aria-label="复筛文献列表">
+      <header class="rs-head">
+        <span class="heading-icon"><i class="fas fa-robot"></i></span>
         <div>
           <h3>AI 全文复筛</h3>
-          <p>选择模型，根据全文与排除标准生成建议；最终结果仍需人工确认。</p>
+          <p>根据全文与排除标准生成筛选建议</p>
         </div>
-        <button
-          class="primary-btn"
-          :disabled="
-            blocked ||
-              modelsDirty ||
-              !validEstimate ||
-              ws.state.promptDirty ||
-              (!balance?.is_unlimited &&
-                balance &&
-                balance.balance < validEstimate.reserve_credits)
-          "
-          @click="start"
-        >
-          <i class="fas fa-play"></i>开始 AI 复筛
-        </button>
-      </div>
-      <div class="panel">
-        <div class="panel-title">
-          <h4>任务输入</h4>
-          <span>仅处理全文已就绪的文献</span>
-        </div>
-        <div class="task-grid">
-          <div>
-            <b>{{ ws.state.info.counts.ready }}</b><span>可进入 AI</span>
-          </div>
-          <div>
-            <b>{{ ws.state.selected.length }}</b><span>本次已选</span>
-          </div>
-          <div>
-            <b>{{ ws.state.info.configuration.criteria.length }}</b><span>排除标准</span>
-          </div>
-        </div>
-      </div>
-      <section class="panel model-panel">
-        <div class="rs-toolbar">
-          <h3>选择模型</h3>
-          <small>参考倍率以 DeepSeek Flash 为 1.0×；实际预估按本次证据包计算</small>
-        </div>
-        <div class="rs-model-grid">
-          <div v-for="provider in ws.state.models" :key="provider.id">
-            <h4>{{ provider.name }}</h4>
-            <label
-              v-for="model in provider.sub_models"
-              :key="model.id"
-              class="rs-model-option"
-              :class="{
-                chosen: selectedModels.includes(model.id),
-                unavailable: !model.configured,
-              }"
-            ><input
-              v-model="selectedModels"
-              type="checkbox"
-              :value="model.id"
-              :disabled="!model.configured || blocked"
-            /><span><strong>{{ model.name }}</strong><small>{{
-              model.configured ? model.description : '模型凭据未配置'
-            }}</small></span><b v-if="hints[model.id]">{{ hints[model.id] }}×</b></label>
-          </div>
-        </div>
-        <div class="rs-toolbar">
-          <span v-if="modelsDirty" class="rs-warning">模型选择尚未保存</span><button v-if="modelsDirty" :disabled="blocked" @click="saveModels">
-            保存模型选择
-          </button><small v-if="hintError">{{ hintError }}</small>
-        </div>
-      </section>
-
-      <RescreenPrompt v-if="canPrompt" />
-      <div class="panel">
-        <div class="panel-title">
-          <h4>排除标准摘要</h4>
-          <span>已保存到服务器</span>
-        </div>
-        <ul class="criteria-mini">
-          <li
-            v-for="criterion in ws.state.info.configuration.criteria"
-            :key="criterion.id"
-          >
-            {{ criterion.text }}
-          </li>
-        </ul>
-      </div>
-      <section class="panel rs-estimate">
-        <div>
-          <h3>本次预估</h3>
-          <p>
-            选择 {{ ws.state.selected.length }} 篇文献 ·
-            {{ selectedModels.length }} 个模型
-          </p>
-          <strong>{{
-            validEstimate
-              ? `${validEstimate.reserve_credits.toLocaleString()} 积分预占`
-              : '选择文献和模型后自动预估'
-          }}</strong><small>预占采用保守上界，实际消费按返回用量结算，未使用部分会释放。</small><small v-if="balance">{{
-            balance.is_unlimited
-              ? '管理员：不扣积分，保留用量审计'
-              : `可用余额 ${balance.balance.toLocaleString()} 积分`
-          }}</small>
-        </div>
-        <div class="rs-actions">
-          <button :disabled="blocked || !canEstimate" @click="calculate">
-            重新预估
-          </button>
-        </div>
-      </section>
-    </section>
-    <section class="ai-right panel">
-      <div class="panel-title">
-        <h4>AI 结果预览</h4>
-        <span>最终仍需人工确认</span>
-      </div>
+      </header>
       <div class="result-tabs">
         <button
           :class="{ selected: resultTab === 'input' }"
+          :aria-pressed="resultTab === 'input'"
           @click="resultTab = 'input'"
         >
           待复筛文献
+          <span class="rs-badge">{{ ws.state.info.counts.ready }}</span>
         </button><button
+          v-if="ws.state.run"
           :class="{ selected: resultTab === 'results' }"
+          :aria-pressed="resultTab === 'results'"
+          title="查看所选运行记录中的文献、处理状态和结果"
           @click="resultTab = 'results'"
         >
-          运行进度与结果
+          运行明细
+          <span class="rs-badge">{{ ws.state.run?.total_count ?? 0 }}</span>
         </button>
       </div>
       <div v-show="resultTab === 'input'">
@@ -138,114 +36,169 @@
           @open="openReference"
         />
       </div>
-      <div v-show="resultTab === 'results'">
-        <section class="run-panel">
+      <div v-if="ws.state.run" v-show="resultTab === 'results'" class="run-list">
+        <div
+          v-for="item in ws.state.runItems.items"
+          :key="item.id"
+          class="result-item"
+        >
+          <div>
+            <strong :title="item.title">{{ item.title }}</strong>
+            <p>{{ label(item.status) }}</p>
+          </div>
+          <div class="rs-actions">
+            <span class="decision" :class="item.consensus">{{
+              decisionLabel(item.consensus)
+            }}</span><button @click="view(item)">查看结果</button>
+          </div>
+        </div>
+        <RescreenPagination
+          :page="ws.state.runItems"
+          @change="(p, s) => ws.read(() => ws.loadRunItems(p, s))"
+        />
+      </div>
+    </section>
+    <section class="ai-right" aria-label="模型与任务进度">
+      <template v-if="!showRun">
+        <section class="panel model-panel">
           <div class="rs-toolbar">
-            <h4>运行记录</h4>
-            <select
-              :value="ws.state.runId || ''"
-              aria-label="选择复筛运行记录"
-              @change="ws.read(() => ws.loadRun(Number($event.target.value)))"
-            >
-              <option value="" disabled>暂无运行</option>
-              <option
-                v-for="run in ws.state.runs.items"
-                :key="run.id"
-                :value="run.id"
-              >
-                #{{ run.id }} · {{ label(run.status) }} ·
-                {{ run.total_count }} 篇
-              </option>
-            </select><button
-              v-if="
-                ws.state.info.active_run_id &&
-                  ws.state.runId !== ws.state.info.active_run_id
+            <h3 class="model-heading"><i class="fas fa-brain"></i> 选择模型</h3>
+            <small>参考倍率以 DeepSeek Flash 为 1.0×；实际预估按本次证据包计算</small>
+          </div>
+          <AiModelPicker
+            :providers="ws.state.models"
+            :disabled="blocked"
+            :is-selected="(id) => selectedModels.includes(id)"
+            :multiplier-for="(id) => hints[id]"
+            @toggle="toggleModel"
+          />
+          <small v-if="hintError">{{ hintError }}</small>
+        </section>
+
+        <RescreenPrompt v-if="canPrompt" />
+        <section class="panel rs-estimate">
+          <div>
+            <p>
+              选择 {{ ws.state.selected.length }} 篇文献 ·
+              {{ selectedModels.length }} 个模型
+              <button v-if="ws.state.selected.length" type="button" class="rs-link" :disabled="blocked" @click="clearAllSelection">清空已选</button>
+            </p>
+            <strong>{{
+              validEstimate
+                ? `${validEstimate.reserve_credits.toLocaleString()} 积分预占`
+                : '选择文献和模型后自动预估'
+            }}</strong><small>实际消费按返回用量结算，未用积分自动释放。</small><small v-if="balance">{{
+              balance.is_unlimited
+                ? '管理员：不扣积分，保留用量审计'
+                : `可用余额 ${balance.balance.toLocaleString()} 积分`
+            }}</small>
+          </div>
+          <div class="rs-actions">
+            <button :disabled="blocked || !canEstimate" @click="calculate">
+              重新预估
+            </button>
+            <button
+              class="primary-btn"
+              :disabled="
+                blocked ||
+                  !validEstimate ||
+                  ws.state.promptDirty ||
+                  (!balance?.is_unlimited &&
+                    balance &&
+                    balance.balance < validEstimate.reserve_credits)
               "
-              @click="ws.read(() => ws.loadRun(ws.state.info.active_run_id))"
+              @click="start"
             >
-              返回活动任务
+              <i class="fas fa-play"></i>开始 AI 复筛
             </button>
           </div>
-          <template v-if="ws.state.run">
-            <div class="rs-run-summary">
-              <strong>运行 #{{ ws.state.run.id }} ·
-                {{ label(ws.state.run.status) }}</strong><span>{{ ws.state.run.processed_count }} /
-                {{ ws.state.run.total_count }} 篇</span>
-            </div>
-            <div
-              class="progress"
-              role="progressbar"
-              aria-label="复筛运行进度"
-              :aria-valuenow="ws.state.run.processed_count"
-              :aria-valuemax="ws.state.run.total_count || 1"
-              aria-valuemin="0"
-            >
-              <div
-                :style="{
-                  width: `${Math.min(100, (ws.state.run.processed_count / (ws.state.run.total_count || 1)) * 100)}%`,
-                }"
-              ></div>
-            </div>
-            <div class="rs-toolbar">
-              <span
-                v-for="(count, status) in ws.state.run.counts"
-                :key="status"
-                class="rs-badge"
-              >{{ label(status) }} {{ count }}</span><button
-                v-if="['pending', 'running'].includes(ws.state.run.status)"
-                :disabled="ws.state.working"
-                @click="runAction('cancel')"
-              >
-                停止本轮
-              </button><button
-                v-if="
-                  ['failed', 'partial', 'paused', 'cancelled'].includes(
-                    ws.state.run.status,
-                  )
-                "
-                :disabled="blocked"
-                @click="retry"
-              >
-                续跑未完成项
-              </button><button
-                v-if="ws.state.run.status === 'settlement_pending'"
-                :disabled="ws.state.working"
-                @click="runAction('settle')"
-              >
-                恢复结算
-              </button>
-            </div>
-            <p v-if="ws.state.run.needs_unknown_ack" class="rs-warning">
-              存在处理结果或用量未知的请求，重试可能再次产生供应商费用，需要显式确认。
-            </p>
-            <div
-              v-for="item in ws.state.runItems.items"
-              :key="item.id"
-              class="result-item"
-            >
-              <div>
-                <strong :title="item.title">{{ item.title }}</strong>
-                <p>{{ label(item.status) }}</p>
-              </div>
-              <div class="rs-actions">
-                <span class="decision" :class="item.consensus">{{
-                  decisionLabel(item.consensus)
-                }}</span><button @click="view(item)">查看结果</button>
-              </div>
-            </div>
-            <RescreenPagination
-              :page="ws.state.runItems"
-              @change="(p, s) => ws.read(() => ws.loadRunItems(p, s))"
-            />
-          </template>
-          <p v-else class="rs-empty">暂无 AI 运行，可以先选择文献和模型。</p>
-          <RescreenPagination
-            :page="ws.state.runs"
-            @change="(p, s) => ws.read(() => ws.loadRuns(p, s))"
-          />
         </section>
-      </div>
-      <section v-if="resultDetail" class="result-detail">
+      </template>
+      <section v-else class="panel run-panel">
+        <div class="rs-toolbar">
+          <h3>{{ runActive ? '复筛进度' : '复筛结果' }}</h3>
+          <button
+            v-if="ws.state.info.active_run_id && ws.state.runId !== ws.state.info.active_run_id"
+            :disabled="ws.state.working"
+            @click="openRun(ws.state.info.active_run_id)"
+          >
+            返回活动任务
+          </button>
+          <button v-else-if="!runActive" :disabled="blocked" @click="newRound">开始新一轮</button>
+        </div>
+        <div class="rs-run-summary">
+          <strong>运行 #{{ ws.state.run.id }} ·
+            {{ label(ws.state.run.status) }}</strong><span>{{ ws.state.run.processed_count }} /
+            {{ ws.state.run.total_count }} 篇</span>
+        </div>
+        <div
+          v-if="runActive"
+          class="progress"
+          role="progressbar"
+          aria-label="复筛运行进度"
+          :aria-valuenow="ws.state.run.processed_count"
+          :aria-valuemax="ws.state.run.total_count || 1"
+          aria-valuemin="0"
+        >
+          <div
+            :style="{
+              width: `${Math.min(100, (ws.state.run.processed_count / (ws.state.run.total_count || 1)) * 100)}%`,
+            }"
+          ></div>
+        </div>
+        <div class="rs-toolbar">
+          <span
+            v-for="(count, status) in ws.state.run.counts"
+            :key="status"
+            class="rs-badge"
+          >{{ label(status) }} {{ count }}</span><button
+            v-if="['pending', 'running'].includes(ws.state.run.status)"
+            :disabled="ws.state.working"
+            @click="runAction('cancel')"
+          >
+            停止本轮
+          </button><button
+            v-if="
+              ['failed', 'partial', 'paused', 'cancelled'].includes(
+                ws.state.run.status,
+              )
+            "
+            :disabled="blocked"
+            @click="retry"
+          >
+            续跑未完成项
+          </button><button
+            v-if="ws.state.run.status === 'settlement_pending'"
+            :disabled="ws.state.working"
+            @click="runAction('settle')"
+          >
+            恢复结算
+          </button>
+        </div>
+        <p v-if="ws.state.run.needs_unknown_ack" class="rs-warning">
+          存在处理结果或用量未知的请求，重试可能再次产生供应商费用，需要显式确认。
+        </p>
+      </section>
+      <details v-if="ws.state.run || ws.state.runs.total" class="run-history">
+        <summary>历史运行</summary>
+        <select
+          :value="showRun ? (ws.state.runId || '') : ''"
+          :disabled="ws.state.working || ws.state.promptDirty"
+          aria-label="选择复筛运行记录"
+          @change="openRun(Number($event.target.value))"
+        >
+          <option value="" disabled>选择运行记录</option>
+          <option v-for="run in ws.state.runs.items" :key="run.id" :value="run.id">
+            #{{ run.id }} · {{ label(run.status) }} · {{ run.total_count }} 篇
+          </option>
+        </select>
+        <RescreenPagination
+          v-if="ws.state.runs.pages > 1"
+          :page="ws.state.runs"
+          @change="(p, s) => ws.read(() => ws.loadRuns(p, s))"
+        />
+      </details>
+      <section v-if="resultDetail" class="panel result-detail">
         <div class="rs-toolbar">
           <h3 class="rs-wrap">{{ resultDetail.bibliography.title }}</h3>
           <button @click="resultDetail = null">关闭结果</button>
@@ -256,39 +209,37 @@
   </div>
 </template>
 <script setup>
+import AiModelPicker from '@/shared/components/AiModelPicker.vue'
 import { computed, inject, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as billing from '@/features/billing/api'
-import { label, decisionLabel, safePdfUrl } from '../state'
+import { ACTIVE_RUNS, label, decisionLabel, safePdfUrl } from '../state'
 import RescreenReferenceList from './RescreenReferenceList.vue'
 import RescreenPagination from './RescreenPagination.vue'
 import RescreenEvidence from './RescreenEvidence.vue'
 import RescreenPrompt from './RescreenPrompt.vue'
 defineProps({ canPrompt: Boolean })
 const ws = inject('rescreen')
-const selectedModels = ref([...ws.state.info.configuration.model_ids])
-const savedModels = ref([...selectedModels.value])
-const baseVersion = ref(ws.state.info.configuration.version)
+const selectedModels = ref([
+  ...(ws.state.run?.model_ids?.length
+    ? ws.state.run.model_ids
+    : ws.state.info.configuration.model_ids),
+])
+function toggleModel(model) {
+  selectedModels.value = selectedModels.value.includes(model.id)
+    ? selectedModels.value.filter((id) => id !== model.id)
+    : [...selectedModels.value, model.id]
+}
 const hints = ref({})
 const hintError = ref('')
 const balance = ref(null)
 const resultDetail = ref(null)
 const resultTab = ref(ws.state.run ? 'results' : 'input')
+const configuringNewRound = ref(false)
+const runActive = computed(() => ACTIVE_RUNS.includes(ws.state.run?.status))
+const showRun = computed(() =>
+  Boolean(ws.state.run && (!configuringNewRound.value || runActive.value || ws.state.info.active_run_id)),
+)
 const estimateKey = ref('')
-const modelsDirty = computed(
-  () =>
-    JSON.stringify([...selectedModels.value].sort()) !==
-    JSON.stringify([...savedModels.value].sort()),
-)
-watch(
-  () => ws.state.info.configuration.version,
-  () => {
-    if (!modelsDirty.value) {
-      selectedModels.value = [...ws.state.info.configuration.model_ids]
-      savedModels.value = [...selectedModels.value]
-      baseVersion.value = ws.state.info.configuration.version
-    }
-  },
-)
 const blocked = computed(() => ws.state.working || ws.state.info.busy)
 const payload = computed(() => ({
   ids: [...ws.state.selected].sort((a, b) => a - b),
@@ -310,14 +261,18 @@ const validEstimate = computed(() =>
 let timer
 let alive = true
 let lastAttempt = ''
-onMounted(async () => {
-  ws.read(() => ws.loadRuns())
+async function refreshBalance() {
+  balance.value = null
   try {
     const data = (await billing.fetchBalance()).data
     if (alive) balance.value = data
   } catch {
     /* 后端启动仍会核对真实余额 */
   }
+}
+onMounted(async () => {
+  ws.read(() => ws.loadRuns())
+  if (!showRun.value) refreshBalance()
   try {
     const ids = ws.state.models
       .flatMap((provider) => provider.sub_models)
@@ -339,20 +294,13 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   alive = false
   clearTimeout(timer)
-  ws.state.modelDirty = false
 })
 watch(
-  modelsDirty,
-  (value) => {
-    ws.state.modelDirty = value
-  },
-  { immediate: true },
-)
-watch(
-  [signature, () => ws.state.working],
-  () => {
+  [signature, blocked, showRun],
+  ([key], [previousKey] = []) => {
     clearTimeout(timer)
-    if (!blocked.value && canEstimate.value && lastAttempt !== signature.value)
+    if (key !== previousKey) lastAttempt = ''
+    if (!showRun.value && !blocked.value && canEstimate.value && lastAttempt !== signature.value)
       timer = setTimeout(calculate, 800)
   },
   { immediate: true },
@@ -363,20 +311,9 @@ async function calculate() {
   const result = await ws.estimate(payload.value)
   if (alive && result && key === signature.value) estimateKey.value = key
 }
-async function saveModels() {
-  const result = await ws.action(
-    () =>
-      ws.api.configuration(ws.state.projectId, {
-        expected_version: baseVersion.value,
-        criteria: payload.value.criteria,
-        model_ids: selectedModels.value,
-      }),
-    '模型选择已保存。',
-  )
-  if (result) {
-    savedModels.value = [...selectedModels.value]
-    baseVersion.value = result.version
-  }
+function clearAllSelection() {
+  ws.state.selected = []
+  ws.state.estimate = null
 }
 async function start() {
   if (
@@ -386,7 +323,28 @@ async function start() {
   )
     return
   const result = await ws.start(payload.value)
-  if (result) resultTab.value = 'results'
+  if (result) {
+    configuringNewRound.value = false
+    resultDetail.value = null
+    resultTab.value = 'results'
+  }
+}
+function newRound() {
+  configuringNewRound.value = true
+  resultDetail.value = null
+  resultTab.value = 'input'
+  estimateKey.value = ''
+  lastAttempt = ''
+  refreshBalance()
+}
+async function openRun(id) {
+  if (!id) return
+  await ws.read(() => ws.loadRun(id))
+  if (alive && ws.state.run?.id === id) {
+    configuringNewRound.value = false
+    resultDetail.value = null
+    resultTab.value = 'results'
+  }
 }
 function runAction(action) {
   ws.action(() => ws.api.runAction(ws.state.runId, action))
@@ -426,16 +384,31 @@ function openPdf(page) {
 <style scoped>
 .ai-layout {
   display: grid;
-  grid-template-columns: 420px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 0;
   min-height: 0;
 }
-.ai-left {
+.ai-left.panel {
+  padding: 0;
+  background: #fafbff;
+  overflow: hidden;
+}
+.ai-right {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  padding-left: 16px;
 }
-.rs-head,
+.heading-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
 .panel {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -445,9 +418,10 @@ function openPdf(page) {
 }
 .rs-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
 }
 h3,
 h4,
@@ -459,7 +433,6 @@ h3 {
   color: #1e293b;
 }
 .rs-head p,
-.panel-title span,
 .result-item p {
   font-size: 0.78rem;
   color: #64748b;
@@ -483,32 +456,6 @@ h3 {
   opacity: 0.55;
   cursor: not-allowed;
 }
-.panel-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.task-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-.task-grid div {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px;
-}
-.task-grid b {
-  font-size: 1.3rem;
-  color: #1e293b;
-  margin-right: 6px;
-}
-.task-grid span {
-  font-size: 0.76rem;
-  color: #64748b;
-}
 .progress {
   height: 8px;
   background: #eef2ff;
@@ -520,18 +467,6 @@ h3 {
   height: 100%;
   background: linear-gradient(90deg, #6366f1, #8b5cf6);
   transition: width 0.3s;
-}
-.criteria-mini {
-  margin: 0;
-  padding-left: 18px;
-  color: #475569;
-  font-size: 0.82rem;
-}
-.criteria-mini li {
-  margin: 7px 0;
-}
-.ai-right {
-  overflow: auto;
 }
 .result-item {
   display: flex;
@@ -566,9 +501,13 @@ h3 {
   background: #f1f5f9;
   color: #64748b;
 }
-@media (max-width: 1100px) {
+@media (max-width: 1000px) {
   .ai-layout {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .ai-right {
+    padding-left: 0;
   }
 }
 
@@ -579,39 +518,25 @@ h3 {
 .ai-right {
   min-width: 0;
 }
-.ai-left .rs-model-grid {
-  grid-template-columns: 1fr;
-}
-.ai-left .rs-model-grid > div {
-  grid-column: auto;
-}
-.ai-left .rs-model-grid h4 {
-  margin: 0 0 8px;
-}
-.ai-left .rs-estimate {
+.ai-right .rs-estimate {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
-.ai-left .rs-estimate .rs-actions {
+.ai-right .rs-estimate .rs-actions {
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
-.ai-left .rs-estimate strong {
-  font-size: 1.2rem;
-}
-.ai-left :deep(.rs-card) {
+.ai-right :deep(.rs-card) {
   padding: 16px;
-}
-.ai-right {
-  min-height: 420px;
 }
 .result-tabs {
   display: flex;
   gap: 8px;
-  padding-bottom: 12px;
+  padding: 8px 12px;
+  flex-wrap: wrap;
   border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 12px;
 }
 .result-tabs button.selected {
   background: #eef2ff;
@@ -635,13 +560,13 @@ h3 {
 .model-panel small {
   line-height: 1.5;
 }
-.run-panel > p {
-  padding: 20px 0;
+.run-history {
+  padding: 0 4px;
+  font-size: 0.8rem;
+  color: #64748b;
 }
-@media (min-width: 1101px) {
-  .ai-layout {
-    grid-template-columns: 420px minmax(0, 1fr);
-  }
+.run-history select {
+  margin-top: 8px;
 }
 .decision.excluded {
   background: #fef2f2;
@@ -650,5 +575,41 @@ h3 {
 .decision.conflict {
   background: #fff7ed;
   color: #c2410c;
+}
+.run-list {
+  padding: 0 12px 12px;
+  max-height: 520px;
+  overflow: auto;
+}
+.model-panel {
+  background: #fafbff;
+  border-color: #e0e7ff;
+}
+.result-item .rs-actions {
+  max-width: 45%;
+  justify-content: flex-end;
+}
+.model-panel {
+  padding: 12px 14px;
+}
+.model-panel > .rs-toolbar:first-child {
+  margin-bottom: 10px;
+}
+.model-heading {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.model-heading i {
+  color: #818cf8;
+}
+.ai-right .rs-estimate {
+  padding: 12px 14px;
+}
+.ai-right .rs-estimate p {
+  margin: 0 0 4px;
+}
+.ai-right .rs-estimate strong {
+  margin-bottom: 4px;
+  font-size: 1rem;
 }
 </style>

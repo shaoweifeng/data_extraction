@@ -172,8 +172,7 @@ const canPrompt = computed(
 const dirty = () =>
   ws.state.dirty ||
   ws.state.reviewDirty ||
-  ws.state.promptDirty ||
-  ws.state.modelDirty
+  ws.state.promptDirty
 function confirmLeave() {
   return !dirty() || window.confirm('当前存在未保存修改，确定离开此步骤？')
 }

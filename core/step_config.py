@@ -10,6 +10,8 @@
 - 依赖关系
 """
 
+from copy import deepcopy
+
 # ============================================================================
 # 步骤配置表
 # ============================================================================
@@ -298,6 +300,7 @@ STEP_CONFIGURATIONS = {
     },
     "rescreen_pdf": {
         "name": "处理私有全文", "stage_key": "SCREEN_2", "execution_mode": "async",
+        "task_scoped": True,
         "dependencies": [], "retry_policy": {"max_retries": 0}, "metadata_template": {},
     },
     "rescreen_fetch": {
@@ -592,7 +595,12 @@ def get_step_config(step_key: str) -> dict:
     """
     if step_key not in STEP_CONFIGURATIONS:
         raise KeyError(f"未知的步骤: {step_key}")
-    return STEP_CONFIGURATIONS[step_key]
+    return deepcopy(STEP_CONFIGURATIONS[step_key])
+
+
+def is_task_scoped_step(step_key: str) -> bool:
+    """同一步骤下可并行执行，状态与停止信号以任务为单位。"""
+    return bool(STEP_CONFIGURATIONS.get(step_key, {}).get('task_scoped'))
 
 
 def get_stage_definition(stage_key: str) -> dict:

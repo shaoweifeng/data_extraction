@@ -93,15 +93,63 @@ describe('rescreen component visibility and layout contracts', () => {
     expect(html).toContain('guide-grid')
     expect(html).toContain('排除动物实验')
     expect(html).not.toContain('rows="12"')
+    expect(html).not.toContain('更改后已有审核需要重新确认')
   })
-  it('restores AI input and result columns with real model and billing controls', async () => {
-    const html = await render(RescreenAI, workspace())
+  it('places literature on the left and AI model, billing and progress controls on the right', async () => {
+    const ws = workspace()
+    ws.state.models = [{
+      id: 'deepseek',
+      name: 'DeepSeek',
+      configured: true,
+      sub_models: [{ id: 'flash', name: 'Flash', configured: true }],
+    }]
+    ws.state.info.configuration.model_ids = ['flash']
+    const html = await render(RescreenAI, ws)
     expect(html).toContain('ai-layout')
     expect(html).toContain('ai-left')
-    expect(html).toContain('ai-right panel')
-    expect(html).toContain('选择模型')
+    const right = html.indexOf('aria-label="模型与任务进度"')
+    expect(right).toBeGreaterThan(0)
+    expect(html.slice(0, right)).toContain('待复筛文献')
+    expect(html.slice(0, right)).not.toContain('运行明细')
+    expect(html.slice(0, right)).toContain('ai-list-tools')
+    expect(html.slice(0, right)).toContain('选本页')
+    expect(html.slice(0, right)).not.toContain('筛选文献状态')
+    expect(html.slice(0, right)).not.toContain('跨页保留')
+    expect(html.slice(right)).toContain('选择模型')
+    expect(html.slice(right)).toContain('ai-submodel-btn-active')
+    expect(html.slice(right)).toContain('开始 AI 复筛')
+    expect(html).not.toContain('任务输入')
+    expect(html).not.toContain('排除标准摘要')
+    expect(html).not.toContain('保存模型选择')
     expect(html).toContain('实际消费按返回用量结算')
-    expect(html).toContain('运行进度与结果')
+    expect(html).not.toContain('复筛运行进度')
+    expect(html).not.toContain('历史运行')
+  })
+  it('shows an explicit cancel-page action when this page is selected', async () => {
+    const ws = workspace()
+    ws.state.refs.items = [{ id: 1, title: '文献一', ai_ready: true }]
+    ws.state.selected = [1, 2]
+    const html = await render(RescreenAI, ws)
+    expect(html).toContain('取消本页')
+    expect(html).toContain('只取消本页，保留其他页的选择')
+    expect(html).toContain('清空已选')
+    expect(html).not.toContain('fa-check-double')
+  })
+  it.each([
+    ['running', '复筛进度', '停止本轮'],
+    ['completed', '复筛结果', '开始新一轮'],
+    ['settlement_pending', '复筛进度', '恢复结算'],
+  ])('replaces configuration with the %s run view', async (status, heading, action) => {
+    const ws = workspace()
+    ws.state.run = { id: 1, status, processed_count: 2, total_count: 4, counts: {} }
+    ws.state.runId = 1
+    const html = await render(RescreenAI, ws)
+    expect(html).toContain(heading)
+    expect(html).toContain(action)
+    expect(html).toContain('历史运行')
+    expect(html).toContain('运行明细')
+    expect(html).not.toContain('选择模型')
+    expect(html).not.toContain('开始 AI 复筛')
   })
   it('restores the two-column review and exclusion drawer instead of a third inspector', async () => {
     const ws = workspace()

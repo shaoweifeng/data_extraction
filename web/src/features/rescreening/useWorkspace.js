@@ -84,7 +84,6 @@ export function createRescreenWorkspace(api = defaultApi) {
       dirty: false,
       promptDirty: false,
       reviewDirty: false,
-      modelDirty: false,
     })
     for (const key of [
       'refs',

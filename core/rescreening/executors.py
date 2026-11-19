@@ -40,8 +40,11 @@ class RescreenPDFHandler(BaseStepHandler):
     def execute(self):
         from core.fulltext.models import FulltextAsset
         from core.fulltext.processing import process_asset
+        from core.fulltext.errors import FulltextError
         asset_id = self.config['fulltext_asset_id']
-        FulltextAsset.objects.get(pk=asset_id, project_id=self.project_id, processing_task=self.task_obj)
+        if not FulltextAsset.objects.filter(
+                pk=asset_id, project_id=self.project_id, processing_task=self.task_obj).exists():
+            raise FulltextError('stale_asset_task', '该任务对应的全文已不存在或处理任务已被替代。', status=409)
         asset = process_asset(asset_id, expected_task_id=self.task_obj.pk, check_stop=self.check_stop_signal)
         if asset.status != 'ready':
             return False

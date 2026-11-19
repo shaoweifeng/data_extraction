@@ -50,8 +50,6 @@
     </section>
 
     <div class="rs-toolbar">
-      <small>最多 50 条，每条 2000 字符，总长 12000
-        字符。更改后已有审核需要重新确认。</small>
       <span v-if="dirty" class="rs-warning">有未保存的修改</span>
       <button
         class="primary"

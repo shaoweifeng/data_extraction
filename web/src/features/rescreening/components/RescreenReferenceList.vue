@@ -1,8 +1,8 @@
 <template>
   <section class="reference-list" :class="'reference-list--' + variant">
-    <form class="list-tools" @submit.prevent="search">
+    <form class="list-tools" :class="{ 'ai-list-tools': variant === 'ai' }" @submit.prevent="search">
       <div class="search-box">
-        <i class="fas fa-search"></i><input
+        <i v-if="variant !== 'ai'" class="fas fa-search"></i><input
           v-model="query"
           type="search"
           maxlength="200"
@@ -10,7 +10,7 @@
           aria-label="搜索复筛文献"
         />
       </div>
-      <select v-model="status" aria-label="筛选文献状态" @change="search">
+      <select v-if="variant !== 'ai'" v-model="status" aria-label="筛选文献状态" @change="search">
         <option value="">全部文献</option>
         <option value="ready">全文可用于 AI</option>
         <option value="missing">未绑定全文</option>
@@ -20,15 +20,59 @@
         <option value="excluded">已排除</option>
         <option value="not_retrieved">全文未获取</option>
       </select>
-      <button :disabled="ws.state.working">搜索</button>
+      <template v-if="variant === 'ai'">
+        <button type="submit" class="ai-tool-btn" :disabled="ws.state.working" aria-label="搜索" title="搜索">
+          <i class="fas fa-search" aria-hidden="true"></i>
+        </button>
+        <button
+          v-if="selectable"
+          type="button"
+          class="ai-page-selection"
+          :disabled="ws.state.working || (!canSelectPage && !canDeselectPage)"
+          :title="canDeselectPage ? '只取消本页，保留其他页的选择' : '选中本页全文已就绪的文献，不影响其他页'"
+          @click="togglePageSelection"
+        >
+          {{ canDeselectPage ? '取消本页' : '选本页' }}
+        </button>
+      </template>
+      <button v-else :disabled="ws.state.working">搜索</button>
     </form>
-    <div v-if="selectable" class="list-tools selection-tools">
+    <div v-if="selectable && variant !== 'ai'" class="list-tools selection-tools">
       <button :disabled="ws.state.working" @click="ws.selectPage(readyOnly)">
         选择本页{{ readyOnly ? '可筛选文献' : '' }}
       </button>
       <span>已选 {{ ws.state.selected.length }} 篇（跨页保留）</span><button @click="clearSelection">清空选择</button>
     </div>
-    <div class="ref-table-wrap">
+    <ul v-if="variant === 'ai'" class="ai-reference-items">
+      <li
+        v-for="row in ws.state.refs.items"
+        :key="row.id"
+        class="ai-reference-row"
+      >
+        <input
+          v-if="selectable"
+          type="checkbox"
+          :checked="ws.state.selected.includes(row.id)"
+          :disabled="
+            ws.state.working ||
+              (readyOnly && !row.ai_ready && !ws.state.selected.includes(row.id))
+          "
+          :aria-label="`选择 ${row.title}`"
+          @change="ws.toggle(row.id)"
+        />
+        <div class="ai-reference-title">
+          <div class="ref-title-text" :title="row.title">{{ row.title }}</div>
+          <small v-if="!row.ai_ready">{{ fulltextLabel(row.fulltext_status) }} · 全文未就绪</small>
+        </div>
+        <button class="btn-link" @click="$emit('open', row)">
+          {{ actionLabel }}
+        </button>
+      </li>
+      <li v-if="!ws.state.refs.items.length" class="rs-empty">
+        没有符合条件的文献
+      </li>
+    </ul>
+    <div v-else class="ref-table-wrap">
       <table class="ref-table">
         <thead>
           <tr>
@@ -136,10 +180,10 @@
   </section>
 </template>
 <script setup>
-import { inject, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { fulltextLabel } from '../state'
 import RescreenPagination from './RescreenPagination.vue'
-defineProps({
+const props = defineProps({
   variant: { type: String, default: 'default' },
   selectable: Boolean,
   readyOnly: Boolean,
@@ -154,16 +198,74 @@ const sourceLabels = {
 }
 const query = ref(ws.state.filters.q)
 const status = ref(ws.state.filters.status)
+const readyPageIds = computed(() => ws.state.refs.items.filter(row => row.ai_ready).map(row => row.id))
+const pageIds = computed(() => new Set(ws.state.refs.items.map(row => row.id)))
+const selectedIds = computed(() => new Set(ws.state.selected))
+const canSelectPage = computed(() =>
+  ws.state.selected.length < (ws.state.info.capabilities.max_run || 1000) &&
+  readyPageIds.value.some(id => !selectedIds.value.has(id)),
+)
+const canDeselectPage = computed(() =>
+  !canSelectPage.value && ws.state.selected.some(id => pageIds.value.has(id)),
+)
+function togglePageSelection() {
+  if (canDeselectPage.value) {
+    ws.state.selected = ws.state.selected.filter(id => !pageIds.value.has(id))
+    ws.state.estimate = null
+  } else if (canSelectPage.value) {
+    ws.selectPage(true)
+  }
+}
 function clearSelection() {
   ws.state.selected = []
   ws.state.estimate = null
 }
 function search() {
-  ws.state.filters = { q: query.value, status: status.value }
+  ws.state.filters = { q: query.value, status: props.variant === 'ai' ? 'ready' : status.value }
   ws.read(() => ws.loadReferences(1))
 }
 </script>
 <style scoped>
+.list-tools.ai-list-tools {
+  flex-wrap: nowrap;
+  gap: 6px;
+  padding: 8px 12px;
+}
+.ai-list-tools .search-box {
+  min-width: 0;
+}
+.ai-list-tools .search-box input,
+.ai-list-tools .ai-tool-btn {
+  height: 32px;
+}
+.ai-list-tools .ai-page-selection {
+  height: 32px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.ai-list-tools .ai-tool-btn {
+  width: 32px;
+  padding: 0;
+}
+.ai-reference-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 420px;
+  overflow: auto;
+}
+.ai-reference-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+.ai-reference-title {
+  flex: 1;
+  min-width: 0;
+}
 .ref-table-wrap {
   overflow-x: auto;
   max-height: 360px;
