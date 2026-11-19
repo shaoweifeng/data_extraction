@@ -26,20 +26,23 @@
       </div>
       <p v-if="model.reason" class="rs-wrap">{{ model.reason }}</p>
       <p v-if="model.error" class="rs-warning">{{ model.error }}</p>
-      <div v-if="compact && model.evidence?.length" class="evidence-list">
-        <article
-          v-for="row in model.evidence"
-          :key="row.id"
-          class="evidence-card"
-        >
-          <div class="evidence-head">
-            <span><i class="fas fa-quote-left"></i> AI 证据</span><button :disabled="!row.page" @click="$emit('page', row.page)">
-              {{ row.page ? `第 ${row.page} 页` : '未提供页码' }}
-            </button>
-          </div>
-          <p>{{ row.text }}</p>
-        </article>
-      </div>
+      <details v-if="compact && model.evidence?.length" class="evidence-disclosure">
+        <summary>查看 AI 证据 <span>{{ model.evidence.length }} 条</span></summary>
+        <div class="evidence-list">
+          <article
+            v-for="row in model.evidence"
+            :key="row.id"
+            class="evidence-card"
+          >
+            <div class="evidence-head">
+              <span><i class="fas fa-quote-left"></i> 原文摘录</span><button :disabled="!row.page" @click="$emit('page', row.page)">
+                {{ row.page ? `第 ${row.page} 页` : '未提供页码' }}
+              </button>
+            </div>
+            <p>{{ row.text }}</p>
+          </article>
+        </div>
+      </details>
       <details
         v-for="criterion in model.criteria_results"
         :key="criterion.criterion_id"
@@ -98,6 +101,22 @@ function modelName(id) {
 }
 </script>
 <style scoped>
+.evidence-disclosure {
+  margin: 10px 0;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+}
+.evidence-disclosure > summary {
+  cursor: pointer;
+  color: #6366f1;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+.evidence-disclosure > summary span {
+  margin-left: 6px;
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
 .evidence-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

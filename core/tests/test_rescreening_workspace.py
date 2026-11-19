@@ -162,6 +162,37 @@ class RescreenWorkspaceTests(SharedFulltextFixture):
         state = workspace_state(self.project, self.user)
         self.assertEqual((state['counts']['bound'], state['counts']['missing'], state['counts']['fulltext_failed']), (0, 1, 0))
 
+    def test_ai_lists_track_current_results_and_invalidate_changed_inputs(self):
+        self.config()
+        url = '/api/rescreening/workspace/references/'
+
+        def assert_lists(pending, completed):
+            counts = workspace_state(self.project, self.user)['counts']
+            self.assertEqual((counts['ai_pending'], counts['ai_completed']), (pending, completed))
+            for status, count in [('ai_pending', pending), ('ai_completed', completed)]:
+                response = self.client.get(url, {'project_id': self.project.pk, 'status': status, 'page_size': 1})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data['data']['total'], count)
+
+        assert_lists(1, 0)
+        item = self.suggestion()
+        assert_lists(0, 1)
+        item.status = 'partial'
+        item.save(update_fields=['status'])
+        assert_lists(1, 0)
+        item.status = 'completed'
+        item.save(update_fields=['status'])
+        assert_lists(0, 1)
+        self.config(expected_version=1, criteria=['新的排除标准'])
+        assert_lists(1, 0)
+        self.suggestion()
+        assert_lists(0, 1)
+        self.ref.input_version += 1
+        self.ref.save(update_fields=['input_version'])
+        assert_lists(1, 0)
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.get(url, {'project_id': self.project.pk, 'status': 'ai_completed'}).status_code, 403)
+
     def test_save_api_refreshes_stats_and_history(self):
         detail = self.client.get(f'/api/rescreening/references/{self.ref.pk}/review/').data['data']
         response = self.client.post(f'/api/rescreening/references/{self.ref.pk}/review/', {

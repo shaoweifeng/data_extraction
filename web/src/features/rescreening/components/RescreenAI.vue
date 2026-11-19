@@ -10,61 +10,52 @@
       </header>
       <div class="result-tabs">
         <button
+          :class="{ selected: resultTab === 'all' }"
+          :aria-pressed="resultTab === 'all'"
+          @click="selectTab('all')"
+        >
+          全部
+          <span class="rs-badge">{{ ws.state.info.counts.total }}</span>
+        </button>
+        <button
           :class="{ selected: resultTab === 'input' }"
           :aria-pressed="resultTab === 'input'"
-          @click="resultTab = 'input'"
+          title="全文已就绪，但当前全文与排除标准下尚未完成 AI 复筛"
+          @click="selectTab('input')"
         >
           待复筛文献
-          <span class="rs-badge">{{ ws.state.info.counts.ready }}</span>
+          <span class="rs-badge">{{ ws.state.info.counts.ai_pending ?? 0 }}</span>
         </button><button
-          v-if="ws.state.run"
-          :class="{ selected: resultTab === 'results' }"
-          :aria-pressed="resultTab === 'results'"
-          title="查看所选运行记录中的文献、处理状态和结果"
-          @click="resultTab = 'results'"
+          :class="{ selected: resultTab === 'screened' }"
+          :aria-pressed="resultTab === 'screened'"
+          title="当前全文与排除标准下已完成 AI 复筛，可查看结果或选择重跑"
+          @click="selectTab('screened')"
         >
-          运行明细
-          <span class="rs-badge">{{ ws.state.run?.total_count ?? 0 }}</span>
+          已复筛文献
+          <span class="rs-badge">{{ ws.state.info.counts.ai_completed ?? 0 }}</span>
         </button>
       </div>
-      <div v-show="resultTab === 'input'">
+      <div>
         <RescreenReferenceList
           variant="ai"
           selectable
           ready-only
+          :ai-status="listStatus"
           action-label="查看"
           @open="openReference"
-        />
-      </div>
-      <div v-if="ws.state.run" v-show="resultTab === 'results'" class="run-list">
-        <div
-          v-for="item in ws.state.runItems.items"
-          :key="item.id"
-          class="result-item"
-        >
-          <div>
-            <strong :title="item.title">{{ item.title }}</strong>
-            <p>{{ label(item.status) }}</p>
-          </div>
-          <div class="rs-actions">
-            <span class="decision" :class="item.consensus">{{
-              decisionLabel(item.consensus)
-            }}</span><button @click="view(item)">查看结果</button>
-          </div>
-        </div>
-        <RescreenPagination
-          :page="ws.state.runItems"
-          @change="(p, s) => ws.read(() => ws.loadRunItems(p, s))"
         />
       </div>
     </section>
     <section class="ai-right" aria-label="模型与任务进度">
       <template v-if="!showRun">
         <section class="panel model-panel">
-          <div class="rs-toolbar">
+          <div class="rs-toolbar panel-heading">
             <h3 class="model-heading"><i class="fas fa-brain"></i> 选择模型</h3>
-            <small>参考倍率以 DeepSeek Flash 为 1.0×；实际预估按本次证据包计算</small>
+            <button v-if="canSwitchView" class="panel-view-switch" :disabled="blocked" @click="openRun(ws.state.runId)">
+              查看运行结果 <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </button>
           </div>
+          <small class="model-hint">参考倍率以 DeepSeek Flash 为 1.0×；实际预估按本次证据包计算</small>
           <AiModelPicker
             :providers="ws.state.models"
             :disabled="blocked"
@@ -115,8 +106,11 @@
         </section>
       </template>
       <section v-else class="panel run-panel">
-        <div class="rs-toolbar">
+        <div class="rs-toolbar panel-heading">
           <h3>{{ runActive ? '复筛进度' : '复筛结果' }}</h3>
+          <button v-if="canSwitchView" class="panel-view-switch" :disabled="blocked" @click="newRound">
+            选择模型 <i class="fas fa-arrow-right" aria-hidden="true"></i>
+          </button>
           <button
             v-if="ws.state.info.active_run_id && ws.state.runId !== ws.state.info.active_run_id"
             :disabled="ws.state.working"
@@ -124,7 +118,6 @@
           >
             返回活动任务
           </button>
-          <button v-else-if="!runActive" :disabled="blocked" @click="newRound">开始新一轮</button>
         </div>
         <div class="rs-run-summary">
           <strong>运行 #{{ ws.state.run.id }} ·
@@ -178,6 +171,22 @@
         <p v-if="ws.state.run.needs_unknown_ack" class="rs-warning">
           存在处理结果或用量未知的请求，重试可能再次产生供应商费用，需要显式确认。
         </p>
+        <details class="run-items-details" open>
+          <summary>运行明细 · {{ ws.state.run.total_count }} 篇</summary>
+          <div class="run-list">
+            <div v-for="item in ws.state.runItems.items" :key="item.id" class="result-item">
+              <div>
+                <strong :title="item.title">{{ item.title }}</strong>
+                <p>{{ label(item.status) }}</p>
+              </div>
+              <div class="rs-actions">
+                <span class="decision" :class="item.consensus">{{ decisionLabel(item.consensus) }}</span>
+                <button @click="view(item)">查看结果</button>
+              </div>
+            </div>
+            <RescreenPagination :page="ws.state.runItems" @change="(p, s) => ws.read(() => ws.loadRunItems(p, s))" />
+          </div>
+        </details>
       </section>
       <details v-if="ws.state.run || ws.state.runs.total" class="run-history">
         <summary>历史运行</summary>
@@ -233,9 +242,11 @@ const hints = ref({})
 const hintError = ref('')
 const balance = ref(null)
 const resultDetail = ref(null)
-const resultTab = ref(ws.state.run ? 'results' : 'input')
-const configuringNewRound = ref(false)
+const resultTab = ref('input')
+const listStatus = computed(() => resultTab.value === 'all' ? '' : resultTab.value === 'screened' ? 'ai_completed' : 'ai_pending')
+const configuringNewRound = ref(!ACTIVE_RUNS.includes(ws.state.run?.status))
 const runActive = computed(() => ACTIVE_RUNS.includes(ws.state.run?.status))
+const canSwitchView = computed(() => ws.state.run && !runActive.value && !ws.state.info.active_run_id)
 const showRun = computed(() =>
   Boolean(ws.state.run && (!configuringNewRound.value || runActive.value || ws.state.info.active_run_id)),
 )
@@ -324,18 +335,23 @@ async function start() {
     return
   const result = await ws.start(payload.value)
   if (result) {
+    clearAllSelection()
     configuringNewRound.value = false
     resultDetail.value = null
-    resultTab.value = 'results'
   }
 }
 function newRound() {
   configuringNewRound.value = true
   resultDetail.value = null
-  resultTab.value = 'input'
+  selectTab('input')
   estimateKey.value = ''
   lastAttempt = ''
   refreshBalance()
+}
+function selectTab(tab) {
+  resultTab.value = tab
+  ws.state.filters = { q: ws.state.filters.q, status: listStatus.value }
+  ws.read(() => ws.loadReferences(1))
 }
 async function openRun(id) {
   if (!id) return
@@ -343,7 +359,6 @@ async function openRun(id) {
   if (alive && ws.state.run?.id === id) {
     configuringNewRound.value = false
     resultDetail.value = null
-    resultTab.value = 'results'
   }
 }
 function runAction(action) {
@@ -543,6 +558,39 @@ h3 {
   border-color: #c7d2fe;
   color: #4f46e5;
 }
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ai-right .panel-view-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #4f46e5;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ai-right .panel-view-switch:hover:not(:disabled) {
+  color: #3730a3;
+  text-decoration: underline;
+}
+.ai-right .panel-view-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.model-hint {
+  display: block;
+  margin-bottom: 12px;
+  color: #64748b;
+}
 .result-item > div:first-child {
   min-width: 0;
 }
@@ -580,6 +628,17 @@ h3 {
   padding: 0 12px 12px;
   max-height: 520px;
   overflow: auto;
+}
+.run-items-details {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+.run-items-details summary {
+  cursor: pointer;
+  color: #475569;
+  font-size: 0.84rem;
+  font-weight: 600;
 }
 .model-panel {
   background: #fafbff;

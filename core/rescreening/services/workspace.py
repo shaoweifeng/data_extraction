@@ -107,12 +107,23 @@ def reference_payload(ref):
             'needs_reconfirmation': bool(review and not ref.review_valid)}
 
 
+def ai_reference_filters():
+    """Current input and criteria determine whether a fulltext AI result is reusable."""
+    ready = Q(current_binding__asset__status='ready', current_binding__asset__extraction_status='completed',
+              current_binding__asset__extraction_truncated=False)
+    completed = Q(suggestion_status='completed')
+    return {'ai_pending': ready & (~completed | Q(suggestion_status__isnull=True)),
+            'ai_completed': completed}
+
+
 def workspace_state(project, user):
     corpus = RescreenCorpus.objects.filter(project=project).first()
     refs = reference_query(project)
     ready = Q(current_binding__asset__status='ready', current_binding__asset__extraction_status='completed',
               current_binding__asset__extraction_truncated=False)
     counts = refs.aggregate(total=Count('pk'), ready=Count('pk', filter=ready),
+        ai_pending=Count('pk', filter=ai_reference_filters()['ai_pending']),
+        ai_completed=Count('pk', filter=ai_reference_filters()['ai_completed']),
         bound=Count('pk', filter=Q(current_binding__asset__status='ready')),
         missing=Count('pk', filter=Q(current_binding__isnull=True)),
         fulltext_failed=Count('pk', filter=Q(current_binding__asset__status__in=('failed', 'rejected'))),

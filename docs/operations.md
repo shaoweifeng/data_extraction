@@ -303,3 +303,16 @@ curl -X POST "https://your-domain.example/api/external/images/" \
 python manage.py cleanup_external_image_orphans
 python manage.py cleanup_external_image_orphans --apply --older-than-hours=24
 ```
+
+### PDF 直接导入的复筛题录补全
+
+新上传 PDF 完成处理后，会根据首页可核对的作者行、期刊年卷期以及与原文吻合的 PDF 属性，补全作者、发表年份、期刊的空字段。扫描件、缺失文本或无法明确识别的版式可能仍为空；PDF 创建时间、文件名年份、CNKI 等软件署名不会作为书目信息。PDF 属性可能只有第一作者，不能视为完整作者名单。索引导入的题录和已有非空字段不会被覆盖。
+
+历史 PDF 可以按项目先预览，再写入：
+
+```bash
+python manage.py backfill_rescreen_pdf_bibliography --project-id 71
+python manage.py backfill_rescreen_pdf_bibliography --project-id 71 --apply
+```
+
+命令仅读取已提取的首页文本，无外网请求或模型调用。写入时创建新的文献输入、原始元数据和全文绑定版本，保留旧 AI 结果和人工审核历史；旧结果不再作为当前输入的有效结果，已有人工决定需要重新确认。项目存在活动复筛任务时拒绝写入。重复执行不会重复补全已填写的字段。无需数据库迁移或新增环境变量。

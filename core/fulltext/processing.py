@@ -88,12 +88,17 @@ def process_asset(asset_id, *, expected_task_id=None, check_stop=None):
                 metadata['dois'] = list(dict.fromkeys(value.rstrip('.,;:)]}') for value in re.findall(
                     r'10\.\d{4,9}/[^\s<>"\u4e00-\u9fff]+', first_pages, flags=re.I)))[:20]
                 metadata['pmids'] = list(dict.fromkeys(re.findall(r'PMID\s*:\s*(\d+)', first_pages, flags=re.I)))[:20]
+                from core.fulltext.bibliography import extract_bibliography
+                first_page = next((page.text for page in extraction['pages'] if page.page_number == 1), '')
+                metadata['bibliography'] = extract_bibliography(metadata, first_page)
         chunks = build_chunks(extraction['pages'], target_tokens=settings.QA_CHUNK_TARGET_TOKENS,
                               overlap_tokens=settings.QA_CHUNK_OVERLAP_TOKENS)
         text_bytes = extraction['text'].encode('utf-8')
         chunk_bytes = serialize_chunks(chunks) if chunks else b''
         checkpoint()
         with user_storage_quota_guard(asset.project.owner, len(text_bytes)+len(chunk_bytes)), transaction.atomic():
+            from core.models import Project
+            Project.objects.select_for_update().get(pk=asset.project_id)
             locked = FulltextAsset.objects.select_for_update().get(pk=asset.pk)
             if locked.processing_token != token or locked.status != 'extracting':
                 raise FulltextError('stale_task', '全文处理租约已失效。', status=409)
@@ -119,6 +124,8 @@ def process_asset(asset_id, *, expected_task_id=None, check_stop=None):
             locked.primary_pmid = metadata['pmids'][0][:64] if len(metadata['pmids']) == 1 else ''
             locked.error_code = locked.error_message = ''
             locked.save()
+            from core.rescreening.services.pdf_bibliography import enrich_when_idle
+            enrich_when_idle(locked, metadata['bibliography'])
             from core.models import QAReference
             QAReference.objects.filter(shared_fulltext_asset=locked).update(fulltext_status='available')
             for storage, name in old_files:

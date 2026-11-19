@@ -51,7 +51,8 @@ def references(request):
                'unreviewed': Q(review_valid=False) | Q(current_review__decision='pending'),
                'reconfirm': Q(review_valid=False, current_review__isnull=False),
                'pending': Q(review_valid=True, current_review__decision='pending'),
-               'conflict': Q(suggestion_decision='conflict')}
+               'conflict': Q(suggestion_decision='conflict'),
+               **service.ai_reference_filters()}
     if status in ('included', 'excluded', 'not_retrieved'):
         queryset = queryset.filter(review_valid=True, current_review__decision=status)
     elif status:

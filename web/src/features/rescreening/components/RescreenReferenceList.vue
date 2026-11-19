@@ -187,6 +187,7 @@ const props = defineProps({
   variant: { type: String, default: 'default' },
   selectable: Boolean,
   readyOnly: Boolean,
+  aiStatus: { type: String, default: 'ai_pending' },
   actionLabel: { type: String, default: '查看' },
 })
 defineEmits(['open', 'replace'])
@@ -221,7 +222,7 @@ function clearSelection() {
   ws.state.estimate = null
 }
 function search() {
-  ws.state.filters = { q: query.value, status: props.variant === 'ai' ? 'ready' : status.value }
+  ws.state.filters = { q: query.value, status: props.variant === 'ai' ? props.aiStatus : status.value }
   ws.read(() => ws.loadReferences(1))
 }
 </script>

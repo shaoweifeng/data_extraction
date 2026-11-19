@@ -36,8 +36,20 @@ export function createRescreenWorkspace(api = defaultApi) {
   let generation = 0
   const epochs = {}
   let timer = null
+  let noticeTimer = null
   let disposed = false
   const keys = new Map()
+  function clearNotice() {
+    clearTimeout(noticeTimer)
+    noticeTimer = null
+    state.notice = ''
+  }
+  function showNotice(message) {
+    clearNotice()
+    if (!message) return
+    state.notice = message
+    noticeTimer = setTimeout(clearNotice, 4000)
+  }
   function stopPolling() {
     clearTimeout(timer)
     timer = null
@@ -46,6 +58,7 @@ export function createRescreenWorkspace(api = defaultApi) {
     disposed = true
     generation++
     stopPolling()
+    clearNotice()
   }
   async function resource(name, fetcher) {
     const stamp = generation
@@ -61,6 +74,7 @@ export function createRescreenWorkspace(api = defaultApi) {
   }
   async function initialize(projectId, requestedStep = 1) {
     stopPolling()
+    clearNotice()
     generation++
     disposed = false
     Object.assign(state, {
@@ -102,7 +116,7 @@ export function createRescreenWorkspace(api = defaultApi) {
       await resource('info', () => api.workspace(projectId))
       if (stamp !== generation || disposed) return
       state.step = stepNumber(requestedStep, state.info)
-      if (state.step === 4) state.filters.status = 'ready'
+      if (state.step === 4) state.filters.status = 'ai_pending'
       await Promise.all([
         loadReferences(1),
         resource('models', () => api.models()),
@@ -245,12 +259,12 @@ export function createRescreenWorkspace(api = defaultApi) {
     if (state.working) return null
     state.working = true
     state.error = ''
-    state.notice = ''
+    clearNotice()
     const stamp = generation
     try {
       const result = await callback()
       if (stamp !== generation || disposed) return null
-      if (message) state.notice = message
+      if (message) showNotice(message)
       if (refreshAfter) await refresh()
       return result
     } catch (error) {
@@ -348,6 +362,7 @@ export function createRescreenWorkspace(api = defaultApi) {
     api,
     initialize,
     dispose,
+    clearNotice,
     action,
     read,
     refresh,

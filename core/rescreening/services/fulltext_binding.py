@@ -52,6 +52,13 @@ def import_pdf_references(project, user, assets):
             provenance={'source': 'manual_upload'})
         ref.current_binding = binding
         ref.save(update_fields=['current_binding'])
+    from core.fulltext.bibliography import bibliography_from_asset
+    from core.rescreening.services.pdf_bibliography import enrich_when_idle
+    for asset in new:
+        if asset.status == 'ready':
+            enrich_when_idle(asset, asset.metadata.get('bibliography') or bibliography_from_asset(asset))
+    for ref in refs:
+        ref.refresh_from_db()
     return list(existing.values()) + refs
 
 

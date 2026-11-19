@@ -52,7 +52,7 @@
             </div>
             <div v-if="ws.state.notice" class="rs-alert success" role="status">
               {{ ws.state.notice
-              }}<button aria-label="关闭提示" @click="ws.state.notice = ''">
+              }}<button aria-label="关闭提示" @click="ws.clearNotice()">
                 ×
               </button>
             </div>
@@ -197,7 +197,7 @@ watch(
     ws.state.selected = []
     ws.clearReference()
     ws.state.refs = emptyPage()
-    ws.state.filters = { q: '', status: next === 4 ? 'ready' : '' }
+    ws.state.filters = { q: '', status: next === 4 ? 'ai_pending' : '' }
     await ws.read(() => ws.loadReferences(1))
   },
 )

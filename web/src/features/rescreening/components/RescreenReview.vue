@@ -93,74 +93,67 @@
             }}</span><span class="info-chip"><i class="fas fa-calendar"></i>{{ ws.state.detail.publication_year || '年份未提供' }}</span><span class="info-chip"><i class="fas fa-book"></i>{{ ws.state.detail.bibliography.journal || '期刊未提供' }}</span><span v-if="ws.state.detail.doi" class="info-chip"><i class="fas fa-fingerprint"></i>{{ ws.state.detail.doi }}</span>
           </div>
         </div>
-        <div class="abstract-box">
-          <div class="abstract-box-header">
-            <span class="section-label"><i class="fas fa-file-pdf"></i>PDF 全文</span>
-            <div class="pdf-actions">
-              <button :disabled="ws.state.working" @click="reload">
-                <i class="fas fa-sync-alt"></i>刷新
-              </button><a
-                :href="`/workspace/${ws.state.projectId}?stage=SCREEN_2&rescreen_step=2`"
-              >查看 / 更改全文</a><a v-if="pdfUrl" :href="pdfUrl" target="_blank" rel="noopener">新窗口打开</a>
+        <div class="review-reading-grid">
+          <div class="abstract-box">
+            <div class="abstract-box-header">
+              <span class="section-label"><i class="fas fa-file-pdf"></i>PDF 全文</span>
+              <div class="pdf-actions">
+                <button :disabled="ws.state.working" @click="reload">
+                  <i class="fas fa-sync-alt"></i>刷新
+                </button><a
+                  :href="`/workspace/${ws.state.projectId}?stage=SCREEN_2&rescreen_step=2`"
+                >查看 / 更改全文</a><a v-if="pdfUrl" :href="pdfUrl" target="_blank" rel="noopener">新窗口打开</a>
+              </div>
+            </div>
+            <div v-if="pdfUrl" class="abstract-box-body pdf-body">
+              <RescreenPdf :url="ws.state.detail.pdf_url" :page="page" />
+            </div>
+            <div v-else class="fulltext-empty">
+              <i class="fas fa-file-pdf"></i><strong>{{ ws.state.detail.asset_id ? '全文暂不可读' : '没有绑定全文' }}</strong><span>返回“全文查找绑定”上传或绑定
+                PDF；确实无法获取时，可标记“全文未获取”。</span>
+              <a class="fulltext-upload-link" :href="`/workspace/${ws.state.projectId}?stage=SCREEN_2&rescreen_step=2`">上传 / 绑定全文</a>
             </div>
           </div>
-          <div v-if="pdfUrl" class="abstract-box-body pdf-body">
-            <RescreenPdf :url="ws.state.detail.pdf_url" :page="page" />
-          </div>
-          <div v-else class="fulltext-empty">
-            <i class="fas fa-file-pdf"></i><strong>尚无可读全文</strong><span>返回“全文查找绑定”上传或绑定
-              PDF；确实无法获取时，可标记“全文未获取”。</span>
-            <p v-if="ws.state.detail.bibliography.abstract">
-              {{ ws.state.detail.bibliography.abstract }}
-            </p>
-          </div>
-        </div>
-        <div class="detail-ai">
-          <div
-            v-if="ws.state.detail.needs_reconfirmation"
-            class="conflict-banner"
-          >
-            <i class="fas fa-exclamation-triangle"></i>输入、标准或 AI
-            建议已更新，原决定保留，需要重新确认。
-          </div>
-          <div class="ai-result-row">
-            <span class="badge ai" :class="ws.state.aiDetail?.consensus">AI：{{ decisionLabel(ws.state.aiDetail?.consensus) }}</span><button
-              v-if="
-                ['included', 'excluded'].includes(ws.state.aiDetail?.consensus)
-              "
-              class="adopt-btn"
-              :disabled="blocked"
-              @click="adopt"
+          <section class="detail-ai" aria-label="AI 判断与审核历史">
+            <h4 class="ai-section-heading">AI 判断结果</h4>
+            <div
+              v-if="ws.state.detail.needs_reconfirmation"
+              class="conflict-banner"
             >
-              采纳到表单
-            </button>
-          </div>
-          <RescreenEvidence
-            :detail="ws.state.aiDetail"
-            compact
-            @page="showEvidence"
-          />
-          <details @toggle="historyToggle">
-            <summary>人工审核历史</summary>
-            <article
-              v-for="event in ws.state.history.items"
-              :key="event.id"
-              class="rs-inset"
-            >
-              <strong>{{ decisionLabel(event.payload.decision) }} ·
-                {{ event.author || '原用户已删除' }}</strong><small>{{ new Date(event.created_at).toLocaleString() }}</small>
-              <p v-if="event.payload.exclusion_reason">
-                {{ event.payload.exclusion_reason }}
-              </p>
-              <p v-if="event.payload.note" class="rs-wrap">
-                {{ event.payload.note }}
-              </p>
-            </article>
-            <RescreenPagination
-              :page="ws.state.history"
-              @change="(p, s) => ws.read(() => ws.loadHistory(p, s))"
+              <i class="fas fa-exclamation-triangle"></i>输入、标准或 AI
+              建议已更新，原决定保留，需要重新确认。
+            </div>
+            <div class="ai-result-row">
+              <span class="badge ai" :class="ws.state.aiDetail?.consensus">AI：{{ decisionLabel(ws.state.aiDetail?.consensus) }}</span>
+            </div>
+            <RescreenEvidence
+              :key="ws.state.detail.id"
+              :detail="ws.state.aiDetail"
+              compact
+              @page="showEvidence"
             />
-          </details>
+            <details @toggle="historyToggle">
+              <summary>人工审核历史</summary>
+              <article
+                v-for="event in ws.state.history.items"
+                :key="event.id"
+                class="rs-inset"
+              >
+                <strong>{{ decisionLabel(event.payload.decision) }} ·
+                  {{ event.author || '原用户已删除' }}</strong><small>{{ new Date(event.created_at).toLocaleString() }}</small>
+                <p v-if="event.payload.exclusion_reason">
+                  {{ event.payload.exclusion_reason }}
+                </p>
+                <p v-if="event.payload.note" class="rs-wrap">
+                  {{ event.payload.note }}
+                </p>
+              </article>
+              <RescreenPagination
+                :page="ws.state.history"
+                @change="(p, s) => ws.read(() => ws.loadHistory(p, s))"
+              />
+            </details>
+          </section>
         </div>
         <div class="detail-action">
           <div class="action-row">
@@ -376,17 +369,6 @@ async function save() {
   if (result && ws.state.step === 5 && ws.state.detail?.id === detail.id)
     ws.state.detail = result
   return result
-}
-function adopt() {
-  decision.value = ws.state.aiDetail.consensus
-  if (decision.value === 'excluded')
-    reason.value = ws.state.aiDetail.models
-      .filter(
-        (row) => row.status === 'completed' && row.decision === 'excluded',
-      )
-      .map((row) => row.reason)
-      .join('\n')
-      .slice(0, 2000)
 }
 function showEvidence(value) {
   page.value = value
@@ -682,6 +664,7 @@ watch(() => ws.state.refs, (value) => {
 }
 .detail-panel {
   position: relative;
+  container-type: inline-size;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -835,6 +818,20 @@ watch(() => ws.state.refs, (value) => {
   max-width: 420px;
   font-size: 0.8rem;
   line-height: 1.5;
+}
+.fulltext-upload-link {
+  display: inline-flex;
+  padding: 8px 14px;
+  margin-top: 6px;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.fulltext-upload-link:hover {
+  background: #e0e7ff;
 }
 .detail-ai {
   flex-shrink: 0;
@@ -1198,8 +1195,29 @@ watch(() => ws.state.refs, (value) => {
 .detail-title {
   overflow-wrap: anywhere;
 }
-.abstract-box {
-  min-height: 140px;
+.review-reading-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+  padding: 0 14px 12px;
+  overflow: hidden;
+}
+.review-reading-grid .abstract-box {
+  min-height: 0;
+  margin: 0;
+}
+.abstract-box-header {
+  flex-wrap: wrap;
+}
+.pdf-actions {
+  flex-wrap: wrap;
+}
+.ai-section-heading {
+  margin: 0 0 12px;
+  color: #334155;
+  font-size: 0.86rem;
 }
 .abstract-box-body {
   padding: 0;
@@ -1222,6 +1240,9 @@ watch(() => ws.state.refs, (value) => {
 .detail-ai :deep(.rs-model-result:first-child) {
   border-top: 0;
 }
+.detail-ai :deep(.evidence-list) {
+  grid-template-columns: minmax(0, 1fr);
+}
 .pdf-actions a {
   font-size: 0.72rem;
   text-decoration: none;
@@ -1229,8 +1250,7 @@ watch(() => ws.state.refs, (value) => {
   border-radius: 6px;
   padding: 0.28rem 0.5rem;
 }
-.save-decision,
-.adopt-btn {
+.save-decision {
   border: 1px solid #c7d2fe;
   border-radius: 7px;
   background: #eef2ff;
@@ -1247,9 +1267,14 @@ watch(() => ws.state.refs, (value) => {
   gap: 6px;
 }
 .detail-ai {
-  flex: 0 1 160px;
-  min-height: 60px;
-  max-height: 200px;
+  min-height: 0;
+  min-width: 0;
+  max-height: none;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fafbff;
+  overflow: auto;
 }
 .list-panel .search-box input {
   border: 0;
@@ -1286,12 +1311,13 @@ watch(() => ws.state.refs, (value) => {
   .detail-panel {
     overflow: visible;
   }
-  .abstract-box {
+  .review-reading-grid {
     flex: none;
-    height: 420px;
+    height: 620px;
+    min-height: 0;
   }
   .detail-ai {
-    max-height: 320px;
+    max-height: none;
   }
   .detail-action {
     position: sticky;
@@ -1306,6 +1332,27 @@ watch(() => ws.state.refs, (value) => {
   }
   .tab-label {
     font-size: 0.72rem;
+  }
+}
+@container (max-width: 600px) {
+  .review-reading-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 440px minmax(280px, auto);
+    overflow: auto;
+  }
+}
+@media (max-width: 640px) {
+  .review-reading-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 480px minmax(240px, auto);
+    height: auto;
+    overflow: visible;
+  }
+  .review-reading-grid .detail-ai {
+    max-height: 480px;
+  }
+  .action-row {
+    flex-wrap: wrap;
   }
 }
 </style>
