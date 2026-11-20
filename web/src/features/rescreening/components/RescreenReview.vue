@@ -115,108 +115,100 @@
             </div>
           </div>
           <section class="detail-ai" aria-label="AI 判断与审核历史">
-            <h4 class="ai-section-heading">AI 判断结果</h4>
-            <div
-              v-if="ws.state.detail.needs_reconfirmation"
-              class="conflict-banner"
-            >
-              <i class="fas fa-exclamation-triangle"></i>输入、标准或 AI
-              建议已更新，原决定保留，需要重新确认。
-            </div>
-            <div class="ai-result-row">
-              <span class="badge ai" :class="ws.state.aiDetail?.consensus">AI：{{ decisionLabel(ws.state.aiDetail?.consensus) }}</span>
-            </div>
-            <RescreenEvidence
-              :key="ws.state.detail.id"
-              :detail="ws.state.aiDetail"
-              compact
-              @page="showEvidence"
-            />
-            <details @toggle="historyToggle">
-              <summary>人工审核历史</summary>
-              <article
-                v-for="event in ws.state.history.items"
-                :key="event.id"
-                class="rs-inset"
+            <div class="ai-review-content">
+              <h4 class="ai-section-heading">AI 判断结果</h4>
+              <div
+                v-if="ws.state.detail.needs_reconfirmation"
+                class="conflict-banner"
               >
-                <strong>{{ decisionLabel(event.payload.decision) }} ·
-                  {{ event.author || '原用户已删除' }}</strong><small>{{ new Date(event.created_at).toLocaleString() }}</small>
-                <p v-if="event.payload.exclusion_reason">
-                  {{ event.payload.exclusion_reason }}
-                </p>
-                <p v-if="event.payload.note" class="rs-wrap">
-                  {{ event.payload.note }}
-                </p>
-              </article>
-              <RescreenPagination
-                :page="ws.state.history"
-                @change="(p, s) => ws.read(() => ws.loadHistory(p, s))"
+                <i class="fas fa-exclamation-triangle"></i>输入、标准或 AI
+                建议已更新，原决定保留，需要重新确认。
+              </div>
+              <div class="ai-result-row">
+                <span class="badge ai" :class="ws.state.aiDetail?.consensus">AI：{{ decisionLabel(ws.state.aiDetail?.consensus) }}</span>
+              </div>
+              <RescreenEvidence
+                :key="ws.state.detail.id"
+                :detail="ws.state.aiDetail"
+                compact
+                @page="showEvidence"
               />
-            </details>
+              <details @toggle="historyToggle">
+                <summary>人工审核历史</summary>
+                <article
+                  v-for="event in ws.state.history.items"
+                  :key="event.id"
+                  class="rs-inset"
+                >
+                  <strong>{{ decisionLabel(event.payload.decision) }} ·
+                    {{ event.author || '原用户已删除' }}</strong><small>{{ new Date(event.created_at).toLocaleString() }}</small>
+                  <p v-if="event.payload.exclusion_reason">
+                    {{ event.payload.exclusion_reason }}
+                  </p>
+                  <p v-if="event.payload.note" class="rs-wrap">
+                    {{ event.payload.note }}
+                  </p>
+                </article>
+                <RescreenPagination
+                  :page="ws.state.history"
+                  @change="(p, s) => ws.read(() => ws.loadHistory(p, s))"
+                />
+              </details>
+            </div>
+            <div class="detail-action">
+              <div class="action-row">
+                <div class="action-btns">
+                  <button
+                    v-for="choice in decisions"
+                    :key="choice.value"
+                    class="action-btn"
+                    :class="[choice.value, { active: decision === choice.value }]"
+                    :disabled="
+                      blocked ||
+                        (choice.value === 'not_retrieved' &&
+                          !!ws.state.detail.asset_id &&
+                          !['failed', 'rejected'].includes(
+                            ws.state.detail.fulltext_status,
+                          ))
+                    "
+                    @click="chooseDecision(choice.value)"
+                  >
+                    <i :class="choice.icon"></i>{{ choice.text }}
+                  </button>
+                </div>
+              </div>
+              <div class="note-wrap">
+                <label class="reason-wrap-label" for="rescreen-review-note"><i class="fas fa-sticky-note"></i>备注（可选）<small
+                  v-if="dirty"
+                  class="rs-warning"
+                >
+                  · 有未保存的修改</small></label>
+                <div class="note-input-row">
+                  <textarea
+                    id="rescreen-review-note"
+                    v-model="note"
+                    maxlength="4000"
+                    rows="1"
+                    placeholder="添加人工备注…"
+                    :disabled="blocked"
+                    @keydown.enter.exact.prevent="note.trim() && decision && save()"
+                  /><button
+                    class="note-save-btn"
+                    aria-label="保存备注"
+                    :disabled="
+                      blocked ||
+                        !decision ||
+                        (decision === 'excluded' && !reason.trim())
+                    "
+                    @click="save"
+                  >
+                    <i class="fas fa-save"></i>
+                  </button>
+                </div>
+                <small v-if="ws.state.info.busy" class="rs-warning">后台任务处理期间暂不能修改审核。</small>
+              </div>
+            </div>
           </section>
-        </div>
-        <div class="detail-action">
-          <div class="action-row">
-            <div class="action-btns">
-              <button
-                v-for="choice in decisions"
-                :key="choice.value"
-                class="action-btn"
-                :class="[choice.value, { active: decision === choice.value }]"
-                :disabled="
-                  blocked ||
-                    (choice.value === 'not_retrieved' &&
-                      !!ws.state.detail.asset_id &&
-                      !['failed', 'rejected'].includes(
-                        ws.state.detail.fulltext_status,
-                      ))
-                "
-                @click="chooseDecision(choice.value)"
-              >
-                <i :class="choice.icon"></i>{{ choice.text }}
-              </button>
-            </div>
-            <button
-              class="save-decision"
-              :disabled="
-                blocked ||
-                  !decision ||
-                  (decision === 'excluded' && !reason.trim())
-              "
-              @click="save"
-            >
-              保存人工决定
-            </button>
-          </div>
-          <div class="note-wrap">
-            <label class="reason-wrap-label" for="rescreen-review-note"><i class="fas fa-sticky-note"></i>备注（可选）<small
-              v-if="dirty"
-              class="rs-warning"
-            >
-              · 有未保存的修改</small></label>
-            <div class="note-input-row">
-              <textarea
-                id="rescreen-review-note"
-                v-model="note"
-                maxlength="4000"
-                rows="1"
-                placeholder="添加人工备注…"
-                :disabled="blocked"
-              /><button
-                class="note-save-btn"
-                aria-label="保存备注"
-                :disabled="
-                  blocked ||
-                    !decision ||
-                    (decision === 'excluded' && !reason.trim())
-                "
-                @click="save"
-              >
-                <i class="fas fa-save"></i>
-              </button>
-            </div>
-            <small v-if="ws.state.info.busy" class="rs-warning">后台任务处理期间暂不能修改审核。</small>
-          </div>
         </div>
         <transition name="reason-panel-slide">
           <div
@@ -419,14 +411,15 @@ async function loadList(p, s) {
 }
 async function chooseDecision(value) {
   if (blocked.value) return
-  decision.value = value
   if (value === 'excluded') {
     reasonPanelOpen.value = true
     return
   }
+  decision.value = value
   await save()
 }
 async function confirmExclude() {
+  decision.value = 'excluded'
   const result = await save()
   if (result) reasonPanelOpen.value = false
 }
@@ -1250,15 +1243,6 @@ watch(() => ws.state.refs, (value) => {
   border-radius: 6px;
   padding: 0.28rem 0.5rem;
 }
-.save-decision {
-  border: 1px solid #c7d2fe;
-  border-radius: 7px;
-  background: #eef2ff;
-  color: #4f46e5;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
 .action-btn.not_retrieved.active {
   background: #f1f5f9;
   border-color: #94a3b8;
@@ -1270,12 +1254,23 @@ watch(() => ws.state.refs, (value) => {
   min-height: 0;
   min-width: 0;
   max-height: none;
-  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fafbff;
-  overflow: auto;
+  overflow: hidden;
 }
+.ai-review-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+.detail-ai .detail-action { padding: 12px; box-shadow: none; }
+.detail-ai .action-btns { gap: 6px; }
+.detail-ai .action-btn { padding: 7px 10px; font-size: 0.78rem; }
 .list-panel .search-box input {
   border: 0;
   border-radius: 0;
@@ -1320,8 +1315,7 @@ watch(() => ws.state.refs, (value) => {
     max-height: none;
   }
   .detail-action {
-    position: sticky;
-    bottom: 0;
+    position: static;
   }
   .reason-side-panel {
     position: fixed;
@@ -1349,7 +1343,8 @@ watch(() => ws.state.refs, (value) => {
     overflow: visible;
   }
   .review-reading-grid .detail-ai {
-    max-height: 480px;
+    height: 560px;
+    max-height: none;
   }
   .action-row {
     flex-wrap: wrap;

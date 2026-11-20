@@ -13,6 +13,7 @@ from core.rescreening.services.workspace import reference_query
 from core.quality.services.reference_service import _safe_int, _first_author
 from core.screening.services.import_limits import ImportLimits
 from core.workflow.services.task_launcher import ACTIVE_EXECUTION_STATUSES
+from core.rescreening.services.qa_identity import preserved_sources, match_preserved
 
 
 def _signature(ref):
@@ -22,10 +23,11 @@ def _signature(ref):
 
 def preview(project):
     before = fingerprint(project)
-    refs = reference_query(project).select_related('current_review').only('pk', 'input_version',
-        'current_review__id', 'current_review__version', 'current_review__decision').order_by('pk').iterator(chunk_size=500)
+    refs = reference_query(project).select_related('current_review', 'current_binding__asset', 'import_file').defer(
+        'current_binding__asset__metadata', 'current_binding__asset__provenance', 'abstract', 'source_snapshot').order_by('pk').iterator(chunk_size=500)
     counts = {'included': 0, 'new': 0, 'existing': 0, 'changed': 0, 'no_longer_included': 0}
     differences = []
+    preserved = preserved_sources(project)
     # Incremental digest of QA identity/snapshot state, not a whole-corpus list.
     import hashlib
     state = hashlib.sha256()
@@ -35,13 +37,16 @@ def preview(project):
         for ref in rows:
             included = ref.review_valid and ref.current_review.decision == 'included'
             saved = old.get(ref.pk)
+            detached = not saved
+            if not saved:
+                saved = match_preserved(ref, preserved)
             signature = _signature(ref)
             state.update(digest([ref.pk, signature, bool(included)]).encode())
             counts['included'] += included
             if included and saved is None:
                 counts['new'] += 1
             elif saved:
-                source = getattr(saved, 'rescreen_source_snapshot', None)
+                source = getattr(saved, 'rescreen_source_snapshot', None) if not detached else None
                 saved_signature = source.provenance.get('handoff_signature') if source else None
                 state.update(digest([saved.pk, ref.pk, saved_signature]).encode())
                 if included:
@@ -89,6 +94,7 @@ def handoff(*, project, user, confirmation_token, acknowledge_differences=False)
         if QAReference.objects.filter(project=project).count()+counts['new'] > limits.max_references:
             raise RescreenError('too_many_references', '导入后 QA 文献数超过上限。', status=413)
         imported, no_fulltext, buffer = 0, 0, []
+        preserved = preserved_sources(project)
 
         def flush(rows):
             nonlocal imported, no_fulltext
@@ -96,7 +102,7 @@ def handoff(*, project, user, confirmation_token, acknowledge_differences=False)
                 source_rescreen_reference_id__in=[ref.pk for ref,p in rows]).values_list('source_rescreen_reference_id', flat=True))
             pending, snapshots = [], {}
             for ref, payload in rows:
-                if payload['decision'] != 'included' or ref.pk in existing:
+                if payload['decision'] != 'included' or ref.pk in existing or match_preserved(ref, preserved):
                     continue
                 b = payload['bibliography']
                 asset = ref.current_binding.asset if ref.current_binding_id and ref.current_binding.asset.status == 'ready' else None

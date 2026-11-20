@@ -8,6 +8,45 @@ from core.rescreening.api.common import boundary, integer, paginated, project_fo
 from core.rescreening.errors import RescreenError
 from core.rescreening.models import RescreenReference, RescreenRunItem
 from core.rescreening.services import workspace as service
+from core.rescreening.errors import RescreenError
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@boundary
+def initial_criteria(request):
+    from core.models import StageStep
+    from core.screening.models import ScreeningRun
+    project = project_for(request)
+    step = StageStep.objects.filter(stage__project=project, stage__stage_key='SCREEN_1', step_key='criteria').first()
+    rows = (step.metadata or {}).get('criteria', []) if step else []
+    rows = [row for row in rows if isinstance(row, str)] if isinstance(rows, list) else []
+    return Response({'ok': True, 'data': {'performed': bool(rows) or ScreeningRun.objects.filter(project=project).exists(), 'criteria': rows}})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@boundary
+def import_mode(request):
+    from core.rescreening.api.import_views import _accepting_work
+    from core.rescreening.services.import_mode import select_import_mode
+    _accepting_work()
+    mode = select_import_mode(project_for(request), request.user, request.data.get('mode'),
+        integer(request.data.get('expected_revision'), 'expected_revision', minimum=0))
+    return Response({'ok': True, 'data': {'mode': mode}})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@boundary
+def reset(request):
+    from core.rescreening.services.reset import reset_corpus
+    if request.data.get('confirm') is not True:
+        raise RescreenError('confirmation_required', '请明确确认清空当前复筛文献与记录。')
+    result = reset_corpus(project=project_for(request), user=request.user,
+        expected_revision=integer(request.data.get('expected_revision'), 'expected_revision', minimum=0),
+        expected_mode=request.data.get('expected_mode'), expected_fingerprint=request.data.get('expected_fingerprint'))
+    return Response({'ok': True, 'data': result})
 
 
 @api_view(['GET'])

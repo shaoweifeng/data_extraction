@@ -64,7 +64,7 @@ def _dispatch_processing(asset_id, task_id):
             status='failed', error_code='dispatch_failed', error_message='全文处理任务派发失败，请重试。')
 
 
-def create_assets(*, project, user, files, create_references=False, schedule=True, provenance=None):
+def create_assets(*, project, user, files, create_references=False, schedule=True, provenance=None, expected_revision=None):
     require_upload(project, user)
     from core.operations.services import assert_accepting_new_work
     assert_accepting_new_work()
@@ -74,6 +74,14 @@ def create_assets(*, project, user, files, create_references=False, schedule=Tru
         with transaction.atomic():
             get_user_model().objects.select_for_update().get(pk=project.owner_id)
             project = Project.objects.select_for_update().get(pk=project.pk)
+            if create_references:
+                from core.rescreening.services.import_mode import claim_import_mode
+                claim_import_mode(project, 'pdf', expected_revision)
+            elif expected_revision is not None:
+                from core.rescreening.models import RescreenCorpus
+                revision = RescreenCorpus.objects.filter(project=project).values_list('revision', flat=True).first() or 0
+                if revision != expected_revision:
+                    raise FulltextError('input_changed', '复筛文献已变化，请刷新后重新上传。', status=409)
             existing = {asset.sha256: asset for asset in FulltextAsset.objects.filter(
                 project=project, sha256__in=[sha for _, _, sha in checked])}
             unique = {sha: (item, name) for item, name, sha in checked if sha not in existing}

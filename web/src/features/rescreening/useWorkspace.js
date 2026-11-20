@@ -75,6 +75,7 @@ export function createRescreenWorkspace(api = defaultApi) {
   async function initialize(projectId, requestedStep = 1) {
     stopPolling()
     clearNotice()
+    keys.clear()
     generation++
     disposed = false
     Object.assign(state, {
@@ -305,6 +306,7 @@ export function createRescreenWorkspace(api = defaultApi) {
               (value) => {
                 if (state.projectId === projectId) state.uploadProgress = value
               },
+              state.info.revision,
             ),
         ),
       '上传已接收，正在后台处理。',

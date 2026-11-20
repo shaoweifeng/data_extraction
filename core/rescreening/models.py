@@ -9,6 +9,8 @@ from .storage import PrivateRescreenStorage, rescreen_upload_path, PrivateRescre
 
 class RescreenCorpus(models.Model):
     project = models.OneToOneField('core.Project', on_delete=models.CASCADE, related_name='rescreen_corpus', verbose_name='所属项目')
+    import_mode = models.CharField(verbose_name='固定导入模式', max_length=20, blank=True, default='',
+        choices=[('screening', '初筛导入'), ('bibliography', '上传题录'), ('pdf', '上传全文'), ('mixed', '历史混合模式')])
     revision = models.PositiveBigIntegerField(verbose_name='文献集修订号', default=0)
     active_reference_count = models.PositiveBigIntegerField(verbose_name='有效文献数', default=0)
     current_run = models.ForeignKey('core.RescreenRun', null=True, blank=True, on_delete=models.SET_NULL, related_name='+', verbose_name='当前复筛运行')

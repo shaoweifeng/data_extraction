@@ -62,7 +62,7 @@ def _dispatch(batch_id, task_id):
         )
 
 
-def start_import(*, project, user, idempotency_key, uploads=None, preview=None):
+def start_import(*, project, user, idempotency_key, uploads=None, preview=None, expected_revision=None):
     _require_project(project, user)
     limits = ImportLimits.from_settings()
     validated = validate_uploads(uploads, limits) if uploads is not None else []
@@ -83,6 +83,8 @@ def start_import(*, project, user, idempotency_key, uploads=None, preview=None):
                 if old.request_hash != request_hash:
                     raise RescreenError('idempotency_conflict', '同一幂等键已用于不同的导入请求。', status=409)
                 return old
+            from core.rescreening.services.import_mode import claim_import_mode
+            claim_import_mode(project, source_type, expected_revision)
             from core.services.storage_quota_service import enforce_user_storage_quota
             enforce_user_storage_quota(project.owner, sum(item.size for item in validated))
             _require_idle(project)

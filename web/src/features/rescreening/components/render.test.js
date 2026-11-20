@@ -67,7 +67,9 @@ const render = (component, ws, props = {}) =>
   renderToString(createSSRApp(component, props).provide('rescreen', ws))
 describe('rescreen component visibility and layout contracts', () => {
   it('restores the source branch upload tabs and keeps paginated import history', async () => {
-    const html = await render(RescreenUpload, workspace())
+    const ws = workspace()
+    ws.state.info.import_mode = 'screening'
+    const html = await render(RescreenUpload, ws)
     expect(html).toContain('upload-tabs')
     expect(html).toContain('从初筛导入')
     expect(html).toContain('上传 PDF 全文')
@@ -81,6 +83,8 @@ describe('rescreen component visibility and layout contracts', () => {
     ws.state.detail = { id: 1, title: '示例文献', fulltext_status: 'missing' }
     const html = await render(RescreenFulltext, ws)
     expect(html).toContain('status-cards')
+    expect(html).toContain('已绑定全文')
+    expect(html).toContain('未绑定全文')
     expect(html).toContain('preview-drawer')
     expect(html).toContain('980')
     expect(html).toContain('项目全文与查找记录 / 候选确认')
@@ -92,10 +96,26 @@ describe('rescreen component visibility and layout contracts', () => {
     const html = await render(RescreenCriteria, ws)
     expect(html).toContain('input-row')
     expect(html).toContain('criteria-item')
+    expect(html).toContain('查看初筛标准')
+    expect(html).not.toContain('保存排除标准')
+    expect(html).not.toContain('有未保存的修改')
     expect(html).toContain('guide-grid')
     expect(html).toContain('排除动物实验')
     expect(html).not.toContain('rows="12"')
     expect(html).not.toContain('更改后已有审核需要重新确认')
+  })
+  it('locks upload modes after selection and requires reset before switching', async () => {
+    const ws = workspace()
+    ws.state.info.import_mode = 'pdf'
+    const html = await render(RescreenUpload, ws)
+    expect(html).toContain('清空当前文献')
+    expect(html).toContain('确认清空')
+    const tabs = html.match(/<button[^>]*class="upload-tab[^"]*"[^>]*>/g)
+    expect(tabs.filter(tag => tag.includes('disabled'))).toHaveLength(2)
+    expect(html).not.toContain('dropzone--import')
+    const fresh = workspace()
+    fresh.state.info.import_mode = ''
+    expect(await render(RescreenUpload, fresh)).toContain('请选择一种导入模式')
   })
   it('places literature on the left and AI model, billing and progress controls on the right', async () => {
     const ws = workspace()
@@ -149,7 +169,7 @@ describe('rescreen component visibility and layout contracts', () => {
     const html = await render(RescreenAI, ws)
     expect(html).toContain(heading)
     expect(html).toContain(action)
-    expect(html).toContain('历史运行')
+    expect(html).not.toContain('历史运行')
     expect(html).toContain('运行明细')
     const right = html.indexOf('aria-label="模型与任务进度"')
     expect(html.slice(0, right)).not.toContain('运行明细')
@@ -239,7 +259,8 @@ describe('rescreen component visibility and layout contracts', () => {
     }
     const html = await render(RescreenReview, ws)
     expect(html).not.toContain('采纳到表单')
-    expect(html).toContain('保存人工决定')
+    expect(html).not.toContain('保存人工决定')
+    expect(html).toContain('保存备注')
     expect(html).toContain('研究符合标准')
     expect(html).toContain('查看 AI 证据')
     const disclosure = html.match(/<details[^>]*class="evidence-disclosure"[^>]*>/)?.[0]

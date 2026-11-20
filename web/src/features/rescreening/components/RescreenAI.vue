@@ -188,25 +188,6 @@
           </div>
         </details>
       </section>
-      <details v-if="ws.state.run || ws.state.runs.total" class="run-history">
-        <summary>历史运行</summary>
-        <select
-          :value="showRun ? (ws.state.runId || '') : ''"
-          :disabled="ws.state.working || ws.state.promptDirty"
-          aria-label="选择复筛运行记录"
-          @change="openRun(Number($event.target.value))"
-        >
-          <option value="" disabled>选择运行记录</option>
-          <option v-for="run in ws.state.runs.items" :key="run.id" :value="run.id">
-            #{{ run.id }} · {{ label(run.status) }} · {{ run.total_count }} 篇
-          </option>
-        </select>
-        <RescreenPagination
-          v-if="ws.state.runs.pages > 1"
-          :page="ws.state.runs"
-          @change="(p, s) => ws.read(() => ws.loadRuns(p, s))"
-        />
-      </details>
       <section v-if="resultDetail" class="panel result-detail">
         <div class="rs-toolbar">
           <h3 class="rs-wrap">{{ resultDetail.bibliography.title }}</h3>
@@ -282,7 +263,6 @@ async function refreshBalance() {
   }
 }
 onMounted(async () => {
-  ws.read(() => ws.loadRuns())
   if (!showRun.value) refreshBalance()
   try {
     const ids = ws.state.models
@@ -607,14 +587,6 @@ h3 {
 }
 .model-panel small {
   line-height: 1.5;
-}
-.run-history {
-  padding: 0 4px;
-  font-size: 0.8rem;
-  color: #64748b;
-}
-.run-history select {
-  margin-top: 8px;
 }
 .decision.excluded {
   background: #fef2f2;

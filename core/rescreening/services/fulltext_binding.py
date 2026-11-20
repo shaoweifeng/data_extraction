@@ -19,6 +19,8 @@ from core.services.access_policy import ProjectAccessPolicy
 def import_pdf_references(project, user, assets):
     """Called under owner/project locks; assets do not invent a SCREEN_1 or QA row."""
     _require_idle(project)
+    from core.rescreening.services.import_mode import claim_import_mode
+    claim_import_mode(project, 'pdf')
     corpus, _ = RescreenCorpus.objects.get_or_create(project=project)
     existing = {ref.source_key: ref for ref in RescreenReference.objects.filter(
         project=project, source_key__in=[f'pdf:{asset.asset_key}' for asset in assets])}

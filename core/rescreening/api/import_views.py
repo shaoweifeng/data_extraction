@@ -4,7 +4,7 @@ from django.http import FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from core.rescreening.api.common import boundary, paginated, project_for, visible
+from core.rescreening.api.common import boundary, paginated, project_for, visible, integer
 from core.rescreening.errors import RescreenError
 from core.rescreening.models import RescreenImportBatch, RescreenImportFile
 from core.rescreening.services.imports import start_import, retry_import
@@ -55,7 +55,8 @@ def preview(request):
 def upload(request):
     _accepting_work()
     batch = start_import(project=project_for(request), user=request.user, idempotency_key=_key(request),
-                         uploads=request.FILES.getlist('files') or request.FILES.getlist('files[]'))
+                         uploads=request.FILES.getlist('files') or request.FILES.getlist('files[]'),
+                         expected_revision=integer(request.data['expected_revision'], 'expected_revision', minimum=0) if 'expected_revision' in request.data else None)
     return Response({'ok': True, 'data': _batch(batch, request.user)}, status=202)
 
 
@@ -68,7 +69,8 @@ def from_screening(request):
     snapshot = source_preview(project)
     if request.data.get('source_fingerprint') != snapshot['fingerprint']:
         raise RescreenError('source_changed', '请先预览并传入最新的 source_fingerprint。', status=409)
-    batch = start_import(project=project, user=request.user, idempotency_key=_key(request), preview=snapshot)
+    batch = start_import(project=project, user=request.user, idempotency_key=_key(request), preview=snapshot,
+        expected_revision=integer(request.data['expected_revision'], 'expected_revision', minimum=0) if 'expected_revision' in request.data else None)
     return Response({'ok': True, 'data': _batch(batch, request.user)}, status=202)
 
 

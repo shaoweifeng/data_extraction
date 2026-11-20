@@ -51,18 +51,16 @@
       </div>
     </div>
     <div class="status-cards">
+      <div class="status-card">
+        <span class="status-num">{{ ws.state.info.counts.total }}</span><span class="status-label">全部</span>
+      </div>
       <div class="status-card status-card--bound">
         <span class="status-num">{{
           ws.state.info.counts.bound ?? ws.state.info.counts.ready
-        }}</span><span class="status-label">已绑定</span>
+        }}</span><span class="status-label">已绑定全文</span>
       </div>
       <div class="status-card status-card--unbound">
-        <span class="status-num">{{ ws.state.info.counts.missing ?? '—' }}</span><span class="status-label">未绑定</span>
-      </div>
-      <div class="status-card status-card--failed">
-        <span class="status-num">{{
-          ws.state.info.counts.fulltext_failed ?? '—'
-        }}</span><span class="status-label">处理失败</span>
+        <span class="status-num">{{ ws.state.info.counts.missing ?? '—' }}</span><span class="status-label">未绑定全文</span>
       </div>
     </div>
     <div class="ref-list-section">

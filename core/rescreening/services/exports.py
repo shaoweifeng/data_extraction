@@ -55,7 +55,7 @@ def snapshot_rows(project, scope='all', *, offset=0, limit=None):
     elif scope != 'all':
         queryset = queryset.filter(review_valid=True, current_review__decision=scope)
     config = configuration(project)
-    queryset = queryset.select_related('current_review', 'current_binding__asset').order_by('pk')
+    queryset = queryset.select_related('current_review', 'current_binding__asset', 'import_file').order_by('pk')
     queryset = queryset[offset:offset+limit] if limit is not None else queryset[offset:]
     iterator = queryset.iterator(chunk_size=500)
     while rows := list(islice(iterator, 500)):

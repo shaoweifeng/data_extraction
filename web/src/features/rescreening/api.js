@@ -19,12 +19,15 @@ export const references = (projectId, params = {}) =>
   get('workspace/references/', { project_id: projectId, ...params })
 export const configuration = (projectId, payload) =>
   post('configuration/', { project_id: projectId, ...payload })
+export const initialCriteria = (projectId) => get('initial-criteria/', { project_id: projectId })
+export const selectImportMode = (projectId, mode, revision) => post('workspace/import-mode/', { project_id: projectId, mode, expected_revision: revision })
+export const resetCorpus = (projectId, payload) => post('workspace/reset/', { project_id: projectId, ...payload }, null, 120000)
 export const preview = (projectId) =>
   get('imports/preview/', { project_id: projectId })
-export const importScreening = (projectId, fingerprint, key) =>
+export const importScreening = (projectId, fingerprint, key, revision) =>
   post(
     'imports/from-screening/',
-    { project_id: projectId, source_fingerprint: fingerprint },
+    { project_id: projectId, source_fingerprint: fingerprint, expected_revision: revision },
     key,
   )
 export const imports = (projectId, params = {}) =>
@@ -90,9 +93,11 @@ export const upload = (
   createReferences,
   key,
   onProgress,
+  revision,
 ) => {
   const form = new FormData()
   form.append('project_id', projectId)
+  if (revision !== undefined) form.append('expected_revision', String(revision))
   if (pdf) form.append('create_references', String(createReferences))
   files.forEach((file) => form.append('files', file, file.name))
   return read(

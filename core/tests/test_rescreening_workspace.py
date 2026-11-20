@@ -156,7 +156,7 @@ class RescreenWorkspaceTests(SharedFulltextFixture):
         asset.status = 'failed'
         asset.save(update_fields=['status'])
         state = workspace_state(self.project, self.user)
-        self.assertEqual((state['counts']['bound'], state['counts']['ready'], state['counts']['fulltext_failed']), (0, 0, 1))
+        self.assertEqual((state['counts']['bound'], state['counts']['ready'], state['counts']['fulltext_failed']), (1, 0, 1))
         from core.rescreening.services.fulltext_binding import bind_fulltext
         bind_fulltext(reference=self.ref, asset=None, user=self.user, expected_version=self.ref.input_version)
         state = workspace_state(self.project, self.user)
@@ -230,6 +230,39 @@ class RescreenWorkspaceTests(SharedFulltextFixture):
         self.assertEqual(workspace_state(self.project, self.user)['counts']['remaining'], 1)
         self.assertEqual(RescreenReviewEvent.objects.count(), 2)
         self.assertNotEqual(second.pk, first.pk)
+
+    def test_review_after_bibliography_enrichment_and_multiple_runs_uses_current_input_version(self):
+        from core.rescreening.models import RescreenReview
+        from core.rescreening.services.pdf_bibliography import enrich_pdf_references
+        self.config()
+        self.suggestion()
+        first_review = self.save(note='保留旧输入的审核')
+        self.save(expected_version=1, note='旧审核第二次修改')
+        enrich_pdf_references(self.ref.current_binding.asset, {
+            'version': 'test', 'fields': {'publication_year': '2020'}, 'sources': {}})
+        self.ref.refresh_from_db()
+        self.suggestion()
+        latest = self.suggestion()
+        url = f'/api/rescreening/references/{self.ref.pk}/review/'
+        detail = self.client.get(url).data['data']
+        self.assertTrue(detail['needs_reconfirmation'])
+        self.assertEqual(detail['review']['version'], 2)
+        self.assertEqual(detail['review_version'], 0)
+        self.assertEqual(detail['suggestion_id'], latest.pk)
+        payload = dict(input_version=detail['input_version'], expected_version=detail['review_version'],
+            criteria_revision_id=detail['criteria_revision_id'], suggestion_id=detail['suggestion_id'],
+            suggestion_revision=detail['suggestion_revision'], decision='included', note='确认新输入')
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['data']['review_version'], 1)
+        self.assertFalse(response.data['data']['needs_reconfirmation'])
+        self.assertEqual(self.client.post(url, payload, format='json').status_code, 409)
+        payload['expected_version'] = 1
+        self.assertEqual(self.client.post(url, payload, format='json').status_code, 200)
+        self.assertEqual(RescreenReview.objects.filter(reference=self.ref).count(), 2)
+        first_review.refresh_from_db()
+        self.assertEqual(first_review.note, '旧审核第二次修改')
+        self.assertEqual(first_review.version, 2)
 
     def test_not_retrieved_can_be_finalized_without_any_pdf(self):
         from core.rescreening.services.fulltext_binding import bind_fulltext

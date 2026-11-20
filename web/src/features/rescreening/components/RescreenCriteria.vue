@@ -4,8 +4,9 @@
       <div class="rs-head-icon"><i class="fas fa-list-check"></i></div>
       <div>
         <h3>设定复筛排除标准</h3>
-        <p>逐条维护全文复筛排除标准，保存后刷新或切换步骤不会丢失。</p>
+        <p>逐条维护全文复筛排除标准。</p>
       </div>
+      <button class="initial-criteria-button" :disabled="initialLoading" @click="showInitialCriteria">查看初筛标准</button>
     </section>
 
     <section class="criteria-card">
@@ -49,21 +50,15 @@
       </div>
     </section>
 
-    <div class="rs-toolbar">
-      <span v-if="dirty" class="rs-warning">有未保存的修改</span>
-      <button
-        class="primary"
-        :disabled="
-          ws.state.working ||
-            ws.state.info.busy ||
-            !dirty ||
-            !criteriaLines(text).length
-        "
-        @click="save"
-      >
-        {{ dirty ? '保存排除标准' : '已保存' }}
-      </button>
-    </div>
+    <RescreenDialog :open="initialOpen" title="初筛排除标准" @close="initialOpen = false">
+      <p v-if="initialLoading">正在读取初筛标准…</p>
+      <p v-else-if="initialFailed">读取失败，请关闭后重试。</p>
+      <p v-else-if="!initial?.performed">该项目未进行初筛。</p>
+      <ol v-else-if="initial.criteria.length" class="initial-criteria-list">
+        <li v-for="(item, index) in initial.criteria" :key="index">{{ item }}</li>
+      </ol>
+      <p v-else>该项目尚未设置初筛排除标准。</p>
+    </RescreenDialog>
     <section class="guide-card">
       <h4><i class="fas fa-lightbulb"></i> 撰写提示</h4>
       <div class="guide-grid">
@@ -78,11 +73,12 @@
   </div>
 </template>
 <script setup>
-import { computed, inject, ref, watch, onBeforeUnmount } from 'vue'
+import { computed, inject, ref, onBeforeUnmount } from 'vue'
 import { criteriaLines } from '../state'
+import RescreenDialog from './RescreenDialog.vue'
 const ws = inject('rescreen')
 const newCriterion = ref('')
-function addCriteria() {
+async function addCriteria() {
   const value = newCriterion.value.trim()
   if (!value || ws.state.info.busy || ws.state.working) return
   const lines = [...criteriaLines(text.value), value]
@@ -90,57 +86,42 @@ function addCriteria() {
     ws.state.error = '排除标准最多 50 条，总长不能超过 12000 字符。'
     return
   }
-  text.value = lines.join('\n')
-  newCriterion.value = ''
+  if (await save(lines)) newCriterion.value = ''
 }
 function removeCriteria(index) {
-  text.value = criteriaLines(text.value)
-    .filter((_, i) => i !== index)
-    .join('\n')
+  if (ws.state.working || ws.state.info.busy) return
+  return save(criteriaLines(text.value).filter((_, i) => i !== index))
 }
-const text = ref(
+const text = computed(() =>
   ws.state.info.configuration.criteria.map((row) => row.text).join('\n'),
 )
-const saved = ref(text.value)
-const baseVersion = ref(ws.state.info.configuration.version)
-const dirty = computed(() => text.value !== saved.value)
-watch(
-  () => ws.state.info.configuration.version,
-  () => {
-    if (!dirty.value) {
-      text.value = ws.state.info.configuration.criteria
-        .map((row) => row.text)
-        .join('\n')
-      saved.value = text.value
-      baseVersion.value = ws.state.info.configuration.version
-    }
-  },
-)
-watch(
-  dirty,
-  (value) => {
-    ws.state.dirty = value
-  },
-  { immediate: true },
-)
+let alive = true
+const initialOpen = ref(false)
+const initialLoading = ref(false)
+const initialFailed = ref(false)
+const initial = ref(null)
+async function showInitialCriteria() {
+  initialOpen.value = true
+  initialLoading.value = true
+  initialFailed.value = false
+  const result = await ws.read(() => ws.api.initialCriteria(ws.state.projectId))
+  if (!alive) return
+  initial.value = result
+  initialFailed.value = !result
+  initialLoading.value = false
+}
 onBeforeUnmount(() => {
-  ws.state.dirty = false
+  alive = false
 })
-async function save() {
-  const result = await ws.action(
+async function save(lines) {
+  return ws.action(
     () =>
       ws.api.configuration(ws.state.projectId, {
-        expected_version: baseVersion.value,
-        criteria: criteriaLines(text.value),
+        expected_version: ws.state.info.configuration.version,
+        criteria: lines,
         model_ids: ws.state.info.configuration.model_ids,
       }),
-    '排除标准已保存。',
   )
-  if (result) {
-    saved.value = text.value
-    baseVersion.value = result.version
-    ws.state.dirty = false
-  }
 }
 </script>
 <style scoped>
@@ -169,6 +150,18 @@ async function save() {
   align-items: center;
   justify-content: center;
 }
+.initial-criteria-button {
+  margin-left: auto;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #4f46e5;
+  padding: 8px 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.initial-criteria-list { margin: 0; padding-left: 22px; }
+.initial-criteria-list li { padding: 6px 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 h3,
 h4,
 p {

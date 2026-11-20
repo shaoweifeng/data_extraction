@@ -13,6 +13,7 @@
           从初筛导入、上传 PDF 全文或上传题录，建立复筛文献列表
         </p>
       </div>
+      <button v-if="ws.state.info.import_mode || ws.state.info.counts.total" class="clear-corpus-button" :disabled="blocked || ws.state.info.poll_required" @click="resetOpen = true">清空当前文献</button>
     </div>
     <div class="upload-tabs">
       <button
@@ -20,14 +21,16 @@
         :key="tab.key"
         class="upload-tab"
         :class="{ active: activeTab === tab.key }"
-        :disabled="blocked"
-        @click="activeTab = tab.key"
+        :disabled="blocked || (!!activeTab && activeTab !== tab.key)"
+        @click="selectMode(tab.key)"
       >
         <i :class="tab.icon"></i>{{ tab.label }}
       </button>
     </div>
     <div class="upload-panel">
-      <template v-if="activeTab === 'screening'">
+      <p v-if="!activeTab" class="mode-placeholder">请选择一种导入模式。选择后将固定，清空当前文献后才可更换。</p>
+      <p v-else-if="activeTab === 'mixed'" class="mode-placeholder">当前存在历史混合导入数据。请先清空当前文献，再选择一种导入模式。</p>
+      <template v-else-if="activeTab === 'screening'">
         <div class="dropzone dropzone--import">
           <i
             class="fas fa-database"
@@ -121,6 +124,15 @@
         </p>
       </template>
     </div>
+    <RescreenDialog :open="resetOpen" title="清空当前复筛文献" @close="!ws.state.working && (resetOpen = false)">
+      <p>将删除当前复筛的全部文献、导入记录、排除标准、全文绑定、AI 结果、人工审核、导出和任务记录，之后可重新选择导入模式。</p>
+      <p>初筛数据不受影响。当前关联的 {{ ws.state.info.qa_linked_count || 0 }} 篇质量评价文献、全文及评价成果独立保留；重新导入时，会核对来源，避免重复创建。</p>
+      <p>已消耗积分不退还，积分账单保留。此操作无法撤销。</p>
+      <template #footer>
+        <button :disabled="ws.state.working" @click="resetOpen = false">取消</button>
+        <button class="clear-corpus-button" :disabled="blocked || ws.state.info.poll_required" @click="resetCorpus">确认清空</button>
+      </template>
+    </RescreenDialog>
     <div class="ref-list-section">
       <div class="ref-list-header">
         <h4>复筛文献列表</h4>
@@ -225,9 +237,27 @@
 import { computed, inject, ref, onMounted } from 'vue'
 import RescreenPagination from './RescreenPagination.vue'
 import RescreenReferenceList from './RescreenReferenceList.vue'
+import RescreenDialog from './RescreenDialog.vue'
 import { label } from '../state'
 const ws = inject('rescreen')
-const activeTab = ref('screening')
+const activeTab = computed(() => ws.state.info.import_mode === 'bibliography' ? 'index' : ws.state.info.import_mode || '')
+const resetOpen = ref(false)
+async function selectMode(mode) {
+  if (activeTab.value || blocked.value) return
+  await ws.action(() => ws.api.selectImportMode(ws.state.projectId, mode === 'index' ? 'bibliography' : mode, ws.state.info.revision))
+}
+async function resetCorpus() {
+  const result = await ws.action(() => ws.api.resetCorpus(ws.state.projectId, {
+    confirm: true,
+    expected_revision: ws.state.info.revision,
+    expected_mode: ws.state.info.import_mode,
+    expected_fingerprint: ws.state.info.fingerprint,
+  }), '', false)
+  if (result) {
+    resetOpen.value = false
+    await ws.initialize(ws.state.projectId, 1)
+  }
+}
 const fileInput = ref(null)
 const dragging = ref(false)
 const tabs = [
@@ -263,6 +293,7 @@ function importSource() {
           ws.state.projectId,
           ws.state.source.fingerprint,
           key,
+          ws.state.info.revision,
         ),
       ),
     '导入任务已创建。',
@@ -306,6 +337,19 @@ async function removeSelected() {
 }
 </script>
 <style scoped>
+.clear-corpus-button {
+  margin-left: auto;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff;
+  color: #b91c1c;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.clear-corpus-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.mode-placeholder { padding: 28px 18px; margin: 0; text-align: center; color: #64748b; font-size: 0.86rem; }
 .qa-upload {
   display: flex;
   flex-direction: column;
@@ -361,6 +405,11 @@ async function removeSelected() {
 .upload-tab:hover {
   border-color: #6366f1;
   color: #6366f1;
+}
+.upload-tab:disabled:not(.active) {
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 .upload-tab.active {
   border-color: #6366f1;

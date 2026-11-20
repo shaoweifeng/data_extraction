@@ -7,7 +7,7 @@ from core.fulltext.downloads import pdf_response
 from core.fulltext.errors import FulltextError
 from core.fulltext.models import FulltextAsset
 from core.fulltext.services import create_assets, retry_asset, delete_asset, rebuild_asset
-from core.rescreening.api.common import boundary, paginated, project_for, visible
+from core.rescreening.api.common import boundary, paginated, project_for, visible, integer
 
 
 def asset_payload(asset):
@@ -54,7 +54,8 @@ def upload(request):
     _accepting_work()
     result, refs = create_assets(project=project_for(request), user=request.user,
         files=request.FILES.getlist('files') or request.FILES.getlist('files[]'),
-        create_references=boolean(request.data.get('create_references')))
+        create_references=boolean(request.data.get('create_references')),
+        expected_revision=integer(request.data['expected_revision'], 'expected_revision', minimum=0) if 'expected_revision' in request.data else None)
     return Response({'ok': True, 'data': {'assets': [asset_payload(row) for row in result],
         'references': [{'id': row.pk, 'input_version': row.input_version,
             'removed': row.removed_revision is not None} for row in refs]}}, status=202)

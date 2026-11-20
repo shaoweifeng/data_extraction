@@ -34,7 +34,7 @@ def prompt_configuration(project):
 
 def save_configuration(*, project, user, expected_version, criteria, model_ids, custom_prompt=None):
     _permission(project, user)
-    rows = normalize_criteria(criteria, limits_snapshot())
+    rows = [] if criteria == [] else normalize_criteria(criteria, limits_snapshot())
     if (not isinstance(model_ids, list) or len(model_ids) > 6
             or any(not isinstance(value, str) or not get_model_config(value) for value in model_ids)):
         raise RescreenError('invalid_models', '无效的模型列表。')
@@ -102,7 +102,10 @@ def reference_payload(ref):
             'asset_id': asset.pk if asset else None, 'fulltext_status': asset.status if asset else 'missing',
             'ai_ready': ready, 'suggestion_id': ref.suggestion_id, 'suggestion_revision': ref.suggestion_revision or 0,
             'suggestion_status': ref.suggestion_status, 'suggestion': ref.suggestion_decision,
-            'review_version': review.version if review else 0, 'review_valid': ref.review_valid,
+            # A retained review from an older input is display/history data,
+            # not the optimistic-lock version of this input's review row.
+            'review_version': review.version if review and review.input_version == ref.input_version else 0,
+            'review_valid': ref.review_valid,
             'decision': review.decision if review and ref.review_valid else None,
             'needs_reconfirmation': bool(review and not ref.review_valid)}
 
@@ -124,7 +127,7 @@ def workspace_state(project, user):
     counts = refs.aggregate(total=Count('pk'), ready=Count('pk', filter=ready),
         ai_pending=Count('pk', filter=ai_reference_filters()['ai_pending']),
         ai_completed=Count('pk', filter=ai_reference_filters()['ai_completed']),
-        bound=Count('pk', filter=Q(current_binding__asset__status='ready')),
+        bound=Count('pk', filter=Q(current_binding__isnull=False)),
         missing=Count('pk', filter=Q(current_binding__isnull=True)),
         fulltext_failed=Count('pk', filter=Q(current_binding__asset__status__in=('failed', 'rejected'))),
         pending=Count('pk', filter=Q(review_valid=True, current_review__decision='pending')),
@@ -148,6 +151,8 @@ def workspace_state(project, user):
     completed_export = current_final_export(project, current_fingerprint)
     export_busy = RescreenExport.objects.filter(project=project, status__in=('pending', 'running', 'cancelling')).exists()
     return {'revision': corpus.revision if corpus else 0, 'counts': counts, 'configuration': config,
+        'import_mode': corpus.import_mode if corpus else '',
+        'qa_linked_count': project.qa_references.filter(source_rescreen_reference__isnull=False).count(),
         'fingerprint': current_fingerprint, 'export_completed_id': completed_export.pk if completed_export else None,
         'export_completion_kind': 'skipped' if completed_export and completed_export.format == 'skip' else 'generated' if completed_export else None,
         'export_busy': export_busy,

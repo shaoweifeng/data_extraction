@@ -90,5 +90,8 @@ web/node_modules/
 # 本地回归样本
 /meta_project/
 
+# 本地文献 PDF 下载工具与资料
+/文献PDF自动下载/
+
 # 本地临时分析与渲染产物
 /tmp/
