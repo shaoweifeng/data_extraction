@@ -224,7 +224,7 @@ class RescreenFulltextBinding(models.Model):
     reference = models.ForeignKey(RescreenReference, on_delete=models.CASCADE, related_name='bindings', verbose_name='复筛文献')
     asset = models.ForeignKey('core.FulltextAsset', on_delete=models.RESTRICT, related_name='rescreen_bindings', verbose_name='共享全文资产')
     input_version = models.PositiveBigIntegerField(verbose_name='输入版本')
-    source = models.CharField(verbose_name='来源', max_length=50, default='manual', choices=[('manual', '手工绑定'), ('pdf_upload', '上传全文'), ('local', '本地匹配'), ('manual_link', '手工外链'), ('europe_pmc', 'Europe PMC 开放来源'), ('unpaywall', 'Unpaywall 开放来源')])
+    source = models.CharField(verbose_name='来源', max_length=50, default='manual', choices=[('manual', '手工绑定'), ('pdf_upload', '上传全文'), ('local', '本地匹配'), ('manual_link', '手工外链'), ('europe_pmc', 'Europe PMC 开放来源'), ('unpaywall', 'Unpaywall 开放来源'), ('semantic_scholar', 'Semantic Scholar 开放来源'), ('crossref', 'Crossref 题录链接')])
     provenance = models.JSONField(verbose_name='来源追溯信息', default=dict, blank=True)
     confirmed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='+', verbose_name='确认人')
     created_at = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
@@ -510,7 +510,7 @@ class FulltextLookupItem(models.Model):
 class FulltextCandidate(models.Model):
     item = models.ForeignKey(FulltextLookupItem, on_delete=models.CASCADE, related_name='candidates', verbose_name='所属条目')
     asset = models.ForeignKey('core.FulltextAsset', null=True, on_delete=models.SET_NULL, related_name='lookup_candidates', verbose_name='共享全文资产')
-    source = models.CharField(verbose_name='来源', max_length=30, choices=[('local', '本地匹配'), ('manual_link', '手工外链'), ('europe_pmc', 'Europe PMC 开放来源'), ('unpaywall', 'Unpaywall 开放来源')])
+    source = models.CharField(verbose_name='来源', max_length=30, choices=[('local', '本地匹配'), ('manual_link', '手工外链'), ('europe_pmc', 'Europe PMC 开放来源'), ('unpaywall', 'Unpaywall 开放来源'), ('semantic_scholar', 'Semantic Scholar 开放来源'), ('crossref', 'Crossref 题录链接')])
     url = models.URLField(verbose_name='链接地址', max_length=2000, blank=True)
     license = models.CharField(verbose_name='许可证', max_length=100, blank=True)
     title = models.TextField(verbose_name='文献标题', blank=True)

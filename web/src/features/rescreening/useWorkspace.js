@@ -26,6 +26,7 @@ export function createRescreenWorkspace(api = defaultApi) {
     run: null,
     runId: null,
     lookupId: null,
+    lookupReferenceId: null,
     source: null,
     models: [],
     estimate: null,
@@ -90,6 +91,7 @@ export function createRescreenWorkspace(api = defaultApi) {
       run: null,
       runId: null,
       lookupId: null,
+    lookupReferenceId: null,
       source: null,
       estimate: null,
       working: false,
@@ -163,7 +165,7 @@ export function createRescreenWorkspace(api = defaultApi) {
     size = state.lookups.page_size,
   ) =>
     resource('lookups', () =>
-      api.lookups(state.projectId, { page, page_size: size }),
+      api.lookups(state.projectId, { page, page_size: size, reference_id: state.lookupReferenceId || undefined }),
     )
   const loadRuns = (page = state.runs.page, size = state.runs.page_size) =>
     resource('runs', () => api.runs(state.projectId, { page, page_size: size }))
@@ -192,7 +194,7 @@ export function createRescreenWorkspace(api = defaultApi) {
   async function loadLookup(id, page = 1, size = 50) {
     state.lookupId = id
     return resource('lookupItems', () =>
-      api.lookupItems(id, { page, page_size: size }),
+      api.lookupItems(id, { page, page_size: size, reference_id: state.lookupReferenceId || undefined }),
     )
   }
   function clearReference() {

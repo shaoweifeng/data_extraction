@@ -22,35 +22,6 @@
       :disabled="blocked"
       @change="uploadForReference"
     />
-    <div class="action-panel">
-      <div class="auto-search-copy">
-        <strong>查找并绑定全文</strong><span>选择文献后查找，明确匹配的全文可自动绑定；标题相近的候选仍需确认，避免绑定错误。</span><small>每次最多
-          {{ ws.state.info.capabilities.max_lookup }}
-          篇；未开启外部查找时仍可本地匹配和上传。</small>
-      </div>
-      <div class="rs-actions">
-        <button v-if="ws.state.lookups.total" :disabled="ws.state.working" @click="advancedOpen = true">查看查找结果</button>
-        <button
-          class="btn-secondary"
-          :disabled="blocked || !canLookup"
-          @click="lookup('local')"
-        >
-          本地匹配
-        </button><button
-          class="btn-primary"
-          :disabled="
-            blocked || !canLookup || !ws.state.info.capabilities.online_lookup
-          "
-          @click="lookup('online')"
-        >
-          <i class="fas fa-search"></i>自动查找全文
-        </button><label class="rs-checkbox"><input
-          v-model="downloadOpen"
-          type="checkbox"
-          :disabled="blocked"
-        />下载许可允许的开放全文</label>
-      </div>
-    </div>
     <div class="status-cards">
       <div class="status-card">
         <span class="status-num">{{ ws.state.info.counts.total }}</span><span class="status-label">全部</span>
@@ -67,14 +38,24 @@
     <div class="ref-list-section">
       <div class="ref-list-header">
         <h4>全文绑定列表</h4>
-        <span class="ref-stats">共 {{ ws.state.info.counts.total }} 篇 · 文献 / 全文状态 / 操作</span>
+        <div class="rs-actions"><span class="ref-stats">共 {{ ws.state.info.counts.total }} 篇</span><button class="btn-link" @click="showResults()">全部查找记录</button></div>
       </div>
       <RescreenReferenceList
         variant="fulltext"
         selectable
         @open="open"
         @replace="replace"
-      />
+        @lookup="(row, download) => lookup('online', row, download)"
+        @local="row => lookup('local', row, false)"
+        @results="showResults"
+        @choose="chooseExisting"
+      >
+        <template #selection-actions>
+          <button type="button" :disabled="blocked || !canBatchLookup" :title="batchLimitHint" @click="batchLookup('local')">批量本地匹配</button>
+          <button type="button" class="primary" :disabled="blocked || !canBatchLookup" :title="batchLimitHint" @click="batchLookup('online')">批量在线查找</button>
+          <label class="batch-download" title="只影响批量在线查找；各篇文献的下载选项独立设置"><input v-model="batchDownload" type="checkbox" :disabled="blocked" /><span>自动下载</span></label>
+        </template>
+      </RescreenReferenceList>
     </div>
     <div v-if="ws.state.detail" class="preview-drawer">
       <div class="drawer-head">
@@ -149,7 +130,7 @@
       @close="advancedOpen = false"
     >
       <div class="fulltext-dialog-content">
-        <section class="rs-card">
+        <section v-if="!ws.state.lookupReferenceId" class="rs-card">
           <div class="rs-toolbar">
             <h3>项目全文资产</h3>
             <button @click="ws.read(() => ws.loadAssets())">刷新</button>
@@ -222,8 +203,7 @@
             :key="job.id"
             class="rs-task-row"
           >
-            <span>#{{ job.id }} · {{ label(job.status) }} · {{ job.processed }} /
-              {{ job.total }} 篇</span>
+            <div><strong>#{{ job.id }} · {{ label(job.status) }} · {{ job.processed }} / {{ job.total }} 篇</strong><p class="rs-muted">已绑定 {{ job.counts.bound || 0 }} · 候选 {{ job.counts.found || 0 }} · 未找到 {{ job.counts.not_found || 0 }} · 失败 {{ job.counts.failed || 0 }}</p><p v-if="job.error_message" class="rs-warning">{{ job.error_message }}</p></div>
             <div class="rs-actions">
               <button @click="ws.read(() => ws.loadLookup(job.id))">
                 查看候选
@@ -246,7 +226,7 @@
             </div>
           </div>
           <p v-if="!ws.state.lookups.items.length" class="rs-empty">
-            暂无查找任务
+            暂无查找记录，可点击该文献的“查找全文”或“本地匹配”
           </p>
           <RescreenPagination
             :page="ws.state.lookups"
@@ -259,7 +239,7 @@
               :key="item.id"
               class="rs-inset"
             >
-              <p>文献 #{{ item.reference_id }} · {{ label(item.status) }}</p>
+              <strong>{{ item.title || `文献 #${item.reference_id}` }}</strong><p>{{ label(item.status) }}</p><p v-if="item.error_message" class="rs-warning">{{ item.error_message }}</p><details v-if="Object.keys(item.resolver_messages || {}).length"><summary>查看来源查找情况</summary><p v-for="(message, source) in item.resolver_messages" :key="source" class="rs-muted">{{ sourceName(source) }}：{{ message }}</p></details>
               <p v-if="!item.candidates.length" class="rs-muted">
                 暂无候选，可手工上传全文
               </p>
@@ -269,7 +249,7 @@
                 class="rs-candidate"
               >
                 <div>
-                  <strong>{{ candidate.title || candidate.source }}</strong><small>{{ candidate.source }} ·
+                  <strong>{{ candidate.title || candidate.source }}</strong><small>{{ sourceName(candidate.source) }} ·
                     {{ candidate.license || '未标注许可' }} ·
                     {{ label(candidate.status) }}</small><a
                     v-if="candidate.url"
@@ -279,6 +259,7 @@
                   >查看来源页面</a>
                 </div>
                 <div class="rs-actions">
+                  <p v-if="candidate.error_message" class="rs-warning">{{ candidate.error_message }}</p>
                   <button
                     v-if="candidate.asset_id && candidate.status !== 'bound'"
                     :disabled="blocked"
@@ -287,9 +268,7 @@
                     确认绑定
                   </button><button
                     v-if="
-                      !candidate.asset_id &&
-                        candidate.license &&
-                        ws.state.info.capabilities.online_lookup
+                      !candidate.asset_id && candidate.license
                     "
                     :disabled="blocked"
                     @click="download(candidate, item)"
@@ -351,32 +330,60 @@ async function uploadForReference(event) {
   ws.state.notice =
     'PDF 已上传，校验与提取完成后点击“确认绑定”。原全文在确认前保持不变。'
 }
+function sourceName(source) { return ({local: '项目已有全文', europe_pmc: 'Europe PMC', unpaywall: 'Unpaywall', semantic_scholar: 'Semantic Scholar', crossref: 'Crossref', manual_link: '手工链接'})[source] || source }
 const manualUrl = ref('')
-const downloadOpen = ref(false)
 const blocked = computed(() => ws.state.working || ws.state.info.busy)
-const canLookup = computed(
-  () =>
-    ws.state.selected.length > 0 &&
-    ws.state.selected.length <= ws.state.info.capabilities.max_lookup,
-)
+const batchDownload = ref(true)
+const batchLimitHint = computed(() => `选择会跨页保留，每批最多 ${ws.state.info.capabilities.max_lookup} 篇`)
+const canBatchLookup = computed(() => ws.state.selected.length > 0 && ws.state.selected.length <= ws.state.info.capabilities.max_lookup)
+function batchLookup(mode) {
+  if (blocked.value || !canBatchLookup.value) return
+  return submitLookup(mode, [...ws.state.selected], mode === 'online' && batchDownload.value, null)
+}
 onMounted(() => ws.read(() => Promise.all([ws.loadAssets(), ws.loadLookups()])))
+async function showResults(row) {
+  ws.state.lookupReferenceId = row?.id || null
+  ws.state.lookupId = null
+  await ws.read(async () => {
+    const jobs = await ws.loadLookups(1)
+    if (jobs?.items?.length) await ws.loadLookup(jobs.items[0].id)
+    advancedOpen.value = true
+  })
+}
+async function chooseExisting(row) {
+  assetId.value = ''
+  ws.state.lookupReferenceId = null
+  await ws.read(() => ws.loadLookups(1))
+  const detail = await ws.read(() => ws.selectReference(row.id))
+  if (!detail) return
+  await ws.read(() => ws.loadAssets(1))
+  advancedOpen.value = true
+}
 function open(row) {
   assetId.value = ''
   ws.read(() => ws.selectReference(row.id))
 }
-function lookup(mode) {
+async function lookup(mode, row, download) {
+  return submitLookup(mode, [row.id], download, row.id)
+}
+async function submitLookup(mode, ids, download, referenceId) {
   const payload = {
-    ids: [...ws.state.selected],
+    ids,
     mode,
-    download: downloadOpen.value,
+    download,
     auto_bind: true,
   }
-  ws.action(
-    () =>
-      ws.keyed('lookup', payload, (key) =>
+  await ws.action(
+    async () => {
+      const job = await ws.keyed('lookup', payload, (key) =>
         ws.api.lookupStart(ws.state.projectId, payload, key),
-      ),
-    '查找任务已创建。',
+      )
+      ws.state.lookupReferenceId = referenceId
+      await ws.loadLookups(1)
+      await ws.loadLookup(job.id)
+      advancedOpen.value = true
+    },
+    '查找任务已提交，可在结果中查看每篇文献的进度。',
   )
 }
 function bind() {
@@ -474,29 +481,6 @@ function safeLink(url) {
   font-size: 0.75rem;
   color: #64748b;
   margin: 0;
-}
-.action-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 16px 18px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-}
-.auto-search-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.auto-search-copy strong {
-  font-size: 0.9rem;
-  color: #1e293b;
-}
-.auto-search-copy span {
-  font-size: 0.76rem;
-  color: #64748b;
 }
 .status-cards {
   display: grid;
@@ -777,23 +761,14 @@ function safeLink(url) {
   .status-cards {
     grid-template-columns: 1fr;
   }
-  .action-panel {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 }
 
 .fulltext-dialog-content { display: flex; flex-direction: column; gap: 16px; }
 .binding-tools {
   margin-top: 14px;
 }
-.action-panel .rs-actions {
-  justify-content: flex-end;
-}
-.auto-search-copy {
-  min-width: 0;
-  flex: 1;
-}
+.batch-download { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.batch-download input { margin: 0; }
 .drawer-head p {
   overflow-wrap: anywhere;
 }

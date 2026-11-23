@@ -7,7 +7,7 @@ from django.utils import timezone
 from core.fulltext.errors import FulltextError
 from core.fulltext.matching import local_candidates, match_asset
 from core.fulltext.network import NetworkBudget, fetch_to
-from core.fulltext.resolvers import europe_pmc, unpaywall
+from core.fulltext.resolvers import europe_pmc, unpaywall, semantic_scholar, crossref
 from core.fulltext.services import create_assets
 from core.fulltext.processing import process_asset
 from core.models import Project
@@ -29,7 +29,8 @@ def _download(candidate, item, job, budget, checkpoint):
         checkpoint(budget)
         assets, _ = create_assets(project=job.project, user=job.created_by, files=[uploaded], schedule=False,
             provenance={'source': candidate.source, 'url': response['url'], 'license': candidate.license,
-                        'lookup_job_id': job.pk, 'candidate_id': candidate.pk})
+                        'lookup_job_id': job.pk, 'candidate_id': candidate.pk,
+                        'resolver_metadata': candidate.provenance, 'bibliography': item.bibliography_snapshot})
         asset = assets[0]
         if asset.status == 'pending':
             asset = process_asset(asset.pk, check_stop=lambda: _stopped(job))
@@ -90,10 +91,11 @@ def process_lookup(job_id, *, expected_task_id=None, check_stop=None, progress=N
                         candidates.append(FulltextCandidate.objects.create(item=item, asset=asset,
                             source='local', confidence=match_asset(item.bibliography_snapshot, asset), title=asset.original_filename))
                     if job.mode == 'online' and not candidates:
-                        if not settings.FULLTEXT_LOOKUP_ENABLED:
-                            raise FulltextError('lookup_disabled', '外部全文查找已关闭。')
                         for name, resolver, extra in (('europe_pmc', europe_pmc, {}),
-                                ('unpaywall', unpaywall, {'email': settings.FULLTEXT_UNPAYWALL_EMAIL})):
+                                ('unpaywall', unpaywall, {'email': settings.FULLTEXT_UNPAYWALL_EMAIL}),
+                                ('semantic_scholar', semantic_scholar, {}), ('crossref', crossref, {})):
+                            if name not in snapshot.get('sources', ['europe_pmc', 'unpaywall']):
+                                continue
                             checkpoint(budget)
                             remaining = snapshot['max_candidates']-len(candidates)
                             if remaining <= 0:
@@ -101,8 +103,7 @@ def process_lookup(job_id, *, expected_task_id=None, check_stop=None, progress=N
                             try:
                                 found, note = resolver(item.bibliography_snapshot, budget=budget,
                                     max_json_bytes=snapshot['max_json_bytes'], limit=remaining, **extra)
-                                if note:
-                                    item.resolver_notes[name] = note
+                                item.resolver_notes[name] = note or ('candidates_found' if found else 'not_found')
                                 seen = {candidate.url for candidate in candidates}
                                 for candidate_data in found[:remaining]:
                                     if candidate_data['url'] not in seen:
@@ -114,8 +115,6 @@ def process_lookup(job_id, *, expected_task_id=None, check_stop=None, progress=N
                                 item.resolver_notes[name] = exc.code
                 for candidate in candidates:
                     if snapshot['download'] and candidate.url and not candidate.asset_id:
-                        if not settings.FULLTEXT_LOOKUP_ENABLED:
-                            raise FulltextError('lookup_disabled', '外部全文下载已关闭。')
                         try:
                             _download(candidate, item, job, budget, checkpoint)
                         except FulltextError as exc:

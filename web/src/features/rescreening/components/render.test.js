@@ -88,6 +88,16 @@ describe('rescreen component visibility and layout contracts', () => {
     expect(html).toContain('移除所选')
     expect(html).toContain('导入与文件处理详情')
   })
+  it('keeps batch fulltext selection alongside per-reference operations', async () => {
+    const ws = workspace()
+    ws.state.selected = [1, 2]
+    const html = await render(RescreenFulltext, ws)
+    expect(html).toContain('selection-tools')
+    expect(html).toContain('批量在线查找')
+    expect(html).toContain('批量本地匹配')
+    expect(html).toContain('全部查找记录')
+    expect(html).toContain('已选 2 篇')
+  })
   it('restores fulltext status cards and preview drawer without manual asset ID entry', async () => {
     const ws = workspace()
     ws.state.detail = { id: 1, title: '示例文献', fulltext_status: 'missing' }

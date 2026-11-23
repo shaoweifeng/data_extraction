@@ -25,7 +25,7 @@ class SharedFulltextFixture(TestCase):
         self.root = Path(temporary.name)
         self.settings_override = override_settings(BASE_DIR=self.root, MEDIA_ROOT=self.root/'media',
             FULLTEXT_UPLOAD_ROOT=self.root/'shared', QA_FULLTEXT_UPLOAD_ROOT=self.root/'qa',
-            RESCREEN_IMPORT_UPLOAD_ROOT=self.root/'imports', RESCREEN_EXPORT_UPLOAD_ROOT=self.root/'exports', FULLTEXT_LOOKUP_ENABLED=False,
+            RESCREEN_IMPORT_UPLOAD_ROOT=self.root/'imports', RESCREEN_EXPORT_UPLOAD_ROOT=self.root/'exports',
             FULLTEXT_UNPAYWALL_EMAIL='', QA_FULLTEXT_REQUIRE_CLEAN_SCAN=False,
             QA_MALWARE_SCANNER_BACKEND='core.quality.services.pdf_scanner.DisabledScanner')
         self.settings_override.enable()

@@ -7,6 +7,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from core.bibliography import bibliography_snapshot
 from core.fulltext.errors import FulltextError
+from core.fulltext.resolvers import LOOKUP_SOURCES
 from core.models import Project, ProjectStage
 from core.rescreening.models import (FulltextLookupJob, FulltextLookupItem, FulltextCandidate,
     RescreenReference, RescreenCorpus)
@@ -21,8 +22,6 @@ def start_lookup(*, project, user, ids, mode, idempotency_key, download=False, a
     assert_accepting_new_work()
     if mode not in ('local', 'online', 'download', 'manual'):
         raise FulltextError('invalid_mode', '未知全文查找方式。')
-    if mode in ('online', 'download') and not settings.FULLTEXT_LOOKUP_ENABLED:
-        raise FulltextError('lookup_disabled', '外部全文查找尚未启用，可先上传 PDF 或使用本地匹配。', status=409)
     if not ids or len(ids) > settings.FULLTEXT_LOOKUP_MAX_REFERENCES or len(ids) != len(set(ids)):
         raise FulltextError('invalid_reference_count', '查找文献数量为空、重复或超过单次上限。')
     if mode == 'manual':
@@ -68,7 +67,8 @@ def start_lookup(*, project, user, ids, mode, idempotency_key, download=False, a
         corpus = RescreenCorpus.objects.get(project=project)
         job = FulltextLookupJob.objects.create(project=project, created_by=user, mode=mode,
             idempotency_key=idempotency_key, request_hash=request_hash, input_revision=corpus.revision,
-            settings_snapshot={'max_requests': settings.FULLTEXT_LOOKUP_MAX_REQUESTS,
+            settings_snapshot={'sources': list(LOOKUP_SOURCES),
+                'max_requests': settings.FULLTEXT_LOOKUP_MAX_REQUESTS,
                 'max_bytes': max(0, budget), 'timeout': settings.FULLTEXT_LOOKUP_TIMEOUT,
                 'total_seconds': settings.FULLTEXT_LOOKUP_DOWNLOAD_SECONDS,
                 'max_redirects': settings.FULLTEXT_LOOKUP_MAX_REDIRECTS,

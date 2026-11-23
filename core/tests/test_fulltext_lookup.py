@@ -20,6 +20,11 @@ from core.tests.test_fulltext_network import FakeResponse
 class FulltextLookupTests(SharedFulltextFixture):
     def setUp(self):
         super().setUp()
+        # Keep all network sources mocked; individual tests override relevant providers.
+        for name in ('semantic_scholar', 'crossref'):
+            mocked = patch(f'core.rescreening.services.fulltext_fetch.{name}', return_value=([], 'not_found'))
+            mocked.start()
+            self.addCleanup(mocked.stop)
         batch = start_import(project=self.project, user=self.user, idempotency_key='source', uploads=[ris_file()])
         process_import(batch.pk)
         Task.objects.filter(pk=batch.task_id).update(status='completed')
@@ -34,6 +39,24 @@ class FulltextLookupTests(SharedFulltextFixture):
     def candidate(self, **changes):
         return dict(dict(source='unpaywall', url='https://source.example/study.pdf', title='Study',
             doi=self.ref.doi, pmid='', license='cc-by', confidence='identifier', provenance={}), **changes)
+
+    def test_new_provider_download_provenance_and_failure_are_durable(self):
+        job = self.start(mode='online', download=True, auto_bind=True)
+        body = make_pdf(text='DOI: 10.1234/study Methods and Results')
+        data = self.candidate(source='semantic_scholar', provenance={'paper_id': 'test-paper'})
+        with (patch('core.rescreening.services.fulltext_fetch.europe_pmc', return_value=([], 'not_found')),
+              patch('core.rescreening.services.fulltext_fetch.unpaywall', return_value=([], 'email_not_configured')),
+              patch('core.rescreening.services.fulltext_fetch.semantic_scholar', return_value=([data], '')),
+              patch('core.rescreening.services.fulltext_fetch.crossref', side_effect=FulltextError('http_error', 'HTTP 429')),
+              patch('core.fulltext.network._open_pinned', return_value=(Mock(), FakeResponse(body)))):
+            process_lookup(job.pk)
+        item = job.items.get()
+        candidate = item.candidates.get()
+        self.assertEqual(item.resolver_notes['crossref'], 'http_error')
+        self.assertEqual(candidate.provenance['paper_id'], 'test-paper')
+        self.assertEqual(candidate.status, 'bound')
+        self.assertEqual(candidate.asset.provenance['resolver_metadata']['paper_id'], 'test-paper')
+        self.assertEqual(candidate.asset.provenance['bibliography']['doi'], self.ref.doi)
 
     def test_local_exact_identifier_can_bind_and_versions_are_updated(self):
         asset, _ = self.ready(make_pdf(text='DOI: 10.1234/study research methods'))
@@ -59,14 +82,16 @@ class FulltextLookupTests(SharedFulltextFixture):
         with self.assertRaisesMessage(FulltextError, '已变化'):
             confirm_candidate(candidate=candidate, user=self.user, expected_version=1)
 
-    def test_external_default_is_off_and_local_does_not_make_network_calls(self):
-        with self.assertRaisesMessage(FulltextError, '尚未启用'):
-            self.start(mode='online')
+    def test_local_lookup_does_not_make_network_calls(self):
         job = self.start()
         with patch('core.fulltext.network._open_pinned') as opened:
             process_lookup(job.pk)
         opened.assert_not_called()
         self.assertEqual(job.items.get().status, 'not_found')
+
+    def test_online_lookup_is_available_without_feature_configuration(self):
+        job = self.start(mode='online')
+        self.assertEqual(job.settings_snapshot['sources'], ['europe_pmc', 'unpaywall', 'semantic_scholar', 'crossref'])
 
     def test_job_idempotency_and_account_concurrency(self):
         job = self.start()
@@ -86,7 +111,6 @@ class FulltextLookupTests(SharedFulltextFixture):
         self.ref.refresh_from_db()
         self.assertIsNone(self.ref.current_binding_id)
 
-    @override_settings(FULLTEXT_LOOKUP_ENABLED=True)
     def test_open_pdf_download_scans_extracts_and_only_then_auto_binds(self):
         body = make_pdf(text='DOI: 10.1234/study Methods and Results')
         job = self.start(mode='online', download=True, auto_bind=True)
@@ -102,7 +126,6 @@ class FulltextLookupTests(SharedFulltextFixture):
         self.assertEqual(job.received_bytes, len(body))
         self.assertEqual(job.request_count, 1)
 
-    @override_settings(FULLTEXT_LOOKUP_ENABLED=True)
     def test_missing_license_offers_link_but_never_downloads(self):
         job = self.start(mode='online', download=True, auto_bind=True)
         with (patch('core.rescreening.services.fulltext_fetch.europe_pmc', return_value=([self.candidate(license='')], '')),
@@ -112,7 +135,6 @@ class FulltextLookupTests(SharedFulltextFixture):
         opened.assert_not_called()
         self.assertEqual(job.items.get().candidates.get().error_code, 'license_not_allowed')
 
-    @override_settings(FULLTEXT_LOOKUP_ENABLED=True)
     def test_wrong_downloaded_identifier_is_never_auto_bound(self):
         body = make_pdf(text='DOI: 10.1234/different A different study')
         job = self.start(mode='online', download=True, auto_bind=True)
@@ -124,7 +146,7 @@ class FulltextLookupTests(SharedFulltextFixture):
         self.assertIsNone(self.ref.current_binding_id)
         self.assertEqual(job.items.get().candidates.get().confidence, 'conflict')
 
-    @override_settings(FULLTEXT_LOOKUP_ENABLED=True, FULLTEXT_LOOKUP_DAILY_BYTES=100)
+    @override_settings(FULLTEXT_LOOKUP_DAILY_BYTES=100)
     def test_daily_bytes_and_reference_count_limits(self):
         FulltextLookupJob.objects.create(project=self.project, created_by=self.user, mode='online',
             status='completed', idempotency_key='prior', request_hash='x', input_revision=1, received_bytes=100)
@@ -141,6 +163,9 @@ class FulltextLookupTests(SharedFulltextFixture):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['data']['total'], 1)
         self.assertNotIn('bibliography_snapshot', str(response.json()))
+        self.assertEqual(self.client.get(f'/api/rescreening/lookups/{job.pk}/items/', {'reference_id': self.ref.pk}).data['data']['total'], 1)
+        self.assertEqual(self.client.get(f'/api/rescreening/lookups/{job.pk}/items/', {'reference_id': 999999}).data['data']['total'], 0)
+        self.assertEqual(self.client.get('/api/rescreening/lookups/', {'project_id': self.project.pk, 'reference_id': 999999}).data['data']['total'], 0)
         self.client.force_authenticate(self.other)
         self.assertEqual(self.client.get(f'/api/rescreening/lookups/{job.pk}/').status_code, 404)
 
@@ -181,7 +206,6 @@ class FulltextLookupTests(SharedFulltextFixture):
         self.assertEqual(response.status_code, 202, response.content)
         self.assertNotEqual(response.json()['data']['id'], second.pk)
 
-    @override_settings(FULLTEXT_LOOKUP_ENABLED=True)
     def test_failed_download_counts_bytes_but_keeps_no_partial_file(self):
         job = self.start(mode='online', download=True)
         with (patch('core.rescreening.services.fulltext_fetch.europe_pmc', return_value=([self.candidate()], '')),
@@ -194,7 +218,6 @@ class FulltextLookupTests(SharedFulltextFixture):
         from core.fulltext.models import FulltextAsset
         self.assertEqual(FulltextAsset.objects.count(), 0)
 
-    @override_settings(FULLTEXT_LOOKUP_ENABLED=True)
     def test_explicit_candidate_download_is_visible_in_its_new_job(self):
         original = self.start(mode='online')
         with (patch('core.rescreening.services.fulltext_fetch.europe_pmc', return_value=([self.candidate()], '')),
@@ -209,3 +232,38 @@ class FulltextLookupTests(SharedFulltextFixture):
         new_candidate = download.items.get().candidates.get()
         self.assertIsNotNone(new_candidate.asset_id)
         self.assertEqual(new_candidate.provenance['origin_candidate_id'], candidate.pk)
+
+
+class AdditionalResolverTests(SharedFulltextFixture):
+    def budget(self):
+        return NetworkBudget(10, 100000, 2, 5, 2)
+
+    @patch('core.fulltext.resolvers.fetch_json')
+    def test_semantic_exact_identifier_retains_provenance_and_license(self, fetch):
+        from core.fulltext.resolvers import semantic_scholar
+        fetch.return_value = {'paperId': 'abc', 'title': 'Study', 'externalIds': {'DOI': '10.1234/test'},
+            'isOpenAccess': True, 'openAccessPdf': {'url': 'https://example.org/test.pdf', 'license': 'CCBY'}}
+        rows, _ = semantic_scholar({'doi': '10.1234/test'}, budget=self.budget(), max_json_bytes=10000, limit=5)
+        self.assertEqual(rows[0]['source'], 'semantic_scholar')
+        self.assertEqual(rows[0]['provenance']['paper_id'], 'abc')
+        fetch.return_value['externalIds']['DOI'] = '10.1234/wrong'
+        rows, note = semantic_scholar({'doi': '10.1234/test'}, budget=self.budget(), max_json_bytes=10000, limit=5)
+        self.assertEqual((rows, note), ([], 'identifier_mismatch'))
+
+    @patch('core.fulltext.resolvers.fetch_json')
+    def test_crossref_tdm_links_do_not_imply_download_permission(self, fetch):
+        from core.fulltext.resolvers import crossref
+        fetch.return_value = {'message': {'DOI': '10.1234/test', 'title': ['Study'],
+            'license': [{'URL': 'https://creativecommons.org/licenses/by/4.0/'}],
+            'link': [{'URL': 'https://example.org/test.pdf', 'content-type': 'application/pdf',
+                      'intended-application': 'text-mining'}]}}
+        rows, _ = crossref({'doi': '10.1234/test'}, budget=self.budget(), max_json_bytes=10000, limit=5)
+        self.assertEqual(rows[0]['license'], '')
+        self.assertTrue(rows[0]['provenance']['license_declarations'])
+
+    @patch('core.fulltext.resolvers.fetch_json')
+    def test_missing_identifier_does_not_issue_requests(self, fetch):
+        from core.fulltext.resolvers import semantic_scholar, crossref
+        for resolver in (semantic_scholar, crossref):
+            self.assertEqual(resolver({}, budget=self.budget(), max_json_bytes=10000, limit=5)[0], [])
+        fetch.assert_not_called()

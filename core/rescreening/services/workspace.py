@@ -170,7 +170,6 @@ def workspace_state(project, user):
                   {'index': 6, 'enabled': bool(counts['total']), 'completed': bool(completed_export and counts['total'] and not counts['remaining'])}],
         'capabilities': {'diagnostics': ProjectAccessPolicy.can_view_research_diagnostics(user),
                          'prompt': ProjectAccessPolicy.can_configure_screening_prompt(user),
-                         'online_lookup': settings.FULLTEXT_LOOKUP_ENABLED,
                          'max_lookup': settings.FULLTEXT_LOOKUP_MAX_REFERENCES,
                          'max_run': settings.RESCREEN_MAX_RUN_REFERENCES}}
 

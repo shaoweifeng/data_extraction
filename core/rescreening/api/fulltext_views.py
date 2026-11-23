@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from core.fulltext.api import asset_payload, boolean
 from core.fulltext.models import FulltextAsset
+from core.fulltext.messages import lookup_message
 from core.rescreening.api.common import boundary, integer, paginated, project_for, visible
 from core.rescreening.api.import_views import _key, _accepting_work
 from core.rescreening.models import RescreenReference, FulltextLookupJob, FulltextLookupItem, FulltextCandidate
@@ -17,7 +18,7 @@ from core.rescreening.services.fulltext_lookup import start_lookup, confirm_cand
 def job_payload(job):
     counts = {row['status']: row['count'] for row in job.items.values('status').annotate(count=Count('pk'))}
     return dict(id=job.pk, project_id=job.project_id, task_id=job.task_id, mode=job.mode,
-        status=job.status, processed=job.processed_count, total=sum(counts.values()), counts=counts,
+        error_message=lookup_message(job.error_code), status=job.status, processed=job.processed_count, total=sum(counts.values()), counts=counts,
         received_bytes=job.received_bytes, request_count=job.request_count, error_code=job.error_code,
         created_at=job.created_at, finished_at=job.finished_at)
 
@@ -28,7 +29,7 @@ def candidate_payload(candidate):
     public_url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, '', '')) if candidate.url else ''
     return dict(id=candidate.pk, asset_id=candidate.asset_id, source=candidate.source, url=public_url,
         license=candidate.license, title=candidate.title, confidence=candidate.confidence,
-        status=candidate.status, error_code=candidate.error_code)
+        status=candidate.status, error_code=candidate.error_code, error_message=lookup_message(candidate.error_code))
 
 
 @api_view(['GET', 'POST'])
@@ -70,6 +71,8 @@ def start(request):
 @boundary
 def jobs(request):
     queryset = FulltextLookupJob.objects.filter(project=project_for(request)).order_by('-pk')
+    if request.query_params.get('reference_id'):
+        queryset = queryset.filter(items__reference_id=integer(request.query_params['reference_id'], 'reference_id')).distinct()
     return Response({'ok': True, 'data': paginated(queryset, request, job_payload)})
 
 
@@ -87,9 +90,14 @@ def job_detail(request, job_id):
 def items(request, job_id):
     job = visible(FulltextLookupJob.objects.all(), request.user).get(pk=job_id)
     queryset = job.items.prefetch_related('candidates').order_by('pk')
+    if request.query_params.get('reference_id'):
+        queryset = queryset.filter(reference_id=integer(request.query_params['reference_id'], 'reference_id'))
     def serialize(item):
         return dict(id=item.pk, reference_id=item.reference_id, input_version=item.input_version,
-            status=item.status, error_code=item.error_code, resolver_notes=item.resolver_notes,
+            title=item.bibliography_snapshot.get('title') or f'文献 #{item.reference_id}',
+            status=item.status, error_code=item.error_code, error_message=lookup_message(item.error_code),
+            resolver_notes=item.resolver_notes,
+            resolver_messages={name: lookup_message(code) for name, code in item.resolver_notes.items()},
             candidates=[candidate_payload(row) for row in item.candidates.all()])
     return Response({'ok': True, 'data': paginated(queryset, request, serialize)})
 

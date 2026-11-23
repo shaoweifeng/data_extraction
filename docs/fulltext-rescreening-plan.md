@@ -468,16 +468,14 @@ python manage.py migrate
 python manage.py showmigrations core
 ```
 
-确认 0050/0051 都为 `[X]`，再重启 Django/Gunicorn、Celery Worker；现有 Beat 清理调度继续使用。普通本地上传不需填写新增变量，默认私有目录可用。若主动启用第三方查找再配置：
+确认 0050/0051 都为 `[X]`，再重启 Django/Gunicorn、Celery Worker；现有 Beat 清理调度继续使用。普通本地上传不需填写新增变量，默认私有目录可用。在线查找现为内置功能；如需使用 Unpaywall 可配置：
 
 ```ini
-# 会向开放来源发送书目标识；自行决定何时启用
-FULLTEXT_LOOKUP_ENABLED=true
 # 不使用 Unpaywall 可留空，Europe PMC 不依赖该邮箱
 FULLTEXT_UNPAYWALL_EMAIL=your-contact@example.com
 ```
 
-其余 `FULLTEXT_LOOKUP_*`、`FULLTEXT_MAX_PENDING_PER_USER`、`FULLTEXT_ALLOWED_LICENSES` 已集中写入 `.env.example` 中文注释；本轮没有更改 `.env`，没有启用线上查找。Nginx 上传大小仍应与现有 200 MiB 请求限制协调，存储目录不能放在公开 media 下。
+其余 `FULLTEXT_LOOKUP_*`、`FULLTEXT_MAX_PENDING_PER_USER`、`FULLTEXT_ALLOWED_LICENSES` 已集中写入 `.env.example` 中文注释；在线查找不再需要功能开关或来源环境配置。Nginx 上传大小仍应与现有 200 MiB 请求限制协调，存储目录不能放在公开 media 下。
 
 可以通过现有检查命令验收共享资产，不需要模型：
 

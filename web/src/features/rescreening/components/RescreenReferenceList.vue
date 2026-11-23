@@ -58,19 +58,21 @@
       <div v-if="selectable && variant !== 'ai'" class="selection-tools">
         <button
           type="button"
+          title="全选当前页，其他页的选择会保留"
           :disabled="ws.state.working"
           @click="ws.selectPage(readyOnly)"
         >
-          选择本页{{ readyOnly ? '可筛选文献' : '' }}
+          全选
         </button>
-        <span title="选择会跨页保留">已选 {{ ws.state.selected.length }} 篇</span><button
+        <button
           type="button"
           :disabled="ws.state.working || !ws.state.selected.length"
           @click="clearSelection"
         >
-          清空选择
+          清空
         </button>
         <slot name="selection-actions" />
+        <span title="选择会跨页保留">已选 {{ ws.state.selected.length }} 篇</span>
       </div>
     </form>
     <ul v-if="variant === 'ai'" class="ai-reference-items">
@@ -175,13 +177,13 @@
                   @click="$emit('replace', row)"
                 >
                   {{ row.asset_id ? '更改' : '上传' }}
-                </button><button
+                </button><button class="btn-link" :disabled="ws.state.working || ws.state.info.busy" @click="$emit('lookup', row, downloadChoices[row.id] !== false)">查找全文</button><button
                   v-if="!row.asset_id"
                   class="btn-link"
-                  @click="$emit('open', row)"
+                  @click="$emit('choose', row)"
                 >
-                  绑定已有全文
-                </button>
+                  本地选择
+                </button><button class="btn-link" :disabled="ws.state.working || ws.state.info.busy" @click="$emit('local', row)">本地匹配</button><button class="btn-link" @click="$emit('results', row)">查找结果</button><label class="row-download"><input type="checkbox" :checked="downloadChoices[row.id] !== false" :disabled="ws.state.working || ws.state.info.busy" @change="downloadChoices[row.id] = $event.target.checked" /><span>自动下载</span></label>
               </template>
               <button
                 v-else
@@ -213,6 +215,7 @@
 import { computed, inject, ref } from 'vue'
 import { fulltextLabel } from '../state'
 import RescreenPagination from './RescreenPagination.vue'
+const downloadChoices = ref({})
 const props = defineProps({
   variant: { type: String, default: 'default' },
   selectable: Boolean,
@@ -220,7 +223,7 @@ const props = defineProps({
   aiStatus: { type: String, default: 'ai_pending' },
   actionLabel: { type: String, default: '查看' },
 })
-defineEmits(['open', 'replace'])
+defineEmits(['open', 'replace', 'lookup', 'choose', 'local', 'results'])
 const ws = inject('rescreen')
 const sourceLabels = {
   screening: '初筛导入',
@@ -423,6 +426,10 @@ function search() {
 .ref-table {
   table-layout: fixed;
 }
+.row-download { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 0.75rem; color: #64748b; }
+.row-download input { margin: 0; }
+.reference-list--fulltext .ref-table th:first-child { width: 52%; }
+.reference-list--fulltext .ref-table th:last-child { width: 34%; }
 .ref-table th:first-child {
   width: 65%;
 }
@@ -448,6 +455,8 @@ function search() {
 .reference-list:not(.reference-list--ai) > .list-tools {
   flex-wrap: nowrap;
 }
+.reference-list.reference-list--fulltext > .list-tools { flex-wrap: wrap; }
+.reference-list--fulltext .selection-tools { flex-wrap: wrap; flex-shrink: 1; padding-left: 0; border-left: 0; }
 .reference-list:not(.reference-list--ai) .search-box {
   min-width: 140px;
 }
@@ -469,13 +478,8 @@ function search() {
     border-left: 0;
   }
 }
-.reference-list--ai .ref-table th:first-child {
-  width: 60%;
-}
 @media (max-width: 700px) {
-  .ref-table th:first-child {
-    width: 55%;
-  }
+  .ref-table th:first-child { width: 55%; }
   .op-cell {
     white-space: normal;
   }
