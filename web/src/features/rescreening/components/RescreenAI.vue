@@ -384,10 +384,27 @@ function openPdf(page) {
   min-height: 0;
 }
 .ai-left.panel {
+  height: clamp(560px, 72vh, 760px);
+  display: flex;
+  flex-direction: column;
   padding: 0;
   background: #fafbff;
   overflow: hidden;
 }
+.ai-left > div:last-child {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.ai-left :deep(.reference-list--ai) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.ai-left :deep(.ai-reference-items) { flex: 1; min-height: 0; max-height: none; }
+.ai-left :deep(.list-tools), .ai-left :deep(.rs-pagination), .ai-left .result-tabs, .ai-left .rs-head { flex-shrink: 0; }
 .ai-right {
   display: flex;
   flex-direction: column;

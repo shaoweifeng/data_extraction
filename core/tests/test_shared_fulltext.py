@@ -47,6 +47,27 @@ class SharedFulltextFixture(TestCase):
 
 
 class SharedFulltextTests(SharedFulltextFixture):
+    def test_import_details_include_pdf_processing_and_keep_diagnostics_private(self):
+        asset, refs = self.ready(references=True)
+        batch = refs[0].import_batch
+        url = f'/api/rescreening/imports/{batch.pk}/'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.data['data']
+        self.assertEqual((data['source_type'], data['accepted_count'], data['reference_count']), ('pdf', 1, 1))
+        self.assertEqual(data['files'], [])
+        self.assertEqual(data['assets'][0]['filename'], 'study.pdf')
+        self.assertEqual(data['assets'][0]['status'], 'ready')
+        self.assertFalse(data['assets_truncated'])
+        asset.error_message = 'PRIVATE-DIAGNOSTIC-PATH'
+        asset.save(update_fields=['error_message'])
+        self.assertNotIn('PRIVATE-DIAGNOSTIC-PATH', str(self.client.get(url).data))
+        self.user.profile.role = 'researcher'
+        self.user.profile.save(update_fields=['role'])
+        self.assertIn('PRIVATE-DIAGNOSTIC-PATH', str(self.client.get(url).data))
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.get(url).status_code, 404)
+
     def test_pdf_only_import_is_independent_and_preserves_filename_title(self):
         import fitz
         with fitz.open(stream=make_pdf(), filetype='pdf') as document:

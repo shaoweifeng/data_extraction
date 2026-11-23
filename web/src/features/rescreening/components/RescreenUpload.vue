@@ -13,7 +13,14 @@
           从初筛导入、上传 PDF 全文或上传题录，建立复筛文献列表
         </p>
       </div>
-      <button v-if="ws.state.info.import_mode || ws.state.info.counts.total" class="clear-corpus-button" :disabled="blocked || ws.state.info.poll_required" @click="resetOpen = true">清空当前文献</button>
+      <button
+        v-if="ws.state.info.import_mode || ws.state.info.counts.total"
+        class="clear-corpus-button"
+        :disabled="blocked || ws.state.info.poll_required"
+        @click="resetOpen = true"
+      >
+        清空当前文献
+      </button>
     </div>
     <div class="upload-tabs">
       <button
@@ -28,8 +35,12 @@
       </button>
     </div>
     <div class="upload-panel">
-      <p v-if="!activeTab" class="mode-placeholder">请选择一种导入模式。选择后将固定，清空当前文献后才可更换。</p>
-      <p v-else-if="activeTab === 'mixed'" class="mode-placeholder">当前存在历史混合导入数据。请先清空当前文献，再选择一种导入模式。</p>
+      <p v-if="!activeTab" class="mode-placeholder">
+        请选择一种导入模式。选择后将固定，清空当前文献后才可更换。
+      </p>
+      <p v-else-if="activeTab === 'mixed'" class="mode-placeholder">
+        当前存在历史混合导入数据。请先清空当前文献，再选择一种导入模式。
+      </p>
       <template v-else-if="activeTab === 'screening'">
         <div class="dropzone dropzone--import">
           <i
@@ -124,13 +135,32 @@
         </p>
       </template>
     </div>
-    <RescreenDialog :open="resetOpen" title="清空当前复筛文献" @close="!ws.state.working && (resetOpen = false)">
-      <p>将删除当前复筛的全部文献、导入记录、排除标准、全文绑定、AI 结果、人工审核、导出和任务记录，之后可重新选择导入模式。</p>
-      <p>初筛数据不受影响。当前关联的 {{ ws.state.info.qa_linked_count || 0 }} 篇质量评价文献、全文及评价成果独立保留；重新导入时，会核对来源，避免重复创建。</p>
+    <RescreenDialog
+      :open="resetOpen"
+      title="清空当前复筛文献"
+      @close="!ws.state.working && (resetOpen = false)"
+    >
+      <p>
+        将删除当前复筛的全部文献、导入记录、排除标准、全文绑定、AI
+        结果、人工审核、导出和任务记录，之后可重新选择导入模式。
+      </p>
+      <p>
+        初筛数据不受影响。当前关联的
+        {{ ws.state.info.qa_linked_count || 0 }}
+        篇质量评价文献、全文及评价成果独立保留；重新导入时，会核对来源，避免重复创建。
+      </p>
       <p>已消耗积分不退还，积分账单保留。此操作无法撤销。</p>
       <template #footer>
-        <button :disabled="ws.state.working" @click="resetOpen = false">取消</button>
-        <button class="clear-corpus-button" :disabled="blocked || ws.state.info.poll_required" @click="resetCorpus">确认清空</button>
+        <button :disabled="ws.state.working" @click="resetOpen = false">
+          取消
+        </button>
+        <button
+          class="clear-corpus-button"
+          :disabled="blocked || ws.state.info.poll_required"
+          @click="resetCorpus"
+        >
+          确认清空
+        </button>
       </template>
     </RescreenDialog>
     <div class="ref-list-section">
@@ -138,17 +168,22 @@
         <h4>复筛文献列表</h4>
         <span class="ref-stats">共 {{ ws.state.info.counts.total }} 篇</span>
       </div>
-      <div v-if="ws.state.selected.length" class="rs-toolbar selection-toolbar">
-        <span>已选择 {{ ws.state.selected.length }} 篇</span><button :disabled="blocked" @click="removeSelected">
-          移除所选文献
-        </button>
-      </div>
       <RescreenReferenceList
         variant="upload"
         selectable
         action-label="移除"
         @open="remove"
-      />
+      >
+        <template #selection-actions>
+          <button
+            type="button"
+            :disabled="blocked || !ws.state.selected.length"
+            @click="removeSelected"
+          >
+            移除所选
+          </button>
+        </template>
+      </RescreenReferenceList>
     </div>
     <details class="import-history">
       <summary>导入记录与文件处理详情</summary>
@@ -185,7 +220,7 @@
                 </td>
                 <td>{{ batch.accepted_count }}</td>
                 <td class="rs-actions">
-                  <button @click="details(batch.id)">详情</button><button
+                  <button @click="details(batch.id)">查看详情</button><button
                     v-if="batch.retryable"
                     :disabled="blocked"
                     @click="batchAction(batch.id, 'retry')"
@@ -210,49 +245,152 @@
           :page="ws.state.imports"
           @change="(p, s) => ws.read(() => ws.loadImports(p, s))"
         />
-        <div v-if="batchDetail" class="rs-inset">
-          <div class="rs-toolbar">
-            <strong>批次 #{{ batchDetail.id }}</strong><button @click="batchDetail = null">关闭详情</button>
-          </div>
-          <div v-for="file in batchDetail.files" :key="file.id">
-            <p>
-              {{ file.filename }}
-              <a
-                :href="`/api/rescreening/imports/files/${file.id}/download/`"
-                target="_blank"
-                rel="noopener"
-              >下载原始题录</a>
-            </p>
-            <pre v-if="ws.state.info.capabilities.diagnostics && file.report">{{
-              JSON.stringify(file.report, null, 2)
-            }}</pre>
-          </div>
-          <p v-if="batchDetail.error">{{ batchDetail.error }}</p>
-        </div>
       </section>
     </details>
+    <RescreenDialog
+      :open="detailOpen"
+      title="导入与文件处理详情"
+      icon="fas fa-file-import"
+      @close="detailOpen = false"
+    >
+      <p v-if="detailLoading" role="status">正在读取导入详情…</p>
+      <div v-else-if="detailFailed" role="alert">
+        <p>读取详情失败，请重试。</p>
+        <button @click="details(detailId)">重新读取</button>
+      </div>
+      <template v-else-if="batchDetail">
+        <div class="batch-heading">
+          <strong>{{ sources[batchDetail.source_type] || '文献导入' }}</strong><span class="rs-badge">{{ label(batchDetail.status) }}</span><small>批次 #{{ batchDetail.id }}</small>
+        </div>
+        <dl class="batch-summary">
+          <div>
+            <dt>成功导入</dt>
+            <dd>{{ batchDetail.accepted_count }} 篇</dd>
+          </div>
+          <div>
+            <dt>当前保留</dt>
+            <dd>{{ batchDetail.reference_count }} 篇</dd>
+          </div>
+          <div>
+            <dt>提交时间</dt>
+            <dd>{{ formatTime(batchDetail.created_at) }}</dd>
+          </div>
+          <div>
+            <dt>结束时间</dt>
+            <dd>{{ formatTime(batchDetail.finished_at) }}</dd>
+          </div>
+        </dl>
+        <p v-if="batchDetail.error" class="rs-warning">
+          {{ batchDetail.error }}
+        </p>
+        <p
+          v-if="batchDetail.source_type === 'screening'"
+          class="batch-description"
+        >
+          本批次从初筛结果导入，保留题录与来源信息，没有独立上传的题录文件。
+        </p>
+        <p v-if="batchDetail.source_type === 'pdf'" class="batch-description">
+          PDF 直接导入：文件校验与全文提取完成后，可用于 AI 复筛。
+        </p>
+        <article
+          v-for="asset in batchDetail.assets || []"
+          :key="asset.id"
+          class="batch-file"
+        >
+          <strong>{{ asset.filename }}</strong>
+          <p>
+            {{ label(asset.status) }} · {{ formatSize(asset.size_bytes)
+            }}<template v-if="asset.page_count">
+              · {{ asset.page_count }} 页
+            </template>
+          </p>
+          <p v-if="asset.error" class="rs-warning">{{ asset.error }}</p>
+          <a
+            v-if="asset.status === 'ready'"
+            :href="`/api/fulltext/assets/${asset.id}/download/`"
+            target="_blank"
+            rel="noopener"
+          >查看 PDF</a>
+        </article>
+        <p v-if="batchDetail.assets_truncated" class="batch-description">
+          本弹窗展示前 50 个 PDF 文件，可在全文绑定步骤查看各篇文献。
+        </p>
+        <article
+          v-for="file in batchDetail.files || []"
+          :key="file.id"
+          class="batch-file"
+        >
+          <strong>{{ file.filename }}</strong>
+          <p>
+            {{ formatSize(file.size_bytes) }} · 已解析
+            {{ file.report?.parsed_entries ?? 0 }} 条
+          </p>
+          <a
+            :href="`/api/rescreening/imports/files/${file.id}/download/`"
+            target="_blank"
+            rel="noopener"
+          >下载原始题录</a>
+          <details v-if="ws.state.info.capabilities.diagnostics && file.report">
+            <summary>解析诊断</summary>
+            <pre>{{ JSON.stringify(file.report, null, 2) }}</pre>
+          </details>
+        </article>
+        <p
+          v-if="
+            batchDetail.source_type === 'bibliography' &&
+              !batchDetail.files?.length
+          "
+          class="batch-description"
+        >
+          原始题录文件已清理或不可用。
+        </p>
+        <p
+          v-if="
+            batchDetail.source_type === 'pdf' && !batchDetail.assets?.length
+          "
+          class="batch-description"
+        >
+          当前没有可展示的 PDF 文件记录。
+        </p>
+      </template>
+    </RescreenDialog>
   </div>
 </template>
 <script setup>
-import { computed, inject, ref, onMounted } from 'vue'
+import { computed, inject, ref, onMounted, onBeforeUnmount } from 'vue'
 import RescreenPagination from './RescreenPagination.vue'
 import RescreenReferenceList from './RescreenReferenceList.vue'
 import RescreenDialog from './RescreenDialog.vue'
 import { label } from '../state'
 const ws = inject('rescreen')
-const activeTab = computed(() => ws.state.info.import_mode === 'bibliography' ? 'index' : ws.state.info.import_mode || '')
+const activeTab = computed(() =>
+  ws.state.info.import_mode === 'bibliography'
+    ? 'index'
+    : ws.state.info.import_mode || '',
+)
 const resetOpen = ref(false)
 async function selectMode(mode) {
   if (activeTab.value || blocked.value) return
-  await ws.action(() => ws.api.selectImportMode(ws.state.projectId, mode === 'index' ? 'bibliography' : mode, ws.state.info.revision))
+  await ws.action(() =>
+    ws.api.selectImportMode(
+      ws.state.projectId,
+      mode === 'index' ? 'bibliography' : mode,
+      ws.state.info.revision,
+    ),
+  )
 }
 async function resetCorpus() {
-  const result = await ws.action(() => ws.api.resetCorpus(ws.state.projectId, {
-    confirm: true,
-    expected_revision: ws.state.info.revision,
-    expected_mode: ws.state.info.import_mode,
-    expected_fingerprint: ws.state.info.fingerprint,
-  }), '', false)
+  const result = await ws.action(
+    () =>
+      ws.api.resetCorpus(ws.state.projectId, {
+        confirm: true,
+        expected_revision: ws.state.info.revision,
+        expected_mode: ws.state.info.import_mode,
+        expected_fingerprint: ws.state.info.fingerprint,
+      }),
+    '',
+    false,
+  )
   if (result) {
     resetOpen.value = false
     await ws.initialize(ws.state.projectId, 1)
@@ -274,6 +412,22 @@ function sendFiles(files) {
     ws.upload(files, activeTab.value === 'pdf', true)
 }
 const batchDetail = ref(null)
+const detailOpen = ref(false)
+const detailLoading = ref(false)
+const detailFailed = ref(false)
+const detailId = ref(null)
+let detailEpoch = 0
+onBeforeUnmount(() => {
+  detailEpoch++
+})
+function formatTime(value) {
+  return value ? new Date(value).toLocaleString() : '—'
+}
+function formatSize(bytes) {
+  return bytes >= 1048576
+    ? `${(bytes / 1048576).toFixed(1)} MB`
+    : `${Math.ceil((bytes || 0) / 1024)} KB`
+}
 const sources = {
   screening: '初筛导入',
   bibliography: '题录上传',
@@ -308,7 +462,17 @@ function batchAction(id, action) {
   ws.action(() => ws.api.importAction(id, action))
 }
 async function details(id) {
-  batchDetail.value = await ws.read(() => ws.api.importDetail(id))
+  const epoch = ++detailEpoch
+  detailId.value = id
+  detailOpen.value = true
+  detailLoading.value = true
+  detailFailed.value = false
+  batchDetail.value = null
+  const result = await ws.read(() => ws.api.importDetail(id))
+  if (epoch !== detailEpoch) return
+  batchDetail.value = result
+  detailFailed.value = !result
+  detailLoading.value = false
 }
 function remove(row) {
   if (window.confirm(`移除“${row.title}”？历史记录会保留。`))
@@ -348,8 +512,17 @@ async function removeSelected() {
   white-space: nowrap;
   cursor: pointer;
 }
-.clear-corpus-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.mode-placeholder { padding: 28px 18px; margin: 0; text-align: center; color: #64748b; font-size: 0.86rem; }
+.clear-corpus-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.mode-placeholder {
+  padding: 28px 18px;
+  margin: 0;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.86rem;
+}
 .qa-upload {
   display: flex;
   flex-direction: column;
@@ -627,8 +800,65 @@ async function removeSelected() {
   color: #64748b;
   line-height: 1.6;
 }
-.selection-toolbar {
-  padding: 12px 16px;
+.batch-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.batch-heading small {
+  margin-left: auto;
+  color: #94a3b8;
+}
+.batch-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+.batch-summary > div {
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+.batch-summary dt {
+  color: #94a3b8;
+  font-size: 0.76rem;
+}
+.batch-summary dd {
+  margin: 4px 0 0;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+.batch-description {
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+.batch-file {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+.batch-file strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.batch-file p {
+  margin: 6px 0;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+.batch-file a {
+  color: #6366f1;
+  font-size: 0.8rem;
+}
+.batch-file pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.72rem;
 }
 .import-history {
   background: white;

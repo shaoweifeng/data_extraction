@@ -191,6 +191,11 @@ class RescreeningTests(TestCase):
 
     def test_resource_isolation_and_role_diagnostics(self):
         batch = self.completed()
+        detail = self.client.get(f'/api/rescreening/imports/{batch.pk}/').data['data']
+        self.assertEqual(detail['reference_count'], 1)
+        self.assertEqual(len(detail['files']), 1)
+        self.assertEqual(detail['assets'], [])
+        self.assertEqual(set(detail['files'][0]['report']), {'parsed_entries'})
         ref = RescreenReference.objects.get()
         path = f'/api/rescreening/references/{ref.pk}/raw/'
         self.assertEqual(self.client.get(path).status_code, 403)

@@ -29,6 +29,7 @@
           篇；未开启外部查找时仍可本地匹配和上传。</small>
       </div>
       <div class="rs-actions">
+        <button v-if="ws.state.lookups.total" :disabled="ws.state.working" @click="advancedOpen = true">查看查找结果</button>
         <button
           class="btn-secondary"
           :disabled="blocked || !canLookup"
@@ -141,171 +142,173 @@
         </form>
       </div>
     </div>
-    <details
+    <RescreenDialog
       :open="advancedOpen"
-      class="fulltext-management"
-      @toggle="advancedOpen = $event.target.open"
+      title="选择全文与查看查找结果"
+      wide
+      @close="advancedOpen = false"
     >
-      <summary>项目全文与查找记录 / 候选确认</summary>
-      <section class="rs-card">
-        <div class="rs-toolbar">
-          <h3>项目全文资产</h3>
-          <button @click="ws.read(() => ws.loadAssets())">刷新</button>
-        </div>
-        <div class="rs-table-scroll">
-          <table class="rs-table">
-            <thead>
-              <tr>
-                <th>ID / 文件</th>
-                <th>处理状态</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="asset in ws.state.assets.items" :key="asset.id">
-                <td class="rs-title-cell">
-                  <strong :title="asset.original_filename">#{{ asset.id }} · {{ asset.original_filename }}</strong><small>{{ asset.page_count || '—' }} 页 ·
-                    {{ (asset.size_bytes / 1048576).toFixed(1) }} MB</small>
-                </td>
-                <td>
-                  <span
-                    class="rs-badge"
-                    :class="asset.ai_ready ? 'success' : 'warning'"
-                  >{{
-                    asset.ai_ready ? 'AI 就绪' : label(asset.status)
-                  }}</span><small v-if="asset.extraction_truncated">提取覆盖不完整，不能用于完整全文 AI 复筛</small><small v-if="asset.error_message">{{
-                    asset.error_message
-                  }}</small>
-                </td>
-                <td class="rs-actions">
-                  <a
-                    v-if="asset.download_url"
-                    :href="asset.download_url"
-                    target="_blank"
-                    rel="noopener"
-                  >查看 PDF</a><button
-                    v-if="asset.status === 'ready'"
-                    :disabled="blocked || !ws.state.detail"
-                    @click="assetId = asset.id"
-                  >
-                    选择绑定
-                  </button><button
-                    v-if="asset.status === 'failed'"
-                    :disabled="blocked"
-                    @click="
-                      ws.action(() => ws.api.assetAction(asset.id, 'retry'))
-                    "
-                  >
-                    重新处理
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="!ws.state.assets.items.length">
-                <td colspan="3" class="rs-empty">
-                  暂无全文资产，上传 PDF 后会在这里显示
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <RescreenPagination
-          :page="ws.state.assets"
-          @change="(p, s) => ws.read(() => ws.loadAssets(p, s))"
-        />
-      </section>
-      <section class="rs-card">
-        <h3>查找任务</h3>
-        <div
-          v-for="job in ws.state.lookups.items"
-          :key="job.id"
-          class="rs-task-row"
-        >
-          <span>#{{ job.id }} · {{ label(job.status) }} · {{ job.processed }} /
-            {{ job.total }} 篇</span>
-          <div class="rs-actions">
-            <button @click="ws.read(() => ws.loadLookup(job.id))">
-              查看候选
-            </button><button
-              v-if="['pending', 'running'].includes(job.status)"
-              :disabled="ws.state.working"
-              @click="ws.action(() => ws.api.lookupAction(job.id, 'cancel'))"
-            >
-              停止
-            </button><button
-              v-if="
-                ['failed', 'cancelled', 'completed'].includes(job.status) &&
-                  job.mode !== 'manual'
-              "
-              :disabled="blocked"
-              @click="ws.action(() => ws.api.lookupAction(job.id, 'retry'))"
-            >
-              重试未完成项
-            </button>
+      <div class="fulltext-dialog-content">
+        <section class="rs-card">
+          <div class="rs-toolbar">
+            <h3>项目全文资产</h3>
+            <button @click="ws.read(() => ws.loadAssets())">刷新</button>
           </div>
-        </div>
-        <p v-if="!ws.state.lookups.items.length" class="rs-empty">
-          暂无查找任务
-        </p>
-        <RescreenPagination
-          :page="ws.state.lookups"
-          @change="(p, s) => ws.read(() => ws.loadLookups(p, s))"
-        />
-        <template v-if="ws.state.lookupId">
-          <h4>任务 #{{ ws.state.lookupId }} 的候选</h4>
-          <div
-            v-for="item in ws.state.lookupItems.items"
-            :key="item.id"
-            class="rs-inset"
-          >
-            <p>文献 #{{ item.reference_id }} · {{ label(item.status) }}</p>
-            <p v-if="!item.candidates.length" class="rs-muted">
-              暂无候选，可手工上传全文
-            </p>
-            <div
-              v-for="candidate in item.candidates"
-              :key="candidate.id"
-              class="rs-candidate"
-            >
-              <div>
-                <strong>{{ candidate.title || candidate.source }}</strong><small>{{ candidate.source }} ·
-                  {{ candidate.license || '未标注许可' }} ·
-                  {{ label(candidate.status) }}</small><a
-                  v-if="candidate.url"
-                  :href="safeLink(candidate.url)"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >查看来源页面</a>
-              </div>
-              <div class="rs-actions">
-                <button
-                  v-if="candidate.asset_id && candidate.status !== 'bound'"
-                  :disabled="blocked"
-                  @click="confirm(candidate, item)"
-                >
-                  确认绑定
-                </button><button
-                  v-if="
-                    !candidate.asset_id &&
-                      candidate.license &&
-                      ws.state.info.capabilities.online_lookup
-                  "
-                  :disabled="blocked"
-                  @click="download(candidate, item)"
-                >
-                  尝试合规下载
-                </button>
-              </div>
-            </div>
+          <div class="rs-table-scroll">
+            <table class="rs-table">
+              <thead>
+                <tr>
+                  <th>ID / 文件</th>
+                  <th>处理状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="asset in ws.state.assets.items" :key="asset.id">
+                  <td class="rs-title-cell">
+                    <strong :title="asset.original_filename">#{{ asset.id }} · {{ asset.original_filename }}</strong><small>{{ asset.page_count || '—' }} 页 ·
+                      {{ (asset.size_bytes / 1048576).toFixed(1) }} MB</small>
+                  </td>
+                  <td>
+                    <span
+                      class="rs-badge"
+                      :class="asset.ai_ready ? 'success' : 'warning'"
+                    >{{
+                      asset.ai_ready ? 'AI 就绪' : label(asset.status)
+                    }}</span><small v-if="asset.extraction_truncated">提取覆盖不完整，不能用于完整全文 AI 复筛</small><small v-if="asset.error_message">{{
+                      asset.error_message
+                    }}</small>
+                  </td>
+                  <td class="rs-actions">
+                    <a
+                      v-if="asset.download_url"
+                      :href="asset.download_url"
+                      target="_blank"
+                      rel="noopener"
+                    >查看 PDF</a><button
+                      v-if="asset.status === 'ready'"
+                      :disabled="blocked || !ws.state.detail"
+                      @click="assetId = asset.id; advancedOpen = false"
+                    >
+                      选择绑定
+                    </button><button
+                      v-if="asset.status === 'failed'"
+                      :disabled="blocked"
+                      @click="
+                        ws.action(() => ws.api.assetAction(asset.id, 'retry'))
+                      "
+                    >
+                      重新处理
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="!ws.state.assets.items.length">
+                  <td colspan="3" class="rs-empty">
+                    暂无全文资产，上传 PDF 后会在这里显示
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <RescreenPagination
-            :page="ws.state.lookupItems"
-            @change="
-              (p, s) => ws.read(() => ws.loadLookup(ws.state.lookupId, p, s))
-            "
+            :page="ws.state.assets"
+            @change="(p, s) => ws.read(() => ws.loadAssets(p, s))"
           />
-        </template>
-      </section>
-    </details>
+        </section>
+        <section class="rs-card">
+          <h3>查找任务</h3>
+          <div
+            v-for="job in ws.state.lookups.items"
+            :key="job.id"
+            class="rs-task-row"
+          >
+            <span>#{{ job.id }} · {{ label(job.status) }} · {{ job.processed }} /
+              {{ job.total }} 篇</span>
+            <div class="rs-actions">
+              <button @click="ws.read(() => ws.loadLookup(job.id))">
+                查看候选
+              </button><button
+                v-if="['pending', 'running'].includes(job.status)"
+                :disabled="ws.state.working"
+                @click="ws.action(() => ws.api.lookupAction(job.id, 'cancel'))"
+              >
+                停止
+              </button><button
+                v-if="
+                  ['failed', 'cancelled', 'completed'].includes(job.status) &&
+                    job.mode !== 'manual'
+                "
+                :disabled="blocked"
+                @click="ws.action(() => ws.api.lookupAction(job.id, 'retry'))"
+              >
+                重试未完成项
+              </button>
+            </div>
+          </div>
+          <p v-if="!ws.state.lookups.items.length" class="rs-empty">
+            暂无查找任务
+          </p>
+          <RescreenPagination
+            :page="ws.state.lookups"
+            @change="(p, s) => ws.read(() => ws.loadLookups(p, s))"
+          />
+          <template v-if="ws.state.lookupId">
+            <h4>任务 #{{ ws.state.lookupId }} 的候选</h4>
+            <div
+              v-for="item in ws.state.lookupItems.items"
+              :key="item.id"
+              class="rs-inset"
+            >
+              <p>文献 #{{ item.reference_id }} · {{ label(item.status) }}</p>
+              <p v-if="!item.candidates.length" class="rs-muted">
+                暂无候选，可手工上传全文
+              </p>
+              <div
+                v-for="candidate in item.candidates"
+                :key="candidate.id"
+                class="rs-candidate"
+              >
+                <div>
+                  <strong>{{ candidate.title || candidate.source }}</strong><small>{{ candidate.source }} ·
+                    {{ candidate.license || '未标注许可' }} ·
+                    {{ label(candidate.status) }}</small><a
+                    v-if="candidate.url"
+                    :href="safeLink(candidate.url)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >查看来源页面</a>
+                </div>
+                <div class="rs-actions">
+                  <button
+                    v-if="candidate.asset_id && candidate.status !== 'bound'"
+                    :disabled="blocked"
+                    @click="confirm(candidate, item)"
+                  >
+                    确认绑定
+                  </button><button
+                    v-if="
+                      !candidate.asset_id &&
+                        candidate.license &&
+                        ws.state.info.capabilities.online_lookup
+                    "
+                    :disabled="blocked"
+                    @click="download(candidate, item)"
+                  >
+                    尝试合规下载
+                  </button>
+                </div>
+              </div>
+            </div>
+            <RescreenPagination
+              :page="ws.state.lookupItems"
+              @change="
+                (p, s) => ws.read(() => ws.loadLookup(ws.state.lookupId, p, s))
+              "
+            />
+          </template>
+        </section>
+      </div>
+    </RescreenDialog>
   </div>
 </template>
 <script setup>
@@ -314,6 +317,7 @@ import { label, fulltextLabel, safePdfUrl } from '../state'
 import RescreenPdf from './RescreenPdf.vue'
 import RescreenReferenceList from './RescreenReferenceList.vue'
 import RescreenPagination from './RescreenPagination.vue'
+import RescreenDialog from './RescreenDialog.vue'
 const ws = inject('rescreen')
 const assetId = ref('')
 const uploadInput = ref(null)
@@ -779,12 +783,7 @@ function safeLink(url) {
   }
 }
 
-.fulltext-management {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 14px 16px;
-}
+.fulltext-dialog-content { display: flex; flex-direction: column; gap: 16px; }
 .binding-tools {
   margin-top: 14px;
 }
@@ -807,8 +806,7 @@ function safeLink(url) {
   width: 100%;
   border: 0;
 }
-.fulltext-management > .rs-card {
+.fulltext-dialog-content > .rs-card {
   box-shadow: none;
-  margin-top: 14px;
 }
 </style>

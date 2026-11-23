@@ -4,11 +4,12 @@
       <div class="rs-head-icon"><i class="fas fa-list-check"></i></div>
       <div>
         <h3>设定复筛排除标准</h3>
-        <p>逐条维护全文复筛排除标准。</p>
+        <p>逐条维护全文复筛排除标准。<button class="guide-link" @click="showGuide = true"><i class="fas fa-lightbulb"></i> 查看撰写指南</button></p>
       </div>
       <button class="initial-criteria-button" :disabled="initialLoading" @click="showInitialCriteria">查看初筛标准</button>
     </section>
 
+    <ExclusionCriteriaPresets class="criteria-presets" :model-value="criteriaLines(text)" :disabled="ws.state.working || ws.state.info.busy" @toggle="togglePreset" />
     <section class="criteria-card">
       <div class="input-row">
         <input
@@ -50,34 +51,32 @@
       </div>
     </section>
 
-    <RescreenDialog :open="initialOpen" title="初筛排除标准" @close="initialOpen = false">
-      <p v-if="initialLoading">正在读取初筛标准…</p>
-      <p v-else-if="initialFailed">读取失败，请关闭后重试。</p>
-      <p v-else-if="!initial?.performed">该项目未进行初筛。</p>
+    <RescreenDialog :open="initialOpen" title="初筛排除标准" icon="fas fa-list-check" subtitle="初筛阶段已保存的排除标准，仅供查看参考" @close="initialOpen = false">
+      <div v-if="initialLoading" class="initial-empty"><i class="fas fa-spinner fa-spin"></i><p>正在读取初筛标准…</p></div>
+      <div v-else-if="initialFailed" class="initial-empty"><i class="fas fa-circle-exclamation"></i><p>读取失败，请关闭后重试。</p></div>
+      <div v-else-if="!initial?.performed" class="initial-empty"><i class="fas fa-folder-open"></i><strong>该项目未进行初筛</strong><p>可在当前步骤直接制定全文复筛排除标准。</p></div>
       <ol v-else-if="initial.criteria.length" class="initial-criteria-list">
-        <li v-for="(item, index) in initial.criteria" :key="index">{{ item }}</li>
+        <li v-for="(item, index) in initial.criteria" :key="index"><span>{{ index + 1 }}</span><p>{{ item }}</p></li>
       </ol>
-      <p v-else>该项目尚未设置初筛排除标准。</p>
+      <div v-else class="initial-empty"><i class="fas fa-list-check"></i><strong>尚未设置初筛排除标准</strong></div>
     </RescreenDialog>
-    <section class="guide-card">
-      <h4><i class="fas fa-lightbulb"></i> 撰写提示</h4>
-      <div class="guide-grid">
-        <div><b>P 人群</b><span>全文是否符合目标研究对象。</span></div>
-        <div>
-          <b>I/E 暴露或干预</b><span>是否符合本研究关注的干预、检测或暴露。</span>
-        </div>
-        <div><b>C 对照</b><span>是否存在符合要求的对照或参考标准。</span></div>
-        <div><b>O 结局</b><span>是否报告复筛所需核心结局。</span></div>
-      </div>
-    </section>
+    <ExclusionCriteriaGuide v-model="showGuide" />
   </div>
 </template>
 <script setup>
 import { computed, inject, ref, onBeforeUnmount } from 'vue'
 import { criteriaLines } from '../state'
 import RescreenDialog from './RescreenDialog.vue'
+import ExclusionCriteriaGuide from '@/shared/components/ExclusionCriteriaGuide.vue'
+import ExclusionCriteriaPresets from '@/shared/components/ExclusionCriteriaPresets.vue'
 const ws = inject('rescreen')
 const newCriterion = ref('')
+const showGuide = ref(false)
+function togglePreset(preset) {
+  if (ws.state.working || ws.state.info.busy) return
+  const lines = criteriaLines(text.value)
+  return save(lines.includes(preset) ? lines.filter(line => line !== preset) : [...lines, preset])
+}
 async function addCriteria() {
   const value = newCriterion.value.trim()
   if (!value || ws.state.info.busy || ws.state.working) return
@@ -160,8 +159,15 @@ async function save(lines) {
   white-space: nowrap;
   cursor: pointer;
 }
-.initial-criteria-list { margin: 0; padding-left: 22px; }
-.initial-criteria-list li { padding: 6px 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.criteria-presets { margin-bottom: 0; }
+.guide-link { border: 0; padding: 0 0 0 10px; background: transparent; color: #6366f1; font-size: 0.78rem; cursor: pointer; }
+.initial-criteria-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.initial-criteria-list li { display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+.initial-criteria-list li > span { display: grid; place-items: center; width: 26px; height: 26px; flex: none; background: #e0e7ff; color: #4f46e5; border-radius: 8px; font-weight: 700; }
+.initial-criteria-list p { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.initial-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 28px 12px; }
+.initial-empty > i { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 18px; background: #eef2ff; color: #818cf8; font-size: 1.5rem; }
+.initial-empty p { margin: 0; font-size: 0.82rem; color: #94a3b8; }
 h3,
 h4,
 p {
@@ -176,8 +182,7 @@ h3 {
   color: #64748b;
   margin-top: 4px;
 }
-.criteria-card,
-.guide-card {
+.criteria-card {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
@@ -251,42 +256,6 @@ h3 {
 .empty i {
   font-size: 2rem;
 }
-.guide-card h4 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #1e293b;
-  margin-bottom: 12px;
-}
-.guide-card i {
-  color: #f59e0b;
-}
-.guide-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-.guide-grid div {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 12px;
-  padding: 12px;
-}
-.guide-grid b {
-  display: block;
-  color: #92400e;
-  margin-bottom: 4px;
-}
-.guide-grid span {
-  font-size: 0.78rem;
-  color: #78350f;
-}
-@media (max-width: 1100px) {
-  .guide-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 .criteria-item span {
   overflow-wrap: anywhere;
   white-space: pre-wrap;

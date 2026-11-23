@@ -1,7 +1,8 @@
 <template>
-  <dialog ref="dialog" class="rescreen-dialog" :aria-labelledby="titleId" @cancel.prevent="$emit('close')" @click.self="$emit('close')">
+  <dialog ref="dialog" class="rescreen-dialog" :class="{ wide }" :aria-labelledby="titleId" @cancel.prevent="$emit('close')" @click.self="$emit('close')">
     <header>
-      <h3 :id="titleId">{{ title }}</h3>
+      <span v-if="icon" class="dialog-icon"><i :class="icon" aria-hidden="true"></i></span>
+      <div class="dialog-heading"><h3 :id="titleId">{{ title }}</h3><p v-if="subtitle">{{ subtitle }}</p></div>
       <button type="button" aria-label="关闭弹窗" @click="$emit('close')">×</button>
     </header>
     <div class="dialog-body"><slot /></div>
@@ -10,7 +11,7 @@
 </template>
 <script setup>
 import { onMounted, ref, useId, watch } from 'vue'
-const props = defineProps({ open: Boolean, title: { type: String, required: true } })
+const props = defineProps({ open: Boolean, title: { type: String, required: true }, wide: Boolean, icon: { type: String, default: '' }, subtitle: { type: String, default: '' } })
 defineEmits(['close'])
 const titleId = useId()
 const dialog = ref(null)
@@ -32,8 +33,12 @@ onMounted(() => watch(() => props.open, (value) => {
   box-shadow: 0 20px 60px #0f172a33;
 }
 .rescreen-dialog::backdrop { background: #0f172a66; }
+.rescreen-dialog.wide { width: min(1000px, calc(100vw - 32px)); }
+.dialog-heading { flex: 1; min-width: 0; }
+.dialog-heading p { margin: 5px 0 0; color: #94a3b8; font-size: 0.76rem; line-height: 1.5; }
+.dialog-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 12px; color: #6366f1; background: #e0e7ff; }
 .rescreen-dialog[open] { display: flex; flex-direction: column; }
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #e2e8f0; background: linear-gradient(120deg, #f5f7ff, #fff); }
 h3 { margin: 0; font-size: 1rem; }
 header button { border: 0; background: #f1f5f9; color: #64748b; font-size: 1.3rem; border-radius: 8px; width: 30px; height: 30px; cursor: pointer; }
 .dialog-body { padding: 20px; overflow: auto; line-height: 1.7; font-size: 0.88rem; }

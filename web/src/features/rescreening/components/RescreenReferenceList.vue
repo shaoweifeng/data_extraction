@@ -1,6 +1,10 @@
 <template>
   <section class="reference-list" :class="'reference-list--' + variant">
-    <form class="list-tools" :class="{ 'ai-list-tools': variant === 'ai' }" @submit.prevent="search">
+    <form
+      class="list-tools"
+      :class="{ 'ai-list-tools': variant === 'ai' }"
+      @submit.prevent="search"
+    >
       <div class="search-box">
         <i v-if="variant !== 'ai'" class="fas fa-search"></i><input
           v-model="query"
@@ -10,7 +14,12 @@
           aria-label="搜索复筛文献"
         />
       </div>
-      <select v-if="variant !== 'ai'" v-model="status" aria-label="筛选文献状态" @change="search">
+      <select
+        v-if="variant !== 'ai'"
+        v-model="status"
+        aria-label="筛选文献状态"
+        @change="search"
+      >
         <option value="">全部文献</option>
         <option value="ready">全文可用于 AI</option>
         <option value="missing">未绑定全文</option>
@@ -21,7 +30,13 @@
         <option value="not_retrieved">全文未获取</option>
       </select>
       <template v-if="variant === 'ai'">
-        <button type="submit" class="ai-tool-btn" :disabled="ws.state.working" aria-label="搜索" title="搜索">
+        <button
+          type="submit"
+          class="ai-tool-btn"
+          :disabled="ws.state.working"
+          aria-label="搜索"
+          title="搜索"
+        >
           <i class="fas fa-search" aria-hidden="true"></i>
         </button>
         <button
@@ -29,20 +44,35 @@
           type="button"
           class="ai-page-selection"
           :disabled="ws.state.working || (!canSelectPage && !canDeselectPage)"
-          :title="canDeselectPage ? '只取消本页，保留其他页的选择' : '选中本页全文已就绪的文献，不影响其他页'"
+          :title="
+            canDeselectPage
+              ? '只取消本页，保留其他页的选择'
+              : '选中本页全文已就绪的文献，不影响其他页'
+          "
           @click="togglePageSelection"
         >
           {{ canDeselectPage ? '取消本页' : '选本页' }}
         </button>
       </template>
-      <button v-else :disabled="ws.state.working">搜索</button>
+      <button v-else type="submit" :disabled="ws.state.working">搜索</button>
+      <div v-if="selectable && variant !== 'ai'" class="selection-tools">
+        <button
+          type="button"
+          :disabled="ws.state.working"
+          @click="ws.selectPage(readyOnly)"
+        >
+          选择本页{{ readyOnly ? '可筛选文献' : '' }}
+        </button>
+        <span title="选择会跨页保留">已选 {{ ws.state.selected.length }} 篇</span><button
+          type="button"
+          :disabled="ws.state.working || !ws.state.selected.length"
+          @click="clearSelection"
+        >
+          清空选择
+        </button>
+        <slot name="selection-actions" />
+      </div>
     </form>
-    <div v-if="selectable && variant !== 'ai'" class="list-tools selection-tools">
-      <button :disabled="ws.state.working" @click="ws.selectPage(readyOnly)">
-        选择本页{{ readyOnly ? '可筛选文献' : '' }}
-      </button>
-      <span>已选 {{ ws.state.selected.length }} 篇（跨页保留）</span><button @click="clearSelection">清空选择</button>
-    </div>
     <ul v-if="variant === 'ai'" class="ai-reference-items">
       <li
         v-for="row in ws.state.refs.items"
@@ -199,19 +229,26 @@ const sourceLabels = {
 }
 const query = ref(ws.state.filters.q)
 const status = ref(ws.state.filters.status)
-const readyPageIds = computed(() => ws.state.refs.items.filter(row => row.ai_ready).map(row => row.id))
-const pageIds = computed(() => new Set(ws.state.refs.items.map(row => row.id)))
-const selectedIds = computed(() => new Set(ws.state.selected))
-const canSelectPage = computed(() =>
-  ws.state.selected.length < (ws.state.info.capabilities.max_run || 1000) &&
-  readyPageIds.value.some(id => !selectedIds.value.has(id)),
+const readyPageIds = computed(() =>
+  ws.state.refs.items.filter((row) => row.ai_ready).map((row) => row.id),
 )
-const canDeselectPage = computed(() =>
-  !canSelectPage.value && ws.state.selected.some(id => pageIds.value.has(id)),
+const pageIds = computed(
+  () => new Set(ws.state.refs.items.map((row) => row.id)),
+)
+const selectedIds = computed(() => new Set(ws.state.selected))
+const canSelectPage = computed(
+  () =>
+    ws.state.selected.length < (ws.state.info.capabilities.max_run || 1000) &&
+    readyPageIds.value.some((id) => !selectedIds.value.has(id)),
+)
+const canDeselectPage = computed(
+  () =>
+    !canSelectPage.value &&
+    ws.state.selected.some((id) => pageIds.value.has(id)),
 )
 function togglePageSelection() {
   if (canDeselectPage.value) {
-    ws.state.selected = ws.state.selected.filter(id => !pageIds.value.has(id))
+    ws.state.selected = ws.state.selected.filter((id) => !pageIds.value.has(id))
     ws.state.estimate = null
   } else if (canSelectPage.value) {
     ws.selectPage(true)
@@ -222,11 +259,18 @@ function clearSelection() {
   ws.state.estimate = null
 }
 function search() {
-  ws.state.filters = { q: query.value, status: props.variant === 'ai' ? props.aiStatus : status.value }
+  ws.state.filters = {
+    q: query.value,
+    status: props.variant === 'ai' ? props.aiStatus : status.value,
+  }
   ws.read(() => ws.loadReferences(1))
 }
 </script>
 <style scoped>
+.reference-list {
+  container-type: inline-size;
+  min-width: 0;
+}
 .list-tools.ai-list-tools {
   flex-wrap: nowrap;
   gap: 6px;
@@ -392,7 +436,38 @@ function search() {
   padding: 12px 16px;
 }
 .selection-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding-left: 12px;
+  border-left: 1px solid #e2e8f0;
   color: #64748b;
+}
+.reference-list:not(.reference-list--ai) > .list-tools {
+  flex-wrap: nowrap;
+}
+.reference-list:not(.reference-list--ai) .search-box {
+  min-width: 140px;
+}
+@container (max-width: 720px) {
+  .reference-list:not(.reference-list--ai) > .list-tools {
+    flex-wrap: wrap;
+  }
+  .selection-tools {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+@media (max-width: 850px) {
+  .reference-list:not(.reference-list--ai) > .list-tools {
+    flex-wrap: wrap;
+  }
+  .selection-tools {
+    padding-left: 0;
+    border-left: 0;
+  }
 }
 .reference-list--ai .ref-table th:first-child {
   width: 60%;

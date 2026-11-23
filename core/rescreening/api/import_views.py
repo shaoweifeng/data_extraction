@@ -4,9 +4,10 @@ from django.http import FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from core.fulltext.models import FulltextAsset
 from core.rescreening.api.common import boundary, paginated, project_for, visible, integer
 from core.rescreening.errors import RescreenError
-from core.rescreening.models import RescreenImportBatch, RescreenImportFile
+from core.rescreening.models import RescreenImportBatch, RescreenImportFile, RescreenReference
 from core.rescreening.services.imports import start_import, retry_import
 from core.rescreening.services.source import source_preview
 from core.services.access_policy import ProjectAccessPolicy
@@ -92,6 +93,24 @@ def detail(request, batch_id):
     data['files'] = [dict(id=row.pk, filename=row.original_filename, size_bytes=row.size_bytes,
         report=row.report if diagnostics else {'parsed_entries': row.report.get('parsed_entries', 0)})
         for row in batch.files.order_by('pk')]
+    data['reference_count'] = RescreenReference.objects.active().filter(import_batch=batch).count()
+    assets = FulltextAsset.objects.none()
+    if batch.source_type == 'pdf':
+        assets = FulltextAsset.objects.filter(
+            rescreen_bindings__reference__import_batch=batch,
+            rescreen_bindings__source='pdf_upload',
+            project_id=batch.project_id,
+        ).distinct().order_by('pk')
+    rows = list(assets.values(
+        'id', 'original_filename', 'size_bytes', 'status', 'page_count', 'error_message',
+    )[:51])
+    data['assets_truncated'] = len(rows) > 50
+    data['assets'] = [dict(
+        id=row['id'], filename=row['original_filename'], size_bytes=row['size_bytes'],
+        status=row['status'], page_count=row['page_count'],
+        error=(row['error_message'] if diagnostics else '文件处理未完成，请重试或联系管理员。')
+        if row['error_message'] else '',
+    ) for row in rows[:50]]
     return Response({'ok': True, 'data': data})
 
 

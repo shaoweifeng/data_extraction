@@ -78,6 +78,16 @@ describe('rescreen component visibility and layout contracts', () => {
     expect(html).toContain('导入记录与文件处理详情')
     expect(html).not.toContain('rs-upload-grid')
   })
+  it('keeps selection actions in one toolbar even after selecting references', async () => {
+    const ws = workspace()
+    ws.state.selected = [1, 2]
+    const html = await render(RescreenUpload, ws)
+    expect(html).not.toContain('selection-toolbar')
+    expect(html).not.toContain('已选择')
+    expect(html.match(/class="selection-tools"/g)).toHaveLength(1)
+    expect(html).toContain('移除所选')
+    expect(html).toContain('导入与文件处理详情')
+  })
   it('restores fulltext status cards and preview drawer without manual asset ID entry', async () => {
     const ws = workspace()
     ws.state.detail = { id: 1, title: '示例文献', fulltext_status: 'missing' }
@@ -87,7 +97,8 @@ describe('rescreen component visibility and layout contracts', () => {
     expect(html).toContain('未绑定全文')
     expect(html).toContain('preview-drawer')
     expect(html).toContain('980')
-    expect(html).toContain('项目全文与查找记录 / 候选确认')
+    expect(html).not.toContain('项目全文与查找记录 / 候选确认')
+    expect(html).toContain('选择项目已有全文')
     expect(html).not.toContain('资产 ID')
   })
   it('restores criteria entry rows and writing guide while retaining explicit versioned save', async () => {
@@ -99,7 +110,9 @@ describe('rescreen component visibility and layout contracts', () => {
     expect(html).toContain('查看初筛标准')
     expect(html).not.toContain('保存排除标准')
     expect(html).not.toContain('有未保存的修改')
-    expect(html).toContain('guide-grid')
+    expect(html).toContain('查看撰写指南')
+    expect(html).toContain('常用排除标准（勾选后自动添加）')
+    expect(html).toContain('未以人类为研究对象（如动物实验、细胞实验）')
     expect(html).toContain('排除动物实验')
     expect(html).not.toContain('rows="12"')
     expect(html).not.toContain('更改后已有审核需要重新确认')
@@ -111,7 +124,7 @@ describe('rescreen component visibility and layout contracts', () => {
     expect(html).toContain('清空当前文献')
     expect(html).toContain('确认清空')
     const tabs = html.match(/<button[^>]*class="upload-tab[^"]*"[^>]*>/g)
-    expect(tabs.filter(tag => tag.includes('disabled'))).toHaveLength(2)
+    expect(tabs.filter((tag) => tag.includes('disabled'))).toHaveLength(2)
     expect(html).not.toContain('dropzone--import')
     const fresh = workspace()
     fresh.state.info.import_mode = ''
@@ -119,12 +132,14 @@ describe('rescreen component visibility and layout contracts', () => {
   })
   it('places literature on the left and AI model, billing and progress controls on the right', async () => {
     const ws = workspace()
-    ws.state.models = [{
-      id: 'deepseek',
-      name: 'DeepSeek',
-      configured: true,
-      sub_models: [{ id: 'flash', name: 'Flash', configured: true }],
-    }]
+    ws.state.models = [
+      {
+        id: 'deepseek',
+        name: 'DeepSeek',
+        configured: true,
+        sub_models: [{ id: 'flash', name: 'Flash', configured: true }],
+      },
+    ]
     ws.state.info.configuration.model_ids = ['flash']
     const html = await render(RescreenAI, ws)
     expect(html).toContain('ai-layout')
@@ -162,24 +177,39 @@ describe('rescreen component visibility and layout contracts', () => {
   it.each([
     ['running', '复筛进度', '停止本轮'],
     ['settlement_pending', '复筛进度', '恢复结算'],
-  ])('replaces configuration with the %s run view', async (status, heading, action) => {
-    const ws = workspace()
-    ws.state.run = { id: 1, status, processed_count: 2, total_count: 4, counts: {} }
-    ws.state.runId = 1
-    const html = await render(RescreenAI, ws)
-    expect(html).toContain(heading)
-    expect(html).toContain(action)
-    expect(html).not.toContain('历史运行')
-    expect(html).toContain('运行明细')
-    const right = html.indexOf('aria-label="模型与任务进度"')
-    expect(html.slice(0, right)).not.toContain('运行明细')
-    expect(html.slice(right)).toContain('run-items-details')
-    expect(html).not.toContain('选择模型')
-    expect(html).not.toContain('开始 AI 复筛')
-  })
+  ])(
+    'replaces configuration with the %s run view',
+    async (status, heading, action) => {
+      const ws = workspace()
+      ws.state.run = {
+        id: 1,
+        status,
+        processed_count: 2,
+        total_count: 4,
+        counts: {},
+      }
+      ws.state.runId = 1
+      const html = await render(RescreenAI, ws)
+      expect(html).toContain(heading)
+      expect(html).toContain(action)
+      expect(html).not.toContain('历史运行')
+      expect(html).toContain('运行明细')
+      const right = html.indexOf('aria-label="模型与任务进度"')
+      expect(html.slice(0, right)).not.toContain('运行明细')
+      expect(html.slice(right)).toContain('run-items-details')
+      expect(html).not.toContain('选择模型')
+      expect(html).not.toContain('开始 AI 复筛')
+    },
+  )
   it('reopens a completed run in model configuration with pending and screened tabs', async () => {
     const ws = workspace()
-    ws.state.run = { id: 1, status: 'completed', processed_count: 4, total_count: 4, counts: {} }
+    ws.state.run = {
+      id: 1,
+      status: 'completed',
+      processed_count: 4,
+      total_count: 4,
+      counts: {},
+    }
     ws.state.runId = 1
     const html = await render(RescreenAI, ws)
     expect(html).toContain('选择模型')
@@ -251,11 +281,25 @@ describe('rescreen component visibility and layout contracts', () => {
   })
   it('keeps AI evidence collapsed and leaves human decisions independent from AI suggestions', async () => {
     const ws = workspace()
-    ws.state.detail = { id: 1, title: '示例文献', bibliography: {}, fulltext_status: 'missing' }
+    ws.state.detail = {
+      id: 1,
+      title: '示例文献',
+      bibliography: {},
+      fulltext_status: 'missing',
+    }
     ws.state.aiDetail = {
       consensus: 'included',
-      models: [{ id: 1, model_id: 'flash', status: 'completed', decision: 'included',
-        reason: '研究符合标准', criteria_results: [], evidence: [{ id: 'e1', page: 2, text: '原文证据' }] }],
+      models: [
+        {
+          id: 1,
+          model_id: 'flash',
+          status: 'completed',
+          decision: 'included',
+          reason: '研究符合标准',
+          criteria_results: [],
+          evidence: [{ id: 'e1', page: 2, text: '原文证据' }],
+        },
+      ],
     }
     const html = await render(RescreenReview, ws)
     expect(html).not.toContain('采纳到表单')
@@ -263,7 +307,9 @@ describe('rescreen component visibility and layout contracts', () => {
     expect(html).toContain('保存备注')
     expect(html).toContain('研究符合标准')
     expect(html).toContain('查看 AI 证据')
-    const disclosure = html.match(/<details[^>]*class="evidence-disclosure"[^>]*>/)?.[0]
+    const disclosure = html.match(
+      /<details[^>]*class="evidence-disclosure"[^>]*>/,
+    )?.[0]
     expect(disclosure).toBeTruthy()
     expect(disclosure).not.toMatch(/\bopen(?:\s|=|>)/)
     expect(html).toContain('第 2 页')
